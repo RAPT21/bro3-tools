@@ -5,6 +5,7 @@
 // @include		http://*.3gokushi.jp/*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
+// @author		RAPT
 // @version 	2015.05.17
 // ==/UserScript==
 
