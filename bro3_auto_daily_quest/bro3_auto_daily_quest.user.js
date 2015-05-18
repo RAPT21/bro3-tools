@@ -2,14 +2,17 @@
 // @name		bro3_auto_daily_quest
 // @namespace	https://gist.github.com/RAPT21/
 // @description	ブラウザ三国志 繰り返しクエスト自動化 by RAPT
-// @include		http://*.3gokushi.jp/*
+// @include		http://*.3gokushi.jp/village.php*
+// @include		https://*.3gokushi.jp/village.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @author		RAPT
-// @version 	2015.05.17
+// @version 	2015.05.19
 // ==/UserScript==
 
 // 2015.05.17 初版作成。繰り返しクエスト受注、寄付クエ実施、クエクリ、ヨロズダス引き、受信箱からアイテムを移す
+// 2015.05.19 都市タブでのみ動作するようにした
+//            5zen 氏の ブラウザ三国志 自動デュエル 2014.07.28 を取り込み
 
 /*!
 * jQuery Cookie Plugin
@@ -101,6 +104,46 @@ function sendDonate(rice) {
 	var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 }
 
+// デュエル
+function duel(){
+	j$.get("http://"+HOST+"/card/duel_set.php",function(y){
+
+		var htmldoc = document.createElement("html");
+			htmldoc.innerHTML = y;
+
+		// 6枚目がセットされているか
+		if ( xpath('//ul[@class="deck_card"]/li[6]/dl/dd[3]/span[2]', htmldoc).snapshotItem(0).innerHTML.match("---/---") ) {
+			console.log("*** no deck set ***");
+		} else {
+			j$.get("http://"+HOST+"/pvp_duel/select_enemy.php?deck=1",function(x){
+
+				var htmldoc2 = document.createElement("html");
+					htmldoc2.innerHTML = x;
+
+				try {
+					var rival_list = xpath('//ul[@class="rival_list"]/li/a[@class="thickbox btn_battle"]', htmldoc2);
+					j$.get( rival_list.snapshotItem(0).href, function(x){
+
+						x.match(/battleStart\((\d+),\s(\d+),\s(\d+)\)/);
+
+						var c = {};
+						c['deck']	=	1;
+						c['euid']	=	parseInt(RegExp.$2);
+						c['edeck']	=	0;
+
+						// デュエルの開始
+						j$.get("http://" + HOST + "/pvp_duel/process_json.php?deck=1&euid=" + c['euid'] + "&edeck=0", c , function(x) {
+							location.reload();
+						});
+					});
+				} catch(e) {
+					console.log("*** no duel ***");
+				}
+			});
+		}
+	});
+}
+
 // ヨロズダスを引く
 function yorozudas(){
 	j$.get('http://'+HOST+'/reward_vendor/reward_vendor.php',function(x){
@@ -176,7 +219,9 @@ function yorozudas(){
 				return;
 			}
 			if (quest_id == ID_DUEL){
-				console.log("TODO: デュエルクエ");
+				// デュエルクエ
+				duel();
+				return;
 			}
 			if (quest_id == ID_SHUPPEI){
 				console.log("TODO: 出兵クエ");
