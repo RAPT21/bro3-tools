@@ -7,12 +7,13 @@
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @author		RAPT
-// @version 	2015.05.19
+// @version 	2015.05.22
 // ==/UserScript==
 
 // 2015.05.17 初版作成。繰り返しクエスト受注、寄付クエ実施、クエクリ、ヨロズダス引き、受信箱からアイテムを移す
 // 2015.05.19 都市タブでのみ動作するようにした
-//            5zen 氏の ブラウザ三国志 自動デュエル 2014.07.28 を取り込み
+//			  5zen 氏の ブラウザ三国志 自動デュエル 2014.07.28 を取り込み
+// 2015.05.22 クエクリ済でも、サーバー時刻が [02:00:00-04:59:59] 以外のとき自動デュエルするようにした
 
 /*!
 * jQuery Cookie Plugin
@@ -106,6 +107,7 @@ function sendDonate(rice) {
 
 // デュエル
 function duel(){
+	console.log("*** bro3_duel ***");
 	j$.get("http://"+HOST+"/card/duel_set.php",function(y){
 
 		var htmldoc = document.createElement("html");
@@ -244,5 +246,14 @@ function yorozudas(){
 
 		// 受信箱から移す
 		moveFromInbox();
+
+		// サーバー時刻が [02:00:00 - 04:59:59] 以外であれば自動デュエルする
+		var server = xpath('//div[@id="navi01"]/dl[@class="world"]/dd[@class="server"]/span[@id="server_time_disp"]', htmldoc).snapshotItem(0);
+		if (server && server.textContent) {
+			var hour = parseInt(server.textContent.substr(0,2), 10);
+			if (hour < 2 || hour >= 5) {
+				duel();
+			}
+		}
 	});
 })();
