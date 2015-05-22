@@ -65,7 +65,7 @@ var OPT_QUEST_DONATE		= 1; // 繰り返しクエスト用寄付糧500
 var OPT_QUEST_DUEL			= 1; // 繰り返しクエスト用デュエル
 var OPT_QUEST_TROOPS		= 1; // 繰り返しクエスト用出兵
 
-var OPT_RECEIVE_RESOURCES	= 1; // クエスト報酬 '資源' も自動で受け取る
+var OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬 '資源' も自動で受け取る
 
 var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
 var OPT_AUTO_DUEL			= 1; // 自動デュエル
