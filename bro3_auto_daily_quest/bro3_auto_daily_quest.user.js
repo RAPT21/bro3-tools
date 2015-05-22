@@ -7,13 +7,16 @@
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @author		RAPT
-// @version 	2015.05.22
+// @version 	2015.05.23
 // ==/UserScript==
 
 // 2015.05.17 初版作成。繰り返しクエスト受注、寄付クエ実施、クエクリ、ヨロズダス引き、受信箱からアイテムを移す
 // 2015.05.19 都市タブでのみ動作するようにした
 //			  5zen 氏の ブラウザ三国志 自動デュエル 2014.07.28 を取り込み
 // 2015.05.22 クエクリ済でも、サーバー時刻が [02:00:00-04:59:59] 以外のとき自動デュエルするようにした
+// 2015.05.23 ヨロズダス回数だけでなく、資源以外のクエクリ報酬も自動受領するようにした
+//			  資源報酬もオプションにより自動受領できるようにした
+//			  オプションはコード内。デフォルトは無効
 
 /*!
 * jQuery Cookie Plugin
@@ -38,23 +41,36 @@
 		return null;
 	};
 })(jQuery);
-
 jQuery.noConflict();
 j$ = jQuery;
 
-
-var HOST		= location.hostname;
-var INTERVAL	= 500;
 
 function xpath(query,targetDoc) {
 	return document.evaluate(query, targetDoc, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
 }
 
 
+var HOST		= location.hostname;
+var INTERVAL	= 500;
+
+
 // クエストID
-var ID_KIFU = 254;		// 同盟に合計500以上寄付する
-var ID_SHUPPEI = 256;	// 武将を出兵し、資源を獲得する
-var ID_DUEL = 255;		// ブショーデュエルで1回対戦する
+var ID_DONATE	= 254; // 同盟に合計500以上寄付する
+var ID_TROOPS	= 256; // 武将を出兵し、資源を獲得する
+var ID_DUEL		= 255; // ブショーデュエルで1回対戦する
+
+
+// オプション設定
+var OPT_QUEST_DONATE		= 1; // 繰り返しクエスト用寄付糧500
+var OPT_QUEST_DUEL			= 1; // 繰り返しクエスト用デュエル
+var OPT_QUEST_TROOPS		= 1; // 繰り返しクエスト用出兵
+
+var OPT_RECEIVE_RESOURCES	= 1; // クエスト報酬 '資源' も自動で受け取る
+
+var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
+var OPT_AUTO_DUEL			= 1; // 自動デュエル
+// ここまで
+
 
 // 受信箱にあるアイテムを便利アイテムへ移す
 function moveFromInbox(){
@@ -169,6 +185,60 @@ function yorozudas(){
 	});
 }
 
+// クエスト報酬を自動で受け取るか判定
+function checkReceiveReward(name) {
+	if (name.match(/木材|石|鉄|食料/) === null) {
+		// 資源報酬以外は自動で受け取る
+		return true;
+	} else {
+		// 資源報酬の場合は、自動で受け取る設定に依る
+		return OPT_RECEIVE_RESOURCES ? true : false;
+	}
+}
+
+// 繰り返しクエストを受注
+function acceptAttentionQuest(attention_quest) {
+	var regexp = /takeQuest\((\d+),\s*\d+,\s*\d+\)/;
+
+	var quest_list = [];
+	for (var i = 0; i < attention_quest.snapshotLength; i++){
+		if (xpath('td/a[contains(text(), "繰り返し")]', attention_quest.snapshotItem(i)).snapshotLength){
+			var quest_id = attention_quest.snapshotItem(i).innerHTML.match(regexp);
+			if (quest_id){
+				quest_list.push(quest_id[1]);
+			}
+		}
+	}
+
+	if (quest_list.length == 0) {
+		return false;
+	}
+
+	// クエスト受注
+	for (var i = 0; i < quest_list.length; i++){
+		var query = 'action=take_quest&id=' + quest_list[i];
+		j$.get('http://'+HOST+'/quest/index.php?'+query,function(){});
+	}
+	var tid=setTimeout(function(){location.reload(false);},INTERVAL);
+	return true;
+}
+
+// 未クリアの繰り返しクエストを取得
+function getRestAttentionQuest(attention_quest){
+	var quest_list = [];
+	for (var i = 0; i < attention_quest.snapshotLength; i++){
+		if (xpath('td/a[contains(text(), "繰り返し")]', attention_quest.snapshotItem(i)).snapshotLength){
+			var regexp = /cancelQuest\((\d+),\s*\d+,\s*\d+\)/;
+			var quest_id = attention_quest.snapshotItem(i).innerHTML.match(regexp);
+			if ( quest_id ){
+				quest_list.push(quest_id[1]);
+			}
+		}
+	}
+	return quest_list;
+}
+
+
 
 ( function() {
 	console.log("*** bro3_quest ***");
@@ -176,83 +246,59 @@ function yorozudas(){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
-		// 残ってる繰り返しクエスト id を取得
-		var quest_list = [];
-
+		// 残っている繰り返しクエスト id を取得
 		var attention_quest = xpath('//div[@id="questB3_table"]/table/tbody/tr[contains(@class, "attention")]', htmldoc);
-		for (var i = 0; i < attention_quest.snapshotLength; i++){
-			if (xpath('td/a[contains(text(), "繰り返し")]', attention_quest.snapshotItem(i)).snapshotLength){
-				var regexp = /takeQuest\((\d+),\s*\d+,\s*\d+\)/;
-				var quest_id = attention_quest.snapshotItem(i).innerHTML.match(regexp);
-				if (quest_id){
-					quest_list.push(quest_id[1]);
-				}
-			}
-		}
 
 		// クエスト受注
-		if (quest_list.length != 0) {
-			for (var i = 0; i < quest_list.length; i++){
-				var query = 'action=take_quest&id=' + quest_list[i];
-				j$.get('http://'+HOST+'/quest/index.php?'+query,function(){});
-			}
-			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
+		if (acceptAttentionQuest(attention_quest)) {
 			return;
 		}
 
-		// 未クリアの繰り返しクエストを取得
-		quest_list = [];
-		for (var i = 0; i < attention_quest.snapshotLength; i++){
-			if (xpath('td/a[contains(text(), "繰り返し")]', attention_quest.snapshotItem(i)).snapshotLength){
-				var regexp = /cancelQuest\((\d+),\s*\d+,\s*\d+\)/;
-				var quest_id = attention_quest.snapshotItem(i).innerHTML.match(regexp);
-				if ( quest_id ){
-					quest_list.push(quest_id[1]);
-				}
-			}
-		}
-
-		// クエストマッチング
+		// 未クリアの繰り返しクエストマッチング
+		var quest_list = getRestAttentionQuest(attention_quest);
 		for (var i = 0; i < quest_list.length; i++){
 			var quest_id = parseInt(quest_list[i]);
-			if (quest_id == ID_KIFU){
+			if (quest_id == ID_DONATE && OPT_QUEST_DONATE){
 				// 寄付クエ
 				sendDonate(500);
 				return;
 			}
-			if (quest_id == ID_DUEL){
+			if (quest_id == ID_DUEL && OPT_QUEST_DUEL){
 				// デュエルクエ
 				duel();
 				return;
 			}
-			if (quest_id == ID_SHUPPEI){
+			if (quest_id == ID_TROOPS && OPT_QUEST_TROOPS){
 				console.log("TODO: 出兵クエ");
 			}
 		}
 
-		// クリアしたクエスト報酬がヨロズダス回数なら報酬を受け取る
+		// クリアしたクエスト報酬を受け取る
 		var reward = xpath('//table[@summary="報酬"]/tbody/tr/td', htmldoc).snapshotItem(0);
-		if (reward && reward.textContent == "ヨロズダス回数"){
-			j$.get('http://'+HOST+'/quest/index.php?c=1',function(rewardResponse){
-				var rewardDoc = document.createElement("html");
-					rewardDoc.innerHTML = rewardResponse;
-
-				// そのままヨロズダスを引く
-				yorozudas();
+		if (reward && checkReceiveReward(reward.textContent)){
+			j$.get('http://'+HOST+'/quest/index.php?c=1',function(){
+				// 報酬がヨロズダス回数ならそのままヨロズダスを引く
+				if (reward.textContent == 'ヨロズダス回数') {
+					yorozudas();
+				}
 			});
 		} else {
-				yorozudas();
+			yorozudas();
 		}
 
 		// 受信箱から移す
-		moveFromInbox();
+		if (OPT_MOVE_FROM_INBOX) {
+			moveFromInbox();
+		}
 
 		// サーバー時刻が [02:00:00 - 04:59:59] 以外であれば自動デュエルする
-		var server = xpath('//div[@id="navi01"]/dl[@class="world"]/dd[@class="server"]/span[@id="server_time_disp"]', htmldoc).snapshotItem(0);
-		if (server && server.textContent) {
-			var hour = parseInt(server.textContent.substr(0,2), 10);
-			if (hour < 2 || hour >= 5) {
-				duel();
+		if (OPT_AUTO_DUEL) {
+			var server = xpath('//div[@id="navi01"]/dl[@class="world"]/dd[@class="server"]/span[@id="server_time_disp"]', htmldoc).snapshotItem(0);
+			if (server && server.textContent) {
+				var hour = parseInt(server.textContent.substr(0,2), 10);
+				if (hour < 2 || hour >= 5) {
+					duel();
+				}
 			}
 		}
 	});
