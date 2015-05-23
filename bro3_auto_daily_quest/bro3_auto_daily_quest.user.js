@@ -7,7 +7,7 @@
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @author		RAPT
-// @version 	2015.05.23
+// @version 	2015.05.24
 // ==/UserScript==
 
 // 2015.05.17 初版作成。繰り返しクエスト受注、寄付クエ実施、クエクリ、ヨロズダス引き、受信箱からアイテムを移す
@@ -17,6 +17,7 @@
 // 2015.05.23 ヨロズダス回数だけでなく、資源以外のクエクリ報酬も自動受領するようにした
 //			  資源報酬もオプションにより自動受領できるようにした
 //			  オプションはコード内。デフォルトは無効
+// 2015.05.24 自動助力対応
 
 /*!
 * jQuery Cookie Plugin
@@ -65,12 +66,31 @@ var OPT_QUEST_DONATE		= 1; // 繰り返しクエスト用寄付糧500
 var OPT_QUEST_DUEL			= 1; // 繰り返しクエスト用デュエル
 var OPT_QUEST_TROOPS		= 1; // 繰り返しクエスト用出兵
 
-var OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬 '資源' も自動で受け取る
+var OPT_RECEIVE_RESOURCES	= 1; // クエスト報酬 '資源' も自動で受け取る
 
 var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
 var OPT_AUTO_DUEL			= 1; // 自動デュエル
+var OPT_AUTO_JORYOKU		= 1; // 自動助力
 // ここまで
 
+// 自動助力
+function joryoku_impl(x){
+	var htmldoc = document.createElement("html");
+		htmldoc.innerHTML = x;
+
+	// 助力可能回数を取得
+	var imgs = xpath('//div[@class="support-count"]/ul/li/img',htmldoc);
+	for(var i = 0; i < imgs.snapshotLength; i++){
+		var title = imgs.snapshotItem(i).title;
+		if (title == '助力済み') { // 助力すると '助力空き' となる
+			j$.get('http://'+HOST+'/alliance/village.php?assist=1',joryoku_impl);
+			break;
+		}
+	}
+}
+function joryoku() {
+	j$.get('http://'+HOST+'/alliance/village.php',joryoku_impl);
+}
 
 // 受信箱にあるアイテムを便利アイテムへ移す
 function moveFromInbox(){
@@ -289,6 +309,11 @@ function getRestAttentionQuest(attention_quest){
 		// 受信箱から移す
 		if (OPT_MOVE_FROM_INBOX) {
 			moveFromInbox();
+		}
+
+		// 自動助力
+		if (OPT_AUTO_JORYOKU) {
+			joryoku();
 		}
 
 		// サーバー時刻が [02:00:00 - 04:59:59] 以外であれば自動デュエルする
