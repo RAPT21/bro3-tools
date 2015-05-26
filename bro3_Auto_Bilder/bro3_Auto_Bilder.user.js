@@ -16,7 +16,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2015.05.26
+// @version		2015.05.27
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -96,10 +96,10 @@
 // 2015.05.24 ★9(1-1-1-2)水車村化オプションを追加
 //			  変換用市場表示が Google Chrome でも動作するよう修正
 //			  Google Chrome 対応版@2015.01.01 をマージ by RAPT
-// 2015.05.26 ★5(0-0-0-1)水車村オプションを追加
+// 2015.05.27 ★5(0-0-0-1)水車村オプションを追加
 //			  ★5工場村オプションを追加
 
-var VERSION = "2015.05.26"; 	// バージョン情報
+var VERSION = "2015.05.27"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -260,7 +260,10 @@ var OPT_TORIDE		= 0;	 // 自動砦化オプション
 var OPT_SOUKO_MAX	= 1;	 // 倉庫の最大数
 var OPT_1112MURA	= 0;	 // ★9(1-1-1-2)水車村オプション
 var OPT_0001S5MURA	= 0;	 // ★5(0-0-0-1)水車村オプション
-var OPT_PLANT5MURA	= 0;	 // ★5工場村オプション
+var OPT_PLANT5MURAN	= 0;	 // ★5工場村オプション
+var OPT_PLANT5MURAE	= 0;	 // ★5工場村オプション
+var OPT_PLANT5MURAW	= 0;	 // ★5工場村オプション
+var OPT_PLANT5MURAS	= 0;	 // ★5工場村オプション
 
 var OPT_REMOVE = 0; // 施設削除オプション 2015.05.10
 
@@ -1943,7 +1946,7 @@ debugLog("=== Start setVillageFacility ===");
 	else if (OPT_0001S5MURA == 1) {	// ★5(0-0-0-1)水車村
 		build0001S5();
 	}
-	else if (OPT_PLANT5MURA == 1) {	// ★5(6-0-0-0),(0-6-0-0),(0-0-6-0)工場村
+	else if ((OPT_PLANT5MURAN == 1) || (OPT_PLANT5MURAE == 1) || (OPT_PLANT5MURAW == 1) || (OPT_PLANT5MURAS == 1)) {	// ★5(6-0-0-0),(0-6-0-0),(0-0-6-0)工場村
 		buildPlant5();
 	}
 
@@ -2387,8 +2390,8 @@ var Hatake		= 215, // 畑
 	Bougu		= 231, // 防具工場
 	Ichiba		= 217, // 市場
 	Suisha		= 218, // 水車
-	Heiki		=	0, // 兵器工房
-	Koujou		=	0, // 工場
+	Heiki		= 241, // 兵器工房
+	Koujou		= 219, // 工場
 	Bassai		= 209, // 伐採所
 	Ishikiri	= 211, // 石切り場
 	Seitetsu	= 213, // 製鉄所
@@ -2526,11 +2529,16 @@ function build1112(){
 	createFacilityEx(0, 5, Hatake, 12, area) ||
 	createFacilityEx(0, 6, Hatake, 12, area) ||
 	createFacilityEx(1, 4, Hatake, 12, area) ||
-	createFacilityEx(1, 5, Suisha, 10, area) ||
 	createFacilityEx(1, 6, Hatake, 12, area) ||
 	createFacilityEx(2, 4, Hatake, 12, area) ||
 	createFacilityEx(2, 5, Hatake, 12, area) ||
 	createFacilityEx(2, 6, Hatake, 12, area) ||
+
+	// 水車LV10
+	createFacilityEx(1, 5, Suisha, 10, area) ||
+
+	// 拠点LV10 (拠点は既にあるため ID はダミーで ok)
+	createFacilityEx(3, 3, 999, 10, area) ||
 
 	true;
 }
@@ -2543,6 +2551,15 @@ function buildPlant5(){
 		IwayamaCnt		= 0, // 岩山
 		TekkouzanCnt	= 0, // 鉄鉱山
 		TargetType		= 0; // 伐採所 or 石切場 or 鉄鉱所
+	var needKoujou = 1,
+		needSuisha = 1,
+		needIchiba = 1,
+		needHeiki  = 1,
+		needBougu  = 1,
+		needKajiba = 1,
+		needShukusha = 1,
+		needRenpei = 1,
+		needSouko  = 1;
 
 	var vacant = new Array(); // 平地の座標
 	var area = get_area_all();
@@ -2553,6 +2570,15 @@ function buildPlant5(){
 		if(area[i].name == "森林") ShinrinCnt++; else
 		if(area[i].name == "岩山") IwayamaCnt++; else
 		if(area[i].name == "鉄鉱山") TekkouzanCnt++; else
+		if(area[i].name == "工場") needKoujou = 0; else
+		if(area[i].name == "水車") needSuisha = 0; else
+		if(area[i].name == "市場") needIchiba = 0; else
+		if(area[i].name == "兵器工房") needHeiki = 0; else
+		if(area[i].name == "防具工場") needBougu = 0; else
+		if(area[i].name == "鍛冶場") needKajiba = 0; else
+		if(area[i].name == "宿舎") needShukusha = 0; else
+		if(area[i].name == "練兵所") needRenpei = 0; else
+		if(area[i].name == "倉庫") needSouko = 0; else
 		if(area[i].name == "平地") vacant.push(area[i].xy);
 	}
 	if (ArechiCnt == 21 &&
@@ -2563,23 +2589,24 @@ function buildPlant5(){
 	else if (ShinrinCnt == 0 && IwayamaCnt == 0 && TekkouzanCnt == 6) TargetType = Seitetsu;
 	else return;
 
+	if (needKoujou == 0 && needSuisha == 0) return;
+	if (needSuisha == 0) needRenpei = 0;
+	if (needKoujou == 0) needHeiki = 0;
+	if (needHeiki  == 0) needKajiba = 0;
+	if (needHeiki  == 0 && needIchiba == 0) needBougu = 0;
+	if (needKajiba == 0 && needBougu == 0) needShukusha = 0;
+
 	// 資源ブロック 南パターン
-	if (j$.inArray("1,1",vacant) &&
-		j$.inArray("1,3",vacant) &&
-		j$.inArray("1,4",vacant) &&
-		j$.inArray("1,5",vacant) &&
-		j$.inArray("3,5",vacant) &&
-		j$.inArray("5,5",vacant) &&
-		j$.inArray("2,6",vacant) &&
-		j$.inArray("4,6",vacant))
+	if (OPT_PLANT5MURAS == 1)
 	{
 		// まず市場を作るのに必要な建設を行なう
-		createFacilityEx(5, 5, Souko,  1, area) ||
-		createFacilityEx(1, 4, Renpei, 3, area) ||
-		createFacilityEx(1, 1, Shukusha, 1, area) ||
-		createFacilityEx(5, 1, Bougu,  2, area) ||
-		createFacilityEx(1, 5, Ichiba, 1, area) ||
+		(needSouko		&& createFacilityEx(5, 5, Souko,  1, area)) ||
+		(needRenpei		&& createFacilityEx(1, 4, Renpei, 3, area)) ||
+		(needShukusha	&& createFacilityEx(1, 1, Shukusha, 1, area)) ||
+		(needBougu		&& createFacilityEx(5, 1, Bougu,  2, area)) ||
+		(needIchiba		&& createFacilityEx(1, 5, Ichiba, 1, area)) ||
 
+		// 水車周囲の畑を作る
 		createFacilityEx(2, 1, Hatake, 1, area) ||
 		createFacilityEx(2, 2, Hatake, 1, area) ||
 		createFacilityEx(2, 3, Hatake, 1, area) ||
@@ -2588,49 +2615,40 @@ function buildPlant5(){
 		createFacilityEx(4, 2, Hatake, 1, area) ||
 		createFacilityEx(4, 3, Hatake, 1, area) ||
 
+		// 工場周囲の収穫所を作る
 		createFacilityEx(2, 6, TargetType, 1, area) ||
 		createFacilityEx(4, 6, TargetType, 1, area) ||
 
 		// 兵器工房を作る
-		createFacilityEx(5, 2, Kajiba, 3, area) ||
-		createFacilityEx(5, 1, Bougu,  3, area) ||
-		createFacilityEx(1, 3, Heiki,  5, area) ||
+		(needKajiba		&& createFacilityEx(5, 2, Kajiba, 3, area)) ||
+		(needBougu		&& createFacilityEx(5, 1, Bougu,  3, area)) ||
+		(needHeiki		&& createFacilityEx(1, 3, Heiki,  5, area)) ||
 
 		// 水車を作る
-		createFacilityEx(1, 4, Renpei, 5, area) ||
-		createFacilityEx(5, 5, Souko, 10, area) ||
-		createFacilityEx(1, 5, Ichiba, 8, area) ||
-		createFacilityEx(3, 2, Suisha, 1, area) ||
+		(needRenpei		&& createFacilityEx(1, 4, Renpei, 5, area)) ||
+		(needSouko		&& createFacilityEx(5, 5, Souko, 10, area)) ||
+		(needIchiba		&& createFacilityEx(1, 5, Ichiba, 8, area)) ||
+		(needSuisha		&& createFacilityEx(3, 2, Suisha, 1, area)) ||
 
 		// 工場を作る
-		createFacilityEx(1, 5, Ichiba, 10, area) ||
-		createFacilityEx(3, 5, Koujou, 1, area) ||
-
-		// Lv-up
-		createFacilityEx(2, 6, TargetType, 7, area) ||
-		createFacilityEx(4, 6, TargetType, 7, area) ||
+		(needIchiba		&& createFacilityEx(1, 5, Ichiba, 10, area)) ||
+		(needKoujou		&& createFacilityEx(3, 5, Koujou,  1, area)) ||
 
 		true;
 		return;
 	}
 
 	// 資源ブロック 東パターン
-	if (j$.inArray("1,5",vacant) &&
-		j$.inArray("3,5",vacant) &&
-		j$.inArray("4,5",vacant) &&
-		j$.inArray("5,5",vacant) &&
-		j$.inArray("5,3",vacant) &&
-		j$.inArray("5,1",vacant) &&
-		j$.inArray("6,4",vacant) &&
-		j$.inArray("6,2",vacant))
+	if (OPT_PLANT5MURAE == 1)
 	{
 		// まず市場を作るのに必要な建設を行なう
-		createFacilityEx(5, 1, Souko,  1, area) ||
-		createFacilityEx(4, 5, Renpei, 3, area) ||
-		createFacilityEx(1, 5, Shukusha, 1, area) ||
-		createFacilityEx(1, 1, Bougu,  2, area) ||
-		createFacilityEx(5, 5, Ichiba, 1, area) ||
+		(needSouko		&& createFacilityEx(5, 1, Souko,  1, area)) ||
+		(needRenpei		&& createFacilityEx(4, 5, Renpei, 3, area)) ||
+		(needShukusha	&& createFacilityEx(1, 5, Shukusha, 1, area)) ||
+		(needBougu		&& createFacilityEx(1, 1, Bougu,  2, area)) ||
+		(needIchiba		&& createFacilityEx(5, 5, Ichiba, 1, area)) ||
 
+		// 水車周囲の畑を作る
 		createFacilityEx(1, 2, Hatake, 1, area) ||
 		createFacilityEx(1, 3, Hatake, 1, area) ||
 		createFacilityEx(1, 4, Hatake, 1, area) ||
@@ -2639,49 +2657,40 @@ function buildPlant5(){
 		createFacilityEx(3, 2, Hatake, 1, area) ||
 		createFacilityEx(3, 4, Hatake, 1, area) ||
 
+		// 工場周囲の収穫所を作る
 		createFacilityEx(6, 2, TargetType, 1, area) ||
 		createFacilityEx(6, 4, TargetType, 1, area) ||
 
 		// 兵器工房を作る
-		createFacilityEx(2, 1, Kajiba, 3, area) ||
-		createFacilityEx(1, 1, Bougu,  3, area) ||
-		createFacilityEx(3, 5, Heiki,  5, area) ||
+		(needKajiba		&& createFacilityEx(2, 1, Kajiba, 3, area)) ||
+		(needBougu		&& createFacilityEx(1, 1, Bougu,  3, area)) ||
+		(needHeiki		&& createFacilityEx(3, 5, Heiki,  5, area)) ||
 
 		// 水車を作る
-		createFacilityEx(4, 5, Renpei, 5, area) ||
-		createFacilityEx(5, 1, Souko, 10, area) ||
-		createFacilityEx(5, 5, Ichiba, 8, area) ||
-		createFacilityEx(2, 3, Suisha, 1, area) ||
+		(needRenpei		&& createFacilityEx(4, 5, Renpei, 5, area)) ||
+		(needSouko		&& createFacilityEx(5, 1, Souko, 10, area)) ||
+		(needIchiba		&& createFacilityEx(5, 5, Ichiba, 8, area)) ||
+		(needSuisha		&& createFacilityEx(2, 3, Suisha, 1, area)) ||
 
 		// 工場を作る
-		createFacilityEx(5, 5, Ichiba, 10, area) ||
-		createFacilityEx(5, 3, Koujou, 1, area) ||
-
-		// Lv-up
-		createFacilityEx(6, 2, TargetType, 7, area) ||
-		createFacilityEx(6, 4, TargetType, 7, area) ||
+		(needIchiba		&& createFacilityEx(5, 5, Ichiba, 10, area)) ||
+		(needKoujou		&& createFacilityEx(5, 3, Koujou,  1, area)) ||
 
 		true;
 		return;
 	}
 
 	// 資源ブロック 西パターン
-	if (j$.inArray("5,1",vacant) &&
-		j$.inArray("3,1",vacant) &&
-		j$.inArray("2,1",vacant) &&
-		j$.inArray("1,1",vacant) &&
-		j$.inArray("1,3",vacant) &&
-		j$.inArray("1,5",vacant) &&
-		j$.inArray("0,2",vacant) &&
-		j$.inArray("0,4",vacant))
+	if (OPT_PLANT5MURAW == 1)
 	{
 		// まず市場を作るのに必要な建設を行なう
-		createFacilityEx(1, 5, Souko,  1, area) ||
-		createFacilityEx(2, 1, Renpei, 3, area) ||
-		createFacilityEx(5, 1, Shukusha, 1, area) ||
-		createFacilityEx(5, 5, Bougu,  2, area) ||
-		createFacilityEx(1, 1, Ichiba, 1, area) ||
+		(needSouko		&& createFacilityEx(1, 5, Souko,  1, area)) ||
+		(needRenpei		&& createFacilityEx(2, 1, Renpei, 3, area)) ||
+		(needShukusha	&& createFacilityEx(5, 1, Shukusha, 1, area)) ||
+		(needBougu		&& createFacilityEx(5, 5, Bougu,  2, area)) ||
+		(needIchiba		&& createFacilityEx(1, 1, Ichiba, 1, area)) ||
 
+		// 水車周囲の畑を作る
 		createFacilityEx(3, 2, Hatake, 1, area) ||
 		createFacilityEx(4, 2, Hatake, 1, area) ||
 		createFacilityEx(5, 2, Hatake, 1, area) ||
@@ -2690,49 +2699,40 @@ function buildPlant5(){
 		createFacilityEx(4, 4, Hatake, 1, area) ||
 		createFacilityEx(5, 4, Hatake, 1, area) ||
 
+		// 工場周囲の収穫所を作る
 		createFacilityEx(0, 2, TargetType, 1, area) ||
 		createFacilityEx(0, 4, TargetType, 1, area) ||
 
 		// 兵器工房を作る
-		createFacilityEx(4, 5, Kajiba, 3, area) ||
-		createFacilityEx(5, 5, Bougu,  3, area) ||
-		createFacilityEx(3, 1, Heiki,  5, area) ||
+		(needKajiba		&& createFacilityEx(4, 5, Kajiba, 3, area)) ||
+		(needBougu		&& createFacilityEx(5, 5, Bougu,  3, area)) ||
+		(needHeiki		&& createFacilityEx(3, 1, Heiki,  5, area)) ||
 
 		// 水車を作る
-		createFacilityEx(2, 1, Renpei, 5, area) ||
-		createFacilityEx(1, 5, Souko, 10, area) ||
-		createFacilityEx(1, 1, Ichiba, 8, area) ||
-		createFacilityEx(4, 3, Suisha, 1, area) ||
+		(needRenpei		&& createFacilityEx(2, 1, Renpei, 5, area)) ||
+		(needSouko		&& createFacilityEx(1, 5, Souko, 10, area)) ||
+		(needIchiba		&& createFacilityEx(1, 1, Ichiba, 8, area)) ||
+		(needSuisha		&& createFacilityEx(4, 3, Suisha, 1, area)) ||
 
 		// 工場を作る
-		createFacilityEx(1, 1, Ichiba, 10, area) ||
-		createFacilityEx(1, 3, Koujou, 1, area) ||
-
-		// Lv-up
-		createFacilityEx(0, 2, TargetType, 7, area) ||
-		createFacilityEx(0, 4, TargetType, 7, area) ||
+		(needIchiba		&& createFacilityEx(1, 1, Ichiba, 10, area)) ||
+		(needKoujou		&& createFacilityEx(1, 3, Koujou,  1, area)) ||
 
 		true;
 		return;
 	}
 
 	// 資源ブロック 北パターン
-	if (j$.inArray("5,5",vacant) &&
-		j$.inArray("5,3",vacant) &&
-		j$.inArray("5,2",vacant) &&
-		j$.inArray("5,1",vacant) &&
-		j$.inArray("3,1",vacant) &&
-		j$.inArray("1,1",vacant) &&
-		j$.inArray("4,0",vacant) &&
-		j$.inArray("2,0",vacant))
+	if (OPT_PLANT5MURAN == 1)
 	{
 		// まず市場を作るのに必要な建設を行なう
-		createFacilityEx(1, 1, Souko,  1, area) ||
-		createFacilityEx(5, 2, Renpei, 3, area) ||
-		createFacilityEx(5, 5, Shukusha, 1, area) ||
-		createFacilityEx(1, 5, Bougu,  2, area) ||
-		createFacilityEx(5, 1, Ichiba, 1, area) ||
+		(needSouko		&& createFacilityEx(1, 1, Souko,  1, area)) ||
+		(needRenpei		&& createFacilityEx(5, 2, Renpei, 3, area)) ||
+		(needShukusha	&& createFacilityEx(5, 5, Shukusha, 1, area)) ||
+		(needBougu		&& createFacilityEx(1, 5, Bougu,  2, area)) ||
+		(needIchiba		&& createFacilityEx(5, 1, Ichiba, 1, area)) ||
 
+		// 水車周囲の畑を作る
 		createFacilityEx(2, 3, Hatake, 1, area) ||
 		createFacilityEx(2, 4, Hatake, 1, area) ||
 		createFacilityEx(2, 5, Hatake, 1, area) ||
@@ -2741,27 +2741,24 @@ function buildPlant5(){
 		createFacilityEx(4, 4, Hatake, 1, area) ||
 		createFacilityEx(4, 5, Hatake, 1, area) ||
 
+		// 工場周囲の収穫所を作る
 		createFacilityEx(2, 0, TargetType, 1, area) ||
 		createFacilityEx(4, 0, TargetType, 1, area) ||
 
 		// 兵器工房を作る
-		createFacilityEx(1, 4, Kajiba, 3, area) ||
-		createFacilityEx(1, 5, Bougu,  3, area) ||
-		createFacilityEx(5, 3, Heiki,  5, area) ||
+		(needKajiba		&& createFacilityEx(1, 4, Kajiba, 3, area)) ||
+		(needBougu		&& createFacilityEx(1, 5, Bougu,  3, area)) ||
+		(needHeiki		&& createFacilityEx(5, 3, Heiki,  5, area)) ||
 
 		// 水車を作る
-		createFacilityEx(5, 2, Renpei, 5, area) ||
-		createFacilityEx(1, 1, Souko, 10, area) ||
-		createFacilityEx(5, 1, Ichiba, 8, area) ||
-		createFacilityEx(3, 4, Suisha, 1, area) ||
+		(needRenpei		&& createFacilityEx(5, 2, Renpei, 5, area)) ||
+		(needSouko		&& createFacilityEx(1, 1, Souko, 10, area)) ||
+		(needIchiba		&& createFacilityEx(5, 1, Ichiba, 8, area)) ||
+		(needSuisha		&& createFacilityEx(3, 4, Suisha, 1, area)) ||
 
 		// 工場を作る
-		createFacilityEx(5, 1, Ichiba, 10, area) ||
-		createFacilityEx(3, 1, Koujou, 1, area) ||
-
-		// Lv-up
-		createFacilityEx(2, 0, TargetType, 7, area) ||
-		createFacilityEx(4, 0, TargetType, 7, area) ||
+		(needIchiba		&& createFacilityEx(5, 1, Ichiba, 10, area)) ||
+		(needKoujou		&& createFacilityEx(3, 1, Koujou,  1, area)) ||
 
 		true;
 		return;
@@ -3142,6 +3139,16 @@ function closeInifacBox() {
 	deleteInifacFrameHtml();
 }
 
+// 水車村化オプションのチェックボックスをクリアする
+function clearWaterwheelBox(){
+	var checkbox = $a('//input[@id="OPT_1112MURA"]');	checkbox[0].checked = false; // 水車村化
+	var checkbox = $a('//input[@id="OPT_0001S5MURA"]');	checkbox[0].checked = false; // 水車村化
+	var checkbox = $a('//input[@id="OPT_PLANT5MURAN"]');	checkbox[0].checked = false; // 工場村化
+	var checkbox = $a('//input[@id="OPT_PLANT5MURAE"]');	checkbox[0].checked = false; // 工場村化
+	var checkbox = $a('//input[@id="OPT_PLANT5MURAW"]');	checkbox[0].checked = false; // 工場村化
+	var checkbox = $a('//input[@id="OPT_PLANT5MURAS"]');	checkbox[0].checked = false; // 工場村化
+}
+
 ///LvUP対象施設設のチェックボックスをクリアする
 function clearInifacBox() {
 
@@ -3232,10 +3239,7 @@ function clearInifacBox() {
 	var checkbox = $a('//input[@id="OPT_DOME37"]'); checkbox[0].checked = false;	// 豊潤祈祷
 	// 糧村オプション
 	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = false; // 糧村化
-	// 水車村オプション
-	var checkbox = $a('//input[@id="OPT_1112MURA"]');	checkbox[0].checked = false; // 水車村化
-	var checkbox = $a('//input[@id="OPT_0001S5MURA"]');	checkbox[0].checked = false; // 水車村化
-	var checkbox = $a('//input[@id="OPT_PLANT5MURA"]');	checkbox[0].checked = false; // 工場村化
+	clearWaterwheelBox(); // 水車村オプション
 	// 宿舎村オプション
 	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = false; // 宿舎村化 2013.12.26
 	// 自動造兵
@@ -3406,10 +3410,7 @@ function InitRiceParadise(){			// 2013.12.18
 	// 糧村オプション
 	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = true; // 糧村化
 	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value	= 5;
-	// 水車村オプション
-	var checkbox = $a('//input[@id="OPT_1112MURA"]');	checkbox[0].checked = false; // 水車村化
-	var checkbox = $a('//input[@id="OPT_0001S5MURA"]');	checkbox[0].checked = false; // 水車村化
-	var checkbox = $a('//input[@id="OPT_PLANT5MURA"]');	checkbox[0].checked = false; // 工場村化
+	clearWaterwheelBox(); // 水車村オプション
 	// 宿舎村オプション
 	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = false; // 宿舎村化 2013.12.26
 	// 市場自動変換
@@ -3492,10 +3493,7 @@ function InitResVillage(){			// 2013.12.18
 	// 糧村オプション
 	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = true; // 糧村化
 	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value	= 5;
-	// 水車村オプション
-	var checkbox = $a('//input[@id="OPT_1112MURA"]');	checkbox[0].checked = false; // 水車村化
-	var checkbox = $a('//input[@id="OPT_0001S5MURA"]');	checkbox[0].checked = false; // 水車村化
-	var checkbox = $a('//input[@id="OPT_PLANT5MURA"]');	checkbox[0].checked = false; // 工場村化
+	clearWaterwheelBox(); // 水車村オプション
 	// 宿舎村オプション
 	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = false; // 宿舎村化 2013.12.26
 	try {
@@ -3566,10 +3564,7 @@ function InitMilitarySite(){			// 2013.12.18
 	// 糧村オプション
 	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = false; // 糧村化
 	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value	= 0;
-	// 水車村オプション
-	var checkbox = $a('//input[@id="OPT_1112MURA"]');	checkbox[0].checked = false; // 水車村化
-	var checkbox = $a('//input[@id="OPT_0001S5MURA"]');	checkbox[0].checked = false; // 水車村化
-	var checkbox = $a('//input[@id="OPT_PLANT5MURA"]');	checkbox[0].checked = false; // 工場村化
+	clearWaterwheelBox(); // 水車村オプション
 	// 宿舎村オプション
 	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = true; // 宿舎村化 2013.12.26
 	// 自動造兵
@@ -3688,10 +3683,7 @@ function InitRiceSite(){			// 2013.12.26
 	// 糧村オプション
 	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = true; // 糧村化
 	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value	= 0;
-	// 水車村オプション
-	var checkbox = $a('//input[@id="OPT_1112MURA"]');	checkbox[0].checked = false; // 水車村化
-	var checkbox = $a('//input[@id="OPT_0001S5MURA"]');	checkbox[0].checked = false; // 水車村化
-	var checkbox = $a('//input[@id="OPT_PLANT5MURA"]');	checkbox[0].checked = false; // 工場村化
+	clearWaterwheelBox(); // 水車村オプション
 	// 宿舎村オプション
 	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = false; // 宿舎村化 2013.12.26
 }
@@ -3772,9 +3764,7 @@ function InitPreset_01(){			// 2014.03.05
 	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = false;		//
 	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = true; 		// 糧村化
 	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value	= 3;
-	var checkbox = $a('//input[@id="OPT_1112MURA"]');	checkbox[0].checked = false; 		// 水車村化
-	var checkbox = $a('//input[@id="OPT_0001S5MURA"]');	checkbox[0].checked = false; 		// 水車村化
-	var checkbox = $a('//input[@id="OPT_PLANT5MURA"]');	checkbox[0].checked = false; // 工場村化
+	clearWaterwheelBox(); // 水車村オプション
 }
 
 function InitPreset_02(){			// 2014.03.05
@@ -3796,9 +3786,7 @@ function InitPreset_02(){			// 2014.03.05
 	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = false;		//
 	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = true; 		// 糧村化
 	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value	= 0;			// 倉庫数
-	var checkbox = $a('//input[@id="OPT_1112MURA"]');	checkbox[0].checked = false; 		// 水車村化
-	var checkbox = $a('//input[@id="OPT_0001S5MURA"]');	checkbox[0].checked = false; 		// 水車村化
-	var checkbox = $a('//input[@id="OPT_PLANT5MURA"]');	checkbox[0].checked = false; // 工場村化
+	clearWaterwheelBox(); // 水車村オプション
 }
 
 function InitPreset_03(){			// 2014.03.05
@@ -3845,9 +3833,7 @@ function InitPreset_02(){			// 2014.03.05
 	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = false;		//
 	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = true; 		// 糧村化
 	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value	= 0;			// 倉庫数
-	var checkbox = $a('//input[@id="OPT_1112MURA"]');	checkbox[0].checked = false; 		// 水車村化
-	var checkbox = $a('//input[@id="OPT_0001S5MURA"]');	checkbox[0].checked = false; 		// 水車村化
-	var checkbox = $a('//input[@id="OPT_PLANT5MURA"]');	checkbox[0].checked = false; // 工場村化
+	clearWaterwheelBox(); // 水車村オプション
 }
 
 function InitPreset_04(){			// 2014.03.05
@@ -4999,43 +4985,36 @@ function addInifacHtml(vId) {
 		tr620.style.backgroundColor =COLOR_TITLE;
 
 	var td620 = d.createElement("td");
+		td620.colSpan = "2";
 		ccreateText(td620, "dummy", "■ 水車村化（実験版） ■", 0 );
 
 	var tr621 = d.createElement("tr");
 		tr621.style.border = "solid 1px black";
 		tr621.style.backgroundColor =COLOR_BACK;
 
-	var td621 = d.createElement("td");
-		td621.style.padding = "2px";
-		td621.style.verticalAlign = "bottom";
-		ccreateCheckBox(td621,"OPT_1112MURA", OPT_1112MURA, " ★9(1-1-1-2)水車村化", "この都市を水車村にする。",0);
+	var td621a = d.createElement("td");
+		td621a.style.padding = "2px";
+		td621a.style.verticalAlign = "top";
+		ccreateCheckBox(td621a, "OPT_1112MURA"	, OPT_1112MURA	, " ★9(1-1-1-2)水車村化", "この都市を水車村にする。",0);
+		ccreateCheckBox(td621a, "OPT_0001S5MURA", OPT_0001S5MURA, " ★5(0-0-0-1)水車村化", "この都市を水車村にする。",0);
 
-	var tr622 = d.createElement("tr");
-		tr622.style.border = "solid 1px black";
-		tr622.style.backgroundColor =COLOR_BACK;
-
-	var td622 = d.createElement("td");
-		td622.style.padding = "2px";
-		td622.style.verticalAlign = "bottom";
-		ccreateCheckBox(td622,"OPT_0001S5MURA", OPT_0001S5MURA, " ★5(0-0-0-1)水車村化", "この都市を水車村にする。",0);
-
-	var tr623 = d.createElement("tr");
-		tr623.style.border = "solid 1px black";
-		tr623.style.backgroundColor =COLOR_BACK;
-
-	var td623 = d.createElement("td");
-		td623.style.padding = "2px";
-		td623.style.verticalAlign = "bottom";
-		ccreateCheckBox(td623,"OPT_PLANT5MURA", OPT_PLANT5MURA, " ★5 工場村化", "この都市を工場村にする。",0);
+	var td621b = d.createElement("td");
+		td621b.style.padding = "2px";
+		td621b.style.verticalAlign = "top";
+		ccreateCheckBox(td621b, "OPT_PLANT5MURAN", OPT_PLANT5MURAN, " ★5(北部資源)工場村化", "この都市を工場+水車村にする。",0);
+		ccreateCheckBox(td621b, "OPT_PLANT5MURAE", OPT_PLANT5MURAE, " ★5(東部資源)工場村化", "この都市を工場+水車村にする。",0);
+		ccreateCheckBox(td621b, "OPT_PLANT5MURAW", OPT_PLANT5MURAW, " ★5(西部資源)工場村化", "この都市を工場+水車村にする。",0);
+		ccreateCheckBox(td621b, "OPT_PLANT5MURAS", OPT_PLANT5MURAS, " ★5(南部資源)工場村化", "この都市を工場+水車村にする。",0);
 
 	Waterwheel_Box.appendChild(tr620);
 	tr620.appendChild(td620);
 	Waterwheel_Box.appendChild(tr621);
-	tr621.appendChild(td621);
-	Waterwheel_Box.appendChild(tr622);
-	tr622.appendChild(td622);
-	Waterwheel_Box.appendChild(tr623);
-	tr623.appendChild(td623);
+	tr621.appendChild(td621a);
+	tr621.appendChild(td621b);
+//	Waterwheel_Box.appendChild(tr622);
+//	tr622.appendChild(td622);
+//	Waterwheel_Box.appendChild(tr623);
+//	tr623.appendChild(td623);
 
 	// ==== 自動兵産設定 ====
 
@@ -5741,7 +5720,10 @@ function SaveInifacBox(vId){
 	// 水車村 2015.05.23
 	strSave += cgetCheckBoxValue($("OPT_1112MURA")) + DELIMIT2;
 	strSave += cgetCheckBoxValue($("OPT_0001S5MURA")) + DELIMIT2;
-	strSave += cgetCheckBoxValue($("OPT_PLANT5MURA")) + DELIMIT2;
+	strSave += cgetCheckBoxValue($("OPT_PLANT5MURAN")) + DELIMIT2;
+	strSave += cgetCheckBoxValue($("OPT_PLANT5MURAE")) + DELIMIT2;
+	strSave += cgetCheckBoxValue($("OPT_PLANT5MURAW")) + DELIMIT2;
+	strSave += cgetCheckBoxValue($("OPT_PLANT5MURAS")) + DELIMIT2;
 
 	GM_setValue(HOST+PGNAME+vId, strSave);
 }
@@ -5757,7 +5739,10 @@ debugLog("=== Start Load_OPT ===");
 		OPT_KATEMURA		= 0;
 		OPT_1112MURA		= 0;
 		OPT_0001S5MURA		= 0;
-		OPT_PLANT5MURA		= 0;
+		OPT_PLANT5MURAN		= 0;
+		OPT_PLANT5MURAE		= 0;
+		OPT_PLANT5MURAW		= 0;
+		OPT_PLANT5MURAS		= 0;
 		OPT_DORM			= 0;				// 2013.12.16
 		OPT_SOUKO_MAX		= 0;
 		OPT_KIFU			= 0;
@@ -5949,7 +5934,10 @@ debugLog("=== Start Load_OPT ===");
 		if(Temp2[231] == ""){return;}
 		OPT_0001S5MURA = forInt(Temp2[231]);
 		if(Temp2[232] == ""){return;}
-		OPT_PLANT5MURA = forInt(Temp2[232]);
+		OPT_PLANT5MURAN = forInt(Temp2[232]);
+		OPT_PLANT5MURAE = forInt(Temp2[233]);
+		OPT_PLANT5MURAW = forInt(Temp2[234]);
+		OPT_PLANT5MURAS = forInt(Temp2[235]);
 	}
 }
 //ユーザプロフィール画面の拠点情報を取得
