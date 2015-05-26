@@ -2412,21 +2412,35 @@ function createFacilityEx(x, y, f, lv, area){
 				||	(f == Souko    && Chek_Sigen(new lv_sort("倉庫",0,"")) != 1)
 				||	(f == Renpei   && Chek_Sigen(new lv_sort("練兵所",0,"")) != 1)
 				||	(f == Shukusha && Chek_Sigen(new lv_sort("宿舎",0,"")) != 1)
+				||	(f == Kajiba   && Chek_Sigen(new lv_sort("鍛冶場",0,"")) != 1)
 				||	(f == Bougu    && Chek_Sigen(new lv_sort("防具工場",0,"")) != 1)
 				||	(f == Ichiba   && Chek_Sigen(new lv_sort("市場",0,"")) != 1)
 				||	(f == Suisha   && Chek_Sigen(new lv_sort("水車",0,"")) != 1)
+				||	(f == Heiki    && Chek_Sigen(new lv_sort("兵器工房",0,"")) != 1)
+				||	(f == Koujou   && Chek_Sigen(new lv_sort("工場",0,"")) != 1)
+				||	(f == Bassai   && Chek_Sigen(new lv_sort("伐採所",0,"")) != 1)
+				||	(f == Ishikiri && Chek_Sigen(new lv_sort("石切り場",0,"")) != 1)
+				||	(f == Seitetsu && Chek_Sigen(new lv_sort("製鉄所",0,"")) != 1)
+				||	(f == Koujou   && Chek_Sigen(new lv_sort("大宿舎",0,"")) != 1)
 				){
 					create = 1;
 				}
 				break;
 			}
-			else if (f == Hatake   && area[i].name.match(/^畑\s*LV\.(\d+)/) 	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Souko    && area[i].name.match(/^倉庫\s*LV\.(\d+)/)	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Renpei   && area[i].name.match(/^練兵所\s*LV\.(\d+)/)   && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Shukusha && area[i].name.match(/^宿舎\s*LV\.(\d+)/)	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Bougu    && area[i].name.match(/^防具工場\s*LV\.(\d+)/) && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Ichiba   && area[i].name.match(/^市場\s*LV\.(\d+)/)	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Suisha   && area[i].name.match(/^水車\s*LV\.(\d+)/)	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Hatake   && area[i].name.match(/^畑\s.*?(\d+)/) 	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Souko    && area[i].name.match(/^倉庫\s.*?(\d+)/)	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Renpei   && area[i].name.match(/^練兵所\s.*?(\d+)/)	&& parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Shukusha && area[i].name.match(/^宿舎\s.*?(\d+)/)	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Kajiba   && area[i].name.match(/^鍛冶場\s.*?(\d+)/) && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Bougu    && area[i].name.match(/^防具工場\s.*?(\d+)/) && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Ichiba   && area[i].name.match(/^市場\s.*?(\d+)/)	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Suisha   && area[i].name.match(/^水車\s.*?(\d+)/)	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Heiki    && area[i].name.match(/^兵器工房\s.*?(\d+)/)	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Koujou   && area[i].name.match(/^工場\s.*?(\d+)/)	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Bassai   && area[i].name.match(/^伐採所\s.*?(\d+)/)	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Ishikiri && area[i].name.match(/^石切り場\s.*?(\d+)/)	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Seitetsu && area[i].name.match(/^製鉄所\s.*?(\d+)/)	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Daishuku && area[i].name.match(/^大宿舎\s.*?(\d+)/)	  && parseInt(RegExp.$1) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
 			break;
 		}
 	}
