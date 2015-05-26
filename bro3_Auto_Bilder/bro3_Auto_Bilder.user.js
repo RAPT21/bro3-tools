@@ -2570,15 +2570,15 @@ function buildPlant5(){
 		if(area[i].name == "森林") ShinrinCnt++; else
 		if(area[i].name == "岩山") IwayamaCnt++; else
 		if(area[i].name == "鉄鉱山") TekkouzanCnt++; else
-		if(area[i].name == "工場") needKoujou = 0; else
-		if(area[i].name == "水車") needSuisha = 0; else
-		if(area[i].name == "市場") needIchiba = 0; else
-		if(area[i].name == "兵器工房") needHeiki = 0; else
-		if(area[i].name == "防具工場") needBougu = 0; else
-		if(area[i].name == "鍛冶場") needKajiba = 0; else
-		if(area[i].name == "宿舎") needShukusha = 0; else
-		if(area[i].name == "練兵所") needRenpei = 0; else
-		if(area[i].name == "倉庫") needSouko = 0; else
+		if(area[i].name.match("^工場")) needKoujou = 0; else
+		if(area[i].name.match("^水車")) needSuisha = 0; else
+		if(area[i].name.match("^市場")) needIchiba = 0; else
+		if(area[i].name.match("^兵器工房")) needHeiki = 0; else
+		if(area[i].name.match("^防具工場")) needBougu = 0; else
+		if(area[i].name.match("^鍛冶場")) needKajiba = 0; else
+		if(area[i].name.match("^宿舎")) needShukusha = 0; else
+		if(area[i].name.match("^練兵所")) needRenpei = 0; else
+		if(area[i].name.match("^倉庫")) needSouko = 0; else
 		if(area[i].name == "平地") vacant.push(area[i].xy);
 	}
 	if (ArechiCnt == 21 &&
