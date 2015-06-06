@@ -35,6 +35,8 @@ var OPT_AUTO_JORYOKU		= 1; // 自動助力
 // 2015.05.29 受信箱内のアイテムが 1 つしかないときアイテムを移せていない不具合を修正
 // 2015.06.06 オプション設定の記載位置をソース先頭の方に移動
 //			  スクリプト実行時の警告を削減
+//			  クエスト報酬受領時はロードごとにしていたが複数あるときは連続で受領するようにした
+//			  クエスト受注状態確認時、「繰り返し」タブのみをチェックするようにした
 
 /*!
 * jQuery Cookie Plugin
@@ -215,6 +217,7 @@ function yorozudas(){
 				var reward_result = xpath('*//table[@class="getBushodas"]/tbody/tr/td/p/strong', div);
 				if (reward_result.snapshotLength) {
 					console.log('取得アイテム:'+reward_result.snapshotItem(0).textContent+' ('+HOST+')');
+					location.reload();
 				}
 			});
 		}
@@ -278,7 +281,7 @@ function getRestAttentionQuest(attention_quest){
 
 ( function() {
 	console.log('*** bro3_quest *** ('+HOST+')');
-	j$.get('http://'+HOST+'/quest/index.php?list=1&p=1&mode=0',function(y){
+	j$.get('http://'+HOST+'/quest/index.php?list=1&p=1&mode=0&selected_tab=7',function(y){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
@@ -318,6 +321,8 @@ function getRestAttentionQuest(attention_quest){
 					// 報酬がヨロズダス回数ならそのままヨロズダスを引く
 					if (reward_text == 'ヨロズダス回数') {
 						yorozudas();
+					} else {
+						location.reload();
 					}
 				});
 			} else {
