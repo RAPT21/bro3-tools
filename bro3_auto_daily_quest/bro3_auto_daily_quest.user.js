@@ -315,8 +315,11 @@ function getRestAttentionQuest(attention_quest){
 		// クリアしたクエスト報酬を受け取る
 		var reward_list = xpath('//table[@summary="報酬"]/tbody/tr/td', htmldoc);
 		if (reward_list.snapshotLength) {
+			// 報酬内容をログに出力
+			var reward_content = xpath('//table[@summary="報酬"]', htmldoc).snapshotItem(0).textContent.replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, "");
 			var reward_text = reward_list.snapshotItem(0).textContent;
 			if (checkReceiveReward(reward_text)){
+				console.log(reward_content+' ('+HOST+') -> 受領');
 				j$.get('http://'+HOST+'/quest/index.php?c=1',function(){
 					// 報酬がヨロズダス回数ならそのままヨロズダスを引く
 					if (reward_text == 'ヨロズダス回数') {
@@ -326,6 +329,7 @@ function getRestAttentionQuest(attention_quest){
 					}
 				});
 			} else {
+				console.log(reward_content+' ('+HOST+') -> 受領保留');
 				yorozudas();
 			}
 		} else {
