@@ -6,6 +6,7 @@
 // @include		https://*.3gokushi.jp/village.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
+// @grant		none
 // @author		RAPT
 // @version 	2015.06.06
 // ==/UserScript==
