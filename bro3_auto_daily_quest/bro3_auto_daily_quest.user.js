@@ -7,8 +7,21 @@
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @author		RAPT
-// @version 	2015.05.29
+// @version 	2015.06.06
 // ==/UserScript==
+
+
+// オプション設定 (1 で有効、0 で無効)
+var OPT_QUEST_DONATE		= 1; // 繰り返しクエスト用寄付糧500を自動で行なう
+var OPT_QUEST_DUEL			= 1; // 繰り返しクエスト用デュエルを自動で行なう
+var OPT_QUEST_TROOPS		= 0; // 繰り返しクエスト用出兵を自動で行なう（未実装）
+
+var OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬 '資源' も自動で受け取る
+
+var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
+var OPT_AUTO_DUEL			= 1; // 自動デュエル
+var OPT_AUTO_JORYOKU		= 1; // 自動助力
+
 
 // 2015.05.17 初版作成。繰り返しクエスト受注、寄付クエ実施、クエクリ、ヨロズダス引き、受信箱からアイテムを移す
 // 2015.05.19 都市タブでのみ動作するようにした
@@ -19,6 +32,8 @@
 //			  オプションはコード内。デフォルトは無効
 // 2015.05.24 自動助力対応
 // 2015.05.29 受信箱内のアイテムが 1 つしかないときアイテムを移せていない不具合を修正
+// 2015.06.06 オプション設定の記載位置をソース先頭の方に移動
+//			  スクリプト実行時の警告を削減
 
 /*!
 * jQuery Cookie Plugin
@@ -47,11 +62,6 @@ jQuery.noConflict();
 j$ = jQuery;
 
 
-function xpath(query,targetDoc) {
-	return document.evaluate(query, targetDoc, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-}
-
-
 var HOST		= location.hostname;
 var INTERVAL	= 500;
 
@@ -62,17 +72,11 @@ var ID_TROOPS	= 256; // 武将を出兵し、資源を獲得する
 var ID_DUEL		= 255; // ブショーデュエルで1回対戦する
 
 
-// オプション設定
-var OPT_QUEST_DONATE		= 1; // 繰り返しクエスト用寄付糧500
-var OPT_QUEST_DUEL			= 1; // 繰り返しクエスト用デュエル
-var OPT_QUEST_TROOPS		= 0; // 繰り返しクエスト用出兵
+// ヘルパー関数
+function xpath(query,targetDoc) {
+	return document.evaluate(query, targetDoc, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+}
 
-var OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬 '資源' も自動で受け取る
-
-var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
-var OPT_AUTO_DUEL			= 1; // 自動デュエル
-var OPT_AUTO_JORYOKU		= 1; // 自動助力
-// ここまで
 
 // 自動助力
 function joryoku_impl(x){
@@ -147,7 +151,7 @@ function sendDonate(rice) {
 	c['wood'] = 0;
 	c['stone'] = 0;
 	c['iron'] = 0;
-	c['rice'] = parseInt(rice);
+	c['rice'] = parseInt(rice,10);
 	c['contribution'] = 1;
 	j$.post('http://'+HOST+'/alliance/level.php',c,function(){});
 	var tid=setTimeout(function(){location.reload(false);},INTERVAL);
@@ -155,7 +159,6 @@ function sendDonate(rice) {
 
 // デュエル
 function duel(){
-	console.log("*** bro3_duel ***");
 	j$.get("http://"+HOST+"/card/duel_set.php",function(y){
 
 		var htmldoc = document.createElement("html");
@@ -163,7 +166,7 @@ function duel(){
 
 		// 6枚目がセットされているか
 		if ( xpath('//ul[@class="deck_card"]/li[6]/dl/dd[3]/span[2]', htmldoc).snapshotItem(0).innerHTML.match("---/---") ) {
-			console.log("*** no deck set ***");
+			console.log('*** no deck set *** ('+HOST+')');
 		} else {
 			j$.get("http://"+HOST+"/pvp_duel/select_enemy.php?deck=1",function(x){
 
@@ -178,7 +181,7 @@ function duel(){
 
 						var c = {};
 						c['deck']	=	1;
-						c['euid']	=	parseInt(RegExp.$2);
+						c['euid']	=	parseInt(RegExp.$2,10);
 						c['edeck']	=	0;
 
 						// デュエルの開始
@@ -187,7 +190,7 @@ function duel(){
 						});
 					});
 				} catch(e) {
-					console.log("*** no duel ***");
+					//console.log('*** no duel *** ('+HOST+')');
 				}
 			});
 		}
@@ -200,8 +203,8 @@ function yorozudas(){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 
-		var reward = xpath('//form/input[@value="ヨロズダスを引く" and not(contains(text(),"ヨロズダスの残り回数がありません"))]', htmldoc).snapshotItem(0);
-		if (reward){
+		var reward_list = xpath('//form/input[@value="ヨロズダスを引く" and not(contains(text(),"ヨロズダスの残り回数がありません"))]', htmldoc);
+		if (reward_list.snapshotLength) {
 			var c={};
 			c['send']='send';
 			c['got_type']=0;
@@ -209,8 +212,8 @@ function yorozudas(){
 				var div = document.createElement('div');
 					div.innerHTML = das.responseText;
 				var reward_result = xpath('*//table[@class="getBushodas"]/tbody/tr/td/p/strong', div);
-				if (reward_result) {
-					console.log('取得アイテム:'+reward_result.snapshotItem(0).textContent);
+				if (reward_result.snapshotLength) {
+					console.log('取得アイテム:'+reward_result.snapshotItem(0).textContent+' ('+HOST+')');
 				}
 			});
 		}
@@ -273,8 +276,8 @@ function getRestAttentionQuest(attention_quest){
 
 
 ( function() {
-	console.log("*** bro3_quest ***");
-	j$.get('http://'+HOST+'/quest/index.php',function(y){
+	console.log('*** bro3_quest *** ('+HOST+')');
+	j$.get('http://'+HOST+'/quest/index.php?list=1&p=1&mode=0',function(y){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
@@ -289,7 +292,7 @@ function getRestAttentionQuest(attention_quest){
 		// 未クリアの繰り返しクエストマッチング
 		var quest_list = getRestAttentionQuest(attention_quest);
 		for (var i = 0; i < quest_list.length; i++){
-			var quest_id = parseInt(quest_list[i]);
+			var quest_id = parseInt(quest_list[i],10);
 			if (quest_id == ID_DONATE && OPT_QUEST_DONATE){
 				// 寄付クエ
 				sendDonate(500);
@@ -301,19 +304,24 @@ function getRestAttentionQuest(attention_quest){
 				return;
 			}
 			if (quest_id == ID_TROOPS && OPT_QUEST_TROOPS){
-				console.log("TODO: 出兵クエ");
+				console.log('TODO: 出兵クエ ('+HOST+')');
 			}
 		}
 
 		// クリアしたクエスト報酬を受け取る
-		var reward = xpath('//table[@summary="報酬"]/tbody/tr/td', htmldoc).snapshotItem(0);
-		if (reward && checkReceiveReward(reward.textContent)){
-			j$.get('http://'+HOST+'/quest/index.php?c=1',function(){
-				// 報酬がヨロズダス回数ならそのままヨロズダスを引く
-				if (reward.textContent == 'ヨロズダス回数') {
-					yorozudas();
-				}
-			});
+		var reward_list = xpath('//table[@summary="報酬"]/tbody/tr/td', htmldoc);
+		if (reward_list.snapshotLength) {
+			var reward_text = reward_list.snapshotItem(0).textContent;
+			if (checkReceiveReward(reward_text)){
+				j$.get('http://'+HOST+'/quest/index.php?c=1',function(){
+					// 報酬がヨロズダス回数ならそのままヨロズダスを引く
+					if (reward_text == 'ヨロズダス回数') {
+						yorozudas();
+					}
+				});
+			} else {
+				yorozudas();
+			}
 		} else {
 			yorozudas();
 		}
@@ -328,7 +336,7 @@ function getRestAttentionQuest(attention_quest){
 			joryoku();
 		}
 
-		// サーバー時刻が [02:00:00 - 04:59:59] 以外であれば自動デュエルする
+		// サーバー時刻が [00:00:00 - 01:59:59] or [05:00:00 - 23:59:59] であれば自動デュエルする
 		if (OPT_AUTO_DUEL) {
 			var server = xpath('//div[@id="navi01"]/dl[@class="world"]/dd[@class="server"]/span[@id="server_time_disp"]', htmldoc).snapshotItem(0);
 			if (server && server.textContent) {
