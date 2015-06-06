@@ -22,8 +22,6 @@ var OPT_QUEST_TROOPS		= 0; // 繰り返しクエスト用出兵を自動で行�
 
 var OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬 '資源' も自動で受け取る
 
-var OPT_AUTO_YOROZUDAS		= 1; // 自動ヨロズダス
-
 var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
 var OPT_AUTO_DUEL			= 1; // 自動デュエル
 var OPT_AUTO_JORYOKU		= 1; // 自動助力
@@ -42,7 +40,6 @@ var OPT_AUTO_JORYOKU		= 1; // 自動助力
 //			  スクリプト実行時の警告を削減
 //			  クエスト報酬受領時はロードごとにしていたが複数あるときは連続で受領するようにした
 //			  クエスト受注状態確認時、「繰り返し」タブのみをチェックするようにした
-//			  クエスト報酬
 // 2015.06.07 設定画面をつけた
 
 /*!
@@ -243,9 +240,6 @@ function duel(){
 
 // ヨロズダスを引く
 function yorozudas(){
-	if (OPT_AUTO_YOROZUDAS == 0) {
-		return;
-	}
 	httpGET('http://'+HOST+'/reward_vendor/reward_vendor.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
