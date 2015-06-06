@@ -6,10 +6,13 @@
 // @include		https://*.3gokushi.jp/village.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
-// @grant		none
+// @grant		GM_xmlhttpRequest
+// @grant		GM_getValue
+// @grant		GM_setValue
 // @author		RAPT
-// @version 	2015.06.06
+// @version 	2015.06.07
 // ==/UserScript==
+var VERSION = "2015.06.07"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -18,6 +21,8 @@ var OPT_QUEST_DUEL			= 1; // 繰り返しクエスト用デュエルを自動で
 var OPT_QUEST_TROOPS		= 0; // 繰り返しクエスト用出兵を自動で行なう（未実装）
 
 var OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬 '資源' も自動で受け取る
+
+var OPT_AUTO_YOROZUDAS		= 1; // 自動ヨロズダス
 
 var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
 var OPT_AUTO_DUEL			= 1; // 自動デュエル
@@ -37,6 +42,8 @@ var OPT_AUTO_JORYOKU		= 1; // 自動助力
 //			  スクリプト実行時の警告を削減
 //			  クエスト報酬受領時はロードごとにしていたが複数あるときは連続で受領するようにした
 //			  クエスト受注状態確認時、「繰り返し」タブのみをチェックするようにした
+//			  クエスト報酬
+// 2015.06.07 設定画面をつけた
 
 /*!
 * jQuery Cookie Plugin
@@ -67,6 +74,7 @@ j$ = jQuery;
 
 var HOST		= location.hostname;
 var INTERVAL	= 500;
+var PGNAME		= "_bro3_auto_daily_quest_20150607_"; //グリモン領域への保存時のPGの名前
 
 
 // クエストID
@@ -81,6 +89,39 @@ function xpath(query,targetDoc) {
 }
 
 
+// ラッパー
+function httpGET(url, callback) {
+//	j$.get(url, callback);
+	GM_xmlhttpRequest({
+		method:"GET",
+		url:url,
+		headers:{"Content-type":"text/html"},
+		overrideMimeType:'text/html; charset=utf-8',
+		onload:callback
+	});
+}
+function httpPOST(url, params, callback) {
+	j$.post(url, params, callback);
+}
+function getVALUE(key, defaultValue) {
+	return GM_getValue(HOST+PGNAME+key , defaultValue );
+}
+function setVALUE(key, value) {
+	GM_setValue(HOST+PGNAME+key , value );
+}
+
+
+var g_MD="";
+var d = document;
+var $ = function(id) { return d.getElementById(id); };
+var $x = function(xp,dc) { return d.evaluate(xp, dc||d, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue; };
+var $a = function(xp,dc) { var r = d.evaluate(xp, dc||d, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null); var a=[]; for(var i=0; i<r.snapshotLength; i++){ a.push(r.snapshotItem(i)); } return a; };
+var $e = function(e,t,f) { if (!e) return; e.addEventListener(t, f, false); };
+var $v = function(key) { return d.evaluate(key, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null); };		// 2013.12.18
+var DELIMIT1 = "#$%";
+var DELIMIT2 = "&?@";
+
+
 // 自動助力
 function joryoku_impl(x){
 	var htmldoc = document.createElement("html");
@@ -91,18 +132,18 @@ function joryoku_impl(x){
 	for(var i = 0; i < imgs.snapshotLength; i++){
 		var title = imgs.snapshotItem(i).title;
 		if (title == '助力済み') { // 助力すると '助力空き' となる
-			j$.get('http://'+HOST+'/alliance/village.php?assist=1',joryoku_impl);
+			httpGET('http://'+HOST+'/alliance/village.php?assist=1',joryoku_impl);
 			break;
 		}
 	}
 }
 function joryoku() {
-	j$.get('http://'+HOST+'/alliance/village.php',joryoku_impl);
+	httpGET('http://'+HOST+'/alliance/village.php',joryoku_impl);
 }
 
 // 受信箱にあるアイテムを便利アイテムへ移す
 function moveFromInbox(){
-	j$.get('http://'+HOST+'/item/inbox.php#ptop',function(x){
+	httpGET('http://'+HOST+'/item/inbox.php#ptop',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 
@@ -141,7 +182,7 @@ function moveFromInbox(){
 			var c = {};
 			c['item_id_list'] = item_id_list;
 			c['ssid'] = ssid.value;
-			j$.post('http://'+HOST+'/item/inbox.php',c,function(){});
+			httpPOST('http://'+HOST+'/item/inbox.php',c,function(){});
 			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 		}
 	});
@@ -156,13 +197,13 @@ function sendDonate(rice) {
 	c['iron'] = 0;
 	c['rice'] = parseInt(rice,10);
 	c['contribution'] = 1;
-	j$.post('http://'+HOST+'/alliance/level.php',c,function(){});
+	httpPOST('http://'+HOST+'/alliance/level.php',c,function(){});
 	var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 }
 
 // デュエル
 function duel(){
-	j$.get("http://"+HOST+"/card/duel_set.php",function(y){
+	httpGET("http://"+HOST+"/card/duel_set.php",function(y){
 
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
@@ -171,14 +212,14 @@ function duel(){
 		if ( xpath('//ul[@class="deck_card"]/li[6]/dl/dd[3]/span[2]', htmldoc).snapshotItem(0).innerHTML.match("---/---") ) {
 			console.log('*** no deck set *** ('+HOST+')');
 		} else {
-			j$.get("http://"+HOST+"/pvp_duel/select_enemy.php?deck=1",function(x){
+			httpGET("http://"+HOST+"/pvp_duel/select_enemy.php?deck=1",function(x){
 
 				var htmldoc2 = document.createElement("html");
 					htmldoc2.innerHTML = x;
 
 				try {
 					var rival_list = xpath('//ul[@class="rival_list"]/li/a[@class="thickbox btn_battle"]', htmldoc2);
-					j$.get( rival_list.snapshotItem(0).href, function(x){
+					httpGET( rival_list.snapshotItem(0).href, function(x){
 
 						x.match(/battleStart\((\d+),\s(\d+),\s(\d+)\)/);
 
@@ -188,7 +229,7 @@ function duel(){
 						c['edeck']	=	0;
 
 						// デュエルの開始
-						j$.get("http://" + HOST + "/pvp_duel/process_json.php?deck=1&euid=" + c['euid'] + "&edeck=0", c , function(x) {
+						httpGET("http://" + HOST + "/pvp_duel/process_json.php?deck=1&euid=" + c['euid'] + "&edeck=0", c , function(x) {
 							location.reload();
 						});
 					});
@@ -202,7 +243,10 @@ function duel(){
 
 // ヨロズダスを引く
 function yorozudas(){
-	j$.get('http://'+HOST+'/reward_vendor/reward_vendor.php',function(x){
+	if (OPT_AUTO_YOROZUDAS == 0) {
+		return;
+	}
+	httpGET('http://'+HOST+'/reward_vendor/reward_vendor.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 
@@ -211,7 +255,7 @@ function yorozudas(){
 			var c={};
 			c['send']='send';
 			c['got_type']=0;
-			j$.post('http://'+HOST+'/reward_vendor/reward_vendor.php',c,function(das){
+			httpPOST('http://'+HOST+'/reward_vendor/reward_vendor.php',c,function(das){
 				var div = document.createElement('div');
 					div.innerHTML = das.responseText;
 				var reward_result = xpath('*//table[@class="getBushodas"]/tbody/tr/td/p/strong', div);
@@ -256,7 +300,7 @@ function acceptAttentionQuest(attention_quest) {
 	// クエスト受注
 	for (var i = 0; i < quest_list.length; i++){
 		var query = 'action=take_quest&id=' + quest_list[i];
-		j$.get('http://'+HOST+'/quest/index.php?'+query,function(){});
+		httpGET('http://'+HOST+'/quest/index.php?'+query,function(){});
 	}
 	var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 	return true;
@@ -280,8 +324,11 @@ function getRestAttentionQuest(attention_quest){
 
 
 ( function() {
+	loadSettingBox();
+	addOpenSettingLink();
+
 	console.log('*** bro3_quest *** ('+HOST+')');
-	j$.get('http://'+HOST+'/quest/index.php?list=1&p=1&mode=0&selected_tab=7',function(y){
+	httpGET('http://'+HOST+'/quest/index.php?list=1&p=1&mode=0&selected_tab=7',function(y){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
@@ -320,7 +367,7 @@ function getRestAttentionQuest(attention_quest){
 			var reward_text = reward_list.snapshotItem(0).textContent;
 			if (checkReceiveReward(reward_text)){
 				console.log(reward_content+' ('+HOST+') -> 受領');
-				j$.get('http://'+HOST+'/quest/index.php?c=1',function(){
+				httpGET('http://'+HOST+'/quest/index.php?c=1',function(){
 					// 報酬がヨロズダス回数ならそのままヨロズダスを引く
 					if (reward_text == 'ヨロズダス回数') {
 						yorozudas();
@@ -358,3 +405,301 @@ function getRestAttentionQuest(attention_quest){
 		}
 	});
 })();
+
+
+//====================[ 設定画面 ]====================
+
+
+function addOpenSettingLink() {
+	var openLink = d.createElement("a");
+		openLink.id = "Auto_Daily_Quest";
+		openLink.href = "javascript:void(0);";
+		openLink.style.marginTop = "0px";
+		openLink.style.marginLeft = "0px";
+		openLink.innerHTML = " [自動デイリークエ]";
+		openLink.style.font = "10px 'ＭＳ ゴシック'";
+		openLink.style.color = "#FFFFFF";
+		openLink.style.cursor = "pointer";
+		openLink.addEventListener("click", function() {
+			openSettingBox();
+		}, true);
+	var sidebar_list = xpath('//*[@class="sideBox"]', d);
+	if (sidebar_list.snapshotLength) {
+		sidebar_list.snapshotItem(0).appendChild(openLink);
+	}
+}
+
+function openSettingBox() {
+	closeSettingBox();
+	loadSettingBox();
+
+	// 色設定
+	var COLOR_FRAME = "#333333";	// 枠背景色
+	var COLOR_BASE	= "#654634";	// 拠点リンク色
+	var COLOR_TITLE = "#FFCC00";	// 各BOXタイトル背景色
+	var COLOR_BACK	= "#FFF2BB";	// 各BOX背景色
+	var FONTSTYLE = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
+
+	// 表示位置をロード
+	var popupLeft = getVALUE("popup_left", 150);
+	var popupTop  = getVALUE("popup_top", 150);
+	if (popupLeft < 0) popupLeft = 0;
+	if (popupTop < 0) popupTop = 0;
+
+
+	// ==========[ 表示コンテナ作成 ]==========
+	var ADContainer = d.createElement("div");
+		ADContainer.id = "ADContainer";
+		ADContainer.style.position = "absolute";
+		ADContainer.style.color = COLOR_BASE;
+		ADContainer.style.backgroundColor = COLOR_FRAME;
+		ADContainer.style.opacity= 1.0;
+		ADContainer.style.border = "solid 2px black";
+		ADContainer.style.left = popupLeft + "px";
+		ADContainer.style.top = popupTop + "px";
+		ADContainer.style.font = FONTSTYLE;
+		ADContainer.style.padding = "2px";
+		ADContainer.style.MozBorderRadius = "4px";
+		ADContainer.style.zIndex = 9999;
+		ADContainer.style.width = "400px";
+	d.body.appendChild(ADContainer);
+
+	$e(ADContainer, "mousedown", function(event){
+		if( event.target != $("ADContainer")) {return false;}
+		g_MD="ADContainer";
+		g_MX=event.pageX-parseInt(this.style.left,10);
+		g_MY=event.pageY-parseInt(this.style.top,10);
+		event.preventDefault();
+	});
+	$e(d, "mousemove", function(event){
+		if(g_MD != "ADContainer") return true;
+		var ADContainer = $("ADContainer");
+		if( !ADContainer ) return true;
+		var popupLeft = event.pageX - g_MX;
+		var popupTop  = event.pageY - g_MY;
+		ADContainer.style.left = popupLeft + "px";
+		ADContainer.style.top = popupTop + "px";
+		//ポップアップ位置を永続保存
+		setVALUE("popup_left", popupLeft);
+		setVALUE("popup_top", popupTop);
+	});
+	$e(d, "mouseup", function(event){g_MD="";});
+
+
+	// ==========[ タイトル＋バージョン ]==========
+	var title = d.createElement("span");
+		title.style.color = "#FFFFFF";
+		title.style.font = 'bold 120% "ＭＳ ゴシック"';
+		title.style.margin = "2px";
+		title.innerHTML = "Auto Daily Quest ";
+	ADContainer.appendChild(title);
+
+	var version = d.createElement("span");
+		version.style.color = COLOR_TITLE;
+		version.style.margin = "2px";
+		version.innerHTML = " Ver." + VERSION;
+	ADContainer.appendChild(version);
+
+
+	// ==========[ 設定 ]==========
+	var Setting_Box = d.createElement("table");
+		Setting_Box.style.margin = "0px 4px 4px 0px";
+		Setting_Box.style.border ="solid 2px black";
+		Setting_Box.style.width = "100%";
+
+	var tr100 = d.createElement("tr");
+		tr100.style.border = "solid 1px black";
+		tr100.style.backgroundColor =COLOR_TITLE;
+
+	var td100 = d.createElement("td");
+		td100.colSpan = "1";
+		ccreateText(td100, "dummy", "■ 繰り返しクエスト自動化 ■", 0 );
+
+	var tr200 = d.createElement("tr");
+		tr200.style.border = "solid 1px black";
+		tr200.style.backgroundColor =COLOR_BACK;
+
+	var td200 = d.createElement("td");
+		td200.style.padding = "2px";
+		td200.style.verticalAlign = "top";
+		ccreateCheckBox(td200, "OPT_QUEST_DONATE"		, OPT_QUEST_DONATE		, " [繰り返しクエスト] 自動寄付糧500", "繰り返しクエスト用に同盟へ糧500の寄付を自動で行ないます。",0);
+		ccreateCheckBox(td200, "OPT_QUEST_DUEL"			, OPT_QUEST_DUEL		, " [繰り返しクエスト] 自動デュエル", "繰り返しクエスト用デュエルを1回だけ自動で行ないます。",0);
+		ccreateCheckBox(td200, "OPT_QUEST_TROOPS"		, OPT_QUEST_TROOPS		, " [繰り返しクエスト] 自動出兵(未実装)", "繰り返しクエスト用出兵を自動で行ないます。",0);
+			ccreateText(td200, "dummy", "　", 0 );
+			ccreateText(td200, "dummy", "※ クエスト報酬のうち、資源以外は自動で受け取ります。", 0 );
+		ccreateCheckBox(td200, "OPT_AUTO_YOROZUDAS"		, OPT_AUTO_YOROZUDAS	, " 自動でヨロズダスをひく", "クエスト報酬がヨロズダスだった場合、自動でヨロズダスをひきます。",0);
+		ccreateCheckBox(td200, "OPT_RECEIVE_RESOURCES"	, OPT_RECEIVE_RESOURCES	, " クエスト報酬が資源でも自動で受け取る", "クエスト報酬が資源だったときも自動で受け取ります。",0);
+		ccreateCheckBox(td200, "OPT_MOVE_FROM_INBOX"	, OPT_MOVE_FROM_INBOX	, " アイテム受信箱から便利アイテムへ移動", "受信箱内のアイテムを自動で便利アイテムへ移動します。",0);
+			ccreateText(td200, "dummy", "　", 0 );
+		ccreateCheckBox(td200, "OPT_AUTO_DUEL"			, OPT_AUTO_DUEL			, " [02:00:00 - 04:59:59] 以外に自動デュエル", "[00:00:00 - 01:59:59], [05:00:00 - 23:59:59] の時間帯のみ自動デュエルを行ないます。",0);
+		ccreateCheckBox(td200, "OPT_AUTO_JORYOKU"		, OPT_AUTO_JORYOKU		, " 自動助力", "同盟施設に祈祷所がある場合、自動で助力を行ないます。",0);
+			ccreateText(td200, "dummy", "　", 0 );
+
+	Setting_Box.appendChild(tr100);
+	tr100.appendChild(td100);
+	Setting_Box.appendChild(tr200);
+	tr200.appendChild(td200);
+	ADContainer.appendChild(Setting_Box);
+
+
+	// ==========[ ボタンエリア ]==========
+	var ButtonBox = d.createElement("div");
+		ButtonBox.style.border ="solid 0px";	// 通常 0px チェック時 1px
+		ButtonBox.style.margin = "2px";
+		ButtonBox.style.padding = "0px";
+	ADContainer.appendChild(ButtonBox);
+
+	// 保存ボタン
+	var Button2 = d.createElement("span");
+		ccreateButton(Button2, "保存して閉じる", "設定内容を保存してウィンドウを閉じます。", function() {saveSettingBox(); closeSettingBox()}, 120);
+	ButtonBox.appendChild(Button2);
+
+	// 閉じるボタン
+	var Button3 = d.createElement("span");
+		ccreateButton(Button3, "キャンセル", "設定内容を破棄してウィンドウを閉じます。", function() {closeSettingBox()}, 88);
+	ButtonBox.appendChild(Button3);
+}
+
+
+function closeSettingBox() {
+	var elem = d.getElementById("ADContainer");
+	if (elem == undefined) return;
+	d.body.removeChild(d.getElementById("ADContainer"));
+
+	var elem = d.getElementById("ADContainer");
+	if (elem == undefined) return;
+	d.body.removeChild(document.getElementById("ADContainer"));
+}
+
+
+function saveSettingBox() {
+	var strSave = "";
+
+	strSave += cgetCheckBoxValue($("OPT_QUEST_DONATE"))		+ DELIMIT2; // 自動寄付糧500
+	strSave += cgetCheckBoxValue($("OPT_QUEST_DUEL"))		+ DELIMIT2; // 自動デュエル
+	strSave += cgetCheckBoxValue($("OPT_QUEST_TROOPS"))		+ DELIMIT2; // 自動出兵
+	strSave += cgetCheckBoxValue($("OPT_AUTO_YOROZUDAS"))	+ DELIMIT2; // 自動でヨロズダスをひく
+	strSave += cgetCheckBoxValue($("OPT_RECEIVE_RESOURCES"))+ DELIMIT2; // クエスト報酬が資源でも自動で受け取る
+	strSave += cgetCheckBoxValue($("OPT_MOVE_FROM_INBOX"))	+ DELIMIT2; // アイテム受信箱から便利アイテムへ移動
+	strSave += cgetCheckBoxValue($("OPT_AUTO_DUEL"))		+ DELIMIT2; // [02:00:00 - 04:59:59] 以外に自動デュエル
+	strSave += cgetCheckBoxValue($("OPT_AUTO_JORYOKU"))		+ DELIMIT2; // 自動助力
+
+	setVALUE("", strSave);
+}
+
+
+function loadSettingBox() {
+	var src = getVALUE("", "");
+	if (src == "") {
+		OPT_QUEST_DONATE		= 1; // 自動寄付糧500
+		OPT_QUEST_DUEL			= 1; // 自動デュエル
+		OPT_QUEST_TROOPS		= 0; // 自動出兵
+		OPT_AUTO_YOROZUDAS		= 1; // 自動でヨロズダスをひく
+		OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬が資源でも自動で受け取る
+		OPT_MOVE_FROM_INBOX		= 1; // アイテム受信箱から便利アイテムへ移動
+		OPT_AUTO_DUEL			= 1; // [02:00:00 - 04:59:59] 以外に自動デュエル
+		OPT_AUTO_JORYOKU		= 1; // 自動助力
+	} else {
+		var Temp = src.split(DELIMIT2);
+		OPT_QUEST_DONATE		= forInt(Temp[0]); // 自動寄付糧500
+		OPT_QUEST_DUEL			= forInt(Temp[1]); // 自動デュエル
+		OPT_QUEST_TROOPS		= forInt(Temp[2]); // 自動出兵
+		OPT_AUTO_YOROZUDAS		= forInt(Temp[3]); // 自動でヨロズダスをひく
+		OPT_RECEIVE_RESOURCES	= forInt(Temp[4]); // クエスト報酬が資源でも自動で受け取る
+		OPT_MOVE_FROM_INBOX		= forInt(Temp[5]); // アイテム受信箱から便利アイテムへ移動
+		OPT_AUTO_DUEL			= forInt(Temp[6]); // [02:00:00 - 04:59:59] 以外に自動デュエル
+		OPT_AUTO_JORYOKU		= forInt(Temp[7]); // 自動助力
+	}
+}
+
+
+function ccreateText(container, id, text, left )
+{
+	left += 2;
+	var dv = d.createElement("div");
+		dv.style.padding = "2px";
+		dv.style.paddingLeft= left + "px";
+		dv.style.paddingBottom = "4px";
+
+	var lb = d.createElement("label");
+		lb.htmlFor = id;
+		lb.style.verticalAlign = "middle";
+	var tx = d.createTextNode(text);
+		tx.fontsize = "9px";
+	lb.appendChild( tx );
+
+	dv.appendChild(lb);
+	container.appendChild(dv);
+}
+
+
+function ccreateButton(container, text, title, func, width, top)
+{
+	var btn = d.createElement("input");
+		btn.style.padding = "0px";
+		btn.type = "button";
+		btn.value = text;
+	if (top != undefined) {
+		btn.style.marginTop = top + "px";
+	}
+	if (width == undefined) {
+		btn.style.width = "54px";
+	} else {
+		btn.style.width = width + "px";
+	}
+	btn.style.height = "20px";
+	btn.style.verticalAlign = "middle";
+	btn.title = title;
+	container.appendChild(d.createTextNode(" "));
+	container.appendChild(btn);
+	container.appendChild(d.createTextNode(" "));
+	$e(btn, "click", func);
+	return btn;
+}
+
+
+function ccreateCheckBox(container, id, def, text, title, left )
+{
+	left += 2;
+	var dv = d.createElement("div");
+		dv.style.padding = "1px";
+		dv.style.paddingLeft= left + "px";
+		dv.title = title;
+	var cb = d.createElement("input");
+		cb.type = "checkbox";
+		cb.style.verticalAlign = "middle";
+		cb.id = id;
+		cb.value = 1;
+	if( def ) cb.checked = true;
+
+	var lb = d.createElement("label");
+		lb.htmlFor = id;
+		lb.style.verticalAlign = "middle";
+
+	var tx = d.createTextNode(text);
+	lb.appendChild( tx );
+
+	dv.appendChild(cb);
+	dv.appendChild(lb);
+	container.appendChild(dv);
+	return cb;
+}
+
+
+function cgetCheckBoxValue(id)
+{
+	var c = id;
+	if( !c ) return 0;
+	if( !c.checked ) return 0;
+	return 1;
+}
+
+
+function forInt(num,def){
+	if (def == undefined) { def = 0; }
+	if (isNaN(parseInt(num,10))) {
+		return def;
+	} else {
+		return parseInt(num,10);
+	}
+}
