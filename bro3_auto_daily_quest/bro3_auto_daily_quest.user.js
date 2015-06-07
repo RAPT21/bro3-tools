@@ -94,7 +94,9 @@ function httpGET(url, callback) {
 		url:url,
 		headers:{"Content-type":"text/html"},
 		overrideMimeType:'text/html; charset=utf-8',
-		onload:callback
+		onload:function(x){
+			callback(x.responseText);
+		}
 	});
 }
 function httpPOST(url, params, callback) {
@@ -294,7 +296,7 @@ function acceptAttentionQuest(attention_quest) {
 	// クエスト受注
 	for (var i = 0; i < quest_list.length; i++){
 		var query = 'action=take_quest&id=' + quest_list[i];
-		httpGET('http://'+HOST+'/quest/index.php?'+query,function(){});
+		httpGET('http://'+HOST+'/quest/index.php?'+query,function(x){});
 	}
 	var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 	return true;
@@ -361,7 +363,7 @@ function getRestAttentionQuest(attention_quest){
 			var reward_text = reward_list.snapshotItem(0).textContent;
 			if (checkReceiveReward(reward_text)){
 				console.log(reward_content+' ('+HOST+') -> 受領');
-				httpGET('http://'+HOST+'/quest/index.php?c=1',function(){
+				httpGET('http://'+HOST+'/quest/index.php?c=1',function(x){
 					// 報酬がヨロズダス回数ならそのままヨロズダスを引く
 					if (reward_text == 'ヨロズダス回数') {
 						yorozudas();
