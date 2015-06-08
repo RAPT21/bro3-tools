@@ -16,7 +16,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2015.05.30
+// @version		2015.06.09
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -100,8 +100,9 @@
 //			  ★5工場村オプションを追加
 // 2015.05.30 ★7(0-0-0-1)水車村オプションを追加
 //			  ★5工場村の建築位置を調整
+// 2015.06.09 設定画面に「保存して閉じる」ボタンを追加。保存アラートなし、保存後閉じる、閉じた後リロードしない。
 
-var VERSION = "2015.05.30"; 	// バージョン情報
+var VERSION = "2015.06.09"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -2637,7 +2638,7 @@ function buildPlant5(){
 
 		// 工場を作る
 		createFacilityEx(1, 5, Ichiba, 10, area) ||
-		createFacilityEx(3, 5, Koujou,  1, area) ||
+		createFacilityEx(3, 5, Koujou,	1, area) ||
 
 		true;
 		return;
@@ -2679,7 +2680,7 @@ function buildPlant5(){
 
 		// 工場を作る
 		createFacilityEx(5, 5, Ichiba, 10, area) ||
-		createFacilityEx(5, 3, Koujou,  1, area) ||
+		createFacilityEx(5, 3, Koujou,	1, area) ||
 
 		true;
 		return;
@@ -2721,7 +2722,7 @@ function buildPlant5(){
 
 		// 工場を作る
 		createFacilityEx(1, 1, Ichiba, 10, area) ||
-		createFacilityEx(1, 3, Koujou,  1, area) ||
+		createFacilityEx(1, 3, Koujou,	1, area) ||
 
 		true;
 		return;
@@ -2763,7 +2764,7 @@ function buildPlant5(){
 
 		// 工場を作る
 		createFacilityEx(5, 1, Ichiba, 10, area) ||
-		createFacilityEx(3, 1, Koujou,  1, area) ||
+		createFacilityEx(3, 1, Koujou,	1, area) ||
 
 		true;
 		return;
@@ -5563,6 +5564,10 @@ function addInifacHtml(vId) {
 		if (tidMain2 != undefined) { clearInterval(tidMain2); }
 		tidMain2=setTimeout(function(){location.reload();},INTERVAL);
 	});
+	ccreateButton(td711, "保存して閉じる", "設定内容を保存して閉じます(リロードなし)", function() {
+		SaveInifacBox(ABfacContainer.getAttribute('vId'))
+		closeInifacBox();
+	},90);
 
 
 	if (vId == villages[0][IDX_XY]) {
