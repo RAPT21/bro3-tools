@@ -7,6 +7,7 @@
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @exclude		http://*.3gokushi.jp/world/select_server_mixi_new.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
+// @exclude		http://info.3gokushi.jp/*
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @grant		GM_xmlhttpRequest
