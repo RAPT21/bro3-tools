@@ -4111,12 +4111,12 @@ function addIniBilderHtml() {
 	version.style.margin = "2px";
 	version.innerHTML = " Ver." + VERSION;
 
-	var storageLimit = d.createElement("span");
-	storageLimit.style.color = "#FFFFFF";
-	storageLimit.style.font = '110% "ＭＳ Ｐゴシック"';
-	storageLimit.style.margin = "2px";
+//	var storageLimit = d.createElement("span");
+//	storageLimit.style.color = "#FFFFFF";
+//	storageLimit.style.font = '110% "ＭＳ Ｐゴシック"';
+//	storageLimit.style.margin = "2px";
 
-	storageLimit.innerHTML = "資源保持上限(変換量) ： " + SetPrice(Math.floor(parseInt( $("rice_max").innerHTML, 10 ) * 0.95)) + " ( " + SetPrice(Math.floor(parseInt( $("rice_max").innerHTML, 10 ) * 0.05)) +" )";
+//	storageLimit.innerHTML = "資源保持上限(変換量) ： " + SetPrice(Math.floor(parseInt( $("rice_max").innerHTML, 10 ) * 0.95)) + " ( " + SetPrice(Math.floor(parseInt( $("rice_max").innerHTML, 10 ) * 0.05)) +" )";
 
 	ABContainer.appendChild(title);
 //	ABContainer.appendChild(storageLimit);
@@ -4589,9 +4589,9 @@ function loadRoundTime() {
 
 //数値を3ケタ区切りにする関数
 function SetPrice(price){
-　var num = new String(price).replace(/,/g, "");
-　while(num != (num = num.replace(/^(-?\d+)(\d{3})/, "$1,$2")));
-　return num;
+	var num = new String(price).replace(/,/g, "");
+	while(num != (num = num.replace(/^(-?\d+)(\d{3})/, "$1,$2")));
+	return num;
 }
 
 // 拠点巡回保存
