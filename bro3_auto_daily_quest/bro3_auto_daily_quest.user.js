@@ -10,7 +10,7 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2015.06.07
+// @version 	2015.06.10
 // ==/UserScript==
 var VERSION = "2015.06.07"; 	// バージョン情報
 
@@ -41,6 +41,7 @@ var OPT_AUTO_JORYOKU		= 1; // 自動助力
 //			  クエスト報酬受領時はロードごとにしていたが複数あるときは連続で受領するようにした
 //			  クエスト受注状態確認時、「繰り返し」タブのみをチェックするようにした
 // 2015.06.07 設定画面をつけた
+// 2015.06.10 助力ゲージ満タンのとき、無限ループになる不具合修正
 
 /*!
 * jQuery Cookie Plugin
@@ -131,7 +132,21 @@ function joryoku_impl(x){
 	for(var i = 0; i < imgs.snapshotLength; i++){
 		var title = imgs.snapshotItem(i).title;
 		if (title == '助力済み') { // 助力すると '助力空き' となる
-			httpGET('http://'+HOST+'/alliance/village.php?assist=1',joryoku_impl);
+			// ゲージ満タンかチェック
+			var gaugeRest = 0;
+			var gauge = xpath('//div[@class="support-gauge-frame"]/p',htmldoc);
+			if (gauge.snapshotLength) {
+				var matchResult = gauge.snapshotItem(0).textContent.match(/\s*(\d+)\s*\/\s*(\d+)\s*/);
+				if (matchResult.length == 3) {
+					gaugeRest = (parseInt(matchResult[2],10) - parseInt(matchResult[1],10));
+				}
+			}
+			if (gaugeRest) {
+				// 助力実行
+				httpGET('http://'+HOST+'/alliance/village.php?assist=1',joryoku_impl);
+			} else {
+				console.log('助力MAXです。解放待ち...orz ('+HOST+')');
+			}
 			break;
 		}
 	}
