@@ -10,9 +10,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2015.06.10
+// @version 	2015.06.21
 // ==/UserScript==
-var VERSION = "2015.06.07"; 	// バージョン情報
+var VERSION = "2015.06.21"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -25,6 +25,9 @@ var OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬 '資源' も自動で受け
 var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
 var OPT_AUTO_DUEL			= 1; // 自動デュエル
 var OPT_AUTO_JORYOKU		= 1; // 自動助力
+
+// 内部設定
+var OPT_VALUE_IGNORE_SECONDS = 10; // 負荷を下げる為、指定秒数以内のリロード時は処理を行なわない
 
 
 // 2015.05.17 初版作成。繰り返しクエスト受注、寄付クエ実施、クエクリ、ヨロズダス引き、受信箱からアイテムを移す
@@ -42,6 +45,7 @@ var OPT_AUTO_JORYOKU		= 1; // 自動助力
 //			  クエスト受注状態確認時、「繰り返し」タブのみをチェックするようにした
 // 2015.06.07 設定画面をつけた
 // 2015.06.10 助力ゲージ満タンのとき、無限ループになる不具合修正
+// 2015.06.21 リロード負荷低減
 
 /*!
 * jQuery Cookie Plugin
@@ -71,6 +75,7 @@ j$ = jQuery;
 
 
 var HOST		= location.hostname;
+var SERVER		= HOST.split('.')[0]+'> ';
 var INTERVAL	= 500;
 var PGNAME		= "_bro3_auto_daily_quest_20150607_"; //グリモン領域への保存時のPGの名前
 
@@ -96,7 +101,9 @@ function httpGET(url, callback) {
 		headers:{"Content-type":"text/html"},
 		overrideMimeType:'text/html; charset=utf-8',
 		onload:function(x){
-			callback(x.responseText);
+			if (callback) {
+				callback(x.responseText);
+			}
 		}
 	});
 }
@@ -123,7 +130,7 @@ var DELIMIT2 = "&?@";
 
 
 // 自動助力
-function joryoku_impl(x){
+function joryoku_once(x){
 	var htmldoc = document.createElement("html");
 		htmldoc.innerHTML = x;
 
@@ -143,20 +150,20 @@ function joryoku_impl(x){
 			}
 			if (gaugeRest) {
 				// 助力実行
-				httpGET('http://'+HOST+'/alliance/village.php?assist=1',joryoku_impl);
+				httpGET('http://'+HOST+'/alliance/village.php?assist=1',joryoku_once);
 			} else {
-				console.log('助力MAXです。解放待ち...orz ('+HOST+')');
+				console.log(SERVER+'助力MAXです。解放待ち...orz');
 			}
 			break;
 		}
 	}
 }
 function joryoku() {
-	httpGET('http://'+HOST+'/alliance/village.php',joryoku_impl);
+	httpGET('http://'+HOST+'/alliance/village.php',joryoku_once);
 }
 
 // 受信箱にあるアイテムを便利アイテムへ移す
-function moveFromInbox(){
+function moveFromInbox(reloadIfNeed){
 	httpGET('http://'+HOST+'/item/inbox.php#ptop',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
@@ -186,7 +193,7 @@ function moveFromInbox(){
 				var match_result = script_list.snapshotItem(0).innerHTML.match(/initItemCheck\(\d+,\s*\d+,\s*'([\d_]+)'/);
 				if (match_result && match_result.length == 2) {
 					item_id_list = match_result[1];
-					count = 1; // この値は 非0 であれば何でもよい
+					count = 1;
 				}
 			}
 		}
@@ -196,67 +203,96 @@ function moveFromInbox(){
 			var c = {};
 			c['item_id_list'] = item_id_list;
 			c['ssid'] = ssid.value;
-			httpPOST('http://'+HOST+'/item/inbox.php',c,function(){});
+			httpPOST('http://'+HOST+'/item/inbox.php',c,function(x){moveFromInbox(true)});
+		} else if (reloadIfNeed) {
 			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 		}
 	});
 }
 
 // 寄付
-function sendDonate(rice) {
+function postDonate(callback) {
 	var c={};
 	c['contributionForm'] = "";
 	c['wood'] = 0;
 	c['stone'] = 0;
 	c['iron'] = 0;
-	c['rice'] = parseInt(rice,10);
+	c['rice'] = 500;
 	c['contribution'] = 1;
-	httpPOST('http://'+HOST+'/alliance/level.php',c,function(){});
-	var tid=setTimeout(function(){location.reload(false);},INTERVAL);
+	httpPOST('http://'+HOST+'/alliance/level.php',c,function(x){
+		if (callback) {
+			callback();
+		}
+	});
+//	var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 }
 
 // デュエル
-function duel(){
+function duel(callback){
 	httpGET("http://"+HOST+"/card/duel_set.php",function(y){
-
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
 		// 6枚目がセットされているか
 		if ( xpath('//ul[@class="deck_card"]/li[6]/dl/dd[3]/span[2]', htmldoc).snapshotItem(0).innerHTML.match("---/---") ) {
-			console.log('*** no deck set *** ('+HOST+')');
-		} else {
-			httpGET("http://"+HOST+"/pvp_duel/select_enemy.php?deck=1",function(x){
-
-				var htmldoc2 = document.createElement("html");
-					htmldoc2.innerHTML = x;
-
-				try {
-					var rival_list = xpath('//ul[@class="rival_list"]/li/a[@class="thickbox btn_battle"]', htmldoc2);
-					httpGET( rival_list.snapshotItem(0).href, function(x){
-
-						x.match(/battleStart\((\d+),\s(\d+),\s(\d+)\)/);
-
-						var c = {};
-						c['deck']	=	1;
-						c['euid']	=	parseInt(RegExp.$2,10);
-						c['edeck']	=	0;
-
-						// デュエルの開始
-						httpGET("http://" + HOST + "/pvp_duel/process_json.php?deck=1&euid=" + c['euid'] + "&edeck=0", c , function(x) {
-							location.reload();
-						});
-					});
-				} catch(e) {
-					//console.log('*** no duel *** ('+HOST+')');
-				}
-			});
+			console.log(SERVER+'*** no deck set ***');
+			if (callback) {
+				callback(false);
+			}
+			return;
 		}
+
+		httpGET("http://"+HOST+"/pvp_duel/select_enemy.php?deck=1",function(z){
+			var htmldoc2 = document.createElement("html");
+				htmldoc2.innerHTML = z;
+
+			try {
+				var rival_list = xpath('//ul[@class="rival_list"]/li/a[@class="thickbox btn_battle"]', htmldoc2);
+				httpGET( rival_list.snapshotItem(0).href, function(x){
+
+					x.match(/battleStart\((\d+),\s(\d+),\s(\d+)\)/);
+
+					var c = {};
+					c['deck']	=	1;
+					c['euid']	=	parseInt(RegExp.$2,10);
+					c['edeck']	=	0;
+
+					// デュエルの開始
+					httpGET("http://" + HOST + "/pvp_duel/process_json.php?deck=1&euid=" + c['euid'] + "&edeck=0", c , function(x) {
+						//location.reload();
+						if (callback) {
+							callback(true);
+						}
+					});
+				});
+			} catch(e) {
+				//console.log(SERVER+'*** no duel ***');
+				if (callback) {
+					callback(false);
+				}
+			}
+		});
 	});
 }
 
+// サーバー時刻が [00:00:00 - 01:59:59] or [05:00:00 - 23:59:59] であれば自動デュエルする
+function auto_duel()
+{
+	var server = xpath('//div[@id="navi01"]/dl[@class="world"]/dd[@class="server"]/span[@id="server_time_disp"]', document).snapshotItem(0);
+	if (server && server.textContent) {
+		var hour = parseInt(server.textContent.substr(0,2), 10);
+		if (hour < 2 || hour >= 5) {
+			duel(function(worked){
+				if (worked) {
+					auto_duel();
+				}
+			});
+		}
+	}
+}
+
 // ヨロズダスを引く
-function yorozudas(){
+function yorozudas(callback){
 	httpGET('http://'+HOST+'/reward_vendor/reward_vendor.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
@@ -271,74 +307,92 @@ function yorozudas(){
 					div.innerHTML = das.responseText;
 				var reward_result = xpath('*//table[@class="getBushodas"]/tbody/tr/td/p/strong', div);
 				if (reward_result.snapshotLength) {
-					console.log('取得アイテム:'+reward_result.snapshotItem(0).textContent+' ('+HOST+')');
-					location.reload();
+					console.log(SERVER+'取得アイテム:'+reward_result.snapshotItem(0).textContent);
+				}
+				if (callback) {
+					callback();
 				}
 			});
+		} else {
+			if (callback) {
+				callback();
+			}
 		}
 	});
 }
 
-// クエスト報酬を自動で受け取るか判定
-function checkReceiveReward(name) {
-	if (name.match(/木材|石|鉄|食料/) === null) {
-		// 資源報酬以外は自動で受け取る
-		return true;
-	} else {
-		// 資源報酬の場合は、自動で受け取る設定に依る
-		return OPT_RECEIVE_RESOURCES ? true : false;
-	}
-}
-
-// 繰り返しクエストを受注
-function acceptAttentionQuest(attention_quest) {
-	var regexp = /takeQuest\((\d+),\s*\d+,\s*\d+\)/;
-
-	var quest_list = [];
-	for (var i = 0; i < attention_quest.snapshotLength; i++){
-		if (xpath('td/a[contains(text(), "繰り返し")]', attention_quest.snapshotItem(i)).snapshotLength){
-			var quest_id = attention_quest.snapshotItem(i).innerHTML.match(regexp);
-			if (quest_id){
-				quest_list.push(quest_id[1]);
-			}
+// クリアしたクエスト報酬を受け取る
+function receiveRewards()
+{
+	var receive_it = false;
+	var callback = function(){
+		if (OPT_MOVE_FROM_INBOX) {
+			moveFromInbox(receive_it);
+		} else if (receive_it) {
+			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 		}
-	}
+	};
+	httpGET('http://'+HOST+'/quest/index.php?list=1&p=1&mode=0&selected_tab=7',function(y){
+		var htmldoc = document.createElement("html");
+			htmldoc.innerHTML = y;
 
-	if (quest_list.length == 0) {
-		return false;
-	}
+		var reward_list = xpath('//table[@summary="報酬"]/tbody/tr/td', htmldoc);
+		if (reward_list.snapshotLength) {
+			// 報酬内容をログに出力
+			var reward_content = xpath('//table[@summary="報酬"]', htmldoc).snapshotItem(0).textContent.replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, "");
+			var reward_text = reward_list.snapshotItem(0).textContent;
 
-	// クエスト受注
-	for (var i = 0; i < quest_list.length; i++){
-		var query = 'action=take_quest&id=' + quest_list[i];
-		httpGET('http://'+HOST+'/quest/index.php?'+query,function(x){});
-	}
-	var tid=setTimeout(function(){location.reload(false);},INTERVAL);
-	return true;
+			// クエスト報酬を自動で受け取るか判定
+			receive_it = true;
+			if (name.match(/木材|石|鉄|食料/)) {
+				// 資源報酬の場合は、自動で受け取る設定に依る
+				receive_it = OPT_RECEIVE_RESOURCES ? true : false;
+			}
+
+			if (receive_it){
+				console.log(SERVER+reward_content+' -> 受領');
+				httpGET('http://'+HOST+'/quest/index.php?c=1',function(x){
+					// 報酬がヨロズダス回数ならそのままヨロズダスを引く
+					if (reward_text == 'ヨロズダス回数') {
+						yorozudas(callback);
+					} else {
+						if (callback) {
+							callback();
+						}
+					}
+				});
+			} else {
+				console.log(SERVER+reward_content+' -> 受領保留');
+				if (callback) {
+					callback();
+				}
+			}
+		} else {
+			yorozudas(callback);
+		}
+	});
 }
 
 // 未クリアの繰り返しクエストを取得
-function getRestAttentionQuest(attention_quest){
+function checkAttentionQuest(htmldoc, callback){
+	var attention_quest = xpath('//div[@id="questB3_table"]/table/tbody/tr[contains(@class, "attention")]', htmldoc);
+	var regexp = /cancelQuest\((\d+),\s*\d+,\s*\d+\)/;
 	var quest_list = [];
 	for (var i = 0; i < attention_quest.snapshotLength; i++){
 		if (xpath('td/a[contains(text(), "繰り返し")]', attention_quest.snapshotItem(i)).snapshotLength){
-			var regexp = /cancelQuest\((\d+),\s*\d+,\s*\d+\)/;
 			var quest_id = attention_quest.snapshotItem(i).innerHTML.match(regexp);
 			if ( quest_id ){
 				quest_list.push(quest_id[1]);
 			}
 		}
 	}
-	return quest_list;
+	if (callback) {
+		callback(quest_list);
+	}
 }
 
-
-
-( function() {
-	loadSettingBox();
-	addOpenSettingLink();
-
-	console.log('*** bro3_quest *** ('+HOST+')');
+// 繰り返しクエストを受注
+function acceptAttentionQuest(callback) {
 	httpGET('http://'+HOST+'/quest/index.php?list=1&p=1&mode=0&selected_tab=7',function(y){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
@@ -346,57 +400,74 @@ function getRestAttentionQuest(attention_quest){
 		// 残っている繰り返しクエスト id を取得
 		var attention_quest = xpath('//div[@id="questB3_table"]/table/tbody/tr[contains(@class, "attention")]', htmldoc);
 
-		// クエスト受注
-		if (acceptAttentionQuest(attention_quest)) {
+		var regexp = /takeQuest\((\d+),\s*\d+,\s*\d+\)/;
+
+		var quest_list = [];
+		for (var i = 0; i < attention_quest.snapshotLength; i++){
+			if (xpath('td/a[contains(text(), "繰り返し")]', attention_quest.snapshotItem(i)).snapshotLength){
+				var quest_id = attention_quest.snapshotItem(i).innerHTML.match(regexp);
+				if (quest_id){
+					quest_list.push(quest_id[1]);
+				}
+			}
+		}
+
+		if (quest_list.length == 0) {
+			checkAttentionQuest(htmldoc, callback);
 			return;
 		}
 
+		// クエスト受注
+		var count = 0;
+		for (var i = 0; i < quest_list.length; i++){
+			var query = 'action=take_quest&id=' + quest_list[i];
+			httpGET('http://'+HOST+'/quest/index.php?'+query,function(x){
+				count++;
+
+				// すべての通信が完了した後の処理
+				if (count == quest_list.length) {
+					checkAttentionQuest(x, callback);
+				}
+			});
+		}
+	});
+}
+
+
+( function() {
+	loadSettingBox();
+	addOpenSettingLink();
+
+	console.log(SERVER+'*** bro3_quest ***');
+	if (! isWorktime(d)) {
+		// 負荷を下げる為、一定時間は処理しない
+		return;
+	}
+
+	// クエスト受注
+	acceptAttentionQuest(function(quest_list){
+
 		// 未クリアの繰り返しクエストマッチング
-		var quest_list = getRestAttentionQuest(attention_quest);
 		for (var i = 0; i < quest_list.length; i++){
 			var quest_id = parseInt(quest_list[i],10);
 			if (quest_id == ID_DONATE && OPT_QUEST_DONATE){
 				// 寄付クエ
-				sendDonate(500);
+				postDonate(receiveRewards);
 				return;
 			}
 			if (quest_id == ID_DUEL && OPT_QUEST_DUEL){
 				// デュエルクエ
-				duel();
+				duel(function(worked){receiveRewards()});
 				return;
 			}
 			if (quest_id == ID_TROOPS && OPT_QUEST_TROOPS){
-				console.log('TODO: 出兵クエ ('+HOST+')');
+				console.log(SERVER+'TODO: 出兵クエ');
 			}
-		}
-
-		// クリアしたクエスト報酬を受け取る
-		var reward_list = xpath('//table[@summary="報酬"]/tbody/tr/td', htmldoc);
-		if (reward_list.snapshotLength) {
-			// 報酬内容をログに出力
-			var reward_content = xpath('//table[@summary="報酬"]', htmldoc).snapshotItem(0).textContent.replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, "");
-			var reward_text = reward_list.snapshotItem(0).textContent;
-			if (checkReceiveReward(reward_text)){
-				console.log(reward_content+' ('+HOST+') -> 受領');
-				httpGET('http://'+HOST+'/quest/index.php?c=1',function(x){
-					// 報酬がヨロズダス回数ならそのままヨロズダスを引く
-					if (reward_text == 'ヨロズダス回数') {
-						yorozudas();
-					} else {
-						location.reload();
-					}
-				});
-			} else {
-				console.log(reward_content+' ('+HOST+') -> 受領保留');
-				yorozudas();
-			}
-		} else {
-			yorozudas();
 		}
 
 		// 受信箱から移す
 		if (OPT_MOVE_FROM_INBOX) {
-			moveFromInbox();
+			moveFromInbox(false);
 		}
 
 		// 自動助力
@@ -406,19 +477,49 @@ function getRestAttentionQuest(attention_quest){
 
 		// サーバー時刻が [00:00:00 - 01:59:59] or [05:00:00 - 23:59:59] であれば自動デュエルする
 		if (OPT_AUTO_DUEL) {
-			var server = xpath('//div[@id="navi01"]/dl[@class="world"]/dd[@class="server"]/span[@id="server_time_disp"]', htmldoc).snapshotItem(0);
-			if (server && server.textContent) {
-				var hour = parseInt(server.textContent.substr(0,2), 10);
-				if (hour < 2 || hour >= 5) {
-					duel();
-				}
-			}
+			auto_duel();
 		}
+
+		// ツールに連動しない報酬受領
+		receiveRewards();
 	});
 })();
 
 
 //====================[ 設定画面 ]====================
+
+// サーバー時間
+function isWorktime(htmldoc){
+	// 負荷を下げる為、一通り実施したら1時間に1回程度の再チェックとする
+	var server = xpath('//div[@id="navi01"]/dl[@class="world"]/dd[@class="server"]/span[@id="server_time"]', htmldoc).snapshotItem(0);
+	if (server && server.textContent) {
+		var match_result = server.textContent.match(/(\d+)[^\d]+(\d+)[^\d]+(\d+)[^\d]+(\d+)[^\d]+(\d+)[^\d]+(\d+)/);
+		if (match_result && match_result.length > 6) {
+			var date = new Date(
+				parseInt(match_result[1],10),
+				parseInt(match_result[2],10),
+				parseInt(match_result[3],10),
+				parseInt(match_result[4],10),
+				parseInt(match_result[5],10),
+				parseInt(match_result[6],10),
+				0);
+			var cur_time = date.getTime();
+			var lasttime = parseInt(getVALUE("lasttime","0"),10);
+			var pasttime = (cur_time - lasttime) / 1000;
+//			console.log(SERVER+"last="+lasttime);
+//			console.log(SERVER+"date="+cur_time);
+			console.log(SERVER+"past="+pasttime+"s");
+
+			// 指定秒数未満のリロードは無視とする
+			if (pasttime < OPT_VALUE_IGNORE_SECONDS) {
+				return false;
+			}
+
+			setVALUE("lasttime", cur_time);
+		}
+	}
+	return true;
+}
 
 
 function addOpenSettingLink() {
@@ -606,7 +707,7 @@ function loadSettingBox() {
 		OPT_QUEST_DUEL			= 1; // 自動デュエル
 		OPT_QUEST_TROOPS		= 0; // 自動出兵
 		OPT_AUTO_YOROZUDAS		= 1; // 自動でヨロズダスをひく
-		OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬が資源でも自動で受け取る
+		OPT_RECEIVE_RESOURCES	= 1; // クエスト報酬が資源でも自動で受け取る
 		OPT_MOVE_FROM_INBOX		= 1; // アイテム受信箱から便利アイテムへ移動
 		OPT_AUTO_DUEL			= 1; // [02:00:00 - 04:59:59] 以外に自動デュエル
 		OPT_AUTO_JORYOKU		= 1; // 自動助力
