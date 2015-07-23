@@ -10,21 +10,21 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2015.06.21
+// @version 	2015.07.24
 // ==/UserScript==
-var VERSION = "2015.06.21"; 	// バージョン情報
+var VERSION = "2015.07.24"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
-var OPT_QUEST_DONATE		= 1; // 繰り返しクエスト用寄付糧500を自動で行なう
-var OPT_QUEST_DUEL			= 1; // 繰り返しクエスト用デュエルを自動で行なう
+var OPT_QUEST_DONATE		= 0; // 繰り返しクエスト用寄付糧500を自動で行なう
+var OPT_QUEST_DUEL			= 0; // 繰り返しクエスト用デュエルを自動で行なう
 var OPT_QUEST_TROOPS		= 0; // 繰り返しクエスト用出兵を自動で行なう（未実装）
 
 var OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬 '資源' も自動で受け取る
 
 var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
-var OPT_AUTO_DUEL			= 1; // 自動デュエル
-var OPT_AUTO_JORYOKU		= 1; // 自動助力
+var OPT_AUTO_DUEL			= 0; // 自動デュエル
+var OPT_AUTO_JORYOKU		= 0; // 自動助力
 
 // 内部設定
 var OPT_VALUE_IGNORE_SECONDS = 10; // 負荷を下げる為、指定秒数以内のリロード時は処理を行なわない
@@ -46,6 +46,8 @@ var OPT_VALUE_IGNORE_SECONDS = 10; // 負荷を下げる為、指定秒数以内
 // 2015.06.07 設定画面をつけた
 // 2015.06.10 助力ゲージ満タンのとき、無限ループになる不具合修正
 // 2015.06.21 リロード負荷低減
+// 2015.07.24 リロード負荷低減について、報酬受け取り成功時は制限時間をなくすよう改修
+//			  鯖開始時を考慮し、オプション初期値を影響が低いものへ変更
 
 /*!
 * jQuery Cookie Plugin
@@ -329,6 +331,7 @@ function receiveRewards()
 		if (OPT_MOVE_FROM_INBOX) {
 			moveFromInbox(receive_it);
 		} else if (receive_it) {
+			clearLastTime();
 			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 		}
 	};
@@ -519,6 +522,9 @@ function isWorktime(htmldoc){
 		}
 	}
 	return true;
+}
+function clearLastTime(){
+	setVALUE("lasttime", 0);
 }
 
 
