@@ -2539,6 +2539,54 @@ function build1112(){
 	createFacilityEx(6, 5, Hatake, 1, area) ||
 	createFacilityEx(6, 6, Hatake, 1, area) ||
 
+	// すべての畑LV5にする
+	createFacilityEx(0, 4, Hatake, 5, area) ||
+	createFacilityEx(0, 5, Hatake, 5, area) ||
+	createFacilityEx(0, 6, Hatake, 5, area) ||
+
+	createFacilityEx(1, 2, Hatake, 5, area) ||
+	createFacilityEx(1, 3, Hatake, 5, area) ||
+	createFacilityEx(1, 4, Hatake, 5, area) ||
+	createFacilityEx(1, 6, Hatake, 5, area) ||
+
+	createFacilityEx(2, 0, Hatake, 5, area) ||
+	createFacilityEx(2, 1, Hatake, 5, area) ||
+	createFacilityEx(2, 4, Hatake, 5, area) ||
+	createFacilityEx(2, 5, Hatake, 5, area) ||
+	createFacilityEx(2, 6, Hatake, 5, area) ||
+
+	createFacilityEx(3, 0, Hatake, 5, area) ||
+	createFacilityEx(3, 1, Hatake, 5, area) ||
+	createFacilityEx(3, 5, Hatake, 5, area) ||
+	createFacilityEx(3, 6, Hatake, 5, area) ||
+
+	createFacilityEx(4, 0, Hatake, 5, area) ||
+	createFacilityEx(4, 1, Hatake, 5, area) ||
+	createFacilityEx(4, 5, Hatake, 5, area) ||
+	createFacilityEx(4, 6, Hatake, 5, area) ||
+
+	createFacilityEx(5, 0, Hatake, 5, area) ||
+	createFacilityEx(5, 1, Hatake, 5, area) ||
+	createFacilityEx(5, 2, Hatake, 5, area) ||
+	createFacilityEx(5, 3, Hatake, 5, area) ||
+	createFacilityEx(5, 4, Hatake, 5, area) ||
+	createFacilityEx(5, 6, Hatake, 5, area) ||
+
+	createFacilityEx(6, 0, Hatake, 5, area) ||
+	createFacilityEx(6, 1, Hatake, 5, area) ||
+	createFacilityEx(6, 2, Hatake, 5, area) ||
+	createFacilityEx(6, 3, Hatake, 5, area) ||
+	createFacilityEx(6, 4, Hatake, 5, area) ||
+	createFacilityEx(6, 5, Hatake, 5, area) ||
+	createFacilityEx(6, 6, Hatake, 5, area) ||
+
+	// 市場を作るのに必要な建設を行なう
+	createFacilityEx(0, 0, Souko,  1, area) ||
+	createFacilityEx(0, 1, Renpei, 3, area) ||
+	createFacilityEx(0, 2, Shukusha, 1, area) ||
+	createFacilityEx(0, 3, Bougu,  2, area) ||
+	createFacilityEx(1, 0, Ichiba, 1, area) ||
+
 	// すべての畑LV10にする
 	createFacilityEx(0, 4, Hatake, 10, area) ||
 	createFacilityEx(0, 5, Hatake, 10, area) ||
@@ -2579,13 +2627,6 @@ function build1112(){
 	createFacilityEx(6, 4, Hatake, 10, area) ||
 	createFacilityEx(6, 5, Hatake, 10, area) ||
 	createFacilityEx(6, 6, Hatake, 10, area) ||
-
-	// 市場を作るのに必要な建設を行なう
-	createFacilityEx(0, 0, Souko,  1, area) ||
-	createFacilityEx(0, 1, Renpei, 3, area) ||
-	createFacilityEx(0, 2, Shukusha, 1, area) ||
-	createFacilityEx(0, 3, Bougu,  2, area) ||
-	createFacilityEx(1, 0, Ichiba, 1, area) ||
 
 	// 水車を建設するのに必要なLV上げ
 	createFacilityEx(0, 0, Souko,  10, area) ||
@@ -2864,6 +2905,43 @@ function build0001S5(){
 	createFacilityEx(6, 5, Hatake, 1, area) ||
 	createFacilityEx(6, 6, Hatake, 1, area) ||
 
+	// すべての畑LV5にする
+	createFacilityEx(0, 6, Hatake, 5, area) ||
+
+	createFacilityEx(1, 3, Hatake, 5, area) ||
+	createFacilityEx(1, 4, Hatake, 5, area) ||
+
+	createFacilityEx(2, 1, Hatake, 5, area) ||
+	createFacilityEx(2, 2, Hatake, 5, area) ||
+	createFacilityEx(2, 3, Hatake, 5, area) ||
+	createFacilityEx(2, 5, Hatake, 5, area) ||
+
+	createFacilityEx(3, 1, Hatake, 5, area) ||
+	createFacilityEx(3, 2, Hatake, 5, area) ||
+	createFacilityEx(3, 4, Hatake, 5, area) ||
+	createFacilityEx(3, 5, Hatake, 5, area) ||
+
+	createFacilityEx(4, 1, Hatake, 5, area) ||
+	createFacilityEx(4, 2, Hatake, 5, area) ||
+	createFacilityEx(4, 3, Hatake, 5, area) ||
+	createFacilityEx(4, 4, Hatake, 5, area) ||
+
+	createFacilityEx(5, 2, Hatake, 5, area) ||
+	createFacilityEx(5, 3, Hatake, 5, area) ||
+	createFacilityEx(5, 4, Hatake, 5, area) ||
+	createFacilityEx(5, 5, Hatake, 5, area) ||
+	createFacilityEx(5, 6, Hatake, 5, area) ||
+
+	createFacilityEx(6, 5, Hatake, 5, area) ||
+	createFacilityEx(6, 6, Hatake, 5, area) ||
+
+	// 市場を作るのに必要な建設を行なう
+	createFacilityEx(0, 0, Souko,  1, area) ||
+	createFacilityEx(1, 0, Renpei, 3, area) ||
+	createFacilityEx(0, 1, Shukusha, 1, area) ||
+	createFacilityEx(1, 1, Bougu,  2, area) ||
+	createFacilityEx(6, 0, Ichiba, 1, area) ||
+
 	// すべての畑LV10にする
 	createFacilityEx(0, 6, Hatake, 10, area) ||
 
@@ -2893,13 +2971,6 @@ function build0001S5(){
 
 	createFacilityEx(6, 5, Hatake, 10, area) ||
 	createFacilityEx(6, 6, Hatake, 10, area) ||
-
-	// 市場を作るのに必要な建設を行なう
-	createFacilityEx(0, 0, Souko,  1, area) ||
-	createFacilityEx(1, 0, Renpei, 3, area) ||
-	createFacilityEx(0, 1, Shukusha, 1, area) ||
-	createFacilityEx(1, 1, Bougu,  2, area) ||
-	createFacilityEx(6, 0, Ichiba, 1, area) ||
 
 	// 水車を建設するのに必要なLV上げ
 	createFacilityEx(0, 0, Souko,  10, area) ||
@@ -2982,6 +3053,47 @@ function build0001S7(){
 
 	createFacilityEx(6, 5, Hatake, 1, area) ||
 
+	// すべての畑LV5にする
+	createFacilityEx(0, 2, Hatake, 5, area) ||
+	createFacilityEx(0, 3, Hatake, 5, area) ||
+	createFacilityEx(0, 4, Hatake, 5, area) ||
+	createFacilityEx(0, 5, Hatake, 5, area) ||
+	createFacilityEx(0, 6, Hatake, 5, area) ||
+
+	createFacilityEx(1, 2, Hatake, 5, area) ||
+	createFacilityEx(1, 4, Hatake, 5, area) ||
+	createFacilityEx(1, 5, Hatake, 5, area) ||
+	createFacilityEx(1, 6, Hatake, 5, area) ||
+
+	createFacilityEx(2, 1, Hatake, 5, area) ||
+	createFacilityEx(2, 2, Hatake, 5, area) ||
+	createFacilityEx(2, 3, Hatake, 5, area) ||
+	createFacilityEx(2, 5, Hatake, 5, area) ||
+
+	createFacilityEx(3, 1, Hatake, 5, area) ||
+	createFacilityEx(3, 2, Hatake, 5, area) ||
+	createFacilityEx(3, 4, Hatake, 5, area) ||
+	createFacilityEx(3, 5, Hatake, 5, area) ||
+
+	createFacilityEx(4, 1, Hatake, 5, area) ||
+	createFacilityEx(4, 2, Hatake, 5, area) ||
+	createFacilityEx(4, 3, Hatake, 5, area) ||
+	createFacilityEx(4, 4, Hatake, 5, area) ||
+
+	createFacilityEx(5, 1, Hatake, 5, area) ||
+	createFacilityEx(5, 2, Hatake, 5, area) ||
+	createFacilityEx(5, 3, Hatake, 5, area) ||
+	createFacilityEx(5, 5, Hatake, 5, area) ||
+
+	createFacilityEx(6, 5, Hatake, 5, area) ||
+
+	// 市場を作るのに必要な建設を行なう
+	createFacilityEx(0, 0, Souko,  1, area) ||
+	createFacilityEx(1, 0, Renpei, 3, area) ||
+	createFacilityEx(0, 1, Shukusha, 1, area) ||
+	createFacilityEx(1, 1, Bougu,  2, area) ||
+	createFacilityEx(6, 2, Ichiba, 1, area) ||
+
 	// すべての畑LV10にする
 	createFacilityEx(0, 2, Hatake, 10, area) ||
 	createFacilityEx(0, 3, Hatake, 10, area) ||
@@ -3015,13 +3127,6 @@ function build0001S7(){
 	createFacilityEx(5, 5, Hatake, 10, area) ||
 
 	createFacilityEx(6, 5, Hatake, 10, area) ||
-
-	// 市場を作るのに必要な建設を行なう
-	createFacilityEx(0, 0, Souko,  1, area) ||
-	createFacilityEx(1, 0, Renpei, 3, area) ||
-	createFacilityEx(0, 1, Shukusha, 1, area) ||
-	createFacilityEx(1, 1, Bougu,  2, area) ||
-	createFacilityEx(6, 2, Ichiba, 1, area) ||
 
 	// 水車を建設するのに必要なLV上げ
 	createFacilityEx(0, 0, Souko,  10, area) ||
