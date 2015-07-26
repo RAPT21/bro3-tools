@@ -2821,7 +2821,7 @@ function build0001S3(vId){
 	createFacilityEx(3, 5, Hatake, 1, area) ||
 
 	createFacilityEx(4, 1, Hatake, 1, area) ||
-	createFacilityEx(4, 2, Hatake, 1, area) ||
+	createFacilityEx(4, 3, Hatake, 1, area) ||
 	createFacilityEx(4, 4, Hatake, 1, area) ||
 	createFacilityEx(4, 5, Hatake, 1, area) ||
 
