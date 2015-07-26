@@ -2519,7 +2519,6 @@ function checkVillageType(area, Arechi, Shinrin, Iwayama, Tekkouzan, Kokumotsu)
 		IwayamaCnt		= 0, // 岩山
 		TekkouzanCnt	= 0; // 鉄鉱山
 
-	var area = get_area_all();
 	area.sort(cmp_areas);
 	for(var i=0;i<area.length;i++){
 		if(area[i].name == "荒地") ArechiCnt++; else
@@ -2540,13 +2539,14 @@ function checkVillageType(area, Arechi, Shinrin, Iwayama, Tekkouzan, Kokumotsu)
 	}
 }
 function build1112(vId){
-	if (! checkVillageType(4,1,1,1,2)){
+	var area = get_area_all();
+	if (! checkVillageType(area, 4,1,1,1,2)){
 		return false;
 	}
 
 	// ★9(1-1-1-2)
 	// まず畑で埋める
-	return
+    return handled;
 	createFacilityEx(0, 4, Hatake, 1, area) ||
 	createFacilityEx(0, 5, Hatake, 1, area) ||
 	createFacilityEx(0, 6, Hatake, 1, area) ||
@@ -2597,6 +2597,7 @@ function build1112(vId){
 
 	// ここまで来たら既存の自動LVUPに移管する
 	switchToAutoLevelUp(vId);
+    return handled;
 }
 
 // ★5工場村
@@ -2798,13 +2799,14 @@ function buildPlant5(vId){
 }
 
 function build0001S3(vId){
-	if (! checkVillageType(22,0,0,0,1)){
+	var area = get_area_all();
+	if (! checkVillageType(area,22,0,0,0,1)){
 		return false;
 	}
 
 	// ★3(0-0-0-1)
 	// まず畑で埋める
-	return
+	var handled =
 	createFacilityEx(1, 2, Hatake, 1, area) ||
 	createFacilityEx(1, 3, Hatake, 1, area) ||
 	createFacilityEx(1, 4, Hatake, 1, area) ||
@@ -2839,16 +2841,18 @@ function build0001S3(vId){
 
 	// ここまで来たら既存の自動LVUPに移管する
 	switchToAutoLevelUp(vId);
+    return handled;
 }
 
 function build0001S5(vId){
-	if (! checkVillageType(19,0,0,0,1)){
-		return false;
+	var area = get_area_all();
+	if (! checkVillageType(area,19,0,0,0,1)){
+        return false;
 	}
 
 	// ★5(0-0-0-1)
 	// まず畑で埋める
-	return
+	var handled =
 	createFacilityEx(0, 6, Hatake, 1, area) ||
 
 	createFacilityEx(1, 3, Hatake, 1, area) ||
@@ -2888,16 +2892,18 @@ function build0001S5(vId){
 
 	// ここまで来たら既存の自動LVUPに移管する
 	switchToAutoLevelUp(vId);
+    return handled;
 }
 
 function build0001S7(vId){
-	if (! checkVillageType(15,0,0,0,1)){
+	var area = get_area_all();
+	if (! checkVillageType(area,15,0,0,0,1)){
 		return false;
 	}
 
 	// ★7(0-0-0-1)
 	// まず畑で埋める
-	return
+	var handled =
 	createFacilityEx(0, 2, Hatake, 1, area) ||
 	createFacilityEx(0, 3, Hatake, 1, area) ||
 	createFacilityEx(0, 4, Hatake, 1, area) ||
@@ -2940,6 +2946,7 @@ function build0001S7(vId){
 
 	// ここまで来たら既存の自動LVUPに移管する
 	switchToAutoLevelUp(vId);
+    return handled;
 }
 
 function areas(name,xy){
