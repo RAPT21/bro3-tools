@@ -2547,6 +2547,10 @@ function checkVillageType(area, Arechi, Shinrin, Iwayama, Tekkouzan, Kokumotsu)
 		return false;
 	}
 }
+function checkReached(r){
+	r[0] = true;
+	return true;
+}
 function build1112(vId){
 	var area = get_area_all();
 	if (! checkVillageType(area, 4,1,1,1,2)){
@@ -2555,7 +2559,8 @@ function build1112(vId){
 
 	// ★9(1-1-1-2)
 	// まず畑で埋める
-	return handled;
+	var reached = [false];
+	var handled =
 	createFacilityEx(0, 4, Hatake, 1, area) ||
 	createFacilityEx(0, 5, Hatake, 1, area) ||
 	createFacilityEx(0, 6, Hatake, 1, area) ||
@@ -2605,7 +2610,10 @@ function build1112(vId){
 	createFacilityEx(1, 0, Ichiba, 1, area) ||
 
 	// ここまで来たら既存の自動LVUPに移管する
-	switchToAutoLevelUp(vId);
+	checkReached(reached);
+	if (reached[0]){
+		switchToAutoLevelUp(vId);
+	}
 	return handled;
 }
 
@@ -2637,6 +2645,7 @@ function buildPlant5(vId){
 	else if (ShinrinCnt == 0 && IwayamaCnt == 0 && TekkouzanCnt == 6) TargetType = Seitetsu;
 	else return false;
 
+	var reached = [false];
 	var handled = false;
 
 	// 資源ブロック 南パターン
@@ -2817,6 +2826,7 @@ function build0001S3(vId){
 
 	// ★3(0-0-0-1)
 	// まず畑で埋める
+	var reached = [false];
 	var handled =
 	createFacilityEx(1, 2, Hatake, 1, area) ||
 	createFacilityEx(1, 3, Hatake, 1, area) ||
@@ -2851,7 +2861,10 @@ function build0001S3(vId){
 	createFacilityEx(6, 6, Ichiba, 1, area) ||
 
 	// ここまで来たら既存の自動LVUPに移管する
-	switchToAutoLevelUp(vId);
+	checkReached(reached);
+	if (reached[0]){
+		switchToAutoLevelUp(vId);
+	}
 	return handled;
 }
 
@@ -2863,6 +2876,7 @@ function build0001S5(vId){
 
 	// ★5(0-0-0-1)
 	// まず畑で埋める
+	var reached = [false];
 	var handled =
 	createFacilityEx(0, 6, Hatake, 1, area) ||
 
@@ -2902,7 +2916,10 @@ function build0001S5(vId){
 	createFacilityEx(6, 0, Ichiba, 1, area) ||
 
 	// ここまで来たら既存の自動LVUPに移管する
-	switchToAutoLevelUp(vId);
+	checkReached(reached);
+	if (reached[0]){
+		switchToAutoLevelUp(vId);
+	}
 	return handled;
 }
 
@@ -2914,6 +2931,7 @@ function build0001S7(vId){
 
 	// ★7(0-0-0-1)
 	// まず畑で埋める
+	var reached = [false];
 	var handled =
 	createFacilityEx(0, 2, Hatake, 1, area) ||
 	createFacilityEx(0, 3, Hatake, 1, area) ||
@@ -2956,7 +2974,10 @@ function build0001S7(vId){
 	createFacilityEx(6, 2, Ichiba, 1, area) ||
 
 	// ここまで来たら既存の自動LVUPに移管する
-	switchToAutoLevelUp(vId);
+	checkReached(reached);
+	if (reached[0]){
+		switchToAutoLevelUp(vId);
+	}
 	return handled;
 }
 
