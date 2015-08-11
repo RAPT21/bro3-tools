@@ -9,14 +9,15 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	0.2
+// @version 	0.3
 // ==/UserScript==
-var VERSION = "0.2"; 	// バージョン情報
+var VERSION = "0.3"; 	// バージョン情報
 
 // 2015.08.10	0.1	プロトタイプ版です。
 // 2015.08.11	0.2	処理結果を UI で表示対応。
 //					5期砦一覧を埋めた。けど全部やるとガチでDoS攻撃になるので注意。
 //					処理開始時に自同盟名を指定できるようにした。
+// 2015.08.12	0.3	自同盟名の自動取得対応。
 
 
 // 自同盟名（指定すると主観的情報として、カラだと客観的情報として結果を出力）
@@ -305,6 +306,21 @@ function createNewDocument(str) {
 }
 
 //==========[ ロジック部 ]==========
+function getAllyName(callback){
+	var url = "http://"+HOST+"/user/";
+	cajaxRequest(url, 'GET', null, function(r){
+		var html = r.responseText;
+		var tmp = html.match(/<td[^>]*>同盟<\/td>[^<]*<td[^>]*>[^>]*><a href="[^"]*">([^<]+)<\/a>[^>]*<\/td>/);
+		if (!tmp) {
+			tmp = html.match(/<td[^>]*>同盟<\/td>[^<]*<td[^>]*>[^>]*<a href="[^"]*">([^<]+)<\/a>[^>]*<\/td>/);
+		}
+		var ally_name = tmp? tmp[1]: null;
+		if (callback) {
+			callback(ally_name);
+		}
+	});
+}
+
 // MAP データをオブジェクトとして返す
 function genMapInfo(x,y,h,k,g,l,e,c,b,f,j,d,i,a){
 	this.x = x; // center-x
@@ -449,8 +465,8 @@ var $ = function(id) { return d.getElementById(id); };
 var $x = function(xp,dc) { return d.evaluate(xp, dc||d, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue; };
 var $a = function(xp,dc) { var r = d.evaluate(xp, dc||d, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null); var a=[]; for(var i=0; i<r.snapshotLength; i++){ a.push(r.snapshotItem(i)); } return a; };
 var $e = function(dc,e,f) { if (!dc) return; dc.addEventListener(e, f, false); };
-function startXX(obj){
-	OPT_TARGET_ALLY = prompt("自同盟名を入力してください。\n省略すると客観的情報を出力します。","");
+function startXX(obj, ally_name){
+	OPT_TARGET_ALLY = prompt("自同盟名を入力してください。\n空欄にすると客観的情報を出力します。",ally_name);
 	if( confirm("全マップデータを一気に取得するためサーバに負荷がかかります。\n何度も実行するとDoS攻撃と同じなので、実行には注意して下さい") == false ) return;
 
 	//窓作成
@@ -569,7 +585,13 @@ function cgetElementXY(elm) {
 		openLink.style.color = "#FFFFFF";
 		openLink.style.cursor = "pointer";
 		openLink.addEventListener("click", function() {
-			startXX(this);
+			if (OPT_TARGET_ALLY && OPT_TARGET_ALLY.length) {
+					startXX(this, OPT_TARGET_ALLY);
+			} else {
+				getAllyName(function(ally_name){
+					startXX(this, ally_name);
+				});
+			}
 		}, true);
 	var sidebar_list = xpath('//*[@class="sideBox"]', d);
 	if (sidebar_list.snapshotLength) {
