@@ -5,9 +5,6 @@
 // @include 	http://*.3gokushi.jp/map.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
-// @grant		GM_xmlhttpRequest
-// @grant		GM_getValue
-// @grant		GM_setValue
 // @author		RAPT
 // @version 	0.3
 // ==/UserScript==
