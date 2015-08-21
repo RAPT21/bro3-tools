@@ -10,9 +10,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2015.07.24
+// @version 	2015.08.21
 // ==/UserScript==
-var VERSION = "2015.07.24"; 	// バージョン情報
+var VERSION = "2015.08.21"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -48,6 +48,7 @@ var OPT_VALUE_IGNORE_SECONDS = 10; // 負荷を下げる為、指定秒数以内
 // 2015.06.21 リロード負荷低減
 // 2015.07.24 リロード負荷低減について、報酬受け取り成功時は制限時間をなくすよう改修
 //			  鯖開始時を考慮し、オプション初期値を影響が低いものへ変更
+// 2015.08.21 リロード負荷低減について、報酬受け取り成功時の制限解除処理を改修
 
 /*!
 * jQuery Cookie Plugin
@@ -329,6 +330,9 @@ function receiveRewards()
 	var receive_it = false;
 	var callback = function(){
 		if (OPT_MOVE_FROM_INBOX) {
+			if (receive_it) {
+				clearLastTime();
+			}
 			moveFromInbox(receive_it);
 		} else if (receive_it) {
 			clearLastTime();
