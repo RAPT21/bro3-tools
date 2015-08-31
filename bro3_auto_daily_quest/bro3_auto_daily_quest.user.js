@@ -10,9 +10,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2015.08.21
+// @version 	2015.09.01
 // ==/UserScript==
-var VERSION = "2015.08.21"; 	// バージョン情報
+var VERSION = "2015.09.01"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -49,6 +49,7 @@ var OPT_VALUE_IGNORE_SECONDS = 10; // 負荷を下げる為、指定秒数以内
 // 2015.07.24 リロード負荷低減について、報酬受け取り成功時は制限時間をなくすよう改修
 //			  鯖開始時を考慮し、オプション初期値を影響が低いものへ変更
 // 2015.08.21 リロード負荷低減について、報酬受け取り成功時の制限解除処理を改修
+// 2015.09.01 リロード負荷低減において、Firefox 40.0.3+Greasemonkey 3.3 にて意図した動作とならないことがあるのを修正
 
 /*!
 * jQuery Cookie Plugin
@@ -518,7 +519,7 @@ function isWorktime(htmldoc){
 			console.log(SERVER+"past="+pasttime+"s");
 
 			// 指定秒数未満のリロードは無視とする
-			if (pasttime < OPT_VALUE_IGNORE_SECONDS) {
+			if (pasttime >= 0 && pasttime < OPT_VALUE_IGNORE_SECONDS) {
 				return false;
 			}
 
