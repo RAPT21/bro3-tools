@@ -7,10 +7,12 @@
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @grant		none
 // @author		5zen + RAPT
-// @version		1.0 (2015/08/16)
+// @version		1.1 (2015/09/17)
 // ==/UserScript==
 
 // 1.0	beyond 3.0.74α (2015/06/28) から 5zen 氏原作のカード表示拡張機能のみ抜粋
+// 1.1	トレード出品画面で武将スキル表示対応
+//		デッキ画面で合成スキルも表示対応
 
 //================================================
 // 定数宣言一式
@@ -1379,7 +1381,8 @@ var scr_list = [
 	if(    location.pathname == "/user/"
 		|| location.pathname == "/card/deck.php"
 		|| location.pathname == "/card/trade_card.php"
-		|| location.pathname.match(/union/)) {
+		|| location.pathname.match(/union/)
+	) {
 		bro3dasuDrawSkill();
 	}
 
@@ -1388,7 +1391,10 @@ var scr_list = [
 		|| location.pathname == "/busyodas/busyodas_continuty_result.php"
 		|| location.pathname == "/busyodas/busyodas_result.php"
 		|| location.pathname == "/card/trade.php"
-		|| location.pathname == "/card/trade_card.php"){
+		|| location.pathname == "/card/trade_card.php"
+		|| location.pathname == "/card/exhibit_list.php"
+		|| location.pathname == "/card/deck.php"
+	){
 		bro3dasuDrawCompositionSkill();
 	}
 
@@ -1407,6 +1413,13 @@ function bro3dasuDrawSkill() {
 					'<ul id="skillFrame" style="position:relative; top:-82px; left:14px; font-size:12px;"></ul>' +
 				'</span>'
 			);
+        } else if (location.pathname == "/card/deck.php") {
+			j$("div[class*=card rarerity] span[class=status_frontback]").parent().after(
+				'<span style="position:relative; top:-293px;">' +
+					'<img src="http://' + location.hostname + '/20141224-01/extend_project/w945/img/card/common/bg_card_skill.png" style="position:relative; left:6px; z-index:-1">' +
+					'<ul id="skillFrame" style="position:relative; top:-82px; left:14px; font-size:12px;"></ul>' +
+				'</span>'
+			);
 		} else {
 			j$("div[class*=card rarerity] span[class=status_frontback]").parent().after(
 				'<span style="position:relative; top:-125px;">' +
@@ -1420,7 +1433,7 @@ function bro3dasuDrawSkill() {
 	// デッキ特別処理
 	if( location.pathname == "/card/deck.php"){
 		// ステータス強化ボタンの位置を移動
-		j$("img[class=levelup]").css({"position":"relative", "top":"-80px", "left":"6px"});
+		j$("img[class=levelup]").css({"position":"relative", "top":"-160px", "left":"6px"});
 
 		// スケスケ指定時はステータス強化ボタンを透明化
 		if(SukesukeFlg == 1){
