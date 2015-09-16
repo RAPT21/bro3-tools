@@ -210,6 +210,8 @@ var gousei_skill = {
 	'謀反の強攻':['英雄', '守護神', '神速', '謀反の強攻'],
 	'謀反の猛攻':['未実装', '未実装', '未実装', '未実装'],
 	'謀反の極攻':['暴虐外道', '金剛不壊', '神速援護', '謀反の猛攻'],
+	'謀反の突攻':['覇道', '守護神', '呉の治世', '謀反の速攻'],
+	'謀反の速攻';['英雄', '鉄壁', '王佐の才', '覇道'],
 	'背水陣の極攻':['未実装', '未実装', '未実装', '未実装'],
 	'弓襲遠攻':['未実装', '未実装', '未実装', '未実装'],
 	'守神の進撃':['守将の進軍', '守護神', '槍将の采配', '槍兵の大極撃'],
@@ -436,6 +438,10 @@ var gousei_skill = {
 	'飛速迅雷':['烈速', '剣兵の聖域', '神算鬼謀', '烈速雷光'],
 	'収奪の猛攻':['鹵獲の強攻', '八卦の陣', '迅速擁護', '猛将の鹵獲'],
 	'帝妃都政':['奇計百出', '厩舎修練', '製鉄技術', '王佐の才'],
+	'娘々武神':['一騎当千', '槍兵の聖域', '兵舎修練', '軍神'],
+	'王将の心意気':['軍神', '城壁補強', '騎兵の勝鬨', '武神'],
+	'食糧革命':['剣兵の極撃', '剣兵の聖域', '練兵修練', '食糧技術'],
+	'護国望心':['剣兵の強撃', '剣兵防御', '英雄', '奇計百出'],
 	'':['', '', '', '']
 };
 
@@ -1413,7 +1419,7 @@ function bro3dasuDrawSkill() {
 					'<ul id="skillFrame" style="position:relative; top:-82px; left:14px; font-size:12px;"></ul>' +
 				'</span>'
 			);
-        } else if (location.pathname == "/card/deck.php") {
+		} else if (location.pathname == "/card/deck.php") {
 			j$("div[class*=card rarerity] span[class=status_frontback]").parent().after(
 				'<span style="position:relative; top:-293px;">' +
 					'<img src="http://' + location.hostname + '/20141224-01/extend_project/w945/img/card/common/bg_card_skill.png" style="position:relative; left:6px; z-index:-1">' +
