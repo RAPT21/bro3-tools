@@ -7,12 +7,15 @@
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @grant		none
 // @author		5zen + RAPT
-// @version		1.1 (2015/09/17)
+// @version		1.3 (2015/09/27)
 // ==/UserScript==
 
-// 1.0	beyond 3.0.74α (2015/06/28) から 5zen 氏原作のカード表示拡張機能のみ抜粋
-// 1.1	トレード出品画面で武将スキル表示対応
-//		デッキ画面で合成スキルも表示対応
+// 2015.08.16	1.0	beyond 3.0.74α (2015/06/28) から 5zen 氏原作のカード表示拡張機能のみ抜粋
+// 2015.09.17	1.1	トレード出品画面で武将スキル表示対応
+//					デッキ画面で合成スキルも表示対応
+// 2015.09.20	1.2	合成画面で合成スキルも表示対応
+//					合成時の合計LV329以上、合計スコア5040025以上のとき合成確率が正常に表示されない問題を修正
+// 2015.09.27	1.3	Google Chrome だと合成画面で合成スキル表示時に、スキル LVUP ボタンが押せなくなる問題を修正
 
 //================================================
 // 定数宣言一式
@@ -188,7 +191,7 @@ var gousei_skill = {
 	'弓兵突攻':['弓兵突覇', '神速', '弓兵修練', '弓兵速攻'],
 	'騎兵突攻':['騎兵突覇', '神速', '厩舎修練', '騎兵速攻'],
 	'兵器突攻':['兵器突覇', '神速', '兵器修練', '兵器速攻'],
-	'鹵獲の強攻':['未実装', '未実装', '未実装', '未実装'],
+	'鹵獲の強攻':['迅速劫略', '八卦の陣', '神速', '鹵獲の強攻'],
 	'鹵獲の猛攻':['鹵獲の強攻', '八卦の陣', '迅速援護', '猛将の鹵獲'],
 	'鹵獲の極攻':['猛将の鹵獲', '王者の護り', '神速援護', '鹵獲の猛攻'],
 	'覇王の強攻':['覇王の強撃', '守護神', '神速', '覇王の強攻'],
@@ -442,6 +445,11 @@ var gousei_skill = {
 	'王将の心意気':['軍神', '城壁補強', '騎兵の勝鬨', '武神'],
 	'食糧革命':['剣兵の極撃', '剣兵の聖域', '練兵修練', '食糧技術'],
 	'護国望心':['剣兵の強撃', '剣兵防御', '英雄', '奇計百出'],
+	'六文銭の雷光':['神速雷光', '剣兵方陣', '深慮遠謀', '烈速'],
+	'鹵獲の進攻':['鹵獲の進攻', '鉄壁', '千里行', '	趁火打劫'],
+	'精鋭の進撃':['精鋭の進撃', '兵器防御', '神速', '奇計百出'],
+	'剣兵方陣':['剣兵堅守', '剣兵の強撃', '剣兵強行', '剣兵の聖域'],
+	'剣兵突撃':['剣兵強行', '剣兵の堅守', '千里行', '剣兵の猛撃'],
 	'':['', '', '', '']
 };
 
@@ -1166,6 +1174,12 @@ var card_list =	{
 	"4212":{n:"皇甫嵩",  r:"UR", c:4, a:520, i:23, d1:505, bs:"全軍の極攻令"},
 	"4213":{n:"李儒",  r:"UR", c:4, a:370, i:22, d1:720, bs:"剣兵の大神域"},
 	"4215":{n:"盧氏",  r:"UR", c:4, a:385, i:25, d1:485, bs:"食糧革命"},
+	"4237":{n:"王異",  r:"R", c:2, a:270, i:7, d1:275, bs:"謀反の速攻"},
+	"4245":{n:"波才",  r:"UC", c:3, a:315, i:6, d1:305, bs:"鹵獲の進攻"},
+	"4246":{n:"馬元義",  r:"R", c:3.5, a:425, i:14, d1:415, bs:"鹵獲の強攻"},
+	"4276":{n:"華雄",  r:"UC", c:3, a:320, i:4, d1:315, bs:"精鋭の進撃"},
+	"4277":{n:"李儒",  r:"UC", c:2.5, a:220, i:14, d1:370, bs:"剣兵方陣"},
+	"4278":{n:"董卓",  r:"UC", c:2.5, a:275, i:5, d1:395, bs:"剣兵突撃"},
 	"5001":{n:"呂布×董卓",  r:"UR", c:4, a:425, i:11, d1:420, bs:""},
 	"5002":{n:"張角×何進",  r:"SR", c:3.5, a:310, i:19, d1:400, bs:""},
 	"5003":{n:"孫堅×黄祖",  r:"R", c:3, a:270, i:9, d1:385, bs:""},
@@ -1346,7 +1360,7 @@ var lv_list = [
 	[	276	 ,	 23  ,	 20  ,	 18  ,	 39 ] ,
 	[	302	 ,	 20  ,	 18  ,	 16  ,	 46 ] ,
 	[	328	 ,	 17  ,	 16  ,	 14  ,	 53 ] ,
-	[	999	 ,	0  ,	0  ,	0  ,	0 ]
+	[	999	 ,	 17  ,	 16  ,	 14  ,	 53 ] ,
 ];
 
 var scr_list = [
@@ -1378,7 +1392,7 @@ var scr_list = [
 	[	4020025 ,  9.09	 ],  [	 4060225 ,	9.09	 ],  [	 4100625 ,	9.09	 ],  [	 4141225 ,	9.09	 ],  [	 4182025 ,	9.09	 ],  [	 4223025 ,	9.09	 ],  [	 4264225 ,	9.09	 ],  [	 4305625 ,	9.09	 ],
 	[	4347225 ,  9.09	 ],  [	 4389025 ,	9.09	 ],  [	 4431025 ,	9.09	 ],  [	 4473225 ,	9.09	 ],  [	 4515625 ,	9.09	 ],  [	 4558225 ,	9.09	 ],  [	 4601025 ,	9.09	 ],  [	 4644025 ,	9.09	 ],
 	[	4687225 ,  9.09	 ],  [	 4730625 ,	9.09	 ],  [	 4774225 ,	9.09	 ],  [	 4818025 ,	9.09	 ],  [	 4862025 ,	9.09	 ],  [	 4906225 ,	9.09	 ],  [	 4950625 ,	9.09	 ],  [	 4995225 ,	9.09	 ],
-	[	5040025 ,  9.09	 ],  [	 999999999 ,  0.00	 ]
+	[	5040025 ,  9.09	 ],  [	 999999999 ,  9.09	 ]
 ];
 
 ( function() {
@@ -1400,6 +1414,7 @@ var scr_list = [
 		|| location.pathname == "/card/trade_card.php"
 		|| location.pathname == "/card/exhibit_list.php"
 		|| location.pathname == "/card/deck.php"
+		|| location.pathname.match(/union/)
 	){
 		bro3dasuDrawCompositionSkill();
 	}
@@ -1503,12 +1518,28 @@ function bro3dasuDrawCompositionSkill() {
 			'</span>'
 		);
 	} else {
-		j$("div[class*=card rarerity] span[class=status_frontback]").parent().after(
-			'<span style="position:relative; top:-211px;">' +
-				'<img src="http://' + location.hostname + '/20141224-01/extend_project/w945/img/card/common/bg_card_skill.png" style="position:relative; left:6px; z-index:-1">' +
-				'<ul id="compositFrame" style="position:relative; top:-82px; left:14px; font-size:12px;"></ul>' +
-			'</span>'
-		);
+		if (window.navigator.userAgent.toLowerCase().indexOf('firefox') == -1) {
+			// Google Chrome でスキル LVUP ボタンが押せなくなる対策
+			var items = j$("div[class*=card rarerity] ul[class=front_skill]");
+			j$.each(items, function(i){
+				var item = j$(this);
+				var count = j$("li", item).length;
+				var offset = 90 + 21 * count + (!count * -5);
+				item.append(
+					'<span style="position:relative; top:-'+offset+'px; left:-6px;">' +
+						'<img src="http://' + location.hostname + '/20141224-01/extend_project/w945/img/card/common/bg_card_skill.png" style="position:relative; left:6px; z-index:-1">' +
+						'<ul id="compositFrame" style="position:relative; top:-82px; left:6px; font-size:12px;"></ul>' +
+					'</span>'
+				);
+			});
+		} else {
+			j$("div[class*=card rarerity] span[class=status_frontback]").parent().after(
+				'<span style="position:relative; top:-211px;">' +
+					'<img src="http://' + location.hostname + '/20141224-01/extend_project/w945/img/card/common/bg_card_skill.png" style="position:relative; left:6px; z-index:-1">' +
+					'<ul id="compositFrame" style="position:relative; top:-82px; left:14px; font-size:12px;"></ul>' +
+				'</span>'
+			);
+		}
 	}
 
 	// 合成スキル算出
