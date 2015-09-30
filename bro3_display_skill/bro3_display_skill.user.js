@@ -7,7 +7,7 @@
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @grant		none
 // @author		5zen + RAPT
-// @version		1.3 (2015/09/27)
+// @version		1.4 (2015/09/30)
 // ==/UserScript==
 
 // 2015.08.16	1.0	beyond 3.0.74α (2015/06/28) から 5zen 氏原作のカード表示拡張機能のみ抜粋
@@ -16,6 +16,9 @@
 // 2015.09.20	1.2	合成画面で合成スキルも表示対応
 //					合成時の合計LV329以上、合計スコア5040025以上のとき合成確率が正常に表示されない問題を修正
 // 2015.09.27	1.3	Google Chrome だと合成画面で合成スキル表示時に、スキル LVUP ボタンが押せなくなる問題を修正
+// 2015.09.30	1.4	カード合成時、カード情報が無くても合成リストがある場合は、合成スキル表示できるようにした。
+//					ただし、ステ振りの自動検出はできないため確率ソートを行なわず、確率表示末尾に(!)を表示するようにした。
+// ★v1.2の影響で、Google Chrome だと合成時に素材カード選択画面でカードが選択できないバグがあります。修正予定。
 
 //================================================
 // 定数宣言一式
@@ -1177,6 +1180,7 @@ var card_list =	{
 	"4237":{n:"王異",  r:"R", c:2, a:270, i:7, d1:275, bs:"謀反の速攻"},
 	"4245":{n:"波才",  r:"UC", c:3, a:315, i:6, d1:305, bs:"鹵獲の進攻"},
 	"4246":{n:"馬元義",  r:"R", c:3.5, a:425, i:14, d1:415, bs:"鹵獲の強攻"},
+	"4275":{n:"牛輔",  r:"R", c:3, a:300, i:9, d1:300, bs:"強襲速撃"},
 	"4276":{n:"華雄",  r:"UC", c:3, a:320, i:4, d1:315, bs:"精鋭の進撃"},
 	"4277":{n:"李儒",  r:"UC", c:2.5, a:220, i:14, d1:370, bs:"剣兵方陣"},
 	"4278":{n:"董卓",  r:"UC", c:2.5, a:275, i:5, d1:395, bs:"剣兵突撃"},
@@ -1600,15 +1604,18 @@ function bro3dasuDrawCompositionSkill() {
 				var att = parseFloat(j$("li[class=status_att]", this).text());
 				var wdef = parseFloat(j$("li[class=status_wdef]", this).text());
 				var int = parseFloat(j$("li[class=status_int]", this).text());
-
+				var skillName1Info = j$("span[class*=skillName1]", this).text().match(/^[^:]+:(.+)LV\d+$/);
+				var skillName1 = RegExp.$1;
 				// 合成確率算出
 				var compositionText = "";
-				var result = calcCompositionSkillRate(baseLv, baseScore, baseSkill, cardNo, cardName, level, score, att, wdef, int);
-				if(result == null) {
+				var res = calcCompositionSkillRate(baseLv, baseScore, baseSkill, cardNo, cardName, level, score, att, wdef, int, skillName1);
+				if(res == null) {
 					compositionText = "<li style='margin-top:3px !important;'>合成表なし</li><li style='margin-top:3px !important;'></li><li style='margin-top:3px !important;'></li><li style='margin-top:3px !important;'></li>";
 				} else {
+					var result = res[0];
+					var probSuffix = res[1] ? "(!)" : "";
 					for(var i = 0; i < result.length; i++) {
-						compositionText = compositionText + "<li style='margin-top:3px !important; font-size:8pt;'>" + result[i].n + ":" + result[i].skill + "&nbsp;" + result[i].probability + "%</li>";
+						compositionText = compositionText + "<li style='margin-top:3px !important; font-size:8pt;'>" + result[i].n + ":" + result[i].skill + "&nbsp;" + result[i].probability + "%" + probSuffix + "</li>";
 					}
 				}
 
@@ -1623,10 +1630,18 @@ function bro3dasuDrawCompositionSkill() {
 //----------------------------------
 // 合成スキル確率算出
 //----------------------------------
-function calcCompositionSkillRate(baseLv, baseScore, baseSkills, useCardNo, useCardName, useLv, useScore, useAtk, useDef, useInt) {
+function calcCompositionSkillRate(baseLv, baseScore, baseSkills, useCardNo, useCardName, useLv, useScore, useAtk, useDef, useInt, useSkillName1) {
+	var noCardInfo = false;
+
 	// 基礎確率の算出
-	if (typeof card_list[useCardNo] == 'undefined') {
-		return null;
+	var useCardInfo = card_list[useCardNo];
+	if (typeof useCardInfo == 'undefined') {
+		if (typeof gousei_skill[useSkillName1] == 'undefined') {
+			return null;
+		} else {
+			noCardInfo = true;
+			useCardInfo = {n:useCardName, a:0, i:0, d1:0, bs:useSkillName1};
+		}
 	}
 
 	// 合計LV・スコアの計算
@@ -1656,14 +1671,14 @@ function calcCompositionSkillRate(baseLv, baseScore, baseSkills, useCardNo, useC
 	probability[3] = (parseFloat( (1 - parseFloat(scr_list[score_table][1] / 100)) * parseFloat(lv_list[lv_table][4] / 100)) * 100).toFixed(2);	// 隠
 
 	// 1ポイントあたりのステータス増分計算
-	var pointAtk = parseFloat(card_list[useCardNo].a)  * 0.094;		// 攻撃
-	var pointDef = parseFloat(card_list[useCardNo].d1) * 0.094;		// 防御
-	var pointInt = parseFloat(card_list[useCardNo].i)  * 0.0016;		// 知力
+	var pointAtk = parseFloat(useCardInfo.a)  * 0.094;		// 攻撃
+	var pointDef = parseFloat(useCardInfo.d1) * 0.094;		// 防御
+	var pointInt = parseFloat(useCardInfo.i)  * 0.0016;		// 知力
 
 	// 実際に割り振ったポイント数の計算
-	var AlloPointAtk = parseInt((useAtk - parseFloat(card_list[useCardNo].a))  / pointAtk + 0.5);		// 攻撃
-	var AlloPointDef = parseInt((useDef - parseFloat(card_list[useCardNo].d1)) / pointDef + 0.5);		// 防御
-	var AlloPointInt = parseInt((useInt - parseFloat(card_list[useCardNo].i))  / pointInt + 0.5);		// 知力
+	var AlloPointAtk = parseInt((useAtk - parseFloat(useCardInfo.a))  / pointAtk + 0.5);		// 攻撃
+	var AlloPointDef = parseInt((useDef - parseFloat(useCardInfo.d1)) / pointDef + 0.5);		// 防御
+	var AlloPointInt = parseInt((useInt - parseFloat(useCardInfo.i))  / pointInt + 0.5);		// 知力
 
 	// 合成レシピ並び替え用配列
 	var SkillArray = [];
@@ -1680,16 +1695,16 @@ function calcCompositionSkillRate(baseLv, baseScore, baseSkills, useCardNo, useC
 			probability[k] = panda_probability;
 		}
 
-		SkillArray.push( {"point":0, "n":"攻", "skill": card_list[useCardNo].bs, "probability":0.00, "flg":3 });		// 攻撃
-		SkillArray.push( {"point":0, "n":"防", "skill": card_list[useCardNo].bs, "probability":0.00, "flg":2 });		// 防御
-		SkillArray.push( {"point":0, "n":"知", "skill": card_list[useCardNo].bs, "probability":0.00, "flg":1 });		// 知力
-		SkillArray.push( {"point":0, "n":"隠", "skill": card_list[useCardNo].bs, "probability":0.00, "flg":0 });		//
+		SkillArray.push( {"point":0, "n":"攻", "skill": useCardInfo.bs, "probability":0.00, "flg":3 });		// 攻撃
+		SkillArray.push( {"point":0, "n":"防", "skill": useCardInfo.bs, "probability":0.00, "flg":2 });		// 防御
+		SkillArray.push( {"point":0, "n":"知", "skill": useCardInfo.bs, "probability":0.00, "flg":1 });		// 知力
+		SkillArray.push( {"point":0, "n":"隠", "skill": useCardInfo.bs, "probability":0.00, "flg":0 });		//
 	}
 	else {
-		SkillArray.push( {"point":AlloPointAtk, "n":"攻", "skill": gousei_skill[card_list[useCardNo].bs][0], "probability":0.00, "flg":3 });		// 攻撃
-		SkillArray.push( {"point":AlloPointDef, "n":"防", "skill": gousei_skill[card_list[useCardNo].bs][1], "probability":0.00, "flg":2 });		// 防御
-		SkillArray.push( {"point":AlloPointInt, "n":"知", "skill": gousei_skill[card_list[useCardNo].bs][2], "probability":0.00, "flg":1 });		// 知力
-		SkillArray.push( {"point":0,			"n":"隠", "skill": gousei_skill[card_list[useCardNo].bs][3], "probability":0.00, "flg":0 });		//
+		SkillArray.push( {"point":AlloPointAtk, "n":"攻", "skill": gousei_skill[useCardInfo.bs][0], "probability":0.00, "flg":3 });		// 攻撃
+		SkillArray.push( {"point":AlloPointDef, "n":"防", "skill": gousei_skill[useCardInfo.bs][1], "probability":0.00, "flg":2 });		// 防御
+		SkillArray.push( {"point":AlloPointInt, "n":"知", "skill": gousei_skill[useCardInfo.bs][2], "probability":0.00, "flg":1 });		// 知力
+		SkillArray.push( {"point":0,			"n":"隠", "skill": gousei_skill[useCardInfo.bs][3], "probability":0.00, "flg":0 });		//
 	}
 
 	SkillArray.sort(
@@ -1732,5 +1747,5 @@ function calcCompositionSkillRate(baseLv, baseScore, baseSkills, useCardNo, useC
 		}
 	}
 
-	return result;
+	return [result, noCardInfo];
 }
