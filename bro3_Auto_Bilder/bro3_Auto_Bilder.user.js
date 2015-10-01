@@ -17,7 +17,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2015.07.28
+// @version		2015.10.02
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -111,8 +111,9 @@
 //			  ★3(0-0-0-1)水車村オプションを追加
 // 2015.07.28 初期化ボタン以外で水車村化オプションのチェックを外せなくなっていた問題を修正
 //			  2015.07.27版で工場村化オプションが動作していなかった問題を修正
+// 2015.10.02 水車村化オプションで資源不足時無限ループしていた問題を修正
 
-var VERSION = "2015.07.28"; 	// バージョン情報
+var VERSION = "2015.10.02"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -1283,8 +1284,8 @@ function DeleteFacility(_x,_y){
 				var ssid=tables.snapshotItem(0).value;
 
 				var c={};
-				c['x'] = parseInt(_x);
-				c['y'] = parseInt(_y);
+				c['x'] = parseInt(_x,10);
+				c['y'] = parseInt(_y,10);
 				c['ssid']=tables.snapshotItem(0).value;
 				c['remove']="%E5%BB%BA%E7%89%A9%E3%82%92%E5%A3%8A%E3%81%99";
 				j$.post("http://"+HOST+"/facility/facility.php?x=" + _x + "&y=" + _y + "#ptop",c,function(){});
@@ -1821,10 +1822,10 @@ debugLog("=== Start autoLvup ===");
 							if (x != -1) {
 								// 武器強化処理
 								var c={};
-								c['x'] = parseInt(_x);
-								c['y'] = parseInt(_y);
-								c['unit_id'] = parseInt(Buki[0][3]);
-								j$.post("http://"+HOST+"/facility/facility.php?x=" + parseInt(_x) + "&y=" + parseInt(_y) + "#ptop",c,function(){});
+								c['x'] = parseInt(_x,10);
+								c['y'] = parseInt(_y,10);
+								c['unit_id'] = parseInt(Buki[0][3],10);
+								j$.post("http://"+HOST+"/facility/facility.php?x=" + parseInt(_x,10) + "&y=" + parseInt(_y,10) + "#ptop",c,function(){});
 			//					var tid=setTimeout(function(){location.reload(false);},0);
 
 							}
@@ -1838,13 +1839,13 @@ debugLog("=== Start autoLvup ===");
 							var iron = parseInt( $("iron").innerHTML, 10 );
 							var rice = parseInt( $("rice").innerHTML, 10 );
 
-		//					var temp = (parseInt(hwood) + 99);
+		//					var temp = (parseInt(hwood) + 99,10);
 
-							if (parseInt(hnlv) >= parseInt(hslv)) { return false; }
-							if ((parseInt(hwood)  + OPT_BLD_WOOD ) > wood ) { return false; }
-							if ((parseInt(hstone) + OPT_BLD_STONE) > stone) { return false; }
-							if ((parseInt(hiron)  + OPT_BLD_IRON ) > iron ) { return false; }
-							if ((parseInt(hrice)  + OPT_BLD_RICE ) > rice ) { return false; }
+							if (parseInt(hnlv,10) >= parseInt(hslv,10)) { return false; }
+							if ((parseInt(hwood,10)  + OPT_BLD_WOOD ) > wood ) { return false; }
+							if ((parseInt(hstone,10) + OPT_BLD_STONE) > stone) { return false; }
+							if ((parseInt(hiron,10)  + OPT_BLD_IRON ) > iron ) { return false; }
+							if ((parseInt(hrice,10)  + OPT_BLD_RICE ) > rice ) { return false; }
 							if (hgo == false) { return false; }
 
 							return true;
@@ -1888,8 +1889,8 @@ debugLog("=== Start setVillageFacility ===");
 			// 削除数カウント
 			if( buildStatusElem.snapshotItem(0).parentNode.parentNode.textContent.indexOf("削除") >= 0 ){
 				if(buildStatusElem.snapshotItem(0).href.match(/.*\/.*(\d+).*(\d+)/)){
-					delX = parseInt(RegExp.$1);
-					delY = parseInt(RegExp.$2);
+					delX = parseInt(RegExp.$1,10);
+					delY = parseInt(RegExp.$2,10);
 				}
 				del++;
 			}
@@ -1983,7 +1984,7 @@ debugLog("=== Start setVillageFacility ===");
 		var n = -1;
 		for(var i=0;i < area_all.length;i++){
 			if(area_all[i].name == "平地"){heichi++;n=i;}
-			else if(area_all[i].name.match(/畑\s.*?(\d+)/)){hatake++;if(parseInt(RegExp.$1)>=5){suzume_Flag=1;}}
+			else if(area_all[i].name.match(/畑\s.*?(\d+)/)){hatake++;if(parseInt(RegExp.$1,10)>=5){suzume_Flag=1;}}
 			else if(area_all[i].name.match(/倉庫/)){souko++;}
 			else if(area_all[i].name.match(/銅雀台/)){suzume++;}
 		}
@@ -2051,7 +2052,7 @@ debugLog("=== Start setVillageFacility ===");
 					break;
 			}
 
-			if(parseInt(area[i].lv) >= parseInt(OPT_CHKBOXLV[OPT_FNID[tmpName1]])){
+			if(parseInt(area[i].lv,10) >= parseInt(OPT_CHKBOXLV[OPT_FNID[tmpName1]],10)){
 				continue;
 			} //指定Lv以上ならメインに戻る
 			//建築物名分回す
@@ -2068,8 +2069,8 @@ debugLog("=== Start setVillageFacility ===");
 				//ソートしたLvの低い順に比較する
 				if(area[i].name == OPT_FUC_NAME[ii]){
 					//建築指示が有るか確認する。
-					if(parseInt(OPT_CHKBOX[ii]) == 1){
-						if(parseInt(area[i].lv) >= parseInt(OPT_CHKBOXLV[ii])){
+					if(parseInt(OPT_CHKBOX[ii],10) == 1){
+						if(parseInt(area[i].lv,10) >= parseInt(OPT_CHKBOXLV[ii],10)){
 							break;
 						}
 
@@ -2083,13 +2084,13 @@ debugLog("=== Start setVillageFacility ===");
 
 						var Temp = area[i].xy.split(",");
 						var c = {};
-						if( (del != 0) && (parseInt(Temp[0]) == delX) && (parseInt(Temp[1]) == delY) ){
+						if( (del != 0) && (parseInt(Temp[0],10) == delX) && (parseInt(Temp[1],10) == delY) ){
 							// 削除施設とレベルアップ施設が一致したらスキップ
 							continue;
 						}
 						// 拠点以外のレベルアップ処理
-						c['x']=parseInt(Temp[0]);
-						c['y']=parseInt(Temp[1]);
+						c['x']=parseInt(Temp[0],10);
+						c['y']=parseInt(Temp[1],10);
 						c['village_id']=getVillageID(vId);
 						c['ssid']=j$.cookie('SSID');
 						j$.post("http://"+HOST+"/facility/build.php",c,function(){});
@@ -2142,8 +2143,8 @@ function setVillageFacility2() {
 			// 削除数カウント
 			if( buildStatusElem.snapshotItem(0).parentNode.parentNode.textContent.indexOf("削除") >= 0 ){
 				if(buildStatusElem.snapshotItem(0).href.match(/.*\/.*(\d+).*(\d+)/)){
-					delX = parseInt(RegExp.$1);
-					delY = parseInt(RegExp.$2);
+					delX = parseInt(RegExp.$1,10);
+					delY = parseInt(RegExp.$2,10);
 				}
 				del++;
 			}
@@ -2192,14 +2193,14 @@ function setVillageFacility2() {
 		var BlankCount = 0;
 		// 対象レベル以下の宿舎（畑）と平地の数をカウントする
 		for (i=0;i<area.length;i++){
-			if (area[i].name == TargetName && parseInt(area[i].lv) <= OPT_MAXLV) { TargetCount += 1; }
+			if (area[i].name == TargetName && parseInt(area[i].lv,10) <= OPT_MAXLV) { TargetCount += 1; }
 			if (area[i].name == "平地") { TargetCount += 1; }
 		}
 		if (TargetCount < OPT_MAX){
 			// 対象となる宿舎（畑）と平地の合計が指定数に満たない場合
 			area.sort(cmp_lv);
 			for (i=0;i<area.length;i++){
-				if ((area[i].name == TargetName) && (parseInt(area[i].lv) >= OPT_MAXLV)) {
+				if ((area[i].name == TargetName) && (parseInt(area[i].lv,10) >= OPT_MAXLV)) {
 					// 削除
 					var Temp = area[i].xy.split(",");
 					DeleteFacility(Temp[0],Temp[1]);
@@ -2211,7 +2212,7 @@ function setVillageFacility2() {
 		} else {
 			// 普通に削除処理を実行
 			for (i=0;i<area.length;i++){
-				if ((area[i].name == TargetName) && (parseInt(area[i].lv) == OPT_MAXLV)) {
+				if ((area[i].name == TargetName) && (parseInt(area[i].lv,10) == OPT_MAXLV)) {
 					// 削除
 					var Temp = area[i].xy.split(",");
 					DeleteFacility(Temp[0],Temp[1]);
@@ -2281,7 +2282,7 @@ function setVillageFacility2() {
 				}
 			}
 		}
-//		if(parseInt(area[i].lv) >= OPT_MAXLV){break;} //指定Lv以上ならメインに戻る
+//		if(parseInt(area[i].lv,10) >= OPT_MAXLV){break;} //指定Lv以上ならメインに戻る
 
 		//建築物名分回す
 		for(var ii=0;ii<OPT_FUC_NAME.length;ii++){
@@ -2298,7 +2299,7 @@ function setVillageFacility2() {
 				var Temp = area[i].xy.split(",");
 				var c={};
 
-				if( (del != 0) && (parseInt(Temp[0]) == delX) && (parseInt(Temp[1]) == delY) ){
+				if( (del != 0) && (parseInt(Temp[0],10) == delX) && (parseInt(Temp[1],10) == delY) ){
 					// 削除施設とレベルアップ施設が一致したらスキップ
 					continue;
 				}
@@ -2307,24 +2308,24 @@ function setVillageFacility2() {
 					continue;
 				}
 				if( area[i].name != "平地"){
-					c['x']=parseInt(Temp[0]);
-					c['y']=parseInt(Temp[1]);
+					c['x']=parseInt(Temp[0],10);
+					c['y']=parseInt(Temp[1],10);
 					c['village_id']=getVillageID(vId);
 					c['ssid']=j$.cookie('SSID');
 					j$.post("http://"+HOST+"/facility/build.php",c,function(){});
 					var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 				} else {
 					if( OPT_SorH == "DD" ){
-						c['x']=parseInt(Temp[0]);
-						c['y']=parseInt(Temp[1]);
+						c['x']=parseInt(Temp[0],10);
+						c['y']=parseInt(Temp[1],10);
 						c['id']=SYUKUSYA;
 						c['village_id']=getVillageID(vId);
 						c['ssid']=j$.cookie('SSID');
 						j$.post("http://"+HOST+"/facility/build.php",c,function(){});
 						var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 					} else {
-						c['x']=parseInt(Temp[0]);
-						c['y']=parseInt(Temp[1]);
+						c['x']=parseInt(Temp[0],10);
+						c['y']=parseInt(Temp[1],10);
 						c['id']=215;
 						c['village_id']=getVillageID(vId);
 						c['ssid']=j$.cookie('SSID');
@@ -2429,8 +2430,8 @@ function createFacility(f, area){
 			var tid=setTimeout(function(){location.href = mURL;},INTERVAL);
 */
 			var c = {};
-			c['x']=parseInt(Temp[0]);
-			c['y']=parseInt(Temp[1]);
+			c['x']=parseInt(Temp[0],10);
+			c['y']=parseInt(Temp[1],10);
 			c['village_id']=getVillageID(vId);
 			c['id']=f;
 			c['ssid']=j$.cookie('SSID');
@@ -2486,28 +2487,28 @@ function createFacilityEx(x, y, f, lv, area){
 				}
 				break;
 			}
-			else if (f == Hatake   && area[i].name.match(/^畑\s.*?(\d+)/)		&& parseInt(RegExp.$1,10) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Souko    && area[i].name.match(/^倉庫\s.*?(\d+)/)		&& parseInt(RegExp.$1,10) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Renpei   && area[i].name.match(/^練兵所\s.*?(\d+)/)	&& parseInt(RegExp.$1,10) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Shukusha && area[i].name.match(/^宿舎\s.*?(\d+)/)		&& parseInt(RegExp.$1,10) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Kajiba   && area[i].name.match(/^鍛冶場\s.*?(\d+)/)	&& parseInt(RegExp.$1,10) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Bougu    && area[i].name.match(/^防具工場\s.*?(\d+)/)	&& parseInt(RegExp.$1,10) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Ichiba   && area[i].name.match(/^市場\s.*?(\d+)/)		&& parseInt(RegExp.$1,10) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Suisha   && area[i].name.match(/^水車\s.*?(\d+)/)		&& parseInt(RegExp.$1,10) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Heiki    && area[i].name.match(/^兵器工房\s.*?(\d+)/)	&& parseInt(RegExp.$1,10) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Koujou   && area[i].name.match(/^工場\s.*?(\d+)/)		&& parseInt(RegExp.$1,10) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Bassai   && area[i].name.match(/^伐採所\s.*?(\d+)/)	&& parseInt(RegExp.$1,10) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Ishikiri && area[i].name.match(/^石切り場\s.*?(\d+)/)	&& parseInt(RegExp.$1,10) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Seitetsu && area[i].name.match(/^製鉄所\s.*?(\d+)/)	&& parseInt(RegExp.$1,10) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
-			else if (f == Daishuku && area[i].name.match(/^大宿舎\s.*?(\d+)/)	&& parseInt(RegExp.$1,10) < lv && Chek_Sigen(area[i]) != 1) lvup = 1;
+			else if (f == Hatake   && area[i].name.match(/^(畑)\s.*?(\d+)/)			&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Souko    && area[i].name.match(/^(倉庫)\s.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Renpei   && area[i].name.match(/^(練兵所)\s.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Shukusha && area[i].name.match(/^(宿舎)\s.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Kajiba   && area[i].name.match(/^(鍛冶場)\s.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Bougu    && area[i].name.match(/^(防具工場)\s.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Ichiba   && area[i].name.match(/^(市場)\s.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Suisha   && area[i].name.match(/^(水車)\s.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Heiki    && area[i].name.match(/^(兵器工房)\s.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Koujou   && area[i].name.match(/^(工場)\s.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Bassai   && area[i].name.match(/^(伐採所)\s.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Ishikiri && area[i].name.match(/^(石切り場)\s.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Seitetsu && area[i].name.match(/^(製鉄所)\s.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Daishuku && area[i].name.match(/^(大宿舎)\s.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
 			break;
 		}
 	}
 
 	if (create || lvup) {
 		var c = {};
-		c['x']=parseInt(x);
-		c['y']=parseInt(y);
+		c['x']=parseInt(x,10);
+		c['y']=parseInt(y,10);
 		c['village_id']=getVillageID(vId);
 		if (create) {
 			c['id']=f;
@@ -3077,10 +3078,10 @@ function forwardNextVillage(){
 		if(vcURL!=undefined){
 			if (nextURL == "") {
 				// 次回建築完了予定がない場合は通常巡回処理
-				roundTime = parseInt(OPT_ROUND_TIME1) * 1000;
+				roundTime = parseInt(OPT_ROUND_TIME1,10) * 1000;
 				tidMain2=setTimeout(function(){location.href = vcURL;},roundTime);
 			} else {
-				if (parseInt(OPT_ROUND_TIME1) * 1000 > nTime) {
+				if (parseInt(OPT_ROUND_TIME1,10) * 1000 > nTime) {
 					// 巡回時間より前に建築が終わる拠点がある場合
 					// 2011.12.06 即時変更をやめて10秒後に修正
 //					tidMain2=setTimeout(function(){location.href = nextURL;},(nextTime - nowTime));
@@ -3089,7 +3090,7 @@ function forwardNextVillage(){
 					tidMain2=setTimeout(function(){location.href = nextURL;},roundTime);
 				} else {
 					// 通常巡回処理
-					roundTime = parseInt(OPT_ROUND_TIME1) * 1000;
+					roundTime = parseInt(OPT_ROUND_TIME1,10) * 1000;
 					tidMain2=setTimeout(function(){location.href = vcURL;},roundTime);
 				}
 			}
@@ -4320,7 +4321,7 @@ function addIniBilderHtml() {
 	OPT_ROUND_TIME1 = GM_getValue(HOST+PGNAME+"OPT_ROUND_TIME1", LOAD_ROUND_TIME_180);
 
 	// 2012.01.11 巡回時間に 1 ~ 10sec 追加
-	OPT_ROUND_TIME1 = parseInt(OPT_ROUND_TIME1) + Math.floor( Math.random() * 10 );
+	OPT_ROUND_TIME1 = parseInt(OPT_ROUND_TIME1,10) + Math.floor( Math.random() * 10 );
 
 	// 次回表示
 	var nowTime = new Date();
@@ -4354,7 +4355,7 @@ function addIniBilderHtml() {
 			ShopBox.style.color = "#90EE90";
 			ShopBox.style.backgroundColor = "#000000";
 			ShopBox.style.verticalAlign = "middle";
-			ShopBox.innerHTML = "　変換用市場 : " + villages[nextIndex][IDX_BASE_NAME] + "　" + villages[nextIndex][IDX_XY] + "　市場Lv : " + shoplist[0].lv;
+			ShopBox.innerHTML = "　変換用市場 : " + villages[nextIndex][IDX_BASE_NAME] + "　" + villages[nextIndex][IDX_XY] + "　市場Lv : " + shoplist[0].lv + "　変換開始量 : " + OPT_RISE_MAX;
 			ABContainer.appendChild(ShopBox);
 		}
 	}
@@ -4645,11 +4646,11 @@ function addIniBilderHtml() {
 
 // 拠点巡回読込
 function loadAVCBox(){
-	OPT_CHKBOX_AVC = parseInt(GM_getValue(HOST+PGNAME+"AVC", ""));
+	OPT_CHKBOX_AVC = parseInt(GM_getValue(HOST+PGNAME+"AVC", ""),10);
 }
 
 function loadAVCBox2(tVID){
-	//OPT_CHKBOX_AVC = parseInt(GM_getValue(HOST+PGNAME+"AVC"+"_"+tVID, ""));
+	//OPT_CHKBOX_AVC = parseInt(GM_getValue(HOST+PGNAME+"AVC"+"_"+tVID, ""),10);
 	OPT_CHKBOX_AVC = GM_getValue(HOST+PGNAME+"OPT_CHKBOX_AVC_" + tVID, true);
 	return OPT_CHKBOX_AVC;
 }
@@ -6336,13 +6337,13 @@ function getChildElement(parentNode, position) {
 //時刻計算（現在時刻に加算、引数hh:mm:ss）
 function computeTime(clock) {
 	var hour = parseInt(trimZero(
-		clock.replace(/^([0-9]{2}):([0-9]{2}):([0-9]{2})$/, "$1")));
+		clock.replace(/^([0-9]{2}):([0-9]{2}):([0-9]{2})$/, "$1")),10);
 	if (isNaN(hour)) hour = 0;
 	var min = parseInt(trimZero(
-		clock.replace(/^([0-9]{2}):([0-9]{2}):([0-9]{2})$/, "$2")));
+		clock.replace(/^([0-9]{2}):([0-9]{2}):([0-9]{2})$/, "$2")),10);
 	if (isNaN(min)) min = 0;
 	var sec = parseInt(trimZero(
-		clock.replace(/^([0-9]{2}):([0-9]{2}):([0-9]{2})$/, "$3")));
+		clock.replace(/^([0-9]{2}):([0-9]{2}):([0-9]{2})$/, "$3")),10);
 	if (isNaN(sec)) sec = 0;
 
 	var now = new Date();
@@ -6993,11 +6994,11 @@ function Chek_Sigen(area){
 	RES_NOW["storagemax"] = parseInt( $("rice_max").innerHTML, 10 );
 
 	try {
-		if( costs[area.name].length <= parseInt(area.lv) || // maxinum level reached
-			RES_NOW.wood < costs[area.name][parseInt(area.lv)][0] ||
-			RES_NOW.stone< costs[area.name][parseInt(area.lv)][1] ||
-			RES_NOW.iron < costs[area.name][parseInt(area.lv)][2] ||
-			RES_NOW.rice < costs[area.name][parseInt(area.lv)][3] ) {
+		if( costs[area.name].length <= parseInt(area.lv,10) || // maxinum level reached
+			RES_NOW.wood < costs[area.name][parseInt(area.lv,10)][0] ||
+			RES_NOW.stone< costs[area.name][parseInt(area.lv,10)][1] ||
+			RES_NOW.iron < costs[area.name][parseInt(area.lv,10)][2] ||
+			RES_NOW.rice < costs[area.name][parseInt(area.lv,10)][3] ) {
 				//建築不可 = 1
 				return 1;
 		}
@@ -7113,28 +7114,28 @@ function addSoldierCount(total, add) {
 
 	if (add.snapshotLength == 12) {
 		for (var j = 0; j < 11; j++) {
-			total[j] += parseInt(add.snapshotItem(j).innerHTML);
+			total[j] += parseInt(add.snapshotItem(j).innerHTML,10);
 		}
 	}
 
 	if (add.snapshotLength == 16) {
 		for (var j = 0; j < 15; j++) {
 			switch ( j ) {
-				case  0: total[0]  += parseInt(add.snapshotItem(j).innerHTML); break;		// 剣兵
-				case  1: total[12] += parseInt(add.snapshotItem(j).innerHTML); break;		// 盾兵
-				case  2: total[1]  += parseInt(add.snapshotItem(j).innerHTML); break;		// 槍兵
-				case  3: total[2]  += parseInt(add.snapshotItem(j).innerHTML); break;		// 弓兵
-				case  4: total[3]  += parseInt(add.snapshotItem(j).innerHTML); break;		// 騎兵
-				case  5: total[9]  += parseInt(add.snapshotItem(j).innerHTML); break;		// 衝車
-				case  6: total[7]  += parseInt(add.snapshotItem(j).innerHTML); break;		// 斥候
+				case  0: total[0]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 剣兵
+				case  1: total[12] += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 盾兵
+				case  2: total[1]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 槍兵
+				case  3: total[2]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 弓兵
+				case  4: total[3]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 騎兵
+				case  5: total[9]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 衝車
+				case  6: total[7]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 斥候
 
-				case  8: total[11] += parseInt(add.snapshotItem(j).innerHTML); break;		// 大剣兵
-				case  9: total[13] += parseInt(add.snapshotItem(j).innerHTML); break;		// 重盾兵
-				case 10: total[4]  += parseInt(add.snapshotItem(j).innerHTML); break;		// 矛槍兵
-				case 11: total[5]  += parseInt(add.snapshotItem(j).innerHTML); break;		// 弩兵
-				case 12: total[6]  += parseInt(add.snapshotItem(j).innerHTML); break;		// 近衛騎兵
-				case 13: total[10] += parseInt(add.snapshotItem(j).innerHTML); break;		// 投石機
-				case 14: total[8]  += parseInt(add.snapshotItem(j).innerHTML); break;		// 斥候騎兵
+				case  8: total[11] += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 大剣兵
+				case  9: total[13] += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 重盾兵
+				case 10: total[4]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 矛槍兵
+				case 11: total[5]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 弩兵
+				case 12: total[6]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 近衛騎兵
+				case 13: total[10] += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 投石機
+				case 14: total[8]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 斥候騎兵
 			}
 		}
 	}
@@ -7169,8 +7170,8 @@ function make_soldier(attackerData){
 					// 兵作成
 					if ((OPT_SOL_ADD[sort_priority[i][1] - 300] != 0) && (OPT_SOL_ADD[sort_priority[i][1] - 300] < sort_priority[i][3])){
 						var c={};
-						c['x']=parseInt(sort_priority[i][7]);
-						c['y']=parseInt(sort_priority[i][8]);
+						c['x']=parseInt(sort_priority[i][7],10);
+						c['y']=parseInt(sort_priority[i][8],10);
 						c['unit_id']=sort_priority[i][1];
 						c['count']=OPT_SOL_ADD[sort_priority[i][1] - 300];
 						j$.post("http://"+HOST+"/facility/facility.php?x=" + sort_priority[i][7] + "&y=" + sort_priority[i][8] + "#ptop",c,function(){});
@@ -7251,7 +7252,7 @@ function make_soldier(attackerData){
 									// 兵作成可能
 									make_no[makeElem.snapshotItem(i).innerHTML][2] = 1;
 									// 兵作成可能数
-									make_no[makeElem.snapshotItem(i).innerHTML][3] = parseInt(sumMaxSoldier(make_no[makeElem.snapshotItem(i).innerHTML][1]));
+									make_no[makeElem.snapshotItem(i).innerHTML][3] = parseInt(sumMaxSoldier(make_no[makeElem.snapshotItem(i).innerHTML][1]),10);
 									// 現存合計兵数
 									make_no[makeElem.snapshotItem(i).innerHTML][5] = attackerData[make_no[makeElem.snapshotItem(i).innerHTML][4]];
 									// 残必要兵数
@@ -7314,10 +7315,10 @@ function sumMaxSoldier(type){
 	var iron = parseInt( $("iron").innerHTML, 10 );
 	var rice = parseInt( $("rice").innerHTML, 10 );
 
-	countWood  = parseInt((wood  - OPT_BLD_WOOD)  / SoldierCost[type][0]);
-	countStone = parseInt((stone - OPT_BLD_STONE) / SoldierCost[type][1]);
-	countIron  = parseInt((iron  - OPT_BLD_IRON)  / SoldierCost[type][2]);
-	countRice  = parseInt((rice  - OPT_BLD_RICE)  / SoldierCost[type][3]);
+	countWood  = parseInt((wood  - OPT_BLD_WOOD)  / SoldierCost[type][0],10);
+	countStone = parseInt((stone - OPT_BLD_STONE) / SoldierCost[type][1],10);
+	countIron  = parseInt((iron  - OPT_BLD_IRON)  / SoldierCost[type][2],10);
+	countRice  = parseInt((rice  - OPT_BLD_RICE)  / SoldierCost[type][3],10);
 
 	var MaxSoldir = countWood;
 	if (MaxSoldir > countStone) { MaxSoldir = countStone; }
@@ -7634,15 +7635,15 @@ debugLog("=== Start ichibaChange ===");
 function changeResorceToResorce(from, tc, to, x, y) {
 
 	var c={};
-	c['x'] = parseInt(x);
-	c['y'] = parseInt(y);
+	c['x'] = parseInt(x,10);
+	c['y'] = parseInt(y,10);
 	c['change_btn'] = encodeURIComponent("はい");
-	c['tc'] = parseInt(tc);
+	c['tc'] = parseInt(tc,10);
 	c['st'] = 1;
-	c['tf_id'] = parseInt(from);
-	c['tt_id'] = parseInt(to);
+	c['tf_id'] = parseInt(from,10);
+	c['tt_id'] = parseInt(to,10);
 	c['ssid'] = j$.cookie('SSID');
-	j$.post("http://"+HOST+"/facility/facility.php?x=" + parseInt(x) + "&y=" + parseInt(y) + "#ptop",c,function(){});
+	j$.post("http://"+HOST+"/facility/facility.php?x=" + parseInt(x,10) + "&y=" + parseInt(y,10) + "#ptop",c,function(){});
 	var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 
 }
@@ -7689,7 +7690,7 @@ function sendDonate(rice) {
 	c['wood'] = 0;
 	c['stone'] = 0;
 	c['iron'] = 0;
-	c['rice'] = parseInt(rice);
+	c['rice'] = parseInt(rice,10);
 	c['contribution'] = 1;
 	j$.post("http://"+HOST+"/alliance/level.php",c,function(){});
 	var tid=setTimeout(function(){location.reload(false);},INTERVAL);
@@ -8424,9 +8425,9 @@ function escapeXPathExpr(text) {
 function forInt(num,def){
 //	console.log(num + " : " + def);
 	if (def == undefined) { 	def = 0;	}
-	if (isNaN(parseInt(num))) {
+	if (isNaN(parseInt(num,10))) {
 		return def;
 	} else {
-		return parseInt(num);
+		return parseInt(num,10);
 	}
 }
