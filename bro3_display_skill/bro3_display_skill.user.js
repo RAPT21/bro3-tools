@@ -7,7 +7,7 @@
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @grant		none
 // @author		5zen + RAPT
-// @version		1.4 (2015/09/30)
+// @version		1.5 (2015/10/04)
 // ==/UserScript==
 
 // 2015.08.16	1.0	beyond 3.0.74α (2015/06/28) から 5zen 氏原作のカード表示拡張機能のみ抜粋
@@ -18,6 +18,8 @@
 // 2015.09.27	1.3	Google Chrome だと合成画面で合成スキル表示時に、スキル LVUP ボタンが押せなくなる問題を修正
 // 2015.09.30	1.4	カード合成時、カード情報が無くても合成リストがある場合は、合成スキル表示できるようにした。
 //					ただし、ステ振りの自動検出はできないため確率ソートを行なわず、確率表示末尾に(!)を表示するようにした。
+// 2015.10.04	1.5	Google Chrome でもデッキ画面で合成スキルも表示対応
+//					デッキにセットする！でカード裏面表示となりますが、再度クリックでセット可能です。
 // ★v1.2の影響で、Google Chrome だと合成時に素材カード選択画面でカードが選択できないバグがあります。修正予定。
 
 //================================================
@@ -453,6 +455,11 @@ var gousei_skill = {
 	'精鋭の進撃':['精鋭の進撃', '兵器防御', '神速', '奇計百出'],
 	'剣兵方陣':['剣兵堅守', '剣兵の強撃', '剣兵強行', '剣兵の聖域'],
 	'剣兵突撃':['剣兵強行', '剣兵の堅守', '千里行', '剣兵の猛撃'],
+	'天衣無縫':['忠節不落', '守護方陣', '烈速', '覇者の護り'],
+	'剣兵増勢':['剣兵速攻', '剣兵方陣', '神速', '剣兵突攻'],
+	'槍兵増勢':['槍兵速攻', '槍兵方陣', '神速', '槍兵突攻'],
+	'L曹操':['全軍の猛攻令', '護君', '智将の大神撃', '全軍の極攻令'],
+	'UR糜夫人':['守護神', '深慮遠謀', '守護聖陣', '守衛聖陣'],
 	'':['', '', '', '']
 };
 
@@ -1399,6 +1406,8 @@ var scr_list = [
 	[	5040025 ,  9.09	 ],  [	 999999999 ,  9.09	 ]
 ];
 
+var isFirefox = window.navigator.userAgent.toLowerCase().indexOf('firefox') != -1;
+
 ( function() {
 
 	// 所持スキル表示
@@ -1439,12 +1448,21 @@ function bro3dasuDrawSkill() {
 				'</span>'
 			);
 		} else if (location.pathname == "/card/deck.php") {
-			j$("div[class*=card rarerity] span[class=status_frontback]").parent().after(
-				'<span style="position:relative; top:-293px;">' +
-					'<img src="http://' + location.hostname + '/20141224-01/extend_project/w945/img/card/common/bg_card_skill.png" style="position:relative; left:6px; z-index:-1">' +
-					'<ul id="skillFrame" style="position:relative; top:-82px; left:14px; font-size:12px;"></ul>' +
-				'</span>'
-			);
+            if (! isFirefox) {
+				j$("div[class*=card rarerity] span[class=status_frontback]").parent().prepend(
+					'<span style="position:relative; top:24px;">' +
+						'<img src="http://' + location.hostname + '/20141224-01/extend_project/w945/img/card/common/bg_card_skill.png" style="position:relative; left:6px; z-index:-1">' +
+						'<ul id="skillFrame" style="position:relative; top:-82px; left:14px; font-size:12px;"></ul>' +
+					'</span>'
+				);
+            } else {
+				j$("div[class*=card rarerity] span[class=status_frontback]").parent().after(
+					'<span style="position:relative; top:-293px;">' +
+						'<img src="http://' + location.hostname + '/20141224-01/extend_project/w945/img/card/common/bg_card_skill.png" style="position:relative; left:6px; z-index:-1">' +
+						'<ul id="skillFrame" style="position:relative; top:-82px; left:14px; font-size:12px;"></ul>' +
+					'</span>'
+				);
+            }
 		} else {
 			j$("div[class*=card rarerity] span[class=status_frontback]").parent().after(
 				'<span style="position:relative; top:-125px;">' +
@@ -1522,7 +1540,7 @@ function bro3dasuDrawCompositionSkill() {
 			'</span>'
 		);
 	} else {
-		if (window.navigator.userAgent.toLowerCase().indexOf('firefox') == -1) {
+		if (! isFirefox) {
 			// Google Chrome でスキル LVUP ボタンが押せなくなる対策
 			var items = j$("div[class*=card rarerity] ul[class=front_skill]");
 			j$.each(items, function(i){
@@ -1536,6 +1554,14 @@ function bro3dasuDrawCompositionSkill() {
 					'</span>'
 				);
 			});
+            if (items.length == 0) {
+				j$("div[class*=card rarerity] span[class=status_frontback]").parent().prepend(
+					'<span style="position:relative; top:108px;">' +
+						'<img src="http://' + location.hostname + '/20141224-01/extend_project/w945/img/card/common/bg_card_skill.png" style="position:relative; left:6px; z-index:-1">' +
+						'<ul id="compositFrame" style="position:relative; top:-82px; left:14px; font-size:12px;"></ul>' +
+					'</span>'
+				);
+            }
 		} else {
 			j$("div[class*=card rarerity] span[class=status_frontback]").parent().after(
 				'<span style="position:relative; top:-211px;">' +
