@@ -7,7 +7,7 @@
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @grant		none
 // @author		5zen + RAPT
-// @version		1.5 (2015/10/04)
+// @version		1.6 (2015/10/14)
 // ==/UserScript==
 
 // 2015.08.16	1.0	beyond 3.0.74α (2015/06/28) から 5zen 氏原作のカード表示拡張機能のみ抜粋
@@ -19,8 +19,9 @@
 // 2015.09.30	1.4	カード合成時、カード情報が無くても合成リストがある場合は、合成スキル表示できるようにした。
 //					ただし、ステ振りの自動検出はできないため確率ソートを行なわず、確率表示末尾に(!)を表示するようにした。
 // 2015.10.04	1.5	Google Chrome でもデッキ画面で合成スキルも表示対応
-//					デッキにセットする！でカード裏面表示となりますが、再度クリックでセット可能です。
-// ★v1.2の影響で、Google Chrome だと合成時に素材カード選択画面でカードが選択できないバグがあります。修正予定。
+//					デッキにセットする！等でカード裏面表示となりますが、再度クリックでセット可能です。
+// 2015.10.14	1.6	一部合成レシピを追加
+// ★v1.2の影響で、Google Chrome だと合成時に素材カード選択画面でカード表面表示のとき選択できないバグがあります。カード裏面だと選択できます。修正予定。
 
 //================================================
 // 定数宣言一式
@@ -58,7 +59,7 @@ var gousei_skill = {
 	'弓兵の大神撃':['弓兵の大極撃', '金剛不壊', '弓兵増強', '大皇帝'],
 	'騎兵の大神撃':['騎兵の大極撃', '金剛不壊', '騎兵増強', '魏武王'],
 	'兵器の大神撃':['未実装', '未実装', '未実装', '未実装'],
-	'剣兵突撃':['未実装', '未実装', '未実装', '未実装'],
+	'剣兵突撃':['剣兵強行', '剣兵堅守', '千里行', '剣兵の猛撃'],
 	'槍兵突撃':['槍兵強行', '槍兵堅守', '千里行', '槍兵の猛撃'],
 	'弓兵突撃':['弓兵強行', '弓兵堅守', '千里行', '弓兵の猛撃'],
 	'騎兵突撃':['騎兵強行', '騎兵堅守', '千里行', '騎兵の猛撃'],
@@ -106,7 +107,7 @@ var gousei_skill = {
 	'孫呉の烈火':['大皇帝', '地の利堅壁', '弓将の采配', '神医の施術'],
 	'白馬将':['拠点襲撃', '戦蹄轟撃', '騎兵増強', '飛蹄進軍'],
 
-	'精鋭の進撃':['未実装', '未実装', '未実装', '未実装'],
+	'精鋭の進撃':['精鋭の進撃', '兵器防御', '神速', '奇計百出'],
 	'臥龍覚醒':['市場繁栄', '八卦の陣', '神算鬼謀', '神医の術式'],
 	'醒龍出師':['太平要術', '八卦の陣', '神算鬼謀', '弓兵の勝鬨'],
 	'昭烈帝':['槍兵突覇', '王者の護り', '軍神', '神算鬼謀'],
@@ -251,7 +252,7 @@ var gousei_skill = {
 	'万里雷光':['万里行', '強襲突覇', '密偵精鋭', '万里雷光'],
 	'天里雷光':['万里行', '強襲突覇', '密偵精鋭', '万里雷光'],
 	'凰里雷光':['万里雷光', '強襲烈覇', '市場知識', '天里行'],
-	'剣兵防御':['未実装', '未実装', '未実装', '未実装'],
+	'剣兵防御':['食糧知識', '剣兵の進撃', '剣兵行軍', '剣兵堅守'],
 	'槍兵防御':['石切知識', '槍兵の進撃', '槍兵行軍', '槍兵堅守'],
 	'弓兵防御':['伐採知識', '弓兵の進撃', '弓兵行軍', '弓兵堅守'],
 	'騎兵防御':['製鉄知識', '騎兵の進撃', '騎兵行軍', '騎兵堅守'],
@@ -452,14 +453,12 @@ var gousei_skill = {
 	'護国望心':['剣兵の強撃', '剣兵防御', '英雄', '奇計百出'],
 	'六文銭の雷光':['神速雷光', '剣兵方陣', '深慮遠謀', '烈速'],
 	'鹵獲の進攻':['鹵獲の進攻', '鉄壁', '千里行', '	趁火打劫'],
-	'精鋭の進撃':['精鋭の進撃', '兵器防御', '神速', '奇計百出'],
-	'剣兵方陣':['剣兵堅守', '剣兵の強撃', '剣兵強行', '剣兵の聖域'],
-	'剣兵突撃':['剣兵強行', '剣兵の堅守', '千里行', '剣兵の猛撃'],
 	'天衣無縫':['忠節不落', '守護方陣', '烈速', '覇者の護り'],
 	'剣兵増勢':['剣兵速攻', '剣兵方陣', '神速', '剣兵突攻'],
 	'槍兵増勢':['槍兵速攻', '槍兵方陣', '神速', '槍兵突攻'],
 	'L曹操':['全軍の猛攻令', '護君', '智将の大神撃', '全軍の極攻令'],
 	'UR糜夫人':['守護神', '深慮遠謀', '守護聖陣', '守衛聖陣'],
+	'知略謀略':['石切技術', '伐採技術', '製鉄技術', '兵器突覇'],
 	'':['', '', '', '']
 };
 
@@ -995,6 +994,7 @@ var card_list =	{
 	"3170":{n:"大虎",  r:"R", c:3, a:310, i:10, d1:430, bs:"剣将の采配"},
 	"3171":{n:"甘寧",  r:"L", c:4, a:610, i:14, d1:565, bs:"凰里雷光"},
 	"3172":{n:"周姫",  r:"SR", c:4, a:330, i:27, d1:605, bs:"呉の治世"},
+	"3187":{n:"歩隲",  r:"C", c:2, a:125, i:13, d1:245, bs:"剣兵防御"},
 	"4001":{n:"呂布",  r:"SR", c:4, a:500, i:3, d1:545, bs:"飛将"},
 	"4002":{n:"董卓",  r:"R", c:3, a:325, i:6, d1:300, bs:"剣兵の進撃"},
 	"4003":{n:"袁紹",  r:"R", c:2.5, a:220, i:10, d1:350, bs:"弓兵突撃"},
@@ -1448,21 +1448,21 @@ function bro3dasuDrawSkill() {
 				'</span>'
 			);
 		} else if (location.pathname == "/card/deck.php") {
-            if (! isFirefox) {
+			if (! isFirefox) {
 				j$("div[class*=card rarerity] span[class=status_frontback]").parent().prepend(
 					'<span style="position:relative; top:24px;">' +
 						'<img src="http://' + location.hostname + '/20141224-01/extend_project/w945/img/card/common/bg_card_skill.png" style="position:relative; left:6px; z-index:-1">' +
 						'<ul id="skillFrame" style="position:relative; top:-82px; left:14px; font-size:12px;"></ul>' +
 					'</span>'
 				);
-            } else {
+			} else {
 				j$("div[class*=card rarerity] span[class=status_frontback]").parent().after(
 					'<span style="position:relative; top:-293px;">' +
 						'<img src="http://' + location.hostname + '/20141224-01/extend_project/w945/img/card/common/bg_card_skill.png" style="position:relative; left:6px; z-index:-1">' +
 						'<ul id="skillFrame" style="position:relative; top:-82px; left:14px; font-size:12px;"></ul>' +
 					'</span>'
 				);
-            }
+			}
 		} else {
 			j$("div[class*=card rarerity] span[class=status_frontback]").parent().after(
 				'<span style="position:relative; top:-125px;">' +
@@ -1554,14 +1554,14 @@ function bro3dasuDrawCompositionSkill() {
 					'</span>'
 				);
 			});
-            if (items.length == 0) {
+			if (items.length == 0) {
 				j$("div[class*=card rarerity] span[class=status_frontback]").parent().prepend(
 					'<span style="position:relative; top:108px;">' +
 						'<img src="http://' + location.hostname + '/20141224-01/extend_project/w945/img/card/common/bg_card_skill.png" style="position:relative; left:6px; z-index:-1">' +
 						'<ul id="compositFrame" style="position:relative; top:-82px; left:14px; font-size:12px;"></ul>' +
 					'</span>'
 				);
-            }
+			}
 		} else {
 			j$("div[class*=card rarerity] span[class=status_frontback]").parent().after(
 				'<span style="position:relative; top:-211px;">' +
