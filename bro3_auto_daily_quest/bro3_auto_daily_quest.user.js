@@ -10,9 +10,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2015.09.01
+// @version 	2015.10.19
 // ==/UserScript==
-var VERSION = "2015.09.01"; 	// バージョン情報
+var VERSION = "2015.10.19"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -50,6 +50,7 @@ var OPT_VALUE_IGNORE_SECONDS = 10; // 負荷を下げる為、指定秒数以内
 //			  鯖開始時を考慮し、オプション初期値を影響が低いものへ変更
 // 2015.08.21 リロード負荷低減について、報酬受け取り成功時の制限解除処理を改修
 // 2015.09.01 リロード負荷低減において、Firefox 40.0.3+Greasemonkey 3.3 にて意図した動作とならないことがあるのを修正
+// 2015.10.19 10/14のメンテでクエクリ以外の自動デュエルが動作しなくなっていたのを修正
 
 /*!
 * jQuery Cookie Plugin
@@ -282,7 +283,7 @@ function duel(callback){
 // サーバー時刻が [00:00:00 - 01:59:59] or [05:00:00 - 23:59:59] であれば自動デュエルする
 function auto_duel()
 {
-	var server = xpath('//div[@id="navi01"]/dl[@class="world"]/dd[@class="server"]/span[@id="server_time_disp"]', document).snapshotItem(0);
+	var server = xpath('//*[@id="server_time_disp"]', document).snapshotItem(0);
 	if (server && server.textContent) {
 		var hour = parseInt(server.textContent.substr(0,2), 10);
 		if (hour < 2 || hour >= 5) {
