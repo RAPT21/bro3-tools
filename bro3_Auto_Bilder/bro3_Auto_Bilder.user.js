@@ -17,7 +17,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2015.10.02
+// @version		2015.11.29
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -112,8 +112,12 @@
 // 2015.07.28 初期化ボタン以外で水車村化オプションのチェックを外せなくなっていた問題を修正
 //			  2015.07.27版で工場村化オプションが動作していなかった問題を修正
 // 2015.10.02 水車村化オプションで資源不足時無限ループしていた問題を修正
+// 2015.11.29 宿舎ビルド＆スクラップ機能を削除
+//			  糧村化オプションにて銅雀台を建設しないようにした
+//			  保存ボタン押下でアラート表示しないようにした
+//			  運営のタイマーバグ対策。最大時間を異常に超えている場合、リロードする。
 
-var VERSION = "2015.10.02"; 	// バージョン情報
+var VERSION = "2015.11.29"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -128,8 +132,6 @@ var COLOR_TITLE = "#FFCC00";	// 各BOXタイトル背景色
 var COLOR_BACK	= "#FFF2BB";	// 各BOX背景色
 
 var DomesticFlg = false;
-
-var WangRay = false;		// 2014.02.19
 
 /*!
 * jQuery Cookie Plugin
@@ -270,8 +272,6 @@ var RICE = 104; 				//糧の内部コード
 //新規作成用
 var OPT_KATEMURA	= 0;	 // 自動糧村化オプション
 var OPT_DORM		= 0;	 // 自動宿舎村化オプション			2013.12.26
-var OPT_TORIDE		= 0;	 // 自動砦化オプション
-var OPT_SOUKO_MAX	= 1;	 // 倉庫の最大数
 var OPT_1112MURA	= 0;	 // ★9(1-1-1-2)水車村オプション
 var OPT_0001S3MURA	= 0;	 // ★3(0-0-0-1)水車村オプション
 var OPT_0001S5MURA	= 0;	 // ★5(0-0-0-1)水車村オプション
@@ -298,9 +298,6 @@ var OPT_BUILD_VID;
 
 
 //グローバル変数
-//var INTERVAL = 1000;			// 負荷対策 回線速度によっては正常動作しない時があります。その際は数値を増やしてください。1秒=1000
-//var INTERVAL2 = 2000; 		// 負荷対策 回線速度によっては正常動作しない時があります。その際は数値を増やしてください。1秒=1000
-
 var INTERVAL  = 1000; // + Math.floor( Math.random() * 5000 );			// 負荷対策 回線速度によっては正常動作しない時があります。その際は数値を増やしてください。1秒=1000
 var INTERVAL2 = 2000; // + Math.floor( Math.random() * 5000 );			// 負荷対策 回線速度によっては正常動作しない時があります。その際は数値を増やしてください。1秒=1000
 var HOST = location.hostname; //アクセスURLホスト
@@ -386,12 +383,7 @@ OPT_FNID["見張り台"] =	 22 	 ;
 //市場変換処理用
 var OPT_ICHIBA = 0;
 var OPT_ICHIBA_PA = 0;
-
-if ( WangRay != true ) {
-	var OPT_ICHIBA_PATS = ["平均的に変換","一括変換"];
-} else {
-	var OPT_ICHIBA_PATS = ["平均的に変換","一括変換","割合変換"];
-}
+var OPT_ICHIBA_PATS = ["平均的に変換","一括変換"];
 
 //自動寄付用
 var OPT_KIFU = 0;
@@ -506,7 +498,7 @@ var DBG_Flg = false;
 		getDeletingVillage(document.body);
 	}
 
-	//バグ回避 600000=5*60*1000
+	//バグ回避 300000=5*60*1000
 	// 領地画面や建築画面で停止した場合の処理
 	// ５分間止まっていた場合拠点画面に移動する
 	if(location.pathname == "/land.php" || location.pathname == "/facility/facility.php") {
@@ -1859,6 +1851,48 @@ debugLog("=== Start autoLvup ===");
 	make_loop(0);
 }
 
+// 直近の建設中施設の残り時間を取得する
+function getBuildingInfo() {
+	var li = j$("#actionLog>#buildList>li:first");
+	for (var i = 0; li && i < 10; i++) {
+		if (li.text().match(/建設中/)) {
+			break;
+		}
+		li = li.next();
+	}
+	if (! li) {
+		console.log("建設中のものは無い");
+		return null;
+	}
+
+	var a = j$(".buildStatus>a", li);
+	if (!a) {
+		console.log("建設リンクが取得できない");
+		return null;
+	}
+
+	var info = { x:-1, y:-1, name:"", lv:0, time:-1 };
+
+	// 建設座標
+	if (a.attr("href").match(/x=(\d+).+y=(\d+)/)){
+		info.x = parseInt(RegExp.$1,10);
+		info.y = parseInt(RegExp.$2,10);
+
+		// 施設名とレベル
+		if (a.text().match(/(.+?)\(.+?(\d+)/)) {
+			info.name = RegExp.$1;
+			info.lv = parseInt(RegExp.$2,10);
+		}
+	}
+
+	// 建設残り時間
+	if (j$(".buildClock", li).text().match(/(\d+):(\d+):(\d+)/)) {
+		info.time = parseInt(RegExp.$1,10) * 60 * 60 + parseInt(RegExp.$2,10) * 60 + parseInt(RegExp.$3,10);
+	}
+
+	return info;
+}
+
 function setVillageFacility() {
 
 debugLog("=== Start setVillageFacility ===");
@@ -1953,7 +1987,20 @@ debugLog("=== Start setVillageFacility ===");
 	}
 
 	//建設予約ができるかどうか
-	if((cnt - del) >= 1) return;
+	if((cnt - del) >= 1) {
+		// 運営のタイマーバグ対策。最大時間を異常に超えている場合、リロードする。
+		var info = getBuildingInfo();
+		if (info) {
+			var cost = getBuildResources(info.name, info.lv);
+			if (cost) {
+				if (info.time > cost.time) {
+					console.log("建築時間がバグっているのでリロードしてみる");
+					var tid=setTimeout(function(){location.reload();},1000);
+				}
+			}
+		}
+		return;
+	}
 
 	// ★9(1-1-1-2)水車村
 	if (OPT_1112MURA == 1) {
@@ -1978,25 +2025,17 @@ debugLog("=== Start setVillageFacility ===");
 		area_all		= get_area_all();
 		var hatake		= 0; //畑の総数
 		var souko		= 0; //倉庫の総数
-		var suzume		= 0; //雀の総数
 		var heichi		= 0; //平地の総数
-		var suzume_Flag = 0;
 		var n = -1;
 		for(var i=0;i < area_all.length;i++){
 			if(area_all[i].name == "平地"){heichi++;n=i;}
-			else if(area_all[i].name.match(/畑\s.*?(\d+)/)){hatake++;if(parseInt(RegExp.$1,10)>=5){suzume_Flag=1;}}
+			else if(area_all[i].name.match(/畑/)){hatake++;}
 			else if(area_all[i].name.match(/倉庫/)){souko++;}
-			else if(area_all[i].name.match(/銅雀台/)){suzume++;}
 		}
 
 
 		if(heichi>0){ //平地が余っていたら
 			var tmp = heichi;
-			if (WangRay != true) {
-				if(suzume != 1){										// 雀がまだ建っていなければ
-					tmp -= 1;											// 平地の数をマイナス1
-				}
-			}
 			if(souko < OPT_SOUKO_MAX){									// 倉庫がまだ最大数建っていなければ
 				tmp -= (OPT_SOUKO_MAX - souko); 						// 平地の数をマイナス
 			}
@@ -2011,14 +2050,6 @@ debugLog("=== Start setVillageFacility ===");
 					createFacility(SOUKO, area_all);					//倉庫を建てる
 					Reload_Flg = 0;
 					return;
-				}
-			} else if(suzume != 1 && suzume_Flag == 1){ 					//雀がまだ建っていなければ
-				if (WangRay != true) {
-					if(Chek_Sigen(new lv_sort("銅雀台",0,"")) != 1){	//資源チェック
-						createFacility(SUZUME, area_all);				//雀を建てる
-						Reload_Flg = 0;
-						return;
-					}
 				}
 			}
 		}
@@ -2114,239 +2145,6 @@ debugLog("=== Start setVillageFacility ===");
 
 }
 
-
-// 2011.09.06 宿舎(畑) 自動ビルド＆スクラッチ
-function setVillageFacility2() {
-	var cnt=0;
-	var del=0;
-	var delX = 0;
-	var delY = 0;
-	var vID = "";
-	//座標を取得
-	var xyElem = document.evaluate('//*[@id="basepoint"]/span[@class="xy"]',
-		document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-	vId = trim(xyElem.snapshotItem(0).innerHTML.match(/(\(-?\d+,-?\d+\))/)[1]); 	// 2014.08.20
-
-	//建設情報を取得
-	var actionsElem = document.evaluate('//*[@id="actionLog"]/ul/li',
-		document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-
-	for (var i = 0; i < actionsElem.snapshotLength; i++) {
-		var paItem = actionsElem.snapshotItem(i);
-		//ステータス
-		var buildStatusElem = document.evaluate('./span[@class="buildStatus"]/a',
-			paItem, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-		if (buildStatusElem.snapshotLength > 0) {
-			//施設建設数
-			cnt++;
-
-			// 削除数カウント
-			if( buildStatusElem.snapshotItem(0).parentNode.parentNode.textContent.indexOf("削除") >= 0 ){
-				if(buildStatusElem.snapshotItem(0).href.match(/.*\/.*(\d+).*(\d+)/)){
-					delX = parseInt(RegExp.$1,10);
-					delY = parseInt(RegExp.$2,10);
-				}
-				del++;
-			}
-		}
-	}
-
-	var results = document.evaluate('//area', document, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-	var area = new Array();
-	for(var i=0,n=0; i<results.snapshotLength; i++){
-		if(results.snapshotItem(i).alt.match(/(.*?)\s.*?(\d+)/)){
-			strURL = results.snapshotItem(i).href;
-			area[n] = new lv_sort(RegExp.$1,RegExp.$2,getURLxy(strURL));
-			n++;
-		}
-		else if(results.snapshotItem(i).alt == "平地"){
-			// 平地の座標を拾う
-			strURL = results.snapshotItem(i).href;
-			area[n] = new lv_sort("平地",0,getURLxy(strURL));
-			n++;
-		}
-	}
-
-	if( OPT_SorH == "DD" ){
-		//宿舎が処理対象の場合、エリアリストに練兵所(宿舎建設条件)があるかをチェック
-		var cntv = 0;
-		for(var i=0;i<area.length;i++){
-			if(area[i].name == "練兵所"){
-				cntv++;
-				break;
-			}
-		}
-		if(cntv == 0) return;
-	}
-
-
-	// 施設情報のレベルソート
-	area.sort(cmp_lv2);
-	Load_OPT(vId);	//LvUP対象の取得
-	// 削除中かチェック
-	if( (del == 0) ){
-		// 削除中でなければ、削除できる施設があるか調べる ＠＠
-		var TargetName = "";
-		if (OPT_SorH == "DD") { TargetName = "宿舎"; }
-		if (OPT_SorH == "HH") { TargetName = "畑"; }
-		var TargetCount = 0;
-		var BlankCount = 0;
-		// 対象レベル以下の宿舎（畑）と平地の数をカウントする
-		for (i=0;i<area.length;i++){
-			if (area[i].name == TargetName && parseInt(area[i].lv,10) <= OPT_MAXLV) { TargetCount += 1; }
-			if (area[i].name == "平地") { TargetCount += 1; }
-		}
-		if (TargetCount < OPT_MAX){
-			// 対象となる宿舎（畑）と平地の合計が指定数に満たない場合
-			area.sort(cmp_lv);
-			for (i=0;i<area.length;i++){
-				if ((area[i].name == TargetName) && (parseInt(area[i].lv,10) >= OPT_MAXLV)) {
-					// 削除
-					var Temp = area[i].xy.split(",");
-					DeleteFacility(Temp[0],Temp[1]);
-					JSSleep(2);
-					Reload_Flg = 0;
-					return;
-				}
-			}
-		} else {
-			// 普通に削除処理を実行
-			for (i=0;i<area.length;i++){
-				if ((area[i].name == TargetName) && (parseInt(area[i].lv,10) == OPT_MAXLV)) {
-					// 削除
-					var Temp = area[i].xy.split(",");
-					DeleteFacility(Temp[0],Temp[1]);
-					JSSleep(2);
-					Reload_Flg = 0;
-					return;
-				}
-			}
-		}
-	}
-
-	area.sort(cmp_lv2);
-	//建設予約ができるかどうか
-	if((cnt - del) >= 1) return;
-	//if(cnt == 2) return;
-
-	// 平地建設条件がある場合、対象施設数がOPT_MAX以上かチェックする
-	var yct = 0;
-
-	if( OPT_SorH == "DD" ){
-		for(i=0;i<area.length;i++){
-			if(area[i].name == "宿舎"){
-				// @@ Lv6以下の数だけを数える 2011.06.22 5zen
-				if(area[i].lv < (OPT_MAXLV + 1)){
-					yct++;
-				}
-			}
-		}
-	}
-	if( OPT_SorH == "HH" ){
-		for(i=0;i<area.length;i++){
-			if(area[i].name == "畑"){
-				// @@ Lv6以下の数だけを数える 2011.06.22 5zen
-				if(area[i].lv < (OPT_MAXLV + 1)){
-					yct++;
-				}
-			}
-		}
-	}
-
-	Reload_Flg = 0;
-	for(i=0;i<area.length;i++){
-
-		if( OPT_SorH == "DD" ){
-			if((area[i].name != "宿舎") && (area[i].name != "平地")){
-				// 平地と宿舎以外スキップ
-				 continue;
-			}
-		}
-		else if( OPT_SorH == "HH" ){
-			if((area[i].name != "畑") && (area[i].name != "平地")){
-				// 平地と畑以外スキップ
-				 continue;
-			}
-		}
-		if( yct >= OPT_MAX ){
-			if( OPT_SorH == "DD" ){
-				if(area[i].name != "宿舎"){
-					// 宿数がすでにOPT_MAX以上なら、平地は無視
-					continue;
-				}
-			}
-			if( OPT_SorH == "HH" ){
-				if(area[i].name != "畑"){
-					// 畑数がすでにOPT_MAX以上なら、平地は無視
-					continue;
-				}
-			}
-		}
-//		if(parseInt(area[i].lv,10) >= OPT_MAXLV){break;} //指定Lv以上ならメインに戻る
-
-		//建築物名分回す
-		for(var ii=0;ii<OPT_FUC_NAME.length;ii++){
-			//ソートしたLvの低い順に比較する
-			if(area[i].name == OPT_FUC_NAME[ii]){
-				//建築に必要な資源が有るかどうかチェック
-				var ret = Chek_Sigen(area[i]);
-				if(ret == 1){
-					//30分後にリロードするかどうか
-					Reload_Flg = 1;
-					break;
-				}
-
-				var Temp = area[i].xy.split(",");
-				var c={};
-
-				if( (del != 0) && (parseInt(Temp[0],10) == delX) && (parseInt(Temp[1],10) == delY) ){
-					// 削除施設とレベルアップ施設が一致したらスキップ
-					continue;
-				}
-				// add 2011.12.14
-				if (area[i].lv > (OPT_MAXLV - 1)) {
-					continue;
-				}
-				if( area[i].name != "平地"){
-					c['x']=parseInt(Temp[0],10);
-					c['y']=parseInt(Temp[1],10);
-					c['village_id']=getVillageID(vId);
-					c['ssid']=j$.cookie('SSID');
-					j$.post("http://"+HOST+"/facility/build.php",c,function(){});
-					var tid=setTimeout(function(){location.reload(false);},INTERVAL);
-				} else {
-					if( OPT_SorH == "DD" ){
-						c['x']=parseInt(Temp[0],10);
-						c['y']=parseInt(Temp[1],10);
-						c['id']=SYUKUSYA;
-						c['village_id']=getVillageID(vId);
-						c['ssid']=j$.cookie('SSID');
-						j$.post("http://"+HOST+"/facility/build.php",c,function(){});
-						var tid=setTimeout(function(){location.reload(false);},INTERVAL);
-					} else {
-						c['x']=parseInt(Temp[0],10);
-						c['y']=parseInt(Temp[1],10);
-						c['id']=215;
-						c['village_id']=getVillageID(vId);
-						c['ssid']=j$.cookie('SSID');
-						j$.post("http://"+HOST+"/facility/build.php",c,function(){});
-						var tid=setTimeout(function(){location.reload(false);},INTERVAL);
-					}
-				}
-				GM_setValue(HOST+PGNAME+"OPT_BUILD_VID" , getVillageID(vId) );
-				Reload_Flg = 0;
-				return;
-			}
-		}
-	}
-
-	if(Reload_Flg == 1){
-		//30分後にリロードし、再度建築できるかチェックする。
-		var tid=setTimeout(function(){location.reload();},1800000);
-	}
-
-	return;
-}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
@@ -3448,607 +3246,6 @@ function InitKoujoVillage(cb){
 	return true;
 }
 
-function InitMilitaryHome(){
-	// 遠征訓練所
-	clearInifacBox();
-	var checkbox = $a('//input[@id="OPT_CHKBOX0"]');   checkbox[0].checked = false; // 拠点
-	var checkbox = $a('//input[@id="OPT_CHKBOX1"]');   checkbox[0].checked = false; // 伐採所
-	var checkbox = $a('//input[@id="OPT_CHKBOX2"]');   checkbox[0].checked = false; // 石切り場
-	var checkbox = $a('//input[@id="OPT_CHKBOX3"]');   checkbox[0].checked = false; // 製鉄所
-	var checkbox = $a('//input[@id="OPT_CHKBOX4"]');   checkbox[0].checked = true;	// 畑
-	var checkbox = $a('//input[@id="OPT_CHKBOX5"]');   checkbox[0].checked = true;	// 倉庫
-	var checkbox = $a('//input[@id="OPT_CHKBOX6"]');   checkbox[0].checked = true;	// 銅雀台
-	var checkbox = $a('//input[@id="OPT_CHKBOX7"]');   checkbox[0].checked = true;	// 鍛冶場
-	var checkbox = $a('//input[@id="OPT_CHKBOX8"]');   checkbox[0].checked = true;	// 防具工場
-	var checkbox = $a('//input[@id="OPT_CHKBOX9"]');   checkbox[0].checked = true;	// 練兵所
-	var checkbox = $a('//input[@id="OPT_CHKBOX10"]');  checkbox[0].checked = false; // 兵舎
-	var checkbox = $a('//input[@id="OPT_CHKBOX11"]');  checkbox[0].checked = false; // 弓兵舎
-	var checkbox = $a('//input[@id="OPT_CHKBOX12"]');  checkbox[0].checked = false; // 厩舎
-	var checkbox = $a('//input[@id="OPT_CHKBOX13"]');  checkbox[0].checked = true;	// 宿舎
-	var checkbox = $a('//input[@id="OPT_CHKBOX14"]');  checkbox[0].checked = false; // 兵器工房
-	var checkbox = $a('//input[@id="OPT_CHKBOX15"]');  checkbox[0].checked = false; // 市場
-	var checkbox = $a('//input[@id="OPT_CHKBOX16"]');  checkbox[0].checked = true;	// 訓練所
-	var checkbox = $a('//input[@id="OPT_CHKBOX17"]');  checkbox[0].checked = false; // 水車
-	var checkbox = $a('//input[@id="OPT_CHKBOX18"]');  checkbox[0].checked = false; // 工場
-	var checkbox = $a('//input[@id="OPT_CHKBOX19"]');  checkbox[0].checked = false; // 研究所
-	var checkbox = $a('//input[@id="OPT_CHKBOX20"]');  checkbox[0].checked = true;	// 大宿舎
-	var checkbox = $a('//input[@id="OPT_CHKBOX21"]');  checkbox[0].checked = true;	// 遠征訓練所
-	var checkbox = $a('//input[@id="OPT_CHKBOX22"]');  checkbox[0].checked = true;	// 見張り台
-
-	var textbox = $a('//input[@id="OPT_CHKBOXLV0"]');	textbox[0].value = 0;	// 拠点
-	var textbox = $a('//input[@id="OPT_CHKBOXLV1"]');	textbox[0].value = 0;	// 伐採所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV2"]');	textbox[0].value = 0;	// 石切り場
-	var textbox = $a('//input[@id="OPT_CHKBOXLV3"]');	textbox[0].value = 0;	// 製鉄所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV4"]');	textbox[0].value = 5;	// 畑
-	var textbox = $a('//input[@id="OPT_CHKBOXLV5"]');	textbox[0].value = 1;	// 倉庫
-	var textbox = $a('//input[@id="OPT_CHKBOXLV6"]');	textbox[0].value = 7;	// 銅雀台
-	var textbox = $a('//input[@id="OPT_CHKBOXLV7"]');	textbox[0].value = 5;	// 鍛冶場
-	var textbox = $a('//input[@id="OPT_CHKBOXLV8"]');	textbox[0].value = 7;	// 防具工場
-	var textbox = $a('//input[@id="OPT_CHKBOXLV9"]');	textbox[0].value = 3;	// 練兵所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV10"]');	textbox[0].value = 0;	// 兵舎
-	var textbox = $a('//input[@id="OPT_CHKBOXLV11"]');	textbox[0].value = 0;	// 弓兵舎
-	var textbox = $a('//input[@id="OPT_CHKBOXLV12"]');	textbox[0].value = 0;	// 厩舎
-	var textbox = $a('//input[@id="OPT_CHKBOXLV13"]');	textbox[0].value = 15;	// 宿舎
-	var textbox = $a('//input[@id="OPT_CHKBOXLV14"]');	textbox[0].value = 0;	// 兵器工房
-	var textbox = $a('//input[@id="OPT_CHKBOXLV15"]');	textbox[0].value = 0;	// 市場
-	var textbox = $a('//input[@id="OPT_CHKBOXLV16"]');	textbox[0].value = 5;	// 訓練所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV17"]');	textbox[0].value = 0;	// 水車
-	var textbox = $a('//input[@id="OPT_CHKBOXLV18"]');	textbox[0].value = 0;	// 工場
-	var textbox = $a('//input[@id="OPT_CHKBOXLV19"]');	textbox[0].value = 0;	// 研究所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV20"]');	textbox[0].value = 8;	// 大宿舎
-	var textbox = $a('//input[@id="OPT_CHKBOXLV21"]');	textbox[0].value = 10;	// 遠征訓練所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV22"]');	textbox[0].value = 8;	// 見張り台
-	// 内政設定
-	var checkbox = $a('//input[@id="OPT_DOME1"]');	checkbox[0].checked = false;	// 伐採知識
-	var checkbox = $a('//input[@id="OPT_DOME2"]');	checkbox[0].checked = false;	// 伐採技術
-	var checkbox = $a('//input[@id="OPT_DOME3"]');	checkbox[0].checked = false;	// 弓兵増強
-	var checkbox = $a('//input[@id="OPT_DOME4"]');	checkbox[0].checked = false;	// 石切知識
-	var checkbox = $a('//input[@id="OPT_DOME5"]');	checkbox[0].checked = false;	// 石切技術
-	var checkbox = $a('//input[@id="OPT_DOME6"]');	checkbox[0].checked = false;	// 槍兵増強
-	var checkbox = $a('//input[@id="OPT_DOME7"]');	checkbox[0].checked = false;	// 製鉄知識
-	var checkbox = $a('//input[@id="OPT_DOME8"]');	checkbox[0].checked = false;	// 製鉄技術
-	var checkbox = $a('//input[@id="OPT_DOME9"]');	checkbox[0].checked = false;	// 騎兵増強
-	var checkbox = $a('//input[@id="OPT_DOME10"]'); checkbox[0].checked = false;	// 食糧知識
-	var checkbox = $a('//input[@id="OPT_DOME11"]'); checkbox[0].checked = false;	// 食糧技術
-	var checkbox = $a('//input[@id="OPT_DOME12"]'); checkbox[0].checked = false;	// 農林知識
-	var checkbox = $a('//input[@id="OPT_DOME13"]'); checkbox[0].checked = false;	// 農林技術
-	var checkbox = $a('//input[@id="OPT_DOME14"]'); checkbox[0].checked = false;	// 加工知識
-	var checkbox = $a('//input[@id="OPT_DOME15"]'); checkbox[0].checked = false;	// 加工技術
-	var checkbox = $a('//input[@id="OPT_DOME16"]'); checkbox[0].checked = false;	// 富国
-	var checkbox = $a('//input[@id="OPT_DOME17"]'); checkbox[0].checked = false;	// 富国論
-	var checkbox = $a('//input[@id="OPT_DOME18"]'); checkbox[0].checked = false;	// 富国強兵
-	var checkbox = $a('//input[@id="OPT_DOME19"]'); checkbox[0].checked = false;	// 豊穣
-	var checkbox = $a('//input[@id="OPT_DOME20"]'); checkbox[0].checked = false;	// 美玉歌舞
-	var checkbox = $a('//input[@id="OPT_DOME21"]'); checkbox[0].checked = false;	// 恵風
-	var checkbox = $a('//input[@id="OPT_DOME22"]'); checkbox[0].checked = false;	// 人選眼力
-	var checkbox = $a('//input[@id="OPT_DOME23"]'); checkbox[0].checked = false;	// 呉の治世
-	var checkbox = $a('//input[@id="OPT_DOME24"]'); checkbox[0].checked = false;	// 王佐の才
-	var checkbox = $a('//input[@id="OPT_DOME25"]'); checkbox[0].checked = false;	// 練兵訓練
-	var checkbox = $a('//input[@id="OPT_DOME26"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME27"]'); checkbox[0].checked = false;	// 兵舎訓練
-	var checkbox = $a('//input[@id="OPT_DOME28"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME29"]'); checkbox[0].checked = false;	// 弓兵訓練
-	var checkbox = $a('//input[@id="OPT_DOME30"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME31"]'); checkbox[0].checked = false;	// 厩舎訓練
-	var checkbox = $a('//input[@id="OPT_DOME32"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME33"]'); checkbox[0].checked = false;	// 兵器訓練
-	var checkbox = $a('//input[@id="OPT_DOME34"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME35"]'); checkbox[0].checked = false;	// 強兵の檄文
-	var checkbox = $a('//input[@id="OPT_DOME36"]'); checkbox[0].checked = false;	// 攻城の檄文
-	var checkbox = $a('//input[@id="OPT_DOME37"]'); checkbox[0].checked = false;	// 豊潤祈祷
-}
-
-function InitRiceParadise(){			// 2013.12.18
-	// 城①
-	clearInifacBox();
-	var checkbox = $a('//input[@id="OPT_CHKBOX1"]');   checkbox[0].checked = true;	// 伐採所
-	var checkbox = $a('//input[@id="OPT_CHKBOX2"]');   checkbox[0].checked = true;	// 石切り場
-	var checkbox = $a('//input[@id="OPT_CHKBOX3"]');   checkbox[0].checked = true;	// 製鉄所
-	var checkbox = $a('//input[@id="OPT_CHKBOX4"]');   checkbox[0].checked = true;	// 畑
-	var checkbox = $a('//input[@id="OPT_CHKBOX5"]');   checkbox[0].checked = true;	// 倉庫
-	var checkbox = $a('//input[@id="OPT_CHKBOX6"]');   checkbox[0].checked = true;	// 銅雀台
-	var checkbox = $a('//input[@id="OPT_CHKBOX15"]');  checkbox[0].checked = true;	// 市場
-
-	var textbox = $a('//input[@id="OPT_CHKBOXLV1"]');	textbox[0].value = 10;	// 伐採所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV2"]');	textbox[0].value = 10;	// 石切り場
-	var textbox = $a('//input[@id="OPT_CHKBOXLV3"]');	textbox[0].value = 10;	// 製鉄所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV4"]');	textbox[0].value = 10;	// 畑
-	var textbox = $a('//input[@id="OPT_CHKBOXLV5"]');	textbox[0].value = 10;	// 倉庫
-	var textbox = $a('//input[@id="OPT_CHKBOXLV6"]');	textbox[0].value = 5;	// 銅雀台
-	var textbox = $a('//input[@id="OPT_CHKBOXLV15"]');	textbox[0].value = 10;	// 市場
-
-	// 内政設定
-	var checkbox = $a('//input[@id="OPT_DOME1"]');	checkbox[0].checked = false;	// 伐採知識
-	var checkbox = $a('//input[@id="OPT_DOME2"]');	checkbox[0].checked = false;	// 伐採技術
-	var checkbox = $a('//input[@id="OPT_DOME3"]');	checkbox[0].checked = false;	// 弓兵増強
-	var checkbox = $a('//input[@id="OPT_DOME4"]');	checkbox[0].checked = false;	// 石切知識
-	var checkbox = $a('//input[@id="OPT_DOME5"]');	checkbox[0].checked = false;	// 石切技術
-	var checkbox = $a('//input[@id="OPT_DOME6"]');	checkbox[0].checked = false;	// 槍兵増強
-	var checkbox = $a('//input[@id="OPT_DOME7"]');	checkbox[0].checked = false;	// 製鉄知識
-	var checkbox = $a('//input[@id="OPT_DOME8"]');	checkbox[0].checked = false;	// 製鉄技術
-	var checkbox = $a('//input[@id="OPT_DOME9"]');	checkbox[0].checked = false;	// 騎兵増強
-	var checkbox = $a('//input[@id="OPT_DOME10"]'); checkbox[0].checked = false;	// 食糧知識
-	var checkbox = $a('//input[@id="OPT_DOME11"]'); checkbox[0].checked = false;	// 食糧技術
-	var checkbox = $a('//input[@id="OPT_DOME12"]'); checkbox[0].checked = false;	// 農林知識		2013.01.10 変更
-	var checkbox = $a('//input[@id="OPT_DOME13"]'); checkbox[0].checked = false;	// 農林技術		2013.01.10 変更
-	var checkbox = $a('//input[@id="OPT_DOME14"]'); checkbox[0].checked = false;	// 加工知識
-	var checkbox = $a('//input[@id="OPT_DOME15"]'); checkbox[0].checked = false;	// 加工技術
-	var checkbox = $a('//input[@id="OPT_DOME16"]'); checkbox[0].checked = false;	// 富国 		2013.01.10 変更
-	var checkbox = $a('//input[@id="OPT_DOME17"]'); checkbox[0].checked = false;	// 富国論		2013.01.10 変更
-	var checkbox = $a('//input[@id="OPT_DOME18"]'); checkbox[0].checked = false;	// 富国強兵
-	var checkbox = $a('//input[@id="OPT_DOME19"]'); checkbox[0].checked = false;	// 豊穣 		2013.01.10 変更
-	var checkbox = $a('//input[@id="OPT_DOME20"]'); checkbox[0].checked = false;	// 美玉歌舞
-	var checkbox = $a('//input[@id="OPT_DOME21"]'); checkbox[0].checked = false;	// 恵風
-	var checkbox = $a('//input[@id="OPT_DOME22"]'); checkbox[0].checked = false;	// 人選眼力		2013.01.10 変更
-	var checkbox = $a('//input[@id="OPT_DOME23"]'); checkbox[0].checked = false;	// 呉の治世
-	var checkbox = $a('//input[@id="OPT_DOME24"]'); checkbox[0].checked = false;	// 王佐の才
-	var checkbox = $a('//input[@id="OPT_DOME25"]'); checkbox[0].checked = false;	// 練兵訓練
-	var checkbox = $a('//input[@id="OPT_DOME26"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME27"]'); checkbox[0].checked = false;	// 兵舎訓練
-	var checkbox = $a('//input[@id="OPT_DOME28"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME29"]'); checkbox[0].checked = false;	// 弓兵訓練
-	var checkbox = $a('//input[@id="OPT_DOME30"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME31"]'); checkbox[0].checked = false;	// 厩舎訓練
-	var checkbox = $a('//input[@id="OPT_DOME32"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME33"]'); checkbox[0].checked = false;	// 兵器訓練
-	var checkbox = $a('//input[@id="OPT_DOME34"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME35"]'); checkbox[0].checked = false;	// 強兵の檄文
-	var checkbox = $a('//input[@id="OPT_DOME36"]'); checkbox[0].checked = false;	// 攻城の檄文
-	var checkbox = $a('//input[@id="OPT_DOME37"]'); checkbox[0].checked = false;	// 豊潤祈祷
-	// 糧村オプション
-	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = true; // 糧村化
-	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value	= 5;
-	clearWaterwheelBox(); // 水車村オプション
-	// 宿舎村オプション
-	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = false; // 宿舎村化 2013.12.26
-	// 市場自動変換
-	try {
-		var checkbox = $a('//input[@id="OPT_ICHIBA"]'); 	checkbox[0].checked = true;
-		var combobox = $a('//select[@id="OPT_ICHIBA_PA"]'); 	combobox[0].value	= "平均的に変換";
-		var textbox  = $a('//input[@id="OPT_RISE_MAX"]');	textbox[0].value	= 8000;
-		var textbox  = $a('//input[@id="OPT_TO_WOOD"]');	textbox[0].value	= 4000;
-		var textbox  = $a('//input[@id="OPT_TO_STONE"]');	textbox[0].value	= 4000;
-		var textbox  = $a('//input[@id="OPT_TO_IRON"]');	textbox[0].value	= 4000;
-	} catch(e) {
-	}
-	// 自動造兵
-	var checkbox = $a('//input[@id="OPT_BLD_SOL"]');	checkbox[0].checked = false;
-	// 自動武器・防具強化
-	var checkbox = $a('//input[@id="OPT_BKBG_CHK"]');	checkbox[0].checked = false;
-
-
-}
-
-function InitResVillage(){			// 2013.12.18
-	// 城②
-	clearInifacBox();
-	var checkbox = $a('//input[@id="OPT_CHKBOX0"]');   checkbox[0].checked = true;	// 拠点
-	var checkbox = $a('//input[@id="OPT_CHKBOX1"]');   checkbox[0].checked = true;	// 伐採所
-	var checkbox = $a('//input[@id="OPT_CHKBOX2"]');   checkbox[0].checked = true;	// 石切り場
-	var checkbox = $a('//input[@id="OPT_CHKBOX3"]');   checkbox[0].checked = true;	// 製鉄所
-	var checkbox = $a('//input[@id="OPT_CHKBOX4"]');   checkbox[0].checked = true;	// 畑
-	var checkbox = $a('//input[@id="OPT_CHKBOX5"]');   checkbox[0].checked = true;	// 倉庫
-	var checkbox = $a('//input[@id="OPT_CHKBOX6"]');   checkbox[0].checked = true;	// 銅雀台
-	var checkbox = $a('//input[@id="OPT_CHKBOX16"]');  checkbox[0].checked = true;	// 市場
-
-	var textbox = $a('//input[@id="OPT_CHKBOXLV0"]');	textbox[0].value = 10;	// 拠点
-	var textbox = $a('//input[@id="OPT_CHKBOXLV1"]');	textbox[0].value = 12;	// 伐採所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV2"]');	textbox[0].value = 12;	// 石切り場
-	var textbox = $a('//input[@id="OPT_CHKBOXLV3"]');	textbox[0].value = 12;	// 製鉄所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV4"]');	textbox[0].value = 12;	// 畑
-	var textbox = $a('//input[@id="OPT_CHKBOXLV5"]');	textbox[0].value = 15;	// 倉庫
-	var textbox = $a('//input[@id="OPT_CHKBOXLV6"]');	textbox[0].value = 7;	// 銅雀台
-	var textbox = $a('//input[@id="OPT_CHKBOXLV15"]');	textbox[0].value = 10;	// 市場
-
-	// 内政設定
-	var checkbox = $a('//input[@id="OPT_DOME1"]');	checkbox[0].checked = false;	// 伐採知識
-	var checkbox = $a('//input[@id="OPT_DOME2"]');	checkbox[0].checked = false;	// 伐採技術
-	var checkbox = $a('//input[@id="OPT_DOME3"]');	checkbox[0].checked = false;	// 弓兵増強
-	var checkbox = $a('//input[@id="OPT_DOME4"]');	checkbox[0].checked = false;	// 石切知識
-	var checkbox = $a('//input[@id="OPT_DOME5"]');	checkbox[0].checked = false;	// 石切技術
-	var checkbox = $a('//input[@id="OPT_DOME6"]');	checkbox[0].checked = false;	// 槍兵増強
-	var checkbox = $a('//input[@id="OPT_DOME7"]');	checkbox[0].checked = false;	// 製鉄知識
-	var checkbox = $a('//input[@id="OPT_DOME8"]');	checkbox[0].checked = false;	// 製鉄技術
-	var checkbox = $a('//input[@id="OPT_DOME9"]');	checkbox[0].checked = false;	// 騎兵増強
-	var checkbox = $a('//input[@id="OPT_DOME10"]'); checkbox[0].checked = false;	// 食糧知識
-	var checkbox = $a('//input[@id="OPT_DOME11"]'); checkbox[0].checked = false;	// 食糧技術
-	var checkbox = $a('//input[@id="OPT_DOME12"]'); checkbox[0].checked = false;	// 農林知識
-	var checkbox = $a('//input[@id="OPT_DOME13"]'); checkbox[0].checked = false;	// 農林技術
-	var checkbox = $a('//input[@id="OPT_DOME14"]'); checkbox[0].checked = false;	// 加工知識
-	var checkbox = $a('//input[@id="OPT_DOME15"]'); checkbox[0].checked = false;	// 加工技術
-	var checkbox = $a('//input[@id="OPT_DOME16"]'); checkbox[0].checked = false;	// 富国
-	var checkbox = $a('//input[@id="OPT_DOME17"]'); checkbox[0].checked = false;	// 富国論
-	var checkbox = $a('//input[@id="OPT_DOME18"]'); checkbox[0].checked = false;	// 富国強兵
-	var checkbox = $a('//input[@id="OPT_DOME19"]'); checkbox[0].checked = false;	// 豊穣
-	var checkbox = $a('//input[@id="OPT_DOME20"]'); checkbox[0].checked = false;	// 美玉歌舞
-	var checkbox = $a('//input[@id="OPT_DOME21"]'); checkbox[0].checked = false;	// 恵風
-	var checkbox = $a('//input[@id="OPT_DOME22"]'); checkbox[0].checked = false;	// 人選眼力
-	var checkbox = $a('//input[@id="OPT_DOME23"]'); checkbox[0].checked = false;	// 呉の治世
-	var checkbox = $a('//input[@id="OPT_DOME24"]'); checkbox[0].checked = false;	// 王佐の才
-	var checkbox = $a('//input[@id="OPT_DOME25"]'); checkbox[0].checked = false;	// 練兵訓練
-	var checkbox = $a('//input[@id="OPT_DOME26"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME27"]'); checkbox[0].checked = false;	// 兵舎訓練
-	var checkbox = $a('//input[@id="OPT_DOME28"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME29"]'); checkbox[0].checked = false;	// 弓兵訓練
-	var checkbox = $a('//input[@id="OPT_DOME30"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME31"]'); checkbox[0].checked = false;	// 厩舎訓練
-	var checkbox = $a('//input[@id="OPT_DOME32"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME33"]'); checkbox[0].checked = false;	// 兵器訓練
-	var checkbox = $a('//input[@id="OPT_DOME34"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME35"]'); checkbox[0].checked = false;	// 強兵の檄文
-	var checkbox = $a('//input[@id="OPT_DOME36"]'); checkbox[0].checked = false;	// 攻城の檄文
-	var checkbox = $a('//input[@id="OPT_DOME37"]'); checkbox[0].checked = false;	// 豊潤祈祷
-	// 糧村オプション
-	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = true; // 糧村化
-	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value	= 5;
-	clearWaterwheelBox(); // 水車村オプション
-	// 宿舎村オプション
-	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = false; // 宿舎村化 2013.12.26
-	try {
-		// 市場自動変換
-		var checkbox = $a('//input[@id="OPT_ICHIBA"]'); 	checkbox[0].checked = true;
-		var combobox = $a('//select[@id="OPT_ICHIBA_PA"]'); 	combobox[0].value	= "平均的に変換";
-		var textbox  = $a('//input[@id="OPT_RISE_MAX"]');	textbox[0].value	= 50000;
-		var textbox  = $a('//input[@id="OPT_TO_WOOD"]');	textbox[0].value	= 20000;
-		var textbox  = $a('//input[@id="OPT_TO_STONE"]');	textbox[0].value	= 20000;
-		var textbox  = $a('//input[@id="OPT_TO_IRON"]');	textbox[0].value	= 20000;
-	} catch(e) {
-	}
-	// 自動造兵
-	var checkbox = $a('//input[@id="OPT_BLD_SOL"]');	checkbox[0].checked = false;
-	// 自動武器・防具強化
-	var checkbox = $a('//input[@id="OPT_BKBG_CHK"]');	checkbox[0].checked = false;
-}
-
-function InitMilitarySite(){			// 2013.12.18
-	// 砦
-	clearInifacBox();
-	var checkbox = $a('//input[@id="OPT_CHKBOX7"]');   checkbox[0].checked = true;	// 鍛冶場
-	var checkbox = $a('//input[@id="OPT_CHKBOX9"]');   checkbox[0].checked = true;	// 練兵所
-	var checkbox = $a('//input[@id="OPT_CHKBOX13"]');  checkbox[0].checked = true;	// 宿舎
-
-	var textbox = $a('//input[@id="OPT_CHKBOXLV7"]');	textbox[0].value =	5;	// 鍛冶場
-	var textbox = $a('//input[@id="OPT_CHKBOXLV9"]');	textbox[0].value = 10;	// 訓練所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV13"]');	textbox[0].value = 13;	// 宿舎
-
-	// 内政設定
-	var checkbox = $a('//input[@id="OPT_DOME1"]');	checkbox[0].checked = false;	// 伐採知識
-	var checkbox = $a('//input[@id="OPT_DOME2"]');	checkbox[0].checked = false;	// 伐採技術
-	var checkbox = $a('//input[@id="OPT_DOME3"]');	checkbox[0].checked = false;	// 弓兵増強
-	var checkbox = $a('//input[@id="OPT_DOME4"]');	checkbox[0].checked = false;	// 石切知識
-	var checkbox = $a('//input[@id="OPT_DOME5"]');	checkbox[0].checked = false;	// 石切技術
-	var checkbox = $a('//input[@id="OPT_DOME6"]');	checkbox[0].checked = false;	// 槍兵増強
-	var checkbox = $a('//input[@id="OPT_DOME7"]');	checkbox[0].checked = false;	// 製鉄知識
-	var checkbox = $a('//input[@id="OPT_DOME8"]');	checkbox[0].checked = false;	// 製鉄技術
-	var checkbox = $a('//input[@id="OPT_DOME9"]');	checkbox[0].checked = false;	// 騎兵増強
-	var checkbox = $a('//input[@id="OPT_DOME10"]'); checkbox[0].checked = false;	// 食糧知識
-	var checkbox = $a('//input[@id="OPT_DOME11"]'); checkbox[0].checked = false;	// 食糧技術
-	var checkbox = $a('//input[@id="OPT_DOME12"]'); checkbox[0].checked = false;	// 農林知識
-	var checkbox = $a('//input[@id="OPT_DOME13"]'); checkbox[0].checked = false;	// 農林技術
-	var checkbox = $a('//input[@id="OPT_DOME14"]'); checkbox[0].checked = false;	// 加工知識
-	var checkbox = $a('//input[@id="OPT_DOME15"]'); checkbox[0].checked = false;	// 加工技術
-	var checkbox = $a('//input[@id="OPT_DOME16"]'); checkbox[0].checked = false;	// 富国
-	var checkbox = $a('//input[@id="OPT_DOME17"]'); checkbox[0].checked = false;	// 富国論
-	var checkbox = $a('//input[@id="OPT_DOME18"]'); checkbox[0].checked = false;	// 富国強兵
-	var checkbox = $a('//input[@id="OPT_DOME19"]'); checkbox[0].checked = false;	// 豊穣
-	var checkbox = $a('//input[@id="OPT_DOME20"]'); checkbox[0].checked = false;	// 美玉歌舞
-	var checkbox = $a('//input[@id="OPT_DOME21"]'); checkbox[0].checked = false;	// 恵風
-	var checkbox = $a('//input[@id="OPT_DOME22"]'); checkbox[0].checked = false;	// 人選眼力
-	var checkbox = $a('//input[@id="OPT_DOME23"]'); checkbox[0].checked = false;	// 呉の治世
-	var checkbox = $a('//input[@id="OPT_DOME24"]'); checkbox[0].checked = false;	// 王佐の才
-	var checkbox = $a('//input[@id="OPT_DOME25"]'); checkbox[0].checked = false;	// 練兵訓練
-	var checkbox = $a('//input[@id="OPT_DOME26"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME27"]'); checkbox[0].checked = false;	// 兵舎訓練
-	var checkbox = $a('//input[@id="OPT_DOME28"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME29"]'); checkbox[0].checked = false;	// 弓兵訓練
-	var checkbox = $a('//input[@id="OPT_DOME30"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME31"]'); checkbox[0].checked = false;	// 厩舎訓練
-	var checkbox = $a('//input[@id="OPT_DOME32"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME33"]'); checkbox[0].checked = false;	// 兵器訓練
-	var checkbox = $a('//input[@id="OPT_DOME34"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME35"]'); checkbox[0].checked = false;	// 強兵の檄文
-	var checkbox = $a('//input[@id="OPT_DOME36"]'); checkbox[0].checked = false;	// 攻城の檄文
-	var checkbox = $a('//input[@id="OPT_DOME37"]'); checkbox[0].checked = false;	// 豊潤祈祷
-	// 糧村オプション
-	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = false; // 糧村化
-	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value	= 0;
-	clearWaterwheelBox(); // 水車村オプション
-	// 宿舎村オプション
-	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = true; // 宿舎村化 2013.12.26
-	// 自動造兵
-	var checkbox = $a('//input[@id="OPT_BLD_SOL"]');	checkbox[0].checked = true;
-
-	var textbox = $a('//input[@id="OPT_SOL_MAX1"]');	textbox[0].value	= 10000;
-	var textbox = $a('//input[@id="OPT_SOL_MAX3"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_MAX8"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_MAX5"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_MAX4"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_MAX9"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_MAX7"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_MAX10"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_MAX11"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_MAX12"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_MAX13"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_MAX15"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_MAX16"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_MAX17"]');	textbox[0].value	= 0;
-
-	var textbox = $a('//input[@id="OPT_SOL_ADD1"]');	textbox[0].value	= 50;
-	var textbox = $a('//input[@id="OPT_SOL_ADD3"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_ADD8"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_ADD5"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_ADD4"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_ADD9"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_ADD7"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_ADD10"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_ADD11"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_ADD12"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_ADD13"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_ADD15"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_ADD16"]');	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_SOL_ADD17"]');	textbox[0].value	= 0;
-
-	// 自動武器・防具強化
-	var checkbox = $a('//input[@id="OPT_BKBG_CHK"]');	checkbox[0].checked = true;
-
-	var textbox = $a('//input[@id="OPT_BK_LV1"]');		textbox[0].value	= 10;
-	var textbox = $a('//input[@id="OPT_BK_LV3"]');		textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BK_LV8"]');		textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BK_LV4"]');		textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BK_LV5"]');		textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BK_LV9"]');		textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BK_LV7"]');		textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BK_LV12"]'); 	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BK_LV13"]'); 	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BK_LV14"]'); 	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BK_LV15"]'); 	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BK_LV16"]'); 	textbox[0].value	= 0;
-
-	var textbox = $a('//input[@id="OPT_BG_LV1"]');		textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BG_LV3"]');		textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BG_LV8"]');		textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BG_LV4"]');		textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BG_LV5"]');		textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BG_LV9"]');		textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BG_LV7"]');		textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BG_LV10"]'); 	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BG_LV11"]'); 	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BG_LV12"]'); 	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BG_LV13"]'); 	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BG_LV14"]'); 	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BG_LV15"]'); 	textbox[0].value	= 0;
-	var textbox = $a('//input[@id="OPT_BG_LV16"]'); 	textbox[0].value	= 0;
-
-}
-
-function InitRiceSite(){			// 2013.12.26
-	// 糧村
-	clearInifacBox();
-	var checkbox = $a('//input[@id="OPT_CHKBOX0"]');   checkbox[0].checked = true;	// 拠点
-	var checkbox = $a('//input[@id="OPT_CHKBOX4"]');   checkbox[0].checked = true;	// 畑
-
-	var textbox = $a('//input[@id="OPT_CHKBOXLV0"]');	textbox[0].value =	5;		// 拠点
-	var textbox = $a('//input[@id="OPT_CHKBOXLV4"]');	textbox[0].value = 12;		// 訓練所
-
-	// 内政設定
-	var checkbox = $a('//input[@id="OPT_DOME1"]');	checkbox[0].checked = false;	// 伐採知識
-	var checkbox = $a('//input[@id="OPT_DOME2"]');	checkbox[0].checked = false;	// 伐採技術
-	var checkbox = $a('//input[@id="OPT_DOME3"]');	checkbox[0].checked = false;	// 弓兵増強
-	var checkbox = $a('//input[@id="OPT_DOME4"]');	checkbox[0].checked = false;	// 石切知識
-	var checkbox = $a('//input[@id="OPT_DOME5"]');	checkbox[0].checked = false;	// 石切技術
-	var checkbox = $a('//input[@id="OPT_DOME6"]');	checkbox[0].checked = false;	// 槍兵増強
-	var checkbox = $a('//input[@id="OPT_DOME7"]');	checkbox[0].checked = false;	// 製鉄知識
-	var checkbox = $a('//input[@id="OPT_DOME8"]');	checkbox[0].checked = false;	// 製鉄技術
-	var checkbox = $a('//input[@id="OPT_DOME9"]');	checkbox[0].checked = false;	// 騎兵増強
-	var checkbox = $a('//input[@id="OPT_DOME10"]'); checkbox[0].checked = true;		// 食糧知識
-	var checkbox = $a('//input[@id="OPT_DOME11"]'); checkbox[0].checked = true;		// 食糧技術
-	var checkbox = $a('//input[@id="OPT_DOME12"]'); checkbox[0].checked = false;	// 農林知識
-	var checkbox = $a('//input[@id="OPT_DOME13"]'); checkbox[0].checked = false;	// 農林技術
-	var checkbox = $a('//input[@id="OPT_DOME14"]'); checkbox[0].checked = false;	// 加工知識
-	var checkbox = $a('//input[@id="OPT_DOME15"]'); checkbox[0].checked = false;	// 加工技術
-	var checkbox = $a('//input[@id="OPT_DOME16"]'); checkbox[0].checked = false;	// 富国
-	var checkbox = $a('//input[@id="OPT_DOME17"]'); checkbox[0].checked = false;	// 富国論
-	var checkbox = $a('//input[@id="OPT_DOME18"]'); checkbox[0].checked = false;	// 富国強兵
-	var checkbox = $a('//input[@id="OPT_DOME19"]'); checkbox[0].checked = false;	// 豊穣
-	var checkbox = $a('//input[@id="OPT_DOME20"]'); checkbox[0].checked = false;	// 美玉歌舞
-	var checkbox = $a('//input[@id="OPT_DOME21"]'); checkbox[0].checked = false;	// 恵風
-	var checkbox = $a('//input[@id="OPT_DOME22"]'); checkbox[0].checked = false;	// 人選眼力
-	var checkbox = $a('//input[@id="OPT_DOME23"]'); checkbox[0].checked = false;	// 呉の治世
-	var checkbox = $a('//input[@id="OPT_DOME24"]'); checkbox[0].checked = false;	// 王佐の才
-	var checkbox = $a('//input[@id="OPT_DOME25"]'); checkbox[0].checked = false;	// 練兵訓練
-	var checkbox = $a('//input[@id="OPT_DOME26"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME27"]'); checkbox[0].checked = false;	// 兵舎訓練
-	var checkbox = $a('//input[@id="OPT_DOME28"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME29"]'); checkbox[0].checked = false;	// 弓兵訓練
-	var checkbox = $a('//input[@id="OPT_DOME30"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME31"]'); checkbox[0].checked = false;	// 厩舎訓練
-	var checkbox = $a('//input[@id="OPT_DOME32"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME33"]'); checkbox[0].checked = false;	// 兵器訓練
-	var checkbox = $a('//input[@id="OPT_DOME34"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME35"]'); checkbox[0].checked = false;	// 強兵の檄文
-	var checkbox = $a('//input[@id="OPT_DOME36"]'); checkbox[0].checked = false;	// 攻城の檄文
-	var checkbox = $a('//input[@id="OPT_DOME37"]'); checkbox[0].checked = false;	// 豊潤祈祷
-	// 糧村オプション
-	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = true; // 糧村化
-	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value	= 0;
-	clearWaterwheelBox(); // 水車村オプション
-	// 宿舎村オプション
-	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = false; // 宿舎村化 2013.12.26
-}
-
-function InitPreset_01(){			// 2014.03.05
-	// 城
-	clearInifacBox();
-	var checkbox = $a('//input[@id="OPT_CHKBOX0"]');   checkbox[0].checked = false; 		// 拠点
-	var checkbox = $a('//input[@id="OPT_CHKBOX1"]');   checkbox[0].checked = true;			// 伐採所
-	var checkbox = $a('//input[@id="OPT_CHKBOX2"]');   checkbox[0].checked = true;			// 石切り場
-	var checkbox = $a('//input[@id="OPT_CHKBOX3"]');   checkbox[0].checked = true;			// 製鉄所
-	var checkbox = $a('//input[@id="OPT_CHKBOX4"]');   checkbox[0].checked = true;			// 畑
-	var checkbox = $a('//input[@id="OPT_CHKBOX5"]');   checkbox[0].checked = true;			// 倉庫
-	var checkbox = $a('//input[@id="OPT_CHKBOX6"]');   checkbox[0].checked = false; 		// 銅雀台
-	var checkbox = $a('//input[@id="OPT_CHKBOX7"]');   checkbox[0].checked = false; 		// 鍛冶場
-	var checkbox = $a('//input[@id="OPT_CHKBOX8"]');   checkbox[0].checked = false; 		// 防具工場
-	var checkbox = $a('//input[@id="OPT_CHKBOX9"]');   checkbox[0].checked = false; 		// 練兵所
-	var checkbox = $a('//input[@id="OPT_CHKBOX10"]');  checkbox[0].checked = false; 		// 兵舎
-	var checkbox = $a('//input[@id="OPT_CHKBOX11"]');  checkbox[0].checked = false; 		// 弓兵舎
-	var checkbox = $a('//input[@id="OPT_CHKBOX12"]');  checkbox[0].checked = false; 		// 厩舎
-	var checkbox = $a('//input[@id="OPT_CHKBOX13"]');  checkbox[0].checked = false; 		// 宿舎
-	var checkbox = $a('//input[@id="OPT_CHKBOX14"]');  checkbox[0].checked = false; 		// 兵器工房
-	var checkbox = $a('//input[@id="OPT_CHKBOX15"]');  checkbox[0].checked = true;			// 市場
-	var checkbox = $a('//input[@id="OPT_CHKBOX16"]');  checkbox[0].checked = false; 		// 訓練所
-	var checkbox = $a('//input[@id="OPT_CHKBOX17"]');  checkbox[0].checked = false; 		// 水車
-	var checkbox = $a('//input[@id="OPT_CHKBOX18"]');  checkbox[0].checked = false; 		// 工場
-	var checkbox = $a('//input[@id="OPT_CHKBOX19"]');  checkbox[0].checked = false; 		// 研究所
-	var checkbox = $a('//input[@id="OPT_CHKBOX20"]');  checkbox[0].checked = false; 		// 大宿舎
-	var checkbox = $a('//input[@id="OPT_CHKBOX21"]');  checkbox[0].checked = false; 		// 遠征訓練所
-	var checkbox = $a('//input[@id="OPT_CHKBOX22"]');  checkbox[0].checked = false; 		// 見張り台
-
-	var textbox = $a('//input[@id="OPT_CHKBOXLV1"]');	textbox[0].value =	8;				// 伐採所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV2"]');	textbox[0].value =	8;				// 石切り場
-	var textbox = $a('//input[@id="OPT_CHKBOXLV3"]');	textbox[0].value =	8;				// 製鉄所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV4"]');	textbox[0].value =	8;				// 畑
-	var textbox = $a('//input[@id="OPT_CHKBOXLV5"]');	textbox[0].value =	10; 			// 倉庫
-	var textbox = $a('//input[@id="OPT_CHKBOXLV15"]');	textbox[0].value =	5;				// 市場
-
-	// 内政設定
-	var checkbox = $a('//input[@id="OPT_DOME1"]');	 checkbox[0].checked = true;			// 伐採知識
-	var checkbox = $a('//input[@id="OPT_DOME2"]');	 checkbox[0].checked = true;			// 伐採技術
-	var checkbox = $a('//input[@id="OPT_DOME3"]');	 checkbox[0].checked = true;			// 弓兵増強
-	var checkbox = $a('//input[@id="OPT_DOME4"]');	 checkbox[0].checked = true;			// 石切知識
-	var checkbox = $a('//input[@id="OPT_DOME5"]');	 checkbox[0].checked = true;			// 石切技術
-	var checkbox = $a('//input[@id="OPT_DOME6"]');	 checkbox[0].checked = true;			// 槍兵増強
-	var checkbox = $a('//input[@id="OPT_DOME7"]');	 checkbox[0].checked = true;			// 製鉄知識
-	var checkbox = $a('//input[@id="OPT_DOME8"]');	 checkbox[0].checked = true;			// 製鉄技術
-	var checkbox = $a('//input[@id="OPT_DOME9"]');	 checkbox[0].checked = true;			// 騎兵増強
-	var checkbox = $a('//input[@id="OPT_DOME10"]');  checkbox[0].checked = true;			// 食糧知識
-	var checkbox = $a('//input[@id="OPT_DOME11"]');  checkbox[0].checked = true;			// 食糧技術
-	var checkbox = $a('//input[@id="OPT_DOME12"]');  checkbox[0].checked = true;			// 農林知識
-	var checkbox = $a('//input[@id="OPT_DOME13"]');  checkbox[0].checked = true;			// 農林技術
-	var checkbox = $a('//input[@id="OPT_DOME14"]');  checkbox[0].checked = true;			// 加工知識
-	var checkbox = $a('//input[@id="OPT_DOME15"]');  checkbox[0].checked = true;			// 加工技術
-	var checkbox = $a('//input[@id="OPT_DOME16"]');  checkbox[0].checked = true;			// 富国
-	var checkbox = $a('//input[@id="OPT_DOME17"]');  checkbox[0].checked = true;			// 富国論
-	var checkbox = $a('//input[@id="OPT_DOME18"]');  checkbox[0].checked = true;			// 富国強兵
-	var checkbox = $a('//input[@id="OPT_DOME19"]');  checkbox[0].checked = true;			// 豊穣
-	var checkbox = $a('//input[@id="OPT_DOME20"]');  checkbox[0].checked = true;			// 美玉歌舞
-	var checkbox = $a('//input[@id="OPT_DOME21"]');  checkbox[0].checked = true;			// 恵風
-	var checkbox = $a('//input[@id="OPT_DOME22"]');  checkbox[0].checked = true;			// 人選眼力
-	var checkbox = $a('//input[@id="OPT_DOME23"]');  checkbox[0].checked = true;			// 呉の治世
-	var checkbox = $a('//input[@id="OPT_DOME24"]');  checkbox[0].checked = true;			// 王佐の才
-	var checkbox = $a('//input[@id="OPT_DOME25"]');  checkbox[0].checked = true;			// 練兵訓練
-	var checkbox = $a('//input[@id="OPT_DOME26"]');  checkbox[0].checked = true;			// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME27"]');  checkbox[0].checked = true;			// 兵舎訓練
-	var checkbox = $a('//input[@id="OPT_DOME28"]');  checkbox[0].checked = true;			// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME29"]');  checkbox[0].checked = true;			// 弓兵訓練
-	var checkbox = $a('//input[@id="OPT_DOME30"]');  checkbox[0].checked = true;			// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME31"]');  checkbox[0].checked = true;			// 厩舎訓練
-	var checkbox = $a('//input[@id="OPT_DOME32"]');  checkbox[0].checked = true;			// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME33"]');  checkbox[0].checked = true;			// 兵器訓練
-	var checkbox = $a('//input[@id="OPT_DOME34"]');  checkbox[0].checked = true;			// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME35"]');  checkbox[0].checked = true;			// 強兵の檄文
-	var checkbox = $a('//input[@id="OPT_DOME36"]');  checkbox[0].checked = true;			// 攻城の檄文
-	var checkbox = $a('//input[@id="OPT_DOME37"]');  checkbox[0].checked = true;			// 豊潤祈祷
-	// 糧村オプション
-	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = false;		//
-	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = true; 		// 糧村化
-	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value	= 3;
-	clearWaterwheelBox(); // 水車村オプション
-}
-
-function InitPreset_02(){			// 2014.03.05
-	// 糧村
-	clearInifacBox();
-	var checkbox = $a('//input[@id="OPT_CHKBOX0"]');   checkbox[0].checked = false; 		// 拠点
-	var checkbox = $a('//input[@id="OPT_CHKBOX4"]');   checkbox[0].checked = true;			// 畑
-
-	var textbox = $a('//input[@id="OPT_CHKBOXLV0"]');	textbox[0].value =	5;				// 拠点
-	var textbox = $a('//input[@id="OPT_CHKBOXLV4"]');	textbox[0].value =	8;				// 畑
-
-	// 内政設定
-	var checkbox = $a('//input[@id="OPT_DOME10"]');  checkbox[0].checked = true;			// 食糧知識
-	var checkbox = $a('//input[@id="OPT_DOME11"]');  checkbox[0].checked = true;			// 食糧技術
-	var checkbox = $a('//input[@id="OPT_DOME12"]');  checkbox[0].checked = true;			// 農林知識
-	var checkbox = $a('//input[@id="OPT_DOME13"]');  checkbox[0].checked = true;			// 農林技術
-	var checkbox = $a('//input[@id="OPT_DOME23"]');  checkbox[0].checked = true;			// 呉の治世
-	// 糧村オプション
-	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = false;		//
-	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = true; 		// 糧村化
-	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value	= 0;			// 倉庫数
-	clearWaterwheelBox(); // 水車村オプション
-}
-
-function InitPreset_03(){			// 2014.03.05
-	// 砦９
-	clearInifacBox();
-	var checkbox = $a('//input[@id="OPT_CHKBOX7"]');   checkbox[0].checked = true;			// 鍛冶場
-	var checkbox = $a('//input[@id="OPT_CHKBOX9"]');   checkbox[0].checked = true;			// 練兵所
-	var checkbox = $a('//input[@id="OPT_CHKBOX13"]');  checkbox[0].checked = true;			// 宿舎
-
-	var textbox = $a('//input[@id="OPT_CHKBOXLV7"]');	textbox[0].value =	5;				// 鍛冶場
-	var textbox = $a('//input[@id="OPT_CHKBOXLV9"]');	textbox[0].value =	10; 			// 練兵所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV13"]');	textbox[0].value =	9;				// 宿舎
-
-	// 糧村オプション
-	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = true; 		// 宿舎村化
-
-	// 造兵設定
-	clearInitSoldier(); 			// 造兵クリア
-	var checkbox = $a('//input[@id="OPT_BLD_SOL"]');	checkbox[0].checked = false;		// 自動造兵
-	var textbox = $a('//input[@id="OPT_SOL_MAX1"]');	textbox[0].value =	4000;			// 剣兵　最大数
-	var textbox = $a('//input[@id="OPT_SOL_ADD1"]');	textbox[0].value =	50; 			// 　　　造兵数
-
-	clearInitRemainingRes();	// 武器防具設定クリア
-	var checkbox = $a('//input[@id="OPT_BKBG_CHK"]');	checkbox[0].checked = true; 		// 武器防具強化
-	var textbox = $a('//input[@id="OPT_BK_LV1"]');		textbox[0].value =	10; 			// 　　　造兵数
-}
-
-function InitPreset_02(){			// 2014.03.05
-	// 糧村
-	clearInifacBox();
-	var checkbox = $a('//input[@id="OPT_CHKBOX0"]');   checkbox[0].checked = false; 		// 拠点
-	var checkbox = $a('//input[@id="OPT_CHKBOX4"]');   checkbox[0].checked = true;			// 畑
-
-	var textbox = $a('//input[@id="OPT_CHKBOXLV0"]');	textbox[0].value =	5;				// 拠点
-	var textbox = $a('//input[@id="OPT_CHKBOXLV4"]');	textbox[0].value =	8;				// 畑
-
-	// 内政設定
-	var checkbox = $a('//input[@id="OPT_DOME10"]');  checkbox[0].checked = true;			// 食糧知識
-	var checkbox = $a('//input[@id="OPT_DOME11"]');  checkbox[0].checked = true;			// 食糧技術
-	var checkbox = $a('//input[@id="OPT_DOME12"]');  checkbox[0].checked = true;			// 農林知識
-	var checkbox = $a('//input[@id="OPT_DOME13"]');  checkbox[0].checked = true;			// 農林技術
-	var checkbox = $a('//input[@id="OPT_DOME23"]');  checkbox[0].checked = true;			// 呉の治世
-	// 糧村オプション
-	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = false;		//
-	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = true; 		// 糧村化
-	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value	= 0;			// 倉庫数
-	clearWaterwheelBox(); // 水車村オプション
-}
-
-function InitPreset_04(){			// 2014.03.05
-	// 砦13
-	clearInifacBox();
-	var checkbox = $a('//input[@id="OPT_CHKBOX7"]');   checkbox[0].checked = true;			// 鍛冶場
-	var checkbox = $a('//input[@id="OPT_CHKBOX9"]');   checkbox[0].checked = true;			// 練兵所
-	var checkbox = $a('//input[@id="OPT_CHKBOX13"]');  checkbox[0].checked = true;			// 宿舎
-
-	var textbox = $a('//input[@id="OPT_CHKBOXLV7"]');	textbox[0].value =	5;				// 鍛冶場
-	var textbox = $a('//input[@id="OPT_CHKBOXLV9"]');	textbox[0].value =	10; 			// 練兵所
-	var textbox = $a('//input[@id="OPT_CHKBOXLV13"]');	textbox[0].value =	13; 			// 宿舎
-
-	// 糧村オプション
-	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = true; 		// 宿舎村化
-
-	// 造兵設定
-	clearInitSoldier(); 			// 造兵クリア
-	var checkbox = $a('//input[@id="OPT_BLD_SOL"]');	checkbox[0].checked = false;		// 自動造兵
-	var textbox = $a('//input[@id="OPT_SOL_MAX1"]');	textbox[0].value =	4000;			// 剣兵　最大数
-	var textbox = $a('//input[@id="OPT_SOL_ADD1"]');	textbox[0].value =	50; 			// 　　　造兵数
-
-	clearInitRemainingRes();	// 武器防具設定クリア
-	var checkbox = $a('//input[@id="OPT_BKBG_CHK"]');	checkbox[0].checked = true; 		// 武器防具強化
-	var textbox = $a('//input[@id="OPT_BK_LV1"]');		textbox[0].value =	10; 			// 　　　造兵数
-}
-
 // ここまで 2014.03.05 =============================================================================================================================================================
 // 残す資源量のクリア
 function clearInitRemainingRes(){
@@ -4716,7 +3913,7 @@ function addInifacHtml(vId) {
 	ABfacContainer.style.padding = "2px";
 	ABfacContainer.style.MozBorderRadius = "4px";
 	ABfacContainer.style.zIndex = 9999;
-	ABfacContainer.style.width = "746px";
+	ABfacContainer.style.width = "734px";
 
 	ABfacContainer.setAttribute('vId', vId);
 	d.body.appendChild(ABfacContainer);
@@ -4771,7 +3968,8 @@ function addInifacHtml(vId) {
 	var td11 = d.createElement("td");
 		td11.style.padding = "1px";
 		td11.colSpan = "3";
-		td11.appendChild( createRadioBtn ( 'AC', '自動建築' ) );
+		//td11.appendChild( createRadioBtn ( 'AC', '自動建築' ) );
+		ccreateCaptionText(td11, "dummy", "■ 自動建築", 0 );
 
 	var tr111 = d.createElement("tr");
 		tr111.style.backgroundColor = COLOR_BACK;
@@ -4795,6 +3993,7 @@ function addInifacHtml(vId) {
 	var td31 = d.createElement("td");
 		td31.colSpan = "3";
 		td31.style.padding = "3px";
+		td31.style.textAlign = "right";
 
 	Build_Box.appendChild(tr11);
 	tr11.appendChild(td11);
@@ -4841,18 +4040,6 @@ function addInifacHtml(vId) {
 	ccreateCheckBoxKai2(td113, "OPT_CHKBOX", 19, " 研究所 　　","自動でLv上げをする建築物にチェックをしてください。",0);
 	ccreateCheckBoxKai2(td113, "OPT_CHKBOX", 22, " 見張り台 　","自動でLv上げをする建築物にチェックをしてください。",0);
 
-	ccreateButton(td31, "遠征訓練所"  , 	"本拠地に遠征訓練所を建てる設定にします。", 	function() {InitMilitaryHome()},85);
-	if ( WangRay != true ) {
-		ccreateButton(td31, "城①"	,		"城① の設定にします。",					function() {InitRiceParadise()});
-		ccreateButton(td31, "城②"	,		"城② の設定にします。",					function() {InitResVillage()});
-		ccreateButton(td31, "宿舎村",		"砦 の設定にします。",						function() {InitMilitarySite()});
-		ccreateButton(td31, "糧村"	,		"砦 の設定にします。",						function() {InitRiceSite()});
-	} else {
-		ccreateButton(td31, "城",			"城 の設定にします。",						function() {InitPreset_01()});
-		ccreateButton(td31, "糧村", 			"糧村 の設定にします。",					function() {InitPreset_02()});
-		ccreateButton(td31, "砦９", 			"砦９ の設定にします。",					function() {InitPreset_03()});
-		ccreateButton(td31, "砦１３",		"砦１３ の設定にします。",					function() {InitPreset_04()});
-	}
 	ccreateButton(td31, "初期化",		"自動建設設定を消去します。",				function() {clearInifacBox()});
 
 	// ===== 自動削除 ===== 2015.05.10
@@ -4937,7 +4124,7 @@ function addInifacHtml(vId) {
 		td1.colSpan = 5;
 //		td1.style.padding = "2px";
 		td1.style.backgroundColor = COLOR_TITLE;
-		ccreateText(td1, "dummy", "■ 自動内政設定", 0 );
+		ccreateCaptionText(td1, "dummy", "■ 自動内政設定", 0 );
 
 	var tr2 = d.createElement("tr");
 		tr2.style.backgroundColor = COLOR_BACK;
@@ -5099,38 +4286,6 @@ function addInifacHtml(vId) {
 	Contribution_Box.appendChild(tr411);
 	tr411.appendChild(td411);
 
-	// ===== 宿舎ビルド＆スクラップ設定 =====
-
-	var Scrap_Box = d.createElement("table");
-		Scrap_Box.style.margin = "0px 4px 4px 0px";
-		Scrap_Box.style.border ="solid 2px black";
-		Scrap_Box.style.width = "100%";
-
-	var tr510 = d.createElement("tr");
-		tr510.style.border = "solid 1px black";
-		tr510.style.backgroundColor =COLOR_TITLE;
-
-	var td510 = d.createElement("td");
-		td510.style.padding = "1px";
-		td510.appendChild( createRadioBtn ( 'BS', '宿舎ビルスク' ) );
-
-	var tr511 = d.createElement("tr");
-		tr511.style.border = "solid 1px black";
-		tr511.style.backgroundColor =COLOR_BACK;
-
-	var td511 = d.createElement("td");
-		td511.style.padding = "3px";
-		td511.style.verticalAlign = "top";
-
-		td511.appendChild( createRadioBtn2 ( 'DD', ' 宿舎対象　' ) );
-		td511.appendChild( createRadioBtn2 ( 'HH', ' 畑対象　　' ) );
-		ccreateTextBox(td511, "OPT_MAX", OPT_MAX,	  "対象施設数　",	"自動で建築/破棄する施設の数。", 5, 3);
-		ccreateTextBox(td511, "OPT_MAXLV", OPT_MAXLV, "対象施設LV　",	"自動で建築/破棄する施設の最大LV。", 5, 3);
-
-	Scrap_Box.appendChild(tr510);
-	tr510.appendChild(td510);
-	Scrap_Box.appendChild(tr511);
-	tr511.appendChild(td511);
 
 	// ===== 糧村化 ===
 
@@ -5145,7 +4300,16 @@ function addInifacHtml(vId) {
 
 	var td600 = d.createElement("td");
 //		td600.style.padding = "2px";
-		ccreateCheckBox(td600,"OPT_KATEMURA", OPT_KATEMURA, " 糧村化", "この都市を糧村にする。平地に畑・倉庫を建てる。",0);
+		ccreateCheckBoxF(td600,"OPT_KATEMURA", OPT_KATEMURA, " 糧村化", "この都市を糧村にする。平地に畑・倉庫を建てる。",0,function(cb){
+			if (cb && !cb.checked) return;
+			if (cb) cb.checked = true;
+
+			// 畑
+			var textbox  = $a('//input[@id="OPT_CHKBOXLV4"]'); textbox[0].value = 15;
+			var checkbox = $a('//input[@id="OPT_CHKBOX4"]');   checkbox[0].checked = true;
+
+			return true;
+		});
 
 	var tr611 = d.createElement("td");
 		tr611.style.border = "solid 1px black";
@@ -5174,7 +4338,7 @@ function addInifacHtml(vId) {
 
 	var td620 = d.createElement("td");
 		td620.colSpan = "2";
-		ccreateText(td620, "dummy", "■ 水車村化（実験版） ■", 0 );
+		ccreateCaptionText(td620, "dummy", "■ 水車村化（実験版） ■", 0 );
 
 	var tr621 = d.createElement("tr");
 		tr621.style.border = "solid 1px black";
@@ -5489,7 +4653,7 @@ function addInifacHtml(vId) {
 		tra10.style.backgroundColor =COLOR_TITLE;
 
 	var tda10 = d.createElement("td");
-		ccreateText(tda10, "dummy", "■ 自動造兵・武器防具強化時に残す資源量 ■", 0 );
+		ccreateCaptionText(tda10, "dummy", "■ 自動造兵・武器防具強化時に残す資源量 ■", 0 );
 
 	var tra1 = d.createElement("tr");
 		tra1.style.border = "solid 1px black";
@@ -5500,7 +4664,8 @@ function addInifacHtml(vId) {
 	var tra21 = d.createElement("tr");
 	var tda11 = d.createElement("td");
 		tda11.style.padding = "2px";
-		tda11.style.verticalAlign = "bottom";
+		tda11.style.verticalAlign = "top";
+		tda11.style.textAlign = "center";
 	var tda12 = d.createElement("td");
 		tda12.style.padding = "2px";
 	tda12.style.verticalAlign = "top";
@@ -5517,10 +4682,6 @@ function addInifacHtml(vId) {
 		tda15.style.padding = "2px";
 		tda15.style.verticalAlign = "top";
 		tda15.style.textAlign = "center";
-//	var tda16 = d.createElement("td");
-//		tda16.style.padding = "0px";
-//		tda16.style.verticalAlign = "top";
-//		tda16.style.textAlign = "center";
 
 	Storage_Box.appendChild(tra10);
 		tra10.appendChild(tda10);
@@ -5533,33 +4694,26 @@ function addInifacHtml(vId) {
 		tra11.appendChild(tda13);
 		tra11.appendChild(tda14);
 		tra11.appendChild(tda15);
-//		tra11.appendChild(tda16);
 
+	ccreateText(tda11, "dummy", "木", 0 );
+	ccreateText(tda12, "dummy", "石", 0 );
+	ccreateText(tda13, "dummy", "鉄", 0 );
+	ccreateText(tda14, "dummy", "糧", 0 );
+	ccreateText(tda15, "dummy", "　", 0 );
 
-	ccreateText(tda11, "dummy", "　", 0 );
-	ccreateText(tda12, "dummy", "木", 0 );
-	ccreateText(tda13, "dummy", "石", 0 );
-	ccreateText(tda14, "dummy", "鉄", 0 );
-	ccreateText(tda15, "dummy", "糧", 0 );
-
-	ccreateText(tda11, "dummy", "残す資源量", 0 );
-	ccreateTextBox(tda12,"OPT_BLD_WOOD", OPT_BLD_WOOD,"","木を残す量",7,0);
-	ccreateTextBox(tda13,"OPT_BLD_STONE", OPT_BLD_STONE,"","石を残す量",7,0);
-	ccreateTextBox(tda14,"OPT_BLD_IRON", OPT_BLD_IRON,"","鉄を残す量",7,0);
-	ccreateTextBox(tda15,"OPT_BLD_RICE", OPT_BLD_RICE,"","糧を残す量",7,0);
-
-	ccreateText(tda11, "dummy", "　", 0 );
-//	ccreateText(tda12, "dummy", "　", 0 );
-//	ccreateText(tda13, "dummy", "　", 0 );
-//	ccreateText(tda14, "dummy", "　", 0 );
-	ccreateButton(tda15, "初期化", "残す資源量の設定内容を消去します。", function() {clearInitRemainingRes()},54,0);
+	ccreateTextBox(tda11,"OPT_BLD_WOOD", OPT_BLD_WOOD,"","木を残す量",7,0);
+	ccreateTextBox(tda12,"OPT_BLD_STONE", OPT_BLD_STONE,"","石を残す量",7,0);
+	ccreateTextBox(tda13,"OPT_BLD_IRON", OPT_BLD_IRON,"","鉄を残す量",7,0);
+	ccreateTextBox(tda14,"OPT_BLD_RICE", OPT_BLD_RICE,"","糧を残す量",7,0);
+	var btn = ccreateButton(tda15, "初期化", "残す資源量の設定内容を消去します。", function() {clearInitRemainingRes()},54,0);
+	j$(btn).before("　　");
 
 	// ===== 宿舎村設定 ===== 2013.12.26
 	var dorm_Box = d.createElement("table");
 		dorm_Box.style.margin = "0px 4px 4px 0px";
 		dorm_Box.style.border ="solid 2px black";
 		dorm_Box.style.width = "100%";
-		if (WangRay != true) { dorm_Box.style.display = "none"; }
+		dorm_Box.style.display = "none";
 
 	var trc10 = d.createElement("tr");
 		trc10.style.border = "solid 1px black";
@@ -5591,7 +4745,7 @@ function addInifacHtml(vId) {
 		tut_Box.style.margin = "0px 4px 4px 0px";
 		tut_Box.style.border ="solid 2px black";
 		tut_Box.style.width = "100%";
-		if (WangRay != true) { tut_Box.style.display = "none"; }
+		tut_Box.style.display = "none";
 
 	var trb10 = d.createElement("tr");
 		trb10.style.border = "solid 1px black";
@@ -5631,8 +4785,11 @@ function addInifacHtml(vId) {
 		tr711.appendChild(td711);
 
 	ccreateButton(td711, "保存", "設定内容を保存します", function() {
+		j$(this).attr("value","保存中");
+		j$(this).attr("id","AFSaveButton");
 		SaveInifacBox(ABfacContainer.getAttribute('vId'))
-		alert("保存しました");
+		//alert("保存しました");
+		setTimeout(function(){ j$("#AFSaveButton").attr("value","保存"); },200);
 	});
 	ccreateButton(td711, "閉じる", "設定内容を保存せず閉じます", function() {
 		closeInifacBox();
@@ -5686,7 +4843,6 @@ function addInifacHtml(vId) {
 		td002.style.width = "Auto";
 
 
-		td002.appendChild(Scrap_Box);
 		td002.appendChild(Field_Box);		// 糧村化設定
 		td002.appendChild(Waterwheel_Box);	// 水車村
 		td002.appendChild(dorm_Box);		// 宿舎村化設定 2013.12.26
@@ -5745,25 +4901,6 @@ function createRadioBtn ( value, txt ) {
 	radioButton.style.verticalAlign = "top";
 //	  radioButton.style.margin = '0 2px 0 0';
 	if ( OPT_BLD == value ) radioButton.checked = true;
-	radioLabel.appendChild( radioButton );
-	radioLabel.appendChild( radioLabelText );
-	return radioLabel;
-}
-
-function createRadioBtn2 ( value, txt ) {
-	var radioLabel = document.createElement('label');
-	radioLabel.style.display = 'inline-block';
-	radioLabel.style.margin = '0 5px 0 0';
-	radioLabel.style.padding = '0px';
-	radioLabel.addEventListener ( 'click', function(){ OPT_SorH = value; }, true );
-	var radioLabelText = document.createTextNode(txt);
-	var radioButton = document.createElement('input');
-	radioButton.type = 'radio';
-	radioButton.name = 'SorH';
-	radioButton.value = value;
-//	  radioButton.style.margin = '0 2px 0 0';
-	radioButton.style.verticalAlign = "top";
-	if ( OPT_SorH == value ) radioButton.checked = true;
 	radioLabel.appendChild( radioButton );
 	radioLabel.appendChild( radioLabelText );
 	return radioLabel;
@@ -6432,6 +5569,22 @@ function ccreateText(container, id, text, left )
 	container.appendChild(dv);
 }
 // ＠＠　ここまで　＠＠
+function ccreateCaptionText(container, id, text, left )
+{
+	left += 2;
+	var dv = d.createElement("div");
+	dv.style.paddingLeft= left + "px";
+
+	var lb = d.createElement("label");
+	lb.htmlFor = id;
+	lb.style.verticalAlign = "middle";
+	var tx = d.createTextNode(text);
+	tx.fontsize = "9px";
+	lb.appendChild( tx );
+
+	dv.appendChild(lb);
+	container.appendChild(dv);
+}
 function ccreateCheckBoxF(container, id, def, text, title, left, func)
 {
 	var cb = ccreateCheckBox(container, id, def, text, title, left);
@@ -6538,474 +5691,439 @@ function cgetComboBoxValue(id){
 	if( !c ) return "";
 	return c.value;
 }
+// 施設建設資源配列の取得(木、石、鉄、糧、所要秒数[運営バグ対策のため正確さは不要])
+function getBuildResources(constructorName, level){
+  var resources = {
+	'伐採所':[
+	  {wood: 10, stone: 35, iron: 40, food: 15, time: 135},
+	  {wood: 25, stone: 88, iron: 100, food: 38, time: 250},
+	  {wood: 58, stone: 202, iron: 230, food: 86, time: 550},
+	  {wood: 173, stone: 604, iron: 690, food: 259, time: 1100},
+	  {wood: 431, stone: 1510, iron: 1725, food: 647, time: 2200},
+	  {wood: 1466, stone: 2847, iron: 3019, food: 1294, time: 4180},
+	  {wood: 2493, stone: 4839, iron: 5132, food: 2200, time: 7942},
+	  {wood: 3490, stone: 6775, iron: 7186, food: 3080, time: 14296},
+	  {wood: 4537, stone: 8807, iron: 9341, food: 4003, time: 24303},
+	  {wood: 5898, stone: 11450, iron: 12144, food: 5204, time: 38884},
+	  {wood: 8119, stone: 14434, iron: 15787, food: 6766, time: 58326},
+	  {wood: 11366, stone: 20207, iron: 22101, food: 9472, time: 81656},
+	  {wood: 17050, stone: 30311, iron: 33152, food: 14208, time: 106153},
+	  {wood: 25575, stone: 45467, iron: 49729, food: 21312, time: 127384},
+	  {wood: 38362, stone: 68199, iron: 74593, food: 31968, time: 140122}
+	],
+	'石切り場':[
+	  {wood: 40, stone: 10, iron: 35, food: 15, time: 135},
+	  {wood: 100, stone: 25, iron: 88, food: 38, time: 250},
+	  {wood: 230, stone: 58, iron: 202, food: 86, time: 550},
+	  {wood: 690, stone: 173, iron: 604, food: 259, time: 1100},
+	  {wood: 1725, stone: 431, iron: 1510, food: 647, time: 2200},
+	  {wood: 3019, stone: 1466, iron: 2847, food: 1294, time: 4180},
+	  {wood: 5132, stone: 2493, iron: 4839, food: 2200, time: 7942},
+	  {wood: 7186, stone: 3490, iron: 6775, food: 3080, time: 14296},
+	  {wood: 9341, stone: 4537, iron: 8807, food: 4003, time: 24303},
+	  {wood: 12144, stone: 5898, iron: 11450, food: 5204, time: 38884},
+	  {wood: 15787, stone: 8119, iron: 14434, food: 6766, time: 58326},
+	  {wood: 22101, stone: 11366, iron: 20207, food: 9472, time: 81656},
+	  {wood: 33152, stone: 17050, iron: 30311, food: 14208, time: 106153},
+	  {wood: 49729, stone: 25575, iron: 45467, food: 21312, time: 127384},
+	  {wood: 74593, stone: 38362, iron: 68199, food: 31968, time: 140122}
+	],
+	'製鉄所':[
+	  {wood: 35, stone: 40, iron: 10, food: 15, time: 135},
+	  {wood: 88, stone: 100, iron: 25, food: 38, time: 250},
+	  {wood: 202, stone: 230, iron: 58, food: 86, time: 550},
+	  {wood: 604, stone: 690, iron: 173, food: 259, time: 1100},
+	  {wood: 1510, stone: 1725, iron: 431, food: 647, time: 2200},
+	  {wood: 2847, stone: 3019, iron: 1466, food: 1294, time: 4180},
+	  {wood: 4839, stone: 5132, iron: 2493, food: 2200, time: 7942},
+	  {wood: 6775, stone: 7186, iron: 3490, food: 3080, time: 14296},
+	  {wood: 8807, stone: 9341, iron: 4537, food: 4003, time: 24303},
+	  {wood: 11450, stone: 12144, iron: 5898, food: 5204, time: 38884},
+	  {wood: 14434, stone: 15787, iron: 8119, food: 6766, time: 58326},
+	  {wood: 20207, stone: 22101, iron: 11366, food: 9472, time: 81656},
+	  {wood: 30311, stone: 33152, iron: 17050, food: 14208, time: 106153},
+	  {wood: 45467, stone: 49729, iron: 25575, food: 21312, time: 127384},
+	  {wood: 68199, stone: 74593, iron: 38362, food: 31968, time: 140122}
+	],
+	'畑':[
+	  {wood: 35, stone: 35, iron: 30, food: 0, time: 120},
+	  {wood: 88, stone: 88, iron: 75, food: 0, time: 216},
+	  {wood: 202, stone: 202, iron: 173, food: 0, time: 389},
+	  {wood: 604, stone: 604, iron: 518, food: 0, time: 661},
+	  {wood: 1510, stone: 1510, iron: 1294, food: 0, time: 1124},
+	  {wood: 3019, stone: 3019, iron: 2588, food: 0, time: 1910},
+	  {wood: 5132, stone: 5132, iron: 4399, food: 0, time: 3247},
+	  {wood: 7186, stone: 7186, iron: 6159, food: 0, time: 5520},
+	  {wood: 9341, stone: 9341, iron: 8007, food: 0, time: 8833},
+	  {wood: 12144, stone: 12144, iron: 10409, food: 0, time: 13249},
+	  {wood: 15787, stone: 15787, iron: 13532, food: 0, time: 19873},
+	  {wood: 22101, stone: 22101, iron: 18944, food: 0, time: 27823},
+	  {wood: 33152, stone: 33152, iron: 28416, food: 0, time: 36170},
+	  {wood: 49729, stone: 49729, iron: 42625, food: 0, time: 45212},
+	  {wood: 74593, stone: 74593, iron: 63937, food: 0, time: 54225}
+	],
+	'練兵所':[
+	  {wood: 112, stone: 107, iron: 107, food: 122, time: 192},
+	  {wood: 224, stone: 214, iron: 214, food: 244, time: 384},
+	  {wood: 448, stone: 428, iron: 428, food: 488, time: 768},
+	  {wood: 759, stone: 725, iron: 725, food: 826, time: 1536},
+	  {wood: 1214, stone: 1160, iron: 1160, food: 1322, time: 3072},
+	  {wood: 2209, stone: 2110, iron: 2110, food: 2406, time: 4608},
+	  {wood: 3331, stone: 3182, iron: 3182, food: 3627, time: 6922},
+	  {wood: 4958, stone: 4736, iron: 4736, food: 5400, time: 10368},
+	  {wood: 8091, stone: 7729, iron: 7729, food: 8813, time: 14515},
+	  {wood: 11130, stone: 10632, iron: 10632, food: 12122, time: 20312}
+	],
+	'兵舎':[
+	  {wood: 72, stone: 360, iron: 72, food: 216, time: 216},
+	  {wood: 144, stone: 720, iron: 144, food: 432, time: 432},
+	  {wood: 228, stone: 1440, iron: 228, food: 864, time: 864},
+	  {wood: 648, stone: 1728, iron: 648, food: 1296, time: 1728},
+	  {wood: 972, stone: 2592, iron: 972, food: 1944, time: 3456},
+	  {wood: 1409, stone: 3758, iron: 1409, food: 2819, time: 5184},
+	  {wood: 2725, stone: 4088, iron: 2725, food: 4088, time: 7776},
+	  {wood: 6744, stone: 9810, iron: 5518, food: 2453, time: 10886},
+	  {wood: 12140, stone: 17658, iron: 9933, food: 4415, time: 15241},
+	  {wood: 21852, stone: 31784, iron: 17879, food: 7946, time: 19814},
+	  {wood: 39333, stone: 57212, iron: 32182, food: 14303, time: 25757},
+	  {wood: 70800, stone: 96545, iron: 64364, food: 25745, time: 33485},
+	  {wood: 127440, stone: 173781, iron: 115854, food: 43642, time: 43529},
+	  {wood: 254879, stone: 324392, iron: 254879, food: 92683, time: 56588},
+	  {wood: 509759, stone: 648784, iron: 509759, food: 185367, time: 73615}
+	],
+	'弓兵舎':[
+	  {wood: 360, stone: 72, iron: 72, food: 216, time: 216},
+	  {wood: 720, stone: 144, iron: 144, food: 432, time: 432},
+	  {wood: 1440, stone: 228, iron: 228, food: 864, time: 864},
+	  {wood: 1728, stone: 648, iron: 648, food: 1296, time: 1728},
+	  {wood: 2592, stone: 972, iron: 972, food: 1944, time: 3456},
+	  {wood: 3758, stone: 1409, iron: 1409, food: 2819, time: 5184},
+	  {wood: 5450, stone: 2044, iron: 2044, food: 4087, time: 7776},
+	  {wood: 9810, stone: 6131, iron: 6131, food: 2453, time: 10886},
+	  {wood: 17658, stone: 12140, iron: 9933, food: 4415, time: 15241},
+	  {wood: 31784, stone: 21852, iron: 17879, food: 7946, time: 19814},
+	  {wood: 57212, stone: 39333, iron: 32182, food: 14303, time: 25757},
+	  {wood: 96545, stone: 70800, iron: 64364, food: 25745, time: 33485},
+	  {wood: 173781, stone: 127440, iron: 115854, food: 46342, time: 42529},
+	  {wood: 324392, stone: 254879, iron: 254879, food: 92683, time: 56588},
+	  {wood: 648784, stone: 509759, iron: 509759, food: 185367, time: 73615}
+	],
+	'厩舎':[
+	  {wood: 72, stone: 72, iron: 360, food: 216, time: 216},
+	  {wood: 144, stone: 144, iron: 720, food: 432, time: 432},
+	  {wood: 228, stone: 228, iron: 1440, food: 864, time: 864},
+	  {wood: 648, stone: 648, iron: 1728, food: 1296, time: 1728},
+	  {wood: 972, stone: 972, iron: 2592, food: 1944, time: 3456},
+	  {wood: 1409, stone: 1409, iron: 3758, food: 2891, time: 5184},
+	  {wood: 2044, stone: 2044, iron: 5450, food: 4087, time: 7776},
+	  {wood: 5518, stone: 6744, iron: 9810, food: 2453, time: 10886},
+	  {wood: 9933, stone: 12140, iron: 17658, food: 4415, time: 15241},
+	  {wood: 17879, stone: 21852, iron: 31784, food: 7946, time: 19814},
+	  {wood: 32182, stone: 39333, iron: 57212, food: 14303, time: 25757},
+	  {wood: 64364, stone: 70800, iron: 96545, food: 25745, time: 33485},
+	  {wood: 115854, stone: 127440, iron: 173781, food: 46342, time: 42529},
+	  {wood: 254879, stone: 254879, iron: 324392, food: 92683, time: 56588},
+	  {wood: 509759, stone: 509759, iron: 648784, food: 185367, time: 73615}
+	],
+	'兵器工房':[
+	  {wood: 216, stone: 216, iron: 216, food: 72, time: 216},
+	  {wood: 432, stone: 432, iron: 432, food: 144, time: 432},
+	  {wood: 864, stone: 864, iron: 864, food: 288, time: 864},
+	  {wood: 1224, stone: 1224, iron: 1224, food: 648, time: 1728},
+	  {wood: 1836, stone: 1836, iron: 1836, food: 972, time: 3456},
+	  {wood: 2662, stone: 2662, iron: 2662, food: 1409, time: 5184},
+	  {wood: 3860, stone: 3860, iron: 3860, food: 2044, time: 7776},
+	  {wood: 7357, stone: 7357, iron: 7357, food: 2452, time: 10886},
+	  {wood: 13242, stone: 13242, iron: 13242, food: 4414, time: 15241},
+	  {wood: 23836, stone: 23836, iron: 23836, food: 7945, time: 19814},
+	  {wood: 42905, stone: 42905, iron: 42905, food: 14302, time: 25757},
+	  {wood: 77229, stone: 77229, iron: 77229, food: 25743, time: 33485},
+	  {wood: 139013, stone: 139013, iron: 139013, food: 46338, time: 42529},
+	  {wood: 278026, stone: 278026, iron: 278026, food: 92675, time: 56588},
+	  {wood: 556051, stone: 556051, iron: 556051, food: 185350, time: 73615}
+	],
+	'宿舎':[
+	  {wood: 35, stone: 20, iron: 35, food: 80, time: 72},
+	  {wood: 53, stone: 30, iron: 53, food: 120, time: 144},
+	  {wood: 89, stone: 51, iron: 89, food: 204, time: 274},
+	  {wood: 147, stone: 84, iron: 147, food: 337, time: 492},
+	  {wood: 228, stone: 130, iron: 228, food: 522, time: 837},
+	  {wood: 336, stone: 192, iron: 336, food: 767, time: 1339},
+	  {wood: 476, stone: 272, iron: 476, food: 1089, time: 2010},
+	  {wood: 653, stone: 373, iron: 653, food: 1492, time: 2813},
+	  {wood: 868, stone: 496, iron: 868, food: 1984, time: 3657},
+	  {wood: 1129, stone: 645, iron: 1129, food: 2580, time: 4388},
+	  {wood: 2032, stone: 1161, iron: 2032, food: 4644, time: 5266},
+	  {wood: 3658, stone: 2090, iron: 3658, food: 4644, time: 6319},
+	  {wood: 6951, stone: 3971, iron: 6950, food: 15882, time: 7583},
+	  {wood: 13205, stone: 7544, iron: 13205, food: 30177, time: 9100},
+	  {wood: 25090, stone: 14334, iron: 25090, food: 57336, time: 10920}
+	],
+	'大宿舎':[
+	  {wood: 200, stone: 114, iron: 200, food: 438, time: 216},
+	  {wood: 320, stone: 183, iron: 320, food: 701, time: 432},
+	  {wood: 512, stone: 293, iron: 512, food: 1121, time: 821},
+	  {wood: 768, stone: 439, iron: 768, food: 1682, time: 1477},
+	  {wood: 1152, stone: 658, iron: 1152, food: 2523, time: 2511},
+	  {wood: 1728, stone: 987, iron: 1728, food: 3784, time: 4018},
+	  {wood: 2419, stone: 1382, iron: 2419, food: 5298, time: 6029},
+	  {wood: 3387, stone: 1935, iron: 3387, food: 7418, time: 8440},
+	  {wood: 4741, stone: 2709, iron: 4741, food: 10385, time: 10970},
+	  {wood: 6637, stone: 3793, iron: 6637, food: 14538, time: 13165},
+	  {wood: 8628, stone: 4930, iron: 8628, food: 18900, time: 15798},
+	  {wood: 11217, stone: 6409, iron: 11217, food: 24570, time: 18957},
+	  {wood: 14582, stone: 8332, iron: 14582, food: 31941, time: 22750},
+	  {wood: 18956, stone: 11735, iron: 18956, food: 40620, time: 27300},
+	  {wood: 25817, stone: 16429, iron: 25817, food: 49286, time: 35999},
+	  {wood: 32271, stone: 22003, iron: 32271, food: 60141, time: 39311},
+	  {wood: 42172, stone: 29337, iron: 42172, food: 69675, time: 47174},
+	  {wood: 52715, stone: 38963, iron: 52715, food: 84803, time: 56607},
+	  {wood: 66009, stone: 49506, iron: 66009, food: 93512, time: 67929},
+	  {wood: 79211, stone: 62708, iron: 79211, food: 108914, time: 81515}
+	],
+	'訓練所':[
+	  {wood: 1500, stone: 1600, iron: 2500, food: 3300, time: 900},
+	  {wood: 2100, stone: 2240, iron: 3500, food: 3300, time: 1440},
+	  {wood: 2940, stone: 3136, iron: 4900, food: 6468, time: 2304},
+	  {wood: 6629, stone: 7326, iron: 13955, food: 6978, time: 3686},
+	  {wood: 13257, stone: 14653, iron: 27910, food: 13955, time: 5898},
+	  {wood: 32097, stone: 37679, iron: 55821, food: 13955, time: 9437},
+	  {wood: 64194, stone: 75358, iron: 111642, food: 27910, time: 15099},
+	  {wood: 128388, stone: 150716, iron: 223283, food: 55821, time: 24159},
+	  {wood: 256776, stone: 301432, iron: 446566, food: 111642, time: 38655},
+	  {wood: 513551, stone: 602865, iron: 893133, food: 223283, time: 61848}
+	],
+	'遠征訓練所':[
+	  {wood: 2884, stone: 4486, iron: 5977, food: 2723, time: 1500},
+	  {wood: 4614, stone: 7177, iron: 9484, food: 4357, time: 2250},
+	  {wood: 7382, stone: 11483, iron: 15174, food: 6972, time: 3375},
+	  {wood: 11811, stone: 18373, iron: 24279, food: 11155, time: 4725},
+	  {wood: 18898, stone: 29397, iron: 38846, food: 17848, time: 6615},
+	  {wood: 28347, stone: 44096, iron: 58269, food: 26772, time: 9261},
+	  {wood: 42521, stone: 66143, iron: 87404, food: 40158, time: 12039},
+	  {wood: 63781, stone: 99215, iron: 131105, food: 60238, time: 15651},
+	  {wood: 89294, stone: 138901, iron: 183548, food: 84333, time: 20346},
+	  {wood: 125011, stone: 194461, iron: 256967, food: 118066, time: 26450},
+	  {wood: 175015, stone: 272246, iron: 359754, food: 165292, time: 31740},
+	  {wood: 227520, stone: 353920, iron: 467680, food: 214880, time: 38088},
+	  {wood: 295776, stone: 460096, iron: 607984, food: 279344, time: 45706},
+	  {wood: 384509, stone: 598125, iron: 790379, food: 363147, time: 54847},
+	  {wood: 512678, stone: 692116, iron: 897187, food: 461410, time: 60332},
+	  {wood: 645974, stone: 830539, iron: 1045863, food: 553692, time: 66365},
+	  {wood: 812082, stone: 959734, iron: 1218123, food: 701344, time: 73002},
+	  {wood: 1018794, stone: 1151680, iron: 1417453, food: 841613, time: 80302},
+	  {wood: 1275708, stone: 1382016, iron: 1647789, food: 1009935, time: 88332},
+	  {wood: 1594635, stone: 1658420, iron: 1913561, food: 1211922, time: 97166}
+	],
+	'鍛冶場':[
+	  {wood: 150, stone: 200, iron: 340, food: 170, time: 255},
+	  {wood: 400, stone: 300, iron: 680, food: 340, time: 765},
+	  {wood: 780, stone: 585, iron: 1326, food: 663, time: 2295},
+	  {wood: 1482, stone: 1112, iron: 2519, food: 1260, time: 4590},
+	  {wood: 2742, stone: 2056, iron: 4661, food: 2330, time: 9180},
+	  {wood: 4935, stone: 3701, iron: 8390, food: 4195, time: 13770},
+	  {wood: 8636, stone: 6477, iron: 14682, food: 7341, time: 20655},
+	  {wood: 17640, stone: 14112, iron: 28223, food: 10584, time: 24786},
+	  {wood: 31566, stone: 25253, iron: 50506, food: 18940, time: 29743},
+	  {wood: 50506, stone: 40404, iron: 80809, food: 30303, time: 35692}
+	],
+	'防具工場':[
+	  {wood: 150, stone: 200, iron: 340, food: 170, time: 255},
+	  {wood: 300, stone: 400, iron: 680, food: 340, time: 765},
+	  {wood: 585, stone: 780, iron: 1326, food: 663, time: 2295},
+	  {wood: 1112, stone: 1482, iron: 2519, food: 1260, time: 4590},
+	  {wood: 2056, stone: 2742, iron: 4661, food: 2330, time: 9180},
+	  {wood: 3701, stone: 4935, iron: 8390, food: 4195, time: 13770},
+	  {wood: 6477, stone: 8636, iron: 14682, food: 7341, time: 20655},
+	  {wood: 14112, stone: 17640, iron: 28223, food: 10584, time: 24786},
+	  {wood: 25253, stone: 31566, iron: 50506, food: 18940, time: 29743},
+	  {wood: 40404, stone: 50506, iron: 80809, food: 30303, time: 35692}
+	],
+	'見張り台':[
+	  {wood: 600, stone: 840, iron: 600, food: 360, time: 900},
+	  {wood: 960, stone: 1344, iron: 960, food: 576, time: 1350},
+	  {wood: 1536, stone: 2150, iron: 1536, food: 922, time: 2025},
+	  {wood: 2458, stone: 3441, iron: 2458, food: 1475, time: 2835},
+	  {wood: 3932, stone: 5505, iron: 3932, food: 2359, time: 3969},
+	  {wood: 6291, stone: 8808, iron: 6291, food: 3775, time: 5557},
+	  {wood: 9437, stone: 13212, iron: 9437, food: 5662, time: 7224},
+	  {wood: 14156, stone: 19818, iron: 14156, food: 8493, time: 9391},
+	  {wood: 21233, stone: 29727, iron: 21233, food: 12740, time: 12208},
+	  {wood: 31850, stone: 44590, iron: 31850, food: 19110, time: 15870},
+	  {wood: 44590, stone: 62426, iron: 44590, food: 26754, time: 19044},
+	  {wood: 62426, stone: 87396, iron: 62426, food: 37456, time: 22853},
+	  {wood: 87397, stone: 122355, iron: 87397, food: 52438, time: 27424},
+	  {wood: 122355, stone: 171297, iron: 122355, food: 73413, time: 32908},
+	  {wood: 159062, stone: 222686, iron: 159062, food: 95437, time: 36199},
+	  {wood: 206780, stone: 289492, iron: 206780, food: 124068, time: 39819},
+	  {wood: 268814, stone: 376340, iron: 268814, food: 161288, time: 43801},
+	  {wood: 349458, stone: 489242, iron: 349458, food: 209675, time: 48181},
+	  {wood: 419350, stone: 587090, iron: 419350, food: 251610, time: 52999},
+	  {wood: 503220, stone: 704508, iron: 503220, food: 301932, time: 58299}
+	],
+	'倉庫':[
+	  {wood: 83, stone: 141, iron: 83, food: 63, time: 20},
+	  {wood: 167, stone: 281, iron: 167, food: 126, time: 412},
+	  {wood: 300, stone: 506, iron: 300, food: 226, time: 618},
+	  {wood: 479, stone: 810, iron: 479, food: 362, time: 1138},
+	  {wood: 671, stone: 1134, iron: 671, food: 507, time: 1706},
+	  {wood: 1044, stone: 1253, iron: 1044, food: 835, time: 2559},
+	  {wood: 1462, stone: 1754, iron: 1462, food: 1169, time: 3839},
+	  {wood: 1973, stone: 2368, iron: 1973, food: 1578, time: 5162},
+	  {wood: 2664, stone: 3196, iron: 2664, food: 2131, time: 6476},
+	  {wood: 3596, stone: 4315, iron: 3596, food: 2877, time: 8084},
+	  {wood: 4854, stone: 5825, iron: 4854, food: 3883, time: 9700},
+	  {wood: 6311, stone: 7573, iron: 6311, food: 5048, time: 11640},
+	  {wood: 8204, stone: 9845, iron: 8204, food: 6563, time: 13968},
+	  {wood: 10255, stone: 12306, iron: 10255, food: 8204, time: 16761},
+	  {wood: 12819, stone: 15382, iron: 12819, food: 10255, time: 20114},
+	  {wood: 15382, stone: 18459, iron: 15382, food: 12306, time: 23208},
+	  {wood: 18459, stone: 22151, iron: 18459, food: 14767, time: 27850},
+	  {wood: 21228, stone: 21228, iron: 25473, food: 16982, time: 33420},
+	  {wood: 24412, stone: 29294, iron: 24412, food: 19529, time: 39034},
+	  {wood: 28074, stone: 33688, iron: 28074, food: 22459, time: 46841}
+	],
+	'研究所':[
+	  {wood: 275, stone: 110, iron: 110, food: 55, time: 216},
+	  {wood: 413, stone: 165, iron: 165, food: 83, time: 432},
+	  {wood: 619, stone: 248, iron: 248, food: 124, time: 864},
+	  {wood: 1486, stone: 836, iron: 836, food: 557, time: 1728},
+	  {wood: 2228, stone: 1253, iron: 1253, food: 836, time: 3456},
+	  {wood: 7521, stone: 6267, iron: 6267, food: 5015, time: 5184},
+	  {wood: 13538, stone: 11282, iron: 11282, food: 9025, time: 7776},
+	  {wood: 21436, stone: 17862, iron: 17862, food: 14290, time: 10886},
+	  {wood: 44675, stone: 37228, iron: 37228, food: 29784, time: 15240},
+	  {wood: 87725, stone: 73104, iron: 73104, food: 58483, time: 19813}
+	],
+	'市場':[
+	  {wood: 100, stone: 100, iron: 50, food: 50, time: 171},
+	  {wood: 334, stone: 334, iron: 191, food: 191, time: 432},
+	  {wood: 1035, stone: 1035, iron: 592, food: 592, time: 864},
+	  {wood: 2795, stone: 2795, iron: 1600, food: 1600, time: 1728},
+	  {wood: 6328, stone: 6328, iron: 4218, food: 4218, time: 3456},
+	  {wood: 13288, stone: 13288, iron: 8859, food: 8859, time: 5184},
+	  {wood: 25248, stone: 25248, iron: 16832, food: 16832, time: 7776},
+	  {wood: 42921, stone: 42921, iron: 28614, food: 28614, time: 11664},
+	  {wood: 64381, stone: 64381, iron: 42921, food: 42921, time: 16330},
+	  {wood: 90134, stone: 90134, iron: 60089, food: 60089, time: 21229}
+	],
+	'水車':[
+	  {wood: 2940, stone: 980, iron: 980, food: 4900, time: 2700},
+	  {wood: 4704, stone: 1568, iron: 1568, food: 7840, time: 4050},
+	  {wood: 7526, stone: 2509, iron: 2509, food: 12544, time: 6075},
+	  {wood: 10537, stone: 5268, iron: 5268, food: 14049, time: 9112},
+	  {wood: 14751, stone: 7376, iron: 7376, food: 19668, time: 13669},
+	  {wood: 20652, stone: 13768, iron: 13768, food: 20652, time: 20503},
+	  {wood: 28913, stone: 19275, iron: 19275, food: 28913, time: 30755},
+	  {wood: 37587, stone: 25058, iron: 25058, food: 37587, time: 46132},
+	  {wood: 48863, stone: 32576, iron: 32576, food: 48863, time: 69198},
+	  {wood: 63523, stone: 42348, iron: 42348, food: 63523, time: 103797}
+	],
+	'工場':[
+	  {wood: 780, stone: 1560, iron: 1560, food: 3900, time: 2430},
+	  {wood: 1248, stone: 2496, iron: 2496, food: 6240, time: 3645},
+	  {wood: 1997, stone: 3994, iron: 3994, food: 9984, time: 5468},
+	  {wood: 4193, stone: 6290, iron: 6290, food: 11182, time: 8201},
+	  {wood: 5871, stone: 8806, iron: 8806, food: 15655, time: 12302},
+	  {wood: 10958, stone: 13698, iron: 13698, food: 16437, time: 18453},
+	  {wood: 15342, stone: 19177, iron: 19177, food: 23013, time: 27680},
+	  {wood: 19944, stone: 24930, iron: 24930, food: 29916, time: 41519},
+	  {wood: 25928, stone: 32410, iron: 32410, food: 38891, time: 62278},
+	  {wood: 33706, stone: 42132, iron: 42132, food: 50559, time: 93417}
+	],
+	'銅雀台':[
+	  {wood: 700, stone: 3500, iron: 2100, food: 700, time: 3240},
+	  {wood: 1120, stone: 5600, iron: 3360, food: 1120, time: 4860},
+	  {wood: 1792, stone: 8960, iron: 5376, food: 1792, time: 7290},
+	  {wood: 3763, stone: 10035, iron: 7526, food: 3763, time: 10935},
+	  {wood: 5263, stone: 14049, iron: 10537, food: 5268, time: 16403},
+	  {wood: 9834, stone: 14752, iron: 14752, food: 9834, time: 24603},
+	  {wood: 13768, stone: 20652, iron: 20652, food: 13768, time: 36905},
+	  {wood: 17899, stone: 26848, iron: 26848, food: 17899, time: 55358},
+	  {wood: 23268, stone: 34902, iron: 34902, food: 23268, time: 83038},
+	  {wood: 30249, stone: 45373, iron: 45373, food: 30249, time: 124556}
+	],
+	'城':[
+	  {wood: 0, stone: 0, iron: 0, food: 0, time: 0},
+	  {wood: 1404, stone: 546, iron: 390, food: 780, time: 0},
+	  {wood: 2570, stone: 1000, iron: 714, food: 1428, time: 0},
+	  {wood: 4161, stone: 2081, iron: 2081, food: 2081, time: 0},
+	  {wood: 7102, stone: 3552, iron: 3552, food: 3552, time: 0},
+	  {wood: 9056, stone: 9056, iron: 6037, food: 6037, time: 0},
+	  {wood: 14384, stone: 14384, iron: 9589, food: 9589, time: 0},
+	  {wood: 22773, stone: 22773, iron: 15183, food: 15183, time: 0},
+	  {wood: 33562, stone: 33562, iron: 22374, food: 22374, time: 0},
+	  {wood: 44402, stone: 57559, iron: 32890, food: 29602, time: 0},
+	  {wood: 65122, stone: 84418, iron: 48239, food: 43415, time: 0},
+	  {wood: 95317, stone: 123558, iron: 70605, food: 63544, time: 0},
+	  {wood: 113458, stone: 154716, iron: 154716, food: 92830, time: 0},
+	  {wood: 150418, stone: 150418, iron: 315878, food: 135375, time: 0},
+	  {wood: 219008, stone: 219008, iron: 492770, food: 164258, time: 0},
+	  {wood: 294820, stone: 294820, iron: 663345, food: 221115, time: 0},
+	  {wood: 488220, stone: 488220, iron: 827854, food: 318406, time: 0},
+	  {wood: 839130, stone: 839130, iron: 915414, food: 457707, time: 0},
+	  {wood: 1307581, stone: 1307581, iron: 1354280, food: 700491, time: 0},
+	  {wood: 1901938, stone: 1901938, iron: 1969864, food: 1018896, time: 0}
+	],
+	'砦':[
+	  {wood: 104, stone: 400, iron: 136, food: 160, time: 0},
+	  {wood: 243, stone: 936, iron: 319, food: 374, time: 1800},
+	  {wood: 438, stone: 1685, iron: 573, food: 673, time: 2700},
+	  {wood: 1110, stone: 2467, iron: 1357, food: 1233, time: 4050},
+	  {wood: 1887, stone: 4194, iron: 2307, food: 2097, time: 6075},
+	  {wood: 3236, stone: 7191, iron: 3954, food: 3596, time: 9113},
+	  {wood: 5177, stone: 11505, iron: 6327, food: 5753, time: 13669},
+	  {wood: 10430, stone: 18776, iron: 13560, food: 9387, time: 20503},
+	  {wood: 18839, stone: 33912, iron: 24492, food: 16956, time: 30755},
+	  {wood: 33914, stone: 61043, iron: 44087, food: 30523, time: 46132},
+	  {wood: 66939, stone: 106495, iron: 85196, food: 45640, time: 55358},
+	  {wood: 119786, stone: 190570, iron: 152456, food: 81672, time: 66430},
+	  {wood: 213820, stone: 340166, iron: 272133, food: 145786, time: 79716},
+	  {wood: 423566, stone: 505021, iron: 456148, food: 244365, time: 95659},
+	  {wood: 708513, stone: 844765, iron: 763014, food: 408756, time: 114791}
+	],
+	'村':[
+	  {wood: 400, stone: 136, iron: 104, food: 160, time: 0},
+	  {wood: 936, stone: 319, iron: 243, food: 374, time: 1800},
+	  {wood: 1685, stone: 573, iron: 438, food: 673, time: 2700},
+	  {wood: 2467, stone: 1357, iron: 1110, food: 1233, time: 4050},
+	  {wood: 4194, stone: 2307, iron: 1887, food: 2097, time: 6075},
+	  {wood: 7191, stone: 3954, iron: 3236, food: 3596, time: 9113},
+	  {wood: 11505, stone: 6327, iron: 5177, food: 5753, time: 13669},
+	  {wood: 18776, stone: 13560, iron: 10430, food: 9387, time: 20503},
+	  {wood: 33912, stone: 24492, iron: 18839, food: 16956, time: 30755},
+	  {wood: 61043, stone: 44087, iron: 33914, food: 30523, time: 46132},
+	  {wood: 106495, stone: 85196, iron: 66939, food: 45640, time: 55358},
+	  {wood: 190570, stone: 152456, iron: 119786, food: 81672, time: 66430},
+	  {wood: 340166, stone: 272133, iron: 213820, food: 145786, time: 79716},
+	  {wood: 505021, stone: 456148, iron: 423566, food: 244365, time: 95659},
+	  {wood: 844765, stone: 763014, iron: 708513, food: 408756, time: 114791}
+	]
+  };
+
+  if (typeof resources[constructorName][level] == 'undefined') {
+	return null;
+  }
+
+  return resources[constructorName][level];
+}
 function Chek_Sigen(area){
-	//costs
-	var cost_wood = [
-		[10,35,40,15],
-		[25, 88, 100, 38],
-		[58, 202, 230, 86],
-		[173, 604, 690, 259],
-		[431, 1510, 1725, 647],
-		[1466, 2847, 3019, 1294],
-		[2493, 4839, 5132, 2200],
-		[3490, 6775, 7186, 3080],
-		[4537, 8807, 9341, 4003],
-		[5898, 11450, 12144, 5204],
-		[8119, 14434, 15787, 6766],
-		[11366, 20207, 22101, 9472],
-		[17050, 30311, 33152, 14208],
-		[25575, 45467, 49729, 21312],
-		[38362, 68199, 74593, 31698]
-	];
-	var cost_stone= [
-		[40, 10, 35, 15],
-		[100, 25, 88, 38],
-		[230, 58, 202, 86],
-		[690, 173, 604, 259],
-		[1725, 431, 1510, 647],
-		[3019, 1466, 2847, 1294],
-		[5132, 2493, 4839, 2200],
-		[7186, 3490, 6775, 3080],
-		[9341, 4537, 8807, 4003],
-		[12144, 5898, 11450, 5204],
-		[15787, 8119, 14434, 6766],
-		[22101, 11366, 20207, 9472],
-		[33152, 17050, 30311, 14208],
-		[49729, 25575, 45467, 21312],
-		[74593, 38362, 68199, 31968]
-	];
-	var cost_iron=[
-		[35, 40, 10, 15],
-		[88, 100, 25, 38],
-		[202, 230, 58, 86],
-		[604, 690, 173, 259],
-		[1510, 1725, 431, 647],
-		[2847, 3019, 1466, 1294],
-		[4839, 5132, 2493, 2200],
-		[6775, 7186, 3490, 3080],
-		[8807, 9341, 4537, 4003],
-		[11450, 12144, 5898, 5204],
-		[14434, 15787, 8119, 6766],
-		[20207, 22101, 11366, 9472],
-		[30311, 33152, 17050, 14208],
-		[45467, 49729, 25575, 21312],
-		[68199, 74593, 38362, 31968]
-	];
-	var cost_rice=[
-		[35, 35, 30, 0],
-		[88, 88, 75, 0],
-		[202, 202, 173, 0],
-		[604, 604, 518, 0],
-		[1510, 1510, 1294, 0],
-		[3019, 3019, 2588, 0],
-		[5132, 5132, 4399, 0],
-		[7186, 7186, 6159, 0],
-		[9341, 9341, 8007, 0],
-		[12144, 12144, 10409, 0],
-		[15787, 15787, 13532, 0],
-		[22101, 22101, 18944, 0],
-		[33152, 33152, 28416, 0],
-		[49729, 49729, 42625, 0],
-		[74593, 74593, 63937, 0]
-	];
-	var cost_souko=[
-		[83, 141, 83, 63],
-		[167, 281, 167, 126],
-		[300, 506, 300, 226],
-		[479, 810, 479, 362],
-		[671, 1134, 671, 507],
-		[1044, 1253, 1044, 835],
-		[1462, 1754, 1462, 1169],
-		[1973, 2368, 1973, 1578],
-		[2664, 3196, 2664, 2131],
-		[3596, 4315, 3596, 2877],
-		[4854, 5825, 4854, 3883],
-		[6311, 7573, 6311, 5048],
-		[8204, 9845, 8204, 6563],
-		[10255, 12306, 10255, 8204],
-		[12819, 15382, 12819, 10255],
-		[15382, 18459, 15382, 12306],
-		[18459, 22151, 18459, 14767],
-		[21228, 21228, 25473, 16982],
-		[24412, 29294, 24412, 19529],
-		[28074, 33688, 28074, 22459]
-	];
-	var cost_syukusya=[
-		[35, 20, 35, 80],
-		[53, 30, 53, 120],
-		[89, 51, 89, 204],
-		[147, 84, 147, 337],
-		[228, 130, 228, 522],
-		[336, 192, 336, 767],
-		[476, 272, 476, 1089],
-		[653, 373, 653, 1492],
-		[868, 496, 868, 1984],
-		[1129, 645, 1129, 2580],
-		[2032, 1161, 2032, 4644],
-		[3658, 2090, 3658, 4644],
-		[6951, 3971, 6950, 15882],
-		[13205, 7544, 13205, 30177],
-		[25090, 14334, 25090, 57336]
-	];
-	var cost_kojo=[
-		[780, 1560, 1560, 3900],
-		[1248, 2496, 2496, 6240],
-		[1997, 3994, 3994, 9984],
-		[4193, 6290, 6290, 11182],
-		[5871, 8806, 8806, 15655],
-		[10958, 13698, 13698, 16437],
-		[15342, 19177, 19177, 23013],
-		[19944, 24930, 24930, 29916],
-		[25928, 32410, 32410, 38891],
-		[33706, 42132, 42132, 50559]
-	];
-	var cost_suisya=[
-		[2940, 980, 980, 4900],
-		[4704, 1568, 1568, 7840],
-		[7526, 2509, 2509, 12544],
-		[10537, 5268, 5268, 14049],
-		[14751, 7376, 7376, 19668],
-		[20652, 13768, 13768, 20652],
-		[28913, 19275, 19275, 28913],
-		[37587, 25058, 25058, 37587],
-		[48863, 32576, 32576, 48863],
-		[63523, 42348, 42348, 63523]
-	];
-	var cost_ichiba=[
-		[100, 100, 50, 50],
-		[334, 334, 191, 191],
-		[1035, 1035, 592, 592],
-		[2795, 2795, 1600, 1600],
-		[6328, 6328, 4218, 4218],
-		[13288, 13288, 8859, 8859],
-		[25248, 25248, 16832, 16832],
-		[42921, 42921, 28614, 28614],
-		[64381, 64381, 42921, 42921],
-		[90134, 90134, 60089, 60089]
-	];
-	var cost_kenkyu=[
-		[275, 110, 110, 55],
-		[413, 165, 165, 83],
-		[619, 248, 248, 124],
-		[1486, 836, 836, 557],
-		[2228, 1253, 1253, 836],
-		[7521, 6267, 6267, 5015],
-		[13538, 11282, 11282, 9025],
-		[21436, 17862, 17862, 14290],
-		[44675, 37228, 37228, 29784],
-		[87725, 73104, 73104, 58483]
-	];
-	var cost_kunren=[
-		[1500, 1600, 2500, 3300],
-		[2100, 2240, 3500, 3300],
-		[2940, 3136, 4900, 6468],
-		[6629, 7326, 13955, 6978],
-		[13257, 14653, 27910, 13955],
-		[32097, 37679, 55821, 13955],
-		[64194, 75358, 111642, 27910],
-		[128388, 150716, 223283, 55821],
-		[256776, 301432, 446566, 111642],
-		[513551, 602865, 893133, 223283]
-	];
-	var cost_kajiba=[
-		[150, 200, 340, 170],
-		[400, 300, 680, 340],
-		[780, 585, 1326, 663],
-		[1482, 1112, 2519, 1260],
-		[2742, 2056, 4661, 2330],
-		[4935, 3701, 8390, 4195],
-		[8636, 6477, 14682, 7341],
-		[17640, 14112, 28223, 10584],
-		[31566, 25253, 50506, 18940],
-		[50506, 40404, 80809, 30303]
-	];
-	var cost_bougu=[
-		[150, 200, 340, 170],
-		[300, 400, 680, 340],
-		[585, 780, 1326, 663],
-		[1112, 1482, 2519, 1260],
-		[2056, 2742, 4661, 2330],
-		[3701, 4935, 8390, 4195],
-		[6477, 8636, 14682, 7341],
-		[14112, 17640, 28223, 10584],
-		[25253, 31566, 50506, 18940],
-		[40404, 50506, 80809, 30303]
-	];
-	var cost_heiki=[
-		[216, 216, 216, 72],
-		[432, 432, 432, 144],
-		[864, 864, 864, 288],
-		[1224, 1224, 1224, 648],
-		[1836, 1836, 1836, 972],
-		[2662, 2662, 2662, 1409],
-		[3860, 3860, 3860, 2044],
-		[7357, 7357, 7357, 2452],
-		[13242, 13242, 13242, 4414],
-		[23836, 23836, 23836, 7945],
-		[42905, 42905, 42905, 14302],
-		[77229, 77229, 77229, 25743],
-		[139013, 139013, 139013, 46338],
-		[278026, 278026, 278026, 92675],
-		[556051, 556051, 556051, 185350]
-	];
-	var cost_doujaku=[
-		[700, 3500, 2100, 700],
-		[1120, 5600, 3360, 1120],
-		[1792, 8960, 5376, 1792],
-		[3763, 10035, 7526, 3763],
-		[5263, 14049, 10537, 5268],
-		[9834, 14752, 14752, 9834],
-		[13768, 20652, 20652, 13768],
-		[17899, 26848, 26848, 17899],
-		[23268, 34902, 34902, 23268],
-		[30249, 45373, 45373, 30249]
-	];
-	var cost_renpei=[
-		[112, 107, 107, 122],
-		[224, 214, 214, 244],
-		[448, 428, 428, 488],
-		[759, 725, 725, 826],
-		[1214, 1160, 1160, 1322],
-		[2209, 2110, 2110, 2406],
-		[3331, 3182, 3182, 3627],
-		[4958, 4736, 4736, 5400],
-		[8091, 7729, 7729, 8813],
-		[11130, 10632, 10632, 12122]
-	];
-	var cost_heisya=[
-		[72, 360, 72, 216],
-		[144, 720, 144, 432],
-		[288, 1440, 288, 864],
-		[648, 1728, 648, 1296],
-		[972, 2592, 972, 1944],
-		[1409, 3758, 1409, 2819],
-		[2725, 4088, 2725, 4088],
-		[6744, 9810, 5518, 2453],
-		[12140, 17658, 9933, 4415],
-		[21852, 31784, 17879, 7946],
-		[39333, 57212, 32182, 14303],
-		[70800, 96545, 64364, 25745],
-		[127440, 173781, 115854, 46342],
-		[254879, 324392, 254879, 92683],
-		[509759, 648784, 509759, 185367]
-	];
-	var cost_yumi=[
-		[360, 72, 72, 216],
-		[720, 144, 144, 432],
-		[1440, 288, 288, 864],
-		[1728, 648, 648, 1296],
-		[2592, 972, 972, 1944],
-		[3758, 1409, 1409, 2819],
-		[5450, 2044, 2044, 4087],
-		[9810, 6131, 6131, 2453],
-		[17658, 12140, 9933, 4415],
-		[31784, 21852, 17879, 7946],
-		[57212, 39333, 32182, 14303],
-		[96545, 70800, 64364, 25745],
-		[173781, 127440, 115854, 46342],
-		[324392, 254879, 254879, 92683],
-		[648784, 509759, 509759, 185367]
-	];
-	var cost_uma=[
-		[72, 72, 360, 216],
-		[144, 144, 720, 432],
-		[288, 288, 1440, 864],
-		[648, 648, 1728, 1296],
-		[972, 972, 2592, 1944],
-		[1409, 1409, 3758, 2891],
-		[2044, 2044, 5450, 4087],
-		[5518, 6744, 9810, 2453],
-		[9933, 12140, 17658, 4415],
-		[17879, 21852, 31784, 7946],
-		[32182, 39333, 57212, 14303],
-		[64364, 70800, 96545, 25745],
-		[115854, 127440, 173781, 46342],
-		[254879, 254879, 324392, 92683],
-		[509759, 509759, 648784, 185367]
-	];
-
-	var cost_shiro=[
-		[0, 0, 0, 0],
-		[1404, 546, 390, 780],
-		[2570, 1000, 714, 1428],
-		[4161, 2081, 2081, 2081],
-		[7102, 3552, 3552, 3552],
-		[9056, 9056, 6037, 6037],
-		[14384, 14384, 9589, 9589],
-		[22773, 22773, 15183, 15183],
-		[33562, 33562, 22374, 22374],
-		[44402, 57559, 32890, 29602],
-		[65122, 84418, 48239, 43415],
-		[95317, 123558, 70605, 63544],
-		[113458, 154716, 154716, 92830],
-		[150418, 150418, 315878, 135375],
-		[219008, 219008, 492770, 164258],
-		[294820, 294820, 663345, 221115],
-		[488220, 488220, 827854, 318406],
-		[839130, 839130, 915414, 457707],
-		[1307581, 1307581, 1354280, 700491],
-		[1901938, 1901938, 1969864, 1018896]
-	];
-	var cost_toride=[
-		[104, 400, 136, 160],
-		[243, 936, 319, 374],
-		[438, 1685, 573, 673],
-		[1110, 2467, 1357, 1233],
-		[1887, 4194, 2307, 2097],
-		[3236, 7191, 3954, 3596],
-		[5177, 11505, 6327, 5753],
-		[10430, 18776, 13560, 9387],
-		[18839, 33912, 24492, 16956],
-		[33914, 61043, 44087, 30523],
-		[66939, 106495, 85196, 45640],
-		[119786, 190570, 152456, 81672],
-		[213820, 340166, 272133, 145786],
-		[423566, 505021, 456148, 244365],
-		[708513, 844765, 763014, 408756]
-	];
-	var cost_mura=[
-		[400, 136, 104, 160],
-		[936, 319, 243, 374],
-		[1685, 573, 438, 673],
-		[2467, 1357, 1110, 1233],
-		[4194, 2307, 1887, 2097],
-		[7191, 3954, 3236, 3596],
-		[11505, 6327, 5177, 5753],
-		[18776, 13560, 10430, 9387],
-		[33912, 24492, 18839, 16956],
-		[61043, 44087, 33914, 30523],
-		[106495, 85196, 66939, 45640],
-		[190570, 152456, 119786, 81672],
-		[340166, 272133, 213820, 145786],
-		[505021, 456148, 423566, 244365],
-		[844765, 763014, 708513, 408756]
-	];
-	var cost_daisyukusya=[
-		[200, 114, 200, 438],
-		[320, 183, 320, 701],
-		[512, 293, 512, 1121],
-		[768, 439, 768, 1682],
-		[1152, 658, 1152, 2523],
-		[1728, 987, 1728, 3784],
-		[2419, 1382, 2419, 5298],
-		[3387, 1935, 3387, 7418],
-		[4741, 2709, 4741, 10385],
-		[6637, 3793, 6637, 14538],
-		[8628, 4930, 8628, 18900],
-		[11217, 6409, 11217, 24570],
-		[14582, 8332, 14582, 31941],
-		[18956, 11735, 18956, 40620],
-		[25817, 16429, 25817, 49286],
-		[32271, 22003, 32271, 60141],
-		[42172, 29337, 42172, 69675],
-		[52715, 38963, 52715, 84803],
-		[66009, 49506, 66009, 93512],
-		[79211, 62708, 79211, 108914]
-	];
-	var cost_ennseikunren=[
-		[2884, 4486, 5977, 2723],
-		[4614, 7177, 9484, 4357],
-		[7382, 11483, 15174, 6972],
-		[11811, 18373, 24279, 11155],
-		[18898, 29397, 38846, 17848],
-		[28347, 44096, 58269, 26772],
-		[42521, 66143, 87404, 40158],
-		[63781, 99215, 131105, 60238],
-		[89294, 138901, 183548, 84333],
-		[125011, 194461, 256967, 118066],
-		[175015, 272246, 359754, 165292],
-		[227520, 353920, 467680, 214880],
-		[295776, 460096, 607984, 279344]
-	];
-	var cost_miharidai=[
-		[600, 840, 600, 360 ],
-		[960, 1344, 960, 576],
-		[1536, 2150, 1536, 922],
-		[2458, 3441, 2458, 1475],
-		[3932, 5505, 3932, 2359],
-		[6291, 8808, 6291, 3775],
-		[9437, 13212, 9437, 5662],
-		[14156, 19818, 14156, 8493],
-		[21233, 29727, 21233, 12740],
-		[31850, 44590, 31850, 19110],
-		[44590, 62426, 44590, 26754],
-		[62426, 87396, 62426, 37456],
-		[87397, 122355, 87397, 52438],
-		[122355, 171297, 122355, 73413],
-		[159062, 222686, 159062, 95437],
-		[206780, 289492, 206780, 124068]
-	];
-	var cost_syugyouzyo=[
-		[1600, 1200, 600, 600],
-		[2240, 1680, 840, 840],
-		[3136, 2352, 1176, 1176],
-		[4390, 3293, 1646, 1646],
-		[6146, 4610, 2305, 2305],
-		[8605, 6454, 3227, 3227],
-		[11186, 8390, 4195, 4195],
-		[14542, 10907, 5453, 5453],
-		[18905, 14179, 7089, 7089],
-		[24577, 18433, 9216, 9216],
-		[31950, 23963, 11981, 11981],
-		[38340, 28755, 14378, 14378],
-		[46008, 34506, 17253, 17253],
-		[55210, 41407, 20704, 20704],
-		[66252, 49689, 24844, 24844],
-		[72877, 54658, 27329, 27329],
-		[80164, 60123, 30062, 30062],
-		[88181, 66136, 33068, 33068],
-		[96999, 72749, 36375, 36375],
-		[106699, 80024, 40012, 40012]
-	];
-	var costs = [];
-
-	costs["城"] = cost_shiro;
-	costs["伐採所"] = cost_wood;
-	costs["石切り場"] = cost_stone;
-	costs["製鉄所"] = cost_iron;
-	costs["畑"] = cost_rice;
-	costs["倉庫"] = cost_souko;
-	costs["銅雀台"] = cost_doujaku;
-	costs["鍛冶場"] = cost_kajiba;
-	costs["防具工場"] = cost_bougu;
-	costs["練兵所"] = cost_renpei;
-	costs["兵舎"] = cost_heisya;
-	costs["弓兵舎"] = cost_yumi;
-	costs["厩舎"] = cost_uma;
-	costs["宿舎"] = cost_syukusya;
-	costs["兵器工房"] = cost_heiki;
-	costs["市場"] = cost_ichiba;
-	costs["訓練所"] = cost_kunren;
-	costs["水車"] = cost_suisya;
-	costs["工場"] = cost_kojo;
-	costs["研究所"] = cost_kenkyu;
-	costs["大宿舎"] = cost_daisyukusya;
-	costs["遠征訓練所"] = cost_ennseikunren;
-	costs["見張り台"] = cost_miharidai;
-//	costs["修行所"] = cost_syugyouzyo;
-	costs["砦"] = cost_toride;
-	costs["村"] = cost_mura;
-
-	var RES_NOW = [];
-	RES_NOW["wood"] = parseInt( $("wood").innerHTML, 10 );
-	RES_NOW["stone"] = parseInt( $("stone").innerHTML, 10 );
-	RES_NOW["iron"] = parseInt( $("iron").innerHTML, 10 );
-	RES_NOW["rice"] = parseInt( $("rice").innerHTML, 10 );
-	RES_NOW["storagemax"] = parseInt( $("rice_max").innerHTML, 10 );
-
 	try {
-		if( costs[area.name].length <= parseInt(area.lv,10) || // maxinum level reached
-			RES_NOW.wood < costs[area.name][parseInt(area.lv,10)][0] ||
-			RES_NOW.stone< costs[area.name][parseInt(area.lv,10)][1] ||
-			RES_NOW.iron < costs[area.name][parseInt(area.lv,10)][2] ||
-			RES_NOW.rice < costs[area.name][parseInt(area.lv,10)][3] ) {
-				//建築不可 = 1
-				return 1;
+		var resources = new Object();
+			resources.wood	= parseInt( $("wood").innerHTML, 10 );
+			resources.stone = parseInt( $("stone").innerHTML, 10 );
+			resources.iron	= parseInt( $("iron").innerHTML, 10 );
+			resources.rice	= parseInt( $("rice").innerHTML, 10 );
+			resources.storagemax = parseInt( $("rice_max").innerHTML, 10 );
+
+		var cost = getBuildResources(area.name, parseInt(area.lv,10));
+		if (resources.wood < cost.wood || resources.stone < cost.stone || resources.iron < cost.iron || resources.food < cost.food ) {
+			//建築不可 = 1
+			return 1;
 		}
 	}catch(e) {
 	}
 	return 0;
-
 }
 
 function getSoldier() {
@@ -7729,9 +6847,7 @@ debugLog("=== Start Auto Domestic ===");
 
 							GM_xmlhttpRequest({ 	method:"GET", url:"http://" + HOST + link, headers:{"Content-type":"text/html"}, overrideMimeType:'text/html; charset=utf-8',	onload:function(x){
 								debugLog("内政スキル使用");
-								if (OPT_BLD == "AC") {	setVillageFacility();	}	// 拠点建築チェック
-								if (OPT_BLD == "BS") {	setVillageFacility2();	}	// 宿舎ビルド＆スクラッチ
-
+								setVillageFacility();		// 拠点建築チェック
 								getSoldier();				// 自動造兵処理
 								autoLvup(); 				// 自動武器・防具強化
 								ichibaChange(vId);			// 市場処理
@@ -7751,9 +6867,7 @@ debugLog("=== Start Auto Domestic ===");
 					}
 				}
 				debugLog("内政スキル未使用");
-				if (OPT_BLD == "AC") {	setVillageFacility();	}	// 拠点建築チェック
-				if (OPT_BLD == "BS") {	setVillageFacility2();	}	// 宿舎ビルド＆スクラッチ
-
+				setVillageFacility();		// 拠点建築チェック
 				getSoldier();				// 自動造兵処理
 				autoLvup(); 				// 自動武器・防具強化
 				ichibaChange(vId);			// 市場処理
