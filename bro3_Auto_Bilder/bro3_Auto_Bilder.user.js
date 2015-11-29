@@ -17,7 +17,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2015.11.29
+// @version		2015.11.29r2
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -116,8 +116,9 @@
 //			  糧村化オプションにて銅雀台を建設しないようにした
 //			  保存ボタン押下でアラート表示しないようにした
 //			  運営のタイマーバグ対策。最大時間を異常に超えている場合、リロードする。
+// 2015.11.29r2 必要資源チェックの誤りを修正
 
-var VERSION = "2015.11.29"; 	// バージョン情報
+var VERSION = "2015.11.29r2"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -1991,7 +1992,9 @@ debugLog("=== Start setVillageFacility ===");
 		// 運営のタイマーバグ対策。最大時間を異常に超えている場合、リロードする。
 		var info = getBuildingInfo();
 		if (info) {
-			var cost = getBuildResources(info.name, info.lv);
+			console.log("x="+info.x+" y="+info.y+" name="+info.name+" lv="+info.lv+" time="+info.time);
+			// info.log は建築中施設のLV。getBuildResources は現在LVなので-1する
+			var cost = getBuildResources(info.name, info.lv-1);
 			if (cost) {
 				if (info.time > cost.time) {
 					console.log("建築時間がバグっているのでリロードしてみる");
@@ -6102,10 +6105,13 @@ function getBuildResources(constructorName, level){
   };
 
   if (typeof resources[constructorName][level] == 'undefined') {
+	console.log("resourcesFor:"+constructorName+" LV:"+level+" is undefined. may a script bug...");
 	return null;
   }
 
-  return resources[constructorName][level];
+  var o = resources[constructorName][level];
+  console.log("resourcesFor:"+constructorName+"(lv:"+level+"→) 木:"+o.wood+" 石:"+o.stone+" 鉄:"+o.iron+" 糧:"+o.food+" 参考時間:"+o.time);
+  return o;
 }
 function Chek_Sigen(area){
 	try {
@@ -6113,7 +6119,7 @@ function Chek_Sigen(area){
 			resources.wood	= parseInt( $("wood").innerHTML, 10 );
 			resources.stone = parseInt( $("stone").innerHTML, 10 );
 			resources.iron	= parseInt( $("iron").innerHTML, 10 );
-			resources.rice	= parseInt( $("rice").innerHTML, 10 );
+			resources.food	= parseInt( $("rice").innerHTML, 10 );
 			resources.storagemax = parseInt( $("rice_max").innerHTML, 10 );
 
 		var cost = getBuildResources(area.name, parseInt(area.lv,10));
