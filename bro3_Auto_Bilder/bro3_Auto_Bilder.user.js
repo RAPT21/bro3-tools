@@ -17,7 +17,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2015.11.29r2
+// @version		2015.12.01
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -117,8 +117,9 @@
 //			  保存ボタン押下でアラート表示しないようにした
 //			  運営のタイマーバグ対策。最大時間を異常に超えている場合、リロードする。
 // 2015.11.29r2 必要資源チェックの誤りを修正
+// 2015.12.01 運営のタイマーバグ対策でタイマー情報が未登録のとき無限リロードしていた不具合を修正。
 
-var VERSION = "2015.11.29r2"; 	// バージョン情報
+var VERSION = "2015.12.01"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -1996,7 +1997,7 @@ debugLog("=== Start setVillageFacility ===");
 			// info.log は建築中施設のLV。getBuildResources は現在LVなので-1する
 			var cost = getBuildResources(info.name, info.lv-1);
 			if (cost) {
-				if (info.time > cost.time) {
+				if (cost.time > 0 && info.time > cost.time) {
 					console.log("建築時間がバグっているのでリロードしてみる");
 					var tid=setTimeout(function(){location.reload();},1000);
 				}
@@ -6048,25 +6049,25 @@ function getBuildResources(constructorName, level){
 	],
 	'城':[
 	  {wood: 0, stone: 0, iron: 0, food: 0, time: 0},
-	  {wood: 1404, stone: 546, iron: 390, food: 780, time: 0},
-	  {wood: 2570, stone: 1000, iron: 714, food: 1428, time: 0},
-	  {wood: 4161, stone: 2081, iron: 2081, food: 2081, time: 0},
-	  {wood: 7102, stone: 3552, iron: 3552, food: 3552, time: 0},
-	  {wood: 9056, stone: 9056, iron: 6037, food: 6037, time: 0},
-	  {wood: 14384, stone: 14384, iron: 9589, food: 9589, time: 0},
-	  {wood: 22773, stone: 22773, iron: 15183, food: 15183, time: 0},
-	  {wood: 33562, stone: 33562, iron: 22374, food: 22374, time: 0},
-	  {wood: 44402, stone: 57559, iron: 32890, food: 29602, time: 0},
-	  {wood: 65122, stone: 84418, iron: 48239, food: 43415, time: 0},
-	  {wood: 95317, stone: 123558, iron: 70605, food: 63544, time: 0},
-	  {wood: 113458, stone: 154716, iron: 154716, food: 92830, time: 0},
-	  {wood: 150418, stone: 150418, iron: 315878, food: 135375, time: 0},
-	  {wood: 219008, stone: 219008, iron: 492770, food: 164258, time: 0},
-	  {wood: 294820, stone: 294820, iron: 663345, food: 221115, time: 0},
-	  {wood: 488220, stone: 488220, iron: 827854, food: 318406, time: 0},
-	  {wood: 839130, stone: 839130, iron: 915414, food: 457707, time: 0},
-	  {wood: 1307581, stone: 1307581, iron: 1354280, food: 700491, time: 0},
-	  {wood: 1901938, stone: 1901938, iron: 1969864, food: 1018896, time: 0}
+	  {wood: 1404, stone: 546, iron: 390, food: 780, time: 999},		// LV1->2
+	  {wood: 2570, stone: 1000, iron: 714, food: 1428, time: 2498},		// LV2->3
+	  {wood: 4161, stone: 2081, iron: 2081, food: 2081, time: 4240}, 	// LV3->4
+	  {wood: 7102, stone: 3552, iron: 3552, food: 3552, time: 0}, 		// LV4->5
+	  {wood: 9056, stone: 9056, iron: 6037, food: 6037, time: 12587}, 	// LV5->6
+	  {wood: 14384, stone: 14384, iron: 9589, food: 9589, time: 0}, 	// LV6->7
+	  {wood: 22773, stone: 22773, iron: 15183, food: 15183, time: 0}, 	// LV7->8
+	  {wood: 33562, stone: 33562, iron: 22374, food: 22374, time: 29782}, // LV8->9
+	  {wood: 44402, stone: 57559, iron: 32890, food: 29602, time: 38716}, // LV9->10
+	  {wood: 65122, stone: 84418, iron: 48239, food: 43415, time: 0}, 	  // LV10->11
+	  {wood: 95317, stone: 123558, iron: 70605, food: 63544, time: 0}, 	  // LV11->12
+	  {wood: 113458, stone: 154716, iron: 154716, food: 92830, time: 0},  // LV12->13
+	  {wood: 150418, stone: 150418, iron: 315878, food: 135375, time: 0}, // LV13->14
+	  {wood: 219008, stone: 219008, iron: 492770, food: 164258, time: 0}, // LV14->15
+	  {wood: 294820, stone: 294820, iron: 663345, food: 221115, time: 0}, // LV15->16
+	  {wood: 488220, stone: 488220, iron: 827854, food: 318406, time: 0}, // LV16->17
+	  {wood: 839130, stone: 839130, iron: 915414, food: 457707, time: 0}, // LV17->18
+	  {wood: 1307581, stone: 1307581, iron: 1354280, food: 700491, time: 0}, // LV18->19
+	  {wood: 1901938, stone: 1901938, iron: 1969864, food: 1018896, time: 0} // LV19->20
 	],
 	'砦':[
 	  {wood: 104, stone: 400, iron: 136, food: 160, time: 0},
