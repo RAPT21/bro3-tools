@@ -17,7 +17,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2015.12.08
+// @version		2015.12.16
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -119,8 +119,9 @@
 // 2015.11.29r2 必要資源チェックの誤りを修正
 // 2015.12.01 運営のタイマーバグ対策でタイマー情報が未登録のとき無限リロードしていた不具合を修正。
 // 2015.12.08 運営のタイマーバグ対策で城LV4の 目安値誤り修正
+// 2015.12.16 運営のタイマーバグ対策で一部鯖で自動造兵処理/自動武器・防具強化/市場処理/自動寄付処理が動作しなくなる場合があったケースに対応
 
-var VERSION = "2015.12.01"; 	// バージョン情報
+var VERSION = "2015.12.16"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -1856,7 +1857,8 @@ debugLog("=== Start autoLvup ===");
 
 // 直近の建設中施設の残り時間を取得する
 function getBuildingInfo() {
-	var li = j$("#actionLog>#buildList>li:first");
+	var div = j$("#actionLog");
+	var li = j$("li:first", div);
 	for (var i = 0; li && i < 10; i++) {
 		if (li.text().match(/建設中/)) {
 			break;
