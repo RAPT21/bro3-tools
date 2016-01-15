@@ -17,7 +17,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.01.10
+// @version		2016.01.16
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -121,8 +121,11 @@
 // 2015.12.08 運営のタイマーバグ対策で城LV4の 目安値誤り修正
 // 2015.12.16 運営のタイマーバグ対策で一部鯖で自動造兵処理/自動武器・防具強化/市場処理/自動寄付処理が動作しなくなる場合があったケースに対応
 // 2016.01.10 糧自動寄付有効で指定値が0の場合に自動リロードが止まらないため、1未満時は無視するようにした
+// 2016.01.16 糧自動寄付有効で指定値が0の場合の判定誤り（上限値をチェックしていた）を修正
+// 			  運営のタイマーバグ対策でリロード間隔を1→2秒に変更
+//			  序盤本拠向けのプリセットを追加：衝車研究、訓練所、遠征訓練
 
-var VERSION = "2016.01.10"; 	// バージョン情報
+var VERSION = "2016.01.16"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -2003,7 +2006,7 @@ debugLog("=== Start setVillageFacility ===");
 			if (cost) {
 				if (cost.time > 0 && info.time > cost.time) {
 					console.log("建築時間がバグっているのでリロードしてみる");
-					var tid=setTimeout(function(){location.reload();},1000);
+					var tid=setTimeout(function(){location.reload();},2000);
 				}
 			}
 		}
@@ -3206,6 +3209,68 @@ function clearRemoveBox(){
 	}
 }
 
+function InitPreset_01(){	// 衝車研究まで
+	clearInifacBox();
+
+	var checkbox = $a('//input[@id="OPT_CHKBOX7"]');   checkbox[0].checked = true; 		// 鍛冶場
+	var checkbox = $a('//input[@id="OPT_CHKBOX8"]');   checkbox[0].checked = true; 		// 防具工場
+	var checkbox = $a('//input[@id="OPT_CHKBOX9"]');   checkbox[0].checked = true; 		// 練兵所
+	var checkbox = $a('//input[@id="OPT_CHKBOX14"]');  checkbox[0].checked = false;		// 兵器工房
+	var checkbox = $a('//input[@id="OPT_CHKBOX19"]');  checkbox[0].checked = true; 		// 研究所
+
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV7"]');	 textbox[0].value = "3";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV8"]');	 textbox[0].value = "3";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV9"]');	 textbox[0].value = "3";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV14"]');	 textbox[0].value = "8";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV19"]');	 textbox[0].value = "5";
+}
+
+function InitPreset_02(){	// 訓練所まで
+	clearInifacBox();
+
+	var checkbox = $a('//input[@id="OPT_CHKBOX4"]');   checkbox[0].checked = true;		// 畑
+	var checkbox = $a('//input[@id="OPT_CHKBOX5"]');   checkbox[0].checked = true;		// 倉庫
+	var checkbox = $a('//input[@id="OPT_CHKBOX6"]');   checkbox[0].checked = true; 		// 銅雀台
+	var checkbox = $a('//input[@id="OPT_CHKBOX7"]');   checkbox[0].checked = true; 		// 鍛冶場
+	var checkbox = $a('//input[@id="OPT_CHKBOX9"]');   checkbox[0].checked = true; 		// 練兵所
+	var checkbox = $a('//input[@id="OPT_CHKBOX16"]');  checkbox[0].checked = true; 		// 訓練所
+
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV4"]');	 textbox[0].value = "5";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV5"]');	 textbox[0].value = "1";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV6"]');	 textbox[0].value = "7";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV7"]');	 textbox[0].value = "5";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV9"]');	 textbox[0].value = "3";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV16"]');	 textbox[0].value = "5";
+}
+
+function InitPreset_03(){	// 遠征訓練所まで
+	clearInifacBox();
+
+	var checkbox = $a('//input[@id="OPT_CHKBOX4"]');   checkbox[0].checked = true;		// 畑
+	var checkbox = $a('//input[@id="OPT_CHKBOX5"]');   checkbox[0].checked = true;		// 倉庫
+	var checkbox = $a('//input[@id="OPT_CHKBOX6"]');   checkbox[0].checked = true; 		// 銅雀台
+	var checkbox = $a('//input[@id="OPT_CHKBOX7"]');   checkbox[0].checked = true; 		// 鍛冶場
+	var checkbox = $a('//input[@id="OPT_CHKBOX8"]');   checkbox[0].checked = true; 		// 防具工場
+	var checkbox = $a('//input[@id="OPT_CHKBOX9"]');   checkbox[0].checked = true; 		// 練兵所
+	var checkbox = $a('//input[@id="OPT_CHKBOX13"]');  checkbox[0].checked = true; 		// 宿舎
+	var checkbox = $a('//input[@id="OPT_CHKBOX16"]');  checkbox[0].checked = true; 		// 訓練所
+	var checkbox = $a('//input[@id="OPT_CHKBOX20"]');  checkbox[0].checked = true; 		// 大宿舎
+	var checkbox = $a('//input[@id="OPT_CHKBOX21"]');  checkbox[0].checked = true; 		// 遠征訓練所
+	var checkbox = $a('//input[@id="OPT_CHKBOX22"]');  checkbox[0].checked = true; 		// 見張り台
+
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV4"]');	 textbox[0].value = "5";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV5"]');	 textbox[0].value = "1";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV6"]');	 textbox[0].value = "7";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV7"]');	 textbox[0].value = "5";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV8"]');	 textbox[0].value = "7";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV9"]');	 textbox[0].value = "3";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV13"]');	 textbox[0].value = "15";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV16"]');	 textbox[0].value = "5";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV20"]');	 textbox[0].value = "8";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV21"]');	 textbox[0].value = "8";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV22"]');	 textbox[0].value = "8";
+}
+
 function InitSuishaVillage(cb){
 	// 水車村
 	if (cb && !cb.checked) return;
@@ -4048,6 +4113,9 @@ function addInifacHtml(vId) {
 	ccreateCheckBoxKai2(td113, "OPT_CHKBOX", 19, " 研究所 　　","自動でLv上げをする建築物にチェックをしてください。",0);
 	ccreateCheckBoxKai2(td113, "OPT_CHKBOX", 22, " 見張り台 　","自動でLv上げをする建築物にチェックをしてください。",0);
 
+	ccreateButton(td31, "衝車研究",		"衝車研究までの設定にします。",				function() {InitPreset_01()});
+	ccreateButton(td31, "訓練所",		"訓練所までの設定にします。",				function() {InitPreset_02()});
+	ccreateButton(td31, "遠征訓練",		"遠征訓練所までの設定にします。",			function() {InitPreset_03()});
 	ccreateButton(td31, "初期化",		"自動建設設定を消去します。",				function() {clearInifacBox()});
 
 	// ===== 自動削除 ===== 2015.05.10
@@ -6793,7 +6861,7 @@ debugLog("=== Start autoDonate ===");
 	}
 
 	//指定値がおかしいときはスキップ
-	if(OPT_RISE_KIFU_MAX < 1) {
+	if(OPT_RISE_KIFU < 1) {
 		return;
 	}
 
