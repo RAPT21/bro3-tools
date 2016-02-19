@@ -17,7 +17,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.01.16
+// @version		2016.02.19
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -124,6 +124,7 @@
 // 2016.01.16 糧自動寄付有効で指定値が0の場合の判定誤り（上限値をチェックしていた）を修正
 // 			  運営のタイマーバグ対策でリロード間隔を1→2秒に変更
 //			  序盤本拠向けのプリセットを追加：衝車研究、訓練所、遠征訓練
+// 2016.02.19 歴史書モードのときは自動ビルドを動作させないようにした
 
 var VERSION = "2016.01.16"; 	// バージョン情報
 
@@ -523,6 +524,12 @@ var DBG_Flg = false;
 		}
 	}
 	OPT_BUILD_VID = GM_getValue(HOST+PGNAME+"OPT_BUILD_VID" , "" );
+
+	// 歴史書モードの場合は以降の処理を実行しない
+	var historyMode = document.evaluate('//img[@alt="歴史書"]', document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+	if (historyMode.snapshotLength){
+		return;
+	}
 
 	if (location.pathname == "/village.php") {
 
