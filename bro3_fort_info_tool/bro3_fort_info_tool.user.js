@@ -6,22 +6,23 @@
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @author		RAPT
-// @version 	0.3
+// @version 	0.4
 // ==/UserScript==
-var VERSION = "0.3"; 	// バージョン情報
+var VERSION = "0.4"; 	// バージョン情報
 
 // 2015.08.10	0.1	プロトタイプ版です。
 // 2015.08.11	0.2	処理結果を UI で表示対応。
 //					5期砦一覧を埋めた。けど全部やるとガチでDoS攻撃になるので注意。
 //					処理開始時に自同盟名を指定できるようにした。
 // 2015.08.12	0.3	自同盟名の自動取得対応。
+// 2016.03.11	0.4	メンテにより MAP 情報変更対応
 
 
 // 自同盟名（指定すると主観的情報として、カラだと客観的情報として結果を出力）
 var OPT_TARGET_ALLY = "";
 
 // 探索対象の座標[x,y]の配列
-var GET_MAP_LIST = [
+var GET_MAP_LIST_BUSHO = [
 //==========[ 武将砦/城 ]==========
 [0,0],
 [-88,88],	[88,88],	[-88,-88],	[88,-88],
@@ -32,6 +33,8 @@ var GET_MAP_LIST = [
 [-418,-418],	[-154,-418],	[154,-418],	[418,-418],
 [-308,308],	[308,308],	[308,-308],	[-308,-308]
 ];
+
+var GET_MAP_LIST = GET_MAP_LIST_BUSHO;
 
 var GET_MAP_LIST_NPC_5ki = [
 //==========[ 北東砦 ]==========
@@ -319,7 +322,7 @@ function getAllyName(callback){
 }
 
 // MAP データをオブジェクトとして返す
-function genMapInfo(x,y,h,k,g,l,e,c,b,f,j,d,i,a){
+function genMapInfo(x,y,h,k,g,l,e,c,b,f,j,d,i,a,tmp){
 	this.x = x; // center-x
 	this.y = y; // center-y
 	this.h = h; // 地名
@@ -411,14 +414,18 @@ function getMap(ally, x, y, callback){
 					status = "負け";
 				}
 			} else if (j$.inArray(ally, neighbors) == -1) {
-				status = "隣接なし(空"+(8-cell_count)+"マス)";
+				if (cell_count == 8) {
+  				status = "隣接なし";
+				} else {
+  				status = "隣接空き"+(8-cell_count)+"マス";
+				}
 			} else {
 				// 同盟隣接あり
 				if (neighbors.length == 1) {
 					if (cell_count == 8) {
 						status = "完全包囲";
 					} else {
-						status = "隣接(空"+(8-cell_count)+"マス)";
+						status = "隣接(残"+(8-cell_count)+"マス)";
 					}
 				}
 				else if (neighbors.length >= 2) {
