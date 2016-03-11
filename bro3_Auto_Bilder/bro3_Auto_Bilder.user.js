@@ -17,7 +17,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.02.19
+// @version		2016.03.12
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -125,8 +125,9 @@
 // 			  運営のタイマーバグ対策でリロード間隔を1→2秒に変更
 //			  序盤本拠向けのプリセットを追加：衝車研究、訓練所、遠征訓練
 // 2016.02.19 歴史書モードのときは自動ビルドを動作させないようにした
+// 2016.03.12 宿舎LV11→12時の必要糧量誤りを修正（糧不足の獲り無限リロードしていた）
 
-var VERSION = "2016.01.16"; 	// バージョン情報
+var VERSION = "2016.03.12"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -5937,7 +5938,7 @@ function getBuildResources(constructorName, level){
 	  {wood: 868, stone: 496, iron: 868, food: 1984, time: 3657},
 	  {wood: 1129, stone: 645, iron: 1129, food: 2580, time: 4388},
 	  {wood: 2032, stone: 1161, iron: 2032, food: 4644, time: 5266},
-	  {wood: 3658, stone: 2090, iron: 3658, food: 4644, time: 6319},
+	  {wood: 3658, stone: 2090, iron: 3658, food: 8210, time: 6319},
 	  {wood: 6951, stone: 3971, iron: 6950, food: 15882, time: 7583},
 	  {wood: 13205, stone: 7544, iron: 13205, food: 30177, time: 9100},
 	  {wood: 25090, stone: 14334, iron: 25090, food: 57336, time: 10920}
