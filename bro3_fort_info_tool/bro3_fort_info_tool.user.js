@@ -6,9 +6,9 @@
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @author		RAPT
-// @version 	0.5
+// @version 	0.6
 // ==/UserScript==
-var VERSION = "0.5"; 	// バージョン情報
+var VERSION = "0.6"; 	// バージョン情報
 
 // 2015.08.10	0.1	プロトタイプ版です。
 // 2015.08.11	0.2	処理結果を UI で表示対応。
@@ -17,6 +17,7 @@ var VERSION = "0.5"; 	// バージョン情報
 // 2015.08.12	0.3	自同盟名の自動取得対応。
 // 2016.03.11	0.4	メンテによる MAP 情報変更対応。
 // 2016.03.12	0.5	探索砦をオプション化。OPT_TARGET_ZONE
+// 2016.03.13	0.6	出力結果をソートしやすくするためNPC砦名の数字に前ゼロを付与するようにした。
 
 
 // 探索砦
@@ -398,6 +399,10 @@ function getMap(ally, x, y, callback){
 					if (info.a == 1) {
 						// NPC砦
 						npc_name=info.h;
+						if (npc_name.match(/^([南北][東西]砦)(\d{1,3})$/)) {
+							// 北西砦1 -> 北西砦001 のように桁数を合わせる
+							npc_name = RegExp.$1 + ("00"+RegExp.$2).slice(-3);
+						}
 						npc_power=info.c;
 						if (info.e != '-') {
 							// 制圧同盟名を覚える
@@ -441,13 +446,14 @@ function getMap(ally, x, y, callback){
 					status = "負け";
 				}
 			} else if (j$.inArray(ally, neighbors) == -1) {
+				// 自同盟隣接なし
 				if (cell_count == 8) {
-  				status = "隣接なし";
+	  				status = "隣接なし";
 				} else {
-  				status = "隣接空き"+(8-cell_count)+"マス";
+  					status = "隣接空き"+(8-cell_count)+"マス";
 				}
 			} else {
-				// 同盟隣接あり
+				// 自同盟隣接あり
 				if (neighbors.length == 1) {
 					if (cell_count == 8) {
 						status = "完全包囲";
