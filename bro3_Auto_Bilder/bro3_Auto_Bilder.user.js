@@ -17,7 +17,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.03.12
+// @version		2016.03.24
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -125,9 +125,10 @@
 // 			  運営のタイマーバグ対策でリロード間隔を1→2秒に変更
 //			  序盤本拠向けのプリセットを追加：衝車研究、訓練所、遠征訓練
 // 2016.02.19 歴史書モードのときは自動ビルドを動作させないようにした
-// 2016.03.12 宿舎LV11→12時の必要糧量誤りを修正（糧不足の獲り無限リロードしていた）
+// 2016.03.12 宿舎LV11→12時の必要糧量誤りを修正（糧不足のとき無限リロードしていた）
+// 2016.03.24 弓兵舎、厩舎、兵器工房LV12→13時の必要時間誤りを修正（1000秒経過しないとき無限リロードしていた）
 
-var VERSION = "2016.03.12"; 	// バージョン情報
+var VERSION = "2016.03.24"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -5888,7 +5889,7 @@ function getBuildResources(constructorName, level){
 	  {wood: 31784, stone: 21852, iron: 17879, food: 7946, time: 19814},
 	  {wood: 57212, stone: 39333, iron: 32182, food: 14303, time: 25757},
 	  {wood: 96545, stone: 70800, iron: 64364, food: 25745, time: 33485},
-	  {wood: 173781, stone: 127440, iron: 115854, food: 46342, time: 42529},
+	  {wood: 173781, stone: 127440, iron: 115854, food: 46342, time: 43529},
 	  {wood: 324392, stone: 254879, iron: 254879, food: 92683, time: 56588},
 	  {wood: 648784, stone: 509759, iron: 509759, food: 185367, time: 73615}
 	],
@@ -5905,7 +5906,7 @@ function getBuildResources(constructorName, level){
 	  {wood: 17879, stone: 21852, iron: 31784, food: 7946, time: 19814},
 	  {wood: 32182, stone: 39333, iron: 57212, food: 14303, time: 25757},
 	  {wood: 64364, stone: 70800, iron: 96545, food: 25745, time: 33485},
-	  {wood: 115854, stone: 127440, iron: 173781, food: 46342, time: 42529},
+	  {wood: 115854, stone: 127440, iron: 173781, food: 46342, time: 43529},
 	  {wood: 254879, stone: 254879, iron: 324392, food: 92683, time: 56588},
 	  {wood: 509759, stone: 509759, iron: 648784, food: 185367, time: 73615}
 	],
@@ -5922,7 +5923,7 @@ function getBuildResources(constructorName, level){
 	  {wood: 23836, stone: 23836, iron: 23836, food: 7945, time: 19814},
 	  {wood: 42905, stone: 42905, iron: 42905, food: 14302, time: 25757},
 	  {wood: 77229, stone: 77229, iron: 77229, food: 25743, time: 33485},
-	  {wood: 139013, stone: 139013, iron: 139013, food: 46338, time: 42529},
+	  {wood: 139013, stone: 139013, iron: 139013, food: 46338, time: 43529},
 	  {wood: 278026, stone: 278026, iron: 278026, food: 92675, time: 56588},
 	  {wood: 556051, stone: 556051, iron: 556051, food: 185350, time: 73615}
 	],
