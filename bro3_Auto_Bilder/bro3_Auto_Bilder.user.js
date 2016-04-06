@@ -8,6 +8,7 @@
 // @exclude		http://*.3gokushi.jp/world/select_server_mixi_new.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @exclude		http://info.3gokushi.jp/*
+// @connect		3gokushi.jp
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @grant		GM_xmlhttpRequest
@@ -17,7 +18,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.03.24
+// @version		2016.04.06
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -127,8 +128,9 @@
 // 2016.02.19 歴史書モードのときは自動ビルドを動作させないようにした
 // 2016.03.12 宿舎LV11→12時の必要糧量誤りを修正（糧不足のとき無限リロードしていた）
 // 2016.03.24 弓兵舎、厩舎、兵器工房LV12→13時の必要時間誤りを修正（1000秒経過しないとき無限リロードしていた）
+// 2016.04.06 Google Chrome+Tampermonkey でスクリプトヘッダーに @connect が無いと警告が出る件の対応
 
-var VERSION = "2016.03.24"; 	// バージョン情報
+var VERSION = "2016.04.06"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
