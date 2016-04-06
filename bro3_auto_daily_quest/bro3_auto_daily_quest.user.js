@@ -6,13 +6,14 @@
 // @include		https://*.3gokushi.jp/village.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
+// @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2015.10.19
+// @version 	2016.04.07
 // ==/UserScript==
-var VERSION = "2015.10.19"; 	// バージョン情報
+var VERSION = "2016.04.07"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -51,6 +52,7 @@ var OPT_VALUE_IGNORE_SECONDS = 10; // 負荷を下げる為、指定秒数以内
 // 2015.08.21 リロード負荷低減について、報酬受け取り成功時の制限解除処理を改修
 // 2015.09.01 リロード負荷低減において、Firefox 40.0.3+Greasemonkey 3.3 にて意図した動作とならないことがあるのを修正
 // 2015.10.19 10/14のメンテでクエクリ以外の自動デュエルが動作しなくなっていたのを修正
+// 2016.04.07 Google Chrome+Tampermonkey でスクリプトヘッダーに @connect が無いと警告が出る件の対応
 
 /*!
 * jQuery Cookie Plugin
