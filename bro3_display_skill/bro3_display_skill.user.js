@@ -4,10 +4,11 @@
 // @description	ブラウザ三国志 武将スキル表示拡張 by RAPT
 // @include		http://*.3gokushi.jp/*
 // @exclude		http://*.3gokushi.jp/maintenance*
+// @connect		3gokushi.jp
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @grant		none
 // @author		5zen + RAPT
-// @version		2.2 (2015/11/22)
+// @version		2.3 (2016/04/07)
 // ==/UserScript==
 
 // 2015.08.16	1.0	beyond 3.0.74α (2015/06/28) から 5zen 氏原作のカード表示拡張機能のみ抜粋
@@ -28,6 +29,7 @@
 // 2015.11.06	2.1	カード情報追加
 // 2015.11.22	2.2	2015.11.21 のアップデートでブショーダス画面で合成スキル表示できなくなっていたのを修正、カード情報追加
 // ★v1.2の影響で、Google Chrome だと合成時に素材カード選択画面でカード表面表示のとき選択できないバグがあります。カード裏面だと選択できます。修正予定。
+// 2016.04.07	2.3	Google Chrome+Tampermonkey でスクリプトヘッダーに @connect が無いと警告が出る件の対応
 
 //================================================
 // 定数宣言一式
