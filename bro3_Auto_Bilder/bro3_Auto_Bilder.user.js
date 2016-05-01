@@ -18,7 +18,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.04.06
+// @version		2016.05.01
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -129,8 +129,11 @@
 // 2016.03.12 宿舎LV11→12時の必要糧量誤りを修正（糧不足のとき無限リロードしていた）
 // 2016.03.24 弓兵舎、厩舎、兵器工房LV12→13時の必要時間誤りを修正（1000秒経過しないとき無限リロードしていた）
 // 2016.04.06 Google Chrome+Tampermonkey でスクリプトヘッダーに @connect が無いと警告が出る件の対応
+// 2016.05.01 画面レイアウト変更により自動造兵できないことがある問題対策を実施。これに伴い保持数は待機中の兵士のみがカウントされます。
+//			  水車村化オプション、工場村化オプション押下時の動作を調整
+//			  自動内政スキルに食糧革命,陳留王政を追加
 
-var VERSION = "2016.04.06"; 	// バージョン情報
+var VERSION = "2016.05.01"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -455,7 +458,8 @@ var DASkill = [ "■■■■",
 				"厩舎訓練","厩舎修練",
 				"兵器訓練","兵器修練",
 				"強兵の檄文","攻城の檄文",
-				"豊潤祈祷"
+				"豊潤祈祷",
+				"食糧革命","陳留王政"//39
 ];
 // ＠＠　ここまで　＠＠
 
@@ -2208,10 +2212,10 @@ function switchToAutoLevelUp(vId){
 	Temp2[15] = 1;	// 市場
 	Temp2[17] = 1;	// 水車
 
-	if (Temp2[14+74]) {
+	if (forInt(Temp2[14+74])) {
 		Temp2[14] = 1;	// 兵器工房
 	}
-	if (Temp2[18+74]) {
+	if (forInt(Temp2[18+74])) {
 		Temp2[18] = 1;	// 工場
 	}
 
@@ -3197,6 +3201,8 @@ function clearInifacBox() {
 	var checkbox = $a('//input[@id="OPT_DOME35"]'); checkbox[0].checked = false;	// 強兵の檄文
 	var checkbox = $a('//input[@id="OPT_DOME36"]'); checkbox[0].checked = false;	// 攻城の檄文
 	var checkbox = $a('//input[@id="OPT_DOME37"]'); checkbox[0].checked = false;	// 豊潤祈祷
+	var checkbox = $a('//input[@id="OPT_DOME38"]'); checkbox[0].checked = false;	// 食糧革命
+	var checkbox = $a('//input[@id="OPT_DOME39"]'); checkbox[0].checked = false;	// 陳留王政
 	// 糧村オプション
 	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = false; // 糧村化
 	clearWaterwheelBox(); // 水車村オプション
@@ -3290,7 +3296,7 @@ function InitSuishaVillage(cb){
 	if (cb) cb.checked = true;
 
 	var textbox = $a('//input[@id="OPT_CHKBOXLV0"]');	textbox[0].value = 10;	// 拠点
-	var textbox = $a('//input[@id="OPT_CHKBOXLV4"]');	textbox[0].value = 12;	// 畑
+	var textbox = $a('//input[@id="OPT_CHKBOXLV4"]');	textbox[0].value = 15;	// 畑
 	var textbox = $a('//input[@id="OPT_CHKBOXLV5"]');	textbox[0].value = 10;	// 倉庫
 	var textbox = $a('//input[@id="OPT_CHKBOXLV9"]');	textbox[0].value = 5;	// 練兵所
 	var textbox = $a('//input[@id="OPT_CHKBOXLV15"]');	textbox[0].value = 8;	// 市場
@@ -3312,7 +3318,10 @@ function InitKoujoVillage(cb){
 	if (cb) cb.checked = true;
 
 	var textbox = $a('//input[@id="OPT_CHKBOXLV0"]');	textbox[0].value = 10;	// 拠点
-	var textbox = $a('//input[@id="OPT_CHKBOXLV4"]');	textbox[0].value = 12;	// 畑
+	var textbox = $a('//input[@id="OPT_CHKBOXLV1"]');	textbox[0].value = 9;	// 伐採所
+	var textbox = $a('//input[@id="OPT_CHKBOXLV2"]');	textbox[0].value = 9;	// 石切り場
+	var textbox = $a('//input[@id="OPT_CHKBOXLV3"]');	textbox[0].value = 9;	// 製鉄所
+	var textbox = $a('//input[@id="OPT_CHKBOXLV4"]');	textbox[0].value = 15;	// 畑
 	var textbox = $a('//input[@id="OPT_CHKBOXLV5"]');	textbox[0].value = 10;	// 倉庫
 	var textbox = $a('//input[@id="OPT_CHKBOXLV9"]');	textbox[0].value = 5;	// 練兵所
 	var textbox = $a('//input[@id="OPT_CHKBOXLV15"]');	textbox[0].value = 10;	// 市場
@@ -4268,7 +4277,7 @@ function addInifacHtml(vId) {
 
 	ccreateCheckBox(td21, "OPT_DOME10", OPT_DOME[10], " " + DASkill[10], "この都市に来たら、自動的に内政スキル（" + DASkill[10]  + "）を発動します。", 0);
 	ccreateCheckBox(td22, "OPT_DOME11", OPT_DOME[11], " " + DASkill[11], "この都市に来たら、自動的に内政スキル（" + DASkill[11] + "）を発動します。", 0);
-		ccreateText(td23, "Dummy" , "　", 0);
+	ccreateCheckBox(td23, "OPT_DOME38", OPT_DOME[38], " " + DASkill[38], "この都市に来たら、自動的に内政スキル（" + DASkill[38] + "）を発動します。", 0);
 		ccreateText(td24, "Dummy" , "　", 0);
 		ccreateText(td25, "Dummy" , "　", 0);
 
@@ -4285,8 +4294,8 @@ function addInifacHtml(vId) {
 	ccreateCheckBox(td25, "OPT_DOME34", OPT_DOME[34], " " + DASkill[34], "この都市に来たら、自動的に内政スキル（" + DASkill[34]  + "）を発動します。", 0);
 
 		ccreateText(td21, "Dummy" , "　", 0);
-	ccreateCheckBox(td22, "OPT_DOME3",	OPT_DOME[3],  " " + DASkill[3], "この都市に来たら、自動的に内政スキル（" + DASkill[3]  + "）を発動します。", 0);
 	ccreateCheckBox(td23, "OPT_DOME6",	OPT_DOME[6],  " " + DASkill[6], "この都市に来たら、自動的に内政スキル（" + DASkill[6]  + "）を発動します。", 0);
+	ccreateCheckBox(td22, "OPT_DOME3",	OPT_DOME[3],  " " + DASkill[3], "この都市に来たら、自動的に内政スキル（" + DASkill[3]  + "）を発動します。", 0);
 	ccreateCheckBox(td24, "OPT_DOME9",	OPT_DOME[9],  " " + DASkill[9], "この都市に来たら、自動的に内政スキル（" + DASkill[9]  + "）を発動します。", 0);
 		ccreateText(td25, "Dummy" , "　", 0);
 
@@ -4294,6 +4303,7 @@ function addInifacHtml(vId) {
 	ccreateCheckBox(td22, "OPT_DOME22", OPT_DOME[22], " " + DASkill[22], "この都市に来たら、自動的に内政スキル（" + DASkill[22]  + "）を発動します。", 0);
 	ccreateCheckBox(td23, "OPT_DOME23", OPT_DOME[23], " " + DASkill[23], "この都市に来たら、自動的に内政スキル（" + DASkill[23]  + "）を発動します。", 0);
 	ccreateCheckBox(td24, "OPT_DOME24", OPT_DOME[24], " " + DASkill[24], "この都市に来たら、自動的に内政スキル（" + DASkill[24]  + "）を発動します。", 0);
+	ccreateCheckBox(td25, "OPT_DOME39", OPT_DOME[39], " " + DASkill[39], "この都市に来たら、自動的に内政スキル（" + DASkill[39]  + "）を発動します。", 0);
 
 	ccreateCheckBox(td21, "OPT_DOME37", OPT_DOME[37], " " + DASkill[37], "この都市に来たら、自動的に内政スキル（" + DASkill[37]  + "）を発動します。", 0);
 	ccreateCheckBox(td22, "OPT_DOME35", OPT_DOME[35], " " + DASkill[35], "この都市に来たら、自動的に内政スキル（" + DASkill[35]  + "）を発動します。", 0);
@@ -6258,51 +6268,60 @@ debugLog("=== Start getSoldier ===");
 
 				// 援軍中
 				tables = document.evaluate('//div[@id="help"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-				htmldoc2.innerHTML = tables.snapshotItem(0).innerHTML;
-				tables2 = document.evaluate('//table[@class="commonTablesNoMG"]',htmldoc2, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-				for (var i = 0; i < tables2.snapshotLength; i++ ){
-					var htmldoc3 = document.createElement("html");
-						htmldoc3 = tables2.snapshotItem(i);
-					var tables3 = document.evaluate('*/tr/td[@class="digit"]',htmldoc3, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-					helpData	 = addSoldierCount(helpData, tables3);
-					attackerData = addSoldierCount(attackerData, tables3);
+				if(tables){
+					htmldoc2.innerHTML = tables.snapshotItem(0).innerHTML;
+					tables2 = document.evaluate('//table[@class="commonTablesNoMG"]',htmldoc2, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+					for (var i = 0; i < tables2.snapshotLength; i++ ){
+						var htmldoc3 = document.createElement("html");
+							htmldoc3 = tables2.snapshotItem(i);
+						var tables3 = document.evaluate('*/tr/td[@class="digit"]',htmldoc3, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+						helpData	 = addSoldierCount(helpData, tables3);
+						attackerData = addSoldierCount(attackerData, tables3);
+					}
 				}
 
 				// 出撃中
-				tables = document.evaluate('//div[@id="sortie"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-				htmldoc2.innerHTML = tables.snapshotItem(0).innerHTML;
-				tables2 = document.evaluate('//table[@class="commonTablesNoMG"]',htmldoc2, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-				for (var i = 0; i < tables2.snapshotLength; i++ ){
-					var htmldoc3 = document.createElement("html");
-						htmldoc3 = tables2.snapshotItem(i);
-					var tables3 = document.evaluate('*/tr/td[@class="digit"]',htmldoc3, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-					sortieData	 = addSoldierCount(sortieData, tables3);
-					attackerData = addSoldierCount(attackerData, tables3);
+				if(tables){
+					tables = document.evaluate('//div[@id="sortie"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+					htmldoc2.innerHTML = tables.snapshotItem(0).innerHTML;
+					tables2 = document.evaluate('//table[@class="commonTablesNoMG"]',htmldoc2, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+					for (var i = 0; i < tables2.snapshotLength; i++ ){
+						var htmldoc3 = document.createElement("html");
+							htmldoc3 = tables2.snapshotItem(i);
+						var tables3 = document.evaluate('*/tr/td[@class="digit"]',htmldoc3, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+						sortieData	 = addSoldierCount(sortieData, tables3);
+						attackerData = addSoldierCount(attackerData, tables3);
+					}
 				}
 
 				// 帰還中
-				tables = document.evaluate('//div[@id="return"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-				htmldoc2.innerHTML = tables.snapshotItem(0).innerHTML;
-				tables2 = document.evaluate('//table[@class="commonTablesNoMG"]',htmldoc2, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-				for (var i = 0; i < tables2.snapshotLength; i++ ){
-					var htmldoc3 = document.createElement("html");
-						htmldoc3 = tables2.snapshotItem(i);
-					var tables3 = document.evaluate('*/tr/td[@class="digit"]',htmldoc3, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-					returnData	 = addSoldierCount(returnData, tables3);
-					attackerData = addSoldierCount(attackerData, tables3);
+				if(tables){
+					tables = document.evaluate('//div[@id="return"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+					htmldoc2.innerHTML = tables.snapshotItem(0).innerHTML;
+					tables2 = document.evaluate('//table[@class="commonTablesNoMG"]',htmldoc2, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+					for (var i = 0; i < tables2.snapshotLength; i++ ){
+						var htmldoc3 = document.createElement("html");
+							htmldoc3 = tables2.snapshotItem(i);
+						var tables3 = document.evaluate('*/tr/td[@class="digit"]',htmldoc3, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+						returnData	 = addSoldierCount(returnData, tables3);
+						attackerData = addSoldierCount(attackerData, tables3);
+					}
 				}
 
 				// 移動中
-				tables = document.evaluate('//div[@id="move"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-				htmldoc2.innerHTML = tables.snapshotItem(0).innerHTML;
-				tables2 = document.evaluate('//table[@class="commonTablesNoMG"]',htmldoc2, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-				for (var i = 0; i < tables2.snapshotLength; i++ ){
-					var htmldoc3 = document.createElement("html");
-						htmldoc3 = tables2.snapshotItem(i);
-					var tables3 = document.evaluate('*/tr/td[@class="digit"]',htmldoc3, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-					moveData	 = addSoldierCount(moveData, tables3);
-					attackerData = addSoldierCount(attackerData, tables3);
+				if(tables){
+					tables = document.evaluate('//div[@id="move"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+					htmldoc2.innerHTML = tables.snapshotItem(0).innerHTML;
+					tables2 = document.evaluate('//table[@class="commonTablesNoMG"]',htmldoc2, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+					for (var i = 0; i < tables2.snapshotLength; i++ ){
+						var htmldoc3 = document.createElement("html");
+							htmldoc3 = tables2.snapshotItem(i);
+						var tables3 = document.evaluate('*/tr/td[@class="digit"]',htmldoc3, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+						moveData	 = addSoldierCount(moveData, tables3);
+						attackerData = addSoldierCount(attackerData, tables3);
+					}
 				}
+
 				// 作成処理
 				make_soldier(attackerData);
 
@@ -6777,7 +6796,7 @@ debugLog("=== Start ichibaChange ===");
 			if((OPT_TO_STONE > 0) && (RES_NOW["stone"] < min_sigen && CHG_NOW["stone"] == 1)) { min_sigen = RES_NOW["stone"]; }
 			if((OPT_TO_IRON  > 0) && (RES_NOW["iron"]  < min_sigen && CHG_NOW["iron"] == 1)) { min_sigen = RES_NOW["iron"]; }
 
-			//糧から他の資源に返還開始
+			//糧から他の資源に変換開始
 					if((OPT_TO_WOOD > 0) && ( RES_NOW["wood"] == min_sigen ))	{			changeResorceToResorce(RICE, OPT_TO_WOOD, WOOD, ichiba_x, ichiba_y);
 			} else	if((OPT_TO_STONE > 0) && ( RES_NOW["stone"] == min_sigen )) 	{			changeResorceToResorce(RICE, OPT_TO_STONE, STONE, ichiba_x, ichiba_y);
 			} else	if((OPT_TO_IRON > 0) && ( RES_NOW["iron"] == min_sigen ))	{			changeResorceToResorce(RICE, OPT_TO_IRON, IRON, ichiba_x, ichiba_y);
