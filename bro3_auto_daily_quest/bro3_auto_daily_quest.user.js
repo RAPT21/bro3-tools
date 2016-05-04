@@ -20,7 +20,7 @@ var VERSION = "2016.05.05"; 	// バージョン情報
 // オプション設定 (1 で有効、0 で無効)
 var OPT_QUEST_DONATE		= 0; // 繰り返しクエスト用寄付糧500を自動で行なう
 var OPT_QUEST_DUEL			= 0; // 繰り返しクエスト用デュエルを自動で行なう
-var OPT_QUEST_TROOPS		= 0; // 繰り返しクエスト用出兵を自動で行なう（未実装）
+var OPT_QUEST_TROOPS		= 0; // 繰り返しクエスト用出兵を自動で行なう
 
 var OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬 '資源' も自動で受け取る
 
@@ -787,7 +787,7 @@ function openSettingBox() {
 		td200.style.verticalAlign = "top";
 		ccreateCheckBox(td200, "OPT_QUEST_DONATE"		, OPT_QUEST_DONATE		, " [繰り返しクエスト] 自動寄付糧500", "繰り返しクエスト用に同盟へ糧500の寄付を自動で行ないます。",0);
 		ccreateCheckBox(td200, "OPT_QUEST_DUEL"			, OPT_QUEST_DUEL		, " [繰り返しクエスト] 自動デュエル", "繰り返しクエスト用デュエルを1回だけ自動で行ないます。",0);
-		ccreateCheckBox(td200, "OPT_QUEST_TROOPS"		, OPT_QUEST_TROOPS		, " [繰り返しクエスト] 自動出兵(未実装)", "繰り返しクエスト用出兵を自動で行ないます。",0);
+		ccreateCheckBox(td200, "OPT_QUEST_TROOPS"		, OPT_QUEST_TROOPS		, " [繰り返しクエスト] 自動出兵", "繰り返しクエスト用出兵を自動で行ないます。",0);
 			ccreateText(td200, "dummy", "　", 0 );
 			ccreateText(td200, "dummy", "※ クエスト報酬のうち、資源以外は自動で受け取ります。", 0 );
 		ccreateCheckBox(td200, "OPT_AUTO_YOROZUDAS"		, OPT_AUTO_YOROZUDAS	, " 自動でヨロズダスをひく", "クエスト報酬がヨロズダスだった場合、自動でヨロズダスをひきます。",0);
