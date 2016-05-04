@@ -4,6 +4,7 @@
 // @description	ブラウザ三国志 繰り返しクエスト自動化 by RAPT
 // @include		http://*.3gokushi.jp/village.php*
 // @include		https://*.3gokushi.jp/village.php*
+// @include		http://*.3gokushi.jp/facility/castle_send_troop.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @connect		3gokushi.jp
@@ -11,9 +12,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2016.04.07
+// @version 	2016.05.05
 // ==/UserScript==
-var VERSION = "2016.04.07"; 	// バージョン情報
+var VERSION = "2016.05.05"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -26,6 +27,10 @@ var OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬 '資源' も自動で受け
 var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
 var OPT_AUTO_DUEL			= 0; // 自動デュエル
 var OPT_AUTO_JORYOKU		= 0; // 自動助力
+
+var OPT_TROOPS_CARD_ID		= 0;// 出兵武将カードID
+var OPT_TROOPS_X			= 0;// 出兵先座標x
+var OPT_TROOPS_Y			= 0;// 出兵先座標y
 
 // 内部設定
 var OPT_VALUE_IGNORE_SECONDS = 10; // 負荷を下げる為、指定秒数以内のリロード時は処理を行なわない
@@ -53,6 +58,8 @@ var OPT_VALUE_IGNORE_SECONDS = 10; // 負荷を下げる為、指定秒数以内
 // 2015.09.01 リロード負荷低減において、Firefox 40.0.3+Greasemonkey 3.3 にて意図した動作とならないことがあるのを修正
 // 2015.10.19 10/14のメンテでクエクリ以外の自動デュエルが動作しなくなっていたのを修正
 // 2016.04.07 Google Chrome+Tampermonkey でスクリプトヘッダーに @connect が無いと警告が出る件の対応
+// 2016.05.05 自動出兵を実装。出兵画面で出兵先とカードを選択し、出兵確認画面で「自動出兵クエに登録」を押下してください。
+//			  「自動出兵情報をクリア」を押下で設定をクリアできます。
 
 /*!
 * jQuery Cookie Plugin
@@ -76,6 +83,9 @@ var OPT_VALUE_IGNORE_SECONDS = 10; // 負荷を下げる為、指定秒数以内
 		}
 		return null;
 	};
+	$.fn.outerHTML = function(s) {
+		return (s) ? this.before(s).remove() : $("<p>").append(this.eq(0).clone()).html();
+	}
 })(jQuery);
 jQuery.noConflict();
 j$ = jQuery;
@@ -444,6 +454,73 @@ function acceptAttentionQuest(callback) {
 	});
 }
 
+// 自動出兵
+function sendTroop(vID, cardID, cardGage, targetX, targetY, callback) {
+	// 指定の武将を指定の拠点から指定座標に向ける
+	httpGET('http://'+HOST+'/village_change.php?village_id='+vID+'&from=menu&page=%2Fvillage.php#ptop',function(x){
+		var c = {};
+		c['village_x_value'] = targetX; // 出兵先座標x
+		c['village_y_value'] = targetY; // 出兵先座標y
+		c['unit_assign_card_id'] = cardID; // 武将カードID
+		c['radio_move_type'] = '302'; // 301=援軍,302=殲滅,303=強襲,306=偵察
+
+	 	c['radio_reserve_type'] = '0';
+		c['btn_send'] = '出兵';
+		c['card_id'] = '204';
+
+		console.log(SERVER+"拠点 "+vID+" から ("+targetX+","+targetY+") へ "+cardID+" [討伐:"+cardGage+"] で出兵します。");
+		httpPOST('http://'+HOST+'/facility/castle_send_troop.php',c,function(x){
+			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
+		});
+	});
+}
+function callSendTroop()
+{
+	var vID		= 0;					// 出兵拠点ID
+	var cardID	= OPT_TROOPS_CARD_ID;	// 出兵武将カードID
+	var targetX	= OPT_TROOPS_X;			// 出兵先座標x
+	var targetY	= OPT_TROOPS_Y;			// 出兵先座標y
+
+	if (OPT_TROOPS_CARD_ID == 0) {
+		console.log(SERVER+"出兵クエ情報が登録されていません！");
+		return;
+	}
+
+	// 討伐ゲージを取得
+	var cardGage = 0;
+	httpGET('http://'+HOST+'/card/deck.php',function(x){
+		var htmldoc = document.createElement("html");
+			htmldoc.innerHTML = x;
+
+		j$(htmldoc).find("dd:contains('待機中')").each(function(){
+			var m = j$("a", this).attr("href").match(/village_id%3D(\d+)%26card_id%3D(\d+)/i);
+
+			// 指定されている武将カードIDと配置拠点IDが一致したもののみ有効とする
+			if (m && m.length == 3 && m[2] == cardID) {
+				// セットされている拠点IDを覚える
+				vID = m[1];
+
+				// 討伐ゲージを取得
+				j$(this).siblings(".subdue").each(function(){
+					var gage = j$("span.gage", this).text();
+					if (gage.length) {
+						cardGage = gage;
+						return false;
+					}
+				});
+			}
+		});
+
+		// 出兵指示
+		if (cardGage >= 100) {
+			sendTroop(vID, cardID, cardGage, targetX, targetY);
+		} else {
+			console.log("[出兵クエ] 討伐ゲージ回復待ち。current="+cardGage);
+		}
+
+	});
+}
+
 
 ( function() {
 	loadSettingBox();
@@ -455,45 +532,104 @@ function acceptAttentionQuest(callback) {
 		return;
 	}
 
-	// クエスト受注
-	acceptAttentionQuest(function(quest_list){
+	if (location.pathname == "/village.php") {
+		//========================================
+		// 「都市」タブで動作
+		//========================================
 
-		// 未クリアの繰り返しクエストマッチング
-		for (var i = 0; i < quest_list.length; i++){
-			var quest_id = parseInt(quest_list[i],10);
-			if (quest_id == ID_DONATE && OPT_QUEST_DONATE){
-				// 寄付クエ
-				postDonate(receiveRewards);
-				return;
+		// クエスト受注
+		acceptAttentionQuest(function(quest_list){
+
+			// 未クリアの繰り返しクエストマッチング
+			for (var i = 0; i < quest_list.length; i++){
+				var quest_id = parseInt(quest_list[i],10);
+				if (quest_id == ID_DONATE && OPT_QUEST_DONATE){
+					// 寄付クエ
+					postDonate(receiveRewards);
+					return;
+				}
+				if (quest_id == ID_DUEL && OPT_QUEST_DUEL){
+					// デュエルクエ
+					duel(function(worked){receiveRewards()});
+					return;
+				}
+				if (quest_id == ID_TROOPS && OPT_QUEST_TROOPS){
+					// 出兵クエ
+					callSendTroop();
+					return;
+				}
 			}
-			if (quest_id == ID_DUEL && OPT_QUEST_DUEL){
-				// デュエルクエ
-				duel(function(worked){receiveRewards()});
-				return;
+
+			// 受信箱から移す
+			if (OPT_MOVE_FROM_INBOX) {
+				moveFromInbox(false);
 			}
-			if (quest_id == ID_TROOPS && OPT_QUEST_TROOPS){
-				console.log(SERVER+'TODO: 出兵クエ');
+
+			// 自動助力
+			if (OPT_AUTO_JORYOKU) {
+				joryoku();
 			}
-		}
 
-		// 受信箱から移す
-		if (OPT_MOVE_FROM_INBOX) {
-			moveFromInbox(false);
-		}
+			// サーバー時刻が [00:00:00 - 01:59:59] or [05:00:00 - 23:59:59] であれば自動デュエルする
+			if (OPT_AUTO_DUEL) {
+				auto_duel();
+			}
 
-		// 自動助力
-		if (OPT_AUTO_JORYOKU) {
-			joryoku();
-		}
+			// ツールに連動しない報酬受領
+			receiveRewards();
+		});
+	}
+	else if (location.pathname == "/facility/castle_send_troop.php") {
+		//========================================
+		// 出兵画面で動作
+		//========================================
+		var targetX = j$("*[name=village_x_value]").val(); // 出兵先座標x
+		var targetY = j$("*[name=village_y_value]").val(); // 出兵先座標y
+		var cardID = j$("*[name=unit_assign_card_id]").val(); // 武将カードID
+		if (cardID) {
+			var clearInfo = d.createElement("input");
+				clearInfo.id = "Auto_Daily_Quest_Clear_Troops";
+				clearInfo.type = "button";
+				clearInfo.style.marginTop = "10px";
+				clearInfo.style.padding = "10px";
+				if (OPT_TROOPS_CARD_ID) {
+					clearInfo.value = "自動出兵情報をクリア";
+				} else {
+					clearInfo.value = "自動出兵情報は未登録";
+				}
+				clearInfo.style.font = "16px 'ＭＳ ゴシック'";
+				clearInfo.style.color = "#000000";
+				clearInfo.style.cursor = "pointer";
+				clearInfo.addEventListener("click", function() {
 
-		// サーバー時刻が [00:00:00 - 01:59:59] or [05:00:00 - 23:59:59] であれば自動デュエルする
-		if (OPT_AUTO_DUEL) {
-			auto_duel();
-		}
+					OPT_TROOPS_CARD_ID		= 0; // 出兵武将カードID
+					OPT_TROOPS_X			= targetX; // 出兵先座標x
+					OPT_TROOPS_Y			= targetY; // 出兵先座標y
+					saveSettingLocal();
+					var tid=setTimeout(function(){location.reload(false);},INTERVAL);
+				}, true);
+			var regInfo = d.createElement("input");
+				regInfo.id = "Auto_Daily_Quest_Register_Troops";
+				regInfo.type = "button";
+				regInfo.style.marginTop = "10px";
+				regInfo.style.marginLeft = "30px";
+				regInfo.style.padding = "10px";
+				regInfo.value = "自動出兵クエに登録";
+				regInfo.style.font = "18px 'ＭＳ ゴシック'";
+				regInfo.style.fontWeight = "bold";
+				regInfo.style.color = "#0000FF";
+				regInfo.style.cursor = "pointer";
+				regInfo.addEventListener("click", function() {
 
-		// ツールに連動しない報酬受領
-		receiveRewards();
-	});
+					OPT_TROOPS_CARD_ID		= cardID; // 出兵武将カードID
+					OPT_TROOPS_X			= targetX; // 出兵先座標x
+					OPT_TROOPS_Y			= targetY; // 出兵先座標y
+					saveSettingLocal();
+					var tid=setTimeout(function(){location.reload(false);},INTERVAL);
+				}, true);
+			j$("#btn_send").after(regInfo).after(clearInfo);
+		}
+	}
 })();
 
 
@@ -709,8 +845,27 @@ function saveSettingBox() {
 	strSave += cgetCheckBoxValue($("OPT_MOVE_FROM_INBOX"))	+ DELIMIT2; // アイテム受信箱から便利アイテムへ移動
 	strSave += cgetCheckBoxValue($("OPT_AUTO_DUEL"))		+ DELIMIT2; // [02:00:00 - 04:59:59] 以外に自動デュエル
 	strSave += cgetCheckBoxValue($("OPT_AUTO_JORYOKU"))		+ DELIMIT2; // 自動助力
+	strSave += DELIMIT1;
+	strSave += OPT_TROOPS_CARD_ID	+ DELIMIT2; // 出兵武将カードID
+	strSave += OPT_TROOPS_X			+ DELIMIT2; // 出兵先座標x
+	strSave += OPT_TROOPS_Y			+ DELIMIT2; // 出兵先座標y
 
 	setVALUE("", strSave);
+}
+
+
+function saveSettingLocal() {
+	var src = getVALUE("", "");
+	if (src) {
+		var Temp1= src.split(DELIMIT1);
+		var strSave = Temp1[0];
+		strSave += DELIMIT1;
+		strSave += OPT_TROOPS_CARD_ID	+ DELIMIT2; // 出兵武将カードID
+		strSave += OPT_TROOPS_X			+ DELIMIT2; // 出兵先座標x
+		strSave += OPT_TROOPS_Y			+ DELIMIT2; // 出兵先座標y
+
+		setVALUE("", strSave);
+	}
 }
 
 
@@ -725,8 +880,12 @@ function loadSettingBox() {
 		OPT_MOVE_FROM_INBOX		= 1; // アイテム受信箱から便利アイテムへ移動
 		OPT_AUTO_DUEL			= 1; // [02:00:00 - 04:59:59] 以外に自動デュエル
 		OPT_AUTO_JORYOKU		= 1; // 自動助力
+		OPT_TROOPS_CARD_ID		= 0; // 出兵武将カードID
+		OPT_TROOPS_X			= 0; // 出兵先座標x
+		OPT_TROOPS_Y			= 0; // 出兵先座標y
 	} else {
-		var Temp = src.split(DELIMIT2);
+		var Temp1= src.split(DELIMIT1);
+		var Temp = Temp1[0].split(DELIMIT2);
 		OPT_QUEST_DONATE		= forInt(Temp[0]); // 自動寄付糧500
 		OPT_QUEST_DUEL			= forInt(Temp[1]); // 自動デュエル
 		OPT_QUEST_TROOPS		= forInt(Temp[2]); // 自動出兵
@@ -735,6 +894,11 @@ function loadSettingBox() {
 		OPT_MOVE_FROM_INBOX		= forInt(Temp[5]); // アイテム受信箱から便利アイテムへ移動
 		OPT_AUTO_DUEL			= forInt(Temp[6]); // [02:00:00 - 04:59:59] 以外に自動デュエル
 		OPT_AUTO_JORYOKU		= forInt(Temp[7]); // 自動助力
+
+		Temp = Temp1[1].split(DELIMIT2);
+		OPT_TROOPS_CARD_ID		= forInt(Temp[0]); // 出兵武将カードID
+		OPT_TROOPS_X			= forInt(Temp[1]); // 出兵先座標x
+		OPT_TROOPS_Y			= forInt(Temp[2]); // 出兵先座標y
 	}
 }
 
