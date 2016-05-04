@@ -895,10 +895,12 @@ function loadSettingBox() {
 		OPT_AUTO_DUEL			= forInt(Temp[6]); // [02:00:00 - 04:59:59] 以外に自動デュエル
 		OPT_AUTO_JORYOKU		= forInt(Temp[7]); // 自動助力
 
-		Temp = Temp1[1].split(DELIMIT2);
-		OPT_TROOPS_CARD_ID		= forInt(Temp[0]); // 出兵武将カードID
-		OPT_TROOPS_X			= forInt(Temp[1]); // 出兵先座標x
-		OPT_TROOPS_Y			= forInt(Temp[2]); // 出兵先座標y
+		if (Temp1.length >= 2) {
+			Temp = Temp1[1].split(DELIMIT2);
+			OPT_TROOPS_CARD_ID		= forInt(Temp[0]); // 出兵武将カードID
+			OPT_TROOPS_X			= forInt(Temp[1]); // 出兵先座標x
+			OPT_TROOPS_Y			= forInt(Temp[2]); // 出兵先座標y
+		}
 	}
 }
 
