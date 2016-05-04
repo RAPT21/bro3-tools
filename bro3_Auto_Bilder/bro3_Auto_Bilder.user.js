@@ -18,7 +18,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.05.01
+// @version		2016.05.04
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -129,11 +129,11 @@
 // 2016.03.12 宿舎LV11→12時の必要糧量誤りを修正（糧不足のとき無限リロードしていた）
 // 2016.03.24 弓兵舎、厩舎、兵器工房LV12→13時の必要時間誤りを修正（1000秒経過しないとき無限リロードしていた）
 // 2016.04.06 Google Chrome+Tampermonkey でスクリプトヘッダーに @connect が無いと警告が出る件の対応
-// 2016.05.01 画面レイアウト変更により自動造兵できないことがある問題対策を実施。これに伴い保持数は待機中の兵士のみがカウントされます。
-//			  水車村化オプション、工場村化オプション押下時の動作を調整
+// 2016.05.01 水車村化オプション、工場村化オプション押下時の動作を調整
 //			  自動内政スキルに食糧革命,陳留王政を追加
+// 2016.05.04 画面レイアウト変更により自動造兵が正常に動作しなくなっていた問題を修正
 
-var VERSION = "2016.05.01"; 	// バージョン情報
+var VERSION = "2016.05.04"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -6239,87 +6239,27 @@ debugLog("=== Start getSoldier ===");
 	// 造兵指示がない場合はスキップ
 	if (OPT_BLD_SOL == 0) { return; }
 	var result = new Array();
-	//				 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8
+	//							 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8
 	var attackerData = new Array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);		// update 2014.03.07
-	var waitData	 = new Array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);		// update 2014.03.07
-	var helpData	 = new Array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);		// update 2014.03.07
-	var sortieData	 = new Array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);		// update 2014.03.07
-	var returnData	 = new Array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);		// update 2014.03.07
-	var moveData	 = new Array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);		// update 2014.03.07
-
 
 	var tid=setTimeout(function(){
 
 		GM_xmlhttpRequest({
 			method:"GET",
-			url:"http://" + HOST + "/facility/unit_status.php",
+			url:"http://" + HOST + "/facility/unit_status.php?type=all",
 			headers:{"Content-type":"text/html"},
 			overrideMimeType:'text/html; charset=utf-8',
 			onload:function(x){
 				var htmldoc = document.createElement("html");
 					htmldoc.innerHTML = x.responseText;
-				// 待機中の兵士
-				var tables = document.evaluate('//div[@id="wait"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-				var htmldoc2 = document.createElement("html");
-					htmldoc2.innerHTML = tables.snapshotItem(0).innerHTML
-				var tables2 = document.evaluate('//td[@class="digit"]',htmldoc2, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-				waitData	 = addSoldierCount(waitData, tables2);
-				attackerData = addSoldierCount(attackerData, tables2);
 
-				// 援軍中
-				tables = document.evaluate('//div[@id="help"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-				if(tables){
-					htmldoc2.innerHTML = tables.snapshotItem(0).innerHTML;
-					tables2 = document.evaluate('//table[@class="commonTablesNoMG"]',htmldoc2, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-					for (var i = 0; i < tables2.snapshotLength; i++ ){
-						var htmldoc3 = document.createElement("html");
-							htmldoc3 = tables2.snapshotItem(i);
-						var tables3 = document.evaluate('*/tr/td[@class="digit"]',htmldoc3, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-						helpData	 = addSoldierCount(helpData, tables3);
-						attackerData = addSoldierCount(attackerData, tables3);
-					}
-				}
-
-				// 出撃中
-				if(tables){
-					tables = document.evaluate('//div[@id="sortie"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-					htmldoc2.innerHTML = tables.snapshotItem(0).innerHTML;
-					tables2 = document.evaluate('//table[@class="commonTablesNoMG"]',htmldoc2, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-					for (var i = 0; i < tables2.snapshotLength; i++ ){
-						var htmldoc3 = document.createElement("html");
-							htmldoc3 = tables2.snapshotItem(i);
-						var tables3 = document.evaluate('*/tr/td[@class="digit"]',htmldoc3, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-						sortieData	 = addSoldierCount(sortieData, tables3);
-						attackerData = addSoldierCount(attackerData, tables3);
-					}
-				}
-
-				// 帰還中
-				if(tables){
-					tables = document.evaluate('//div[@id="return"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-					htmldoc2.innerHTML = tables.snapshotItem(0).innerHTML;
-					tables2 = document.evaluate('//table[@class="commonTablesNoMG"]',htmldoc2, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-					for (var i = 0; i < tables2.snapshotLength; i++ ){
-						var htmldoc3 = document.createElement("html");
-							htmldoc3 = tables2.snapshotItem(i);
-						var tables3 = document.evaluate('*/tr/td[@class="digit"]',htmldoc3, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-						returnData	 = addSoldierCount(returnData, tables3);
-						attackerData = addSoldierCount(attackerData, tables3);
-					}
-				}
-
-				// 移動中
-				if(tables){
-					tables = document.evaluate('//div[@id="move"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-					htmldoc2.innerHTML = tables.snapshotItem(0).innerHTML;
-					tables2 = document.evaluate('//table[@class="commonTablesNoMG"]',htmldoc2, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-					for (var i = 0; i < tables2.snapshotLength; i++ ){
-						var htmldoc3 = document.createElement("html");
-							htmldoc3 = tables2.snapshotItem(i);
-						var tables3 = document.evaluate('*/tr/td[@class="digit"]',htmldoc3, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-						moveData	 = addSoldierCount(moveData, tables3);
-						attackerData = addSoldierCount(attackerData, tables3);
-					}
+				// 現存総数を合算
+				var tables2 = document.evaluate('//table[@class="commonTablesNoMG"]',htmldoc, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+				for (var i = 0; i < tables2.snapshotLength; i++ ){
+					var htmldoc3 = document.createElement("html");
+					htmldoc3 = tables2.snapshotItem(i);
+					var tables3 = document.evaluate('*/tr/td[@class="digit"]',htmldoc3, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+					attackerData = addSoldierCount(attackerData, tables3);
 				}
 
 				// 作成処理
@@ -6335,7 +6275,7 @@ function addSoldierCount(total, add) {
 
 	if (total == undefined) total = new Array();
 	if (total == undefined) {
-		//		  1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8
+		//				  1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8
 		total = new Array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 	}
 
@@ -6346,24 +6286,12 @@ function addSoldierCount(total, add) {
 	}
 
 	if (add.snapshotLength == 16) {
-		for (var j = 0; j < 15; j++) {
-			switch ( j ) {
-				case  0: total[0]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 剣兵
-				case  1: total[12] += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 盾兵
-				case  2: total[1]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 槍兵
-				case  3: total[2]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 弓兵
-				case  4: total[3]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 騎兵
-				case  5: total[9]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 衝車
-				case  6: total[7]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 斥候
-
-				case  8: total[11] += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 大剣兵
-				case  9: total[13] += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 重盾兵
-				case 10: total[4]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 矛槍兵
-				case 11: total[5]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 弩兵
-				case 12: total[6]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 近衛騎兵
-				case 13: total[10] += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 投石機
-				case 14: total[8]  += parseInt(add.snapshotItem(j).innerHTML,10); break;		// 斥候騎兵
-			}
+		// 2016.05.04 兵士管理画面レイアウト変更対応
+		for (var j = 0; j <= 6; j++) {
+			total[j] += parseInt(add.snapshotItem(j).innerHTML,10);
+		}
+		for (var j = 8; j <= 14; j++) {
+			total[j-1] += parseInt(add.snapshotItem(j).innerHTML,10);
 		}
 	}
 
