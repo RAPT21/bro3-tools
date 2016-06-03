@@ -12,9 +12,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2016.05.05
+// @version 	2016.06.04
 // ==/UserScript==
-var VERSION = "2016.05.05"; 	// バージョン情報
+var VERSION = "2016.06.04"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -61,6 +61,7 @@ var OPT_VALUE_IGNORE_SECONDS = 10; // 負荷を下げる為、指定秒数以内
 // 2016.05.05 自動出兵を実装。出兵画面で出兵先とカードを選択し、出兵確認画面で「自動出兵クエに登録」を押下してください。
 //			  「自動出兵情報をクリア」を押下で設定をクリアできます。
 //			  ※出兵時にスキルを使用したり兵士を引率することはできません。
+// 2016.06.04 自動出兵が有効で、出兵条件を満たさなかった時、寄付クエとデュエルクエ以外の機能が動作していなかった不具合を修正。
 
 /*!
 * jQuery Cookie Plugin
@@ -484,7 +485,7 @@ function callSendTroop()
 
 	if (OPT_TROOPS_CARD_ID == 0) {
 		console.log(SERVER+"出兵クエ情報が登録されていません！");
-		return;
+		return false;
 	}
 
 	// 討伐ゲージを取得
@@ -515,8 +516,10 @@ function callSendTroop()
 		// 出兵指示
 		if (cardGage >= 100) {
 			sendTroop(vID, cardID, cardGage, targetX, targetY);
+			return true;
 		} else {
 			console.log("[出兵クエ] 討伐ゲージ回復待ち。current="+cardGage);
+			return false;
 		}
 
 	});
@@ -556,8 +559,9 @@ function callSendTroop()
 				}
 				if (quest_id == ID_TROOPS && OPT_QUEST_TROOPS){
 					// 出兵クエ
-					callSendTroop();
-					return;
+					if (callSendTroop()) {
+						return;
+					}
 				}
 			}
 
