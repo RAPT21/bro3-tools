@@ -18,7 +18,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.05.12
+// @version		2016.08.14
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -134,8 +134,9 @@
 // 2016.05.04 画面レイアウト変更により自動造兵が正常に動作しなくなっていた問題を修正
 // 2016.05.12 糧変換時一番市場レベルの高い拠点へジャンプする機能が動作しなくなっていたのを修正
 //			  糧変換パターンにスマート変換を追加
+// 2016.08.14 ★5工場村オプションの10～11期対応
 
-var VERSION = "2016.05.12"; 	// バージョン情報
+var VERSION = "2016.08.14"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -2466,8 +2467,8 @@ function buildPlant5(vId){
 		if(area[i].name == "鉄鉱山") TekkouzanCnt++; else
 		if(area[i].name == "平地") vacant.push(area[i].xy);
 	}
-	if (ArechiCnt == 21 &&
-		KokumotsuCnt == 0)
+	if ((ArechiCnt == 21 && KokumotsuCnt == 0) ||	// 5-9期
+		(ArechiCnt == 23 && KokumotsuCnt == 0))		// 10-11期
 	{}else{return false;}
 		 if (ShinrinCnt == 6 && IwayamaCnt == 0 && TekkouzanCnt == 0) TargetType = Bassai;
 	else if (ShinrinCnt == 0 && IwayamaCnt == 6 && TekkouzanCnt == 0) TargetType = Ishikiri;
