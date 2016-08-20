@@ -18,7 +18,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.08.14
+// @version		2016.08.21
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -135,8 +135,9 @@
 // 2016.05.12 糧変換時一番市場レベルの高い拠点へジャンプする機能が動作しなくなっていたのを修正
 //			  糧変換パターンにスマート変換を追加
 // 2016.08.14 ★5工場村オプションの10～11期対応
+// 2016.08.21 自動造兵機能で保有兵士が正常にカウントできなくなっていた不具合を修正（画面レイアウト変更によるもの）
 
-var VERSION = "2016.08.14"; 	// バージョン情報
+var VERSION = "2016.08.21"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -217,20 +218,19 @@ var OPT_BKBG_CHK = 0;
 var make_no = [];
 				   // 兵種, 	  No, 研究済,作成可能兵数,現在の兵数,最大兵数,現兵数との差,x,y
 make_no["剣兵"] 	= ["剣兵"	 ,301,	   0,			0,		   0,		0,			0,0,0];
-make_no["槍兵"] 	= ["槍兵"	 ,303,	   0,			0,		   1,		0,			0,0,0];
-make_no["弓兵"] 	= ["弓兵"	 ,308,	   0,			0,		   2,		0,			0,0,0];
-make_no["騎兵"] 	= ["騎兵"	 ,305,	   0,			0,		   3,		0,			0,0,0];
-make_no["矛槍兵"]	= ["矛槍兵"  ,304,	   0,			0,		   4,		0,			0,0,0];
-make_no["弩兵"] 	= ["弩兵"	 ,309,	   0,			0,		   5,		0,			0,0,0];
-make_no["近衛騎兵"] = ["近衛騎兵",307,	   0,			0,		   6,		0,			0,0,0];
-make_no["斥候"] 	= ["斥候"	 ,310,	   0,			0,		   7,		0,			0,0,0];
-make_no["斥候騎兵"] = ["斥候騎兵",311,	   0,			0,		   8,		0,			0,0,0];
-make_no["衝車"] 	= ["衝車"	 ,312,	   0,			0,		   9,		0,			0,0,0];
-make_no["投石機"]	= ["投石機"  ,313,	   0,			0,		  10,		0,			0,0,0];
-
-make_no["大剣兵"]	= ["大剣兵"  ,315,	   0,			0,		  11,		0,			0,0,0]; 		// 2014.01.30
-make_no["盾兵"] 	= ["盾兵"	 ,316,	   0,			0,		  12,		0,			0,0,0]; 		// 2014.01.30
-make_no["重盾兵"]	= ["重盾兵"  ,317,	   0,			0,		  13,		0,			0,0,0]; 		// 2014.01.30
+make_no["槍兵"] 	= ["槍兵"	 ,303,	   0,			0,		   2,		0,			0,0,0];
+make_no["弓兵"] 	= ["弓兵"	 ,308,	   0,			0,		   3,		0,			0,0,0];
+make_no["騎兵"] 	= ["騎兵"	 ,305,	   0,			0,		   4,		0,			0,0,0];
+make_no["矛槍兵"]	= ["矛槍兵"  ,304,	   0,			0,		   9,		0,			0,0,0];
+make_no["弩兵"] 	= ["弩兵"	 ,309,	   0,			0,		  10,		0,			0,0,0];
+make_no["近衛騎兵"] = ["近衛騎兵",307,	   0,			0,		  11,		0,			0,0,0];
+make_no["斥候"] 	= ["斥候"	 ,310,	   0,			0,		   6,		0,			0,0,0];
+make_no["斥候騎兵"] = ["斥候騎兵",311,	   0,			0,		  13,		0,			0,0,0];
+make_no["衝車"] 	= ["衝車"	 ,312,	   0,			0,		   5,		0,			0,0,0];
+make_no["投石機"]	= ["投石機"  ,313,	   0,			0,		  12,		0,			0,0,0];
+make_no["大剣兵"]	= ["大剣兵"  ,315,	   0,			0,		   7,		0,			0,0,0]; 		// 2014.01.30
+make_no["盾兵"] 	= ["盾兵"	 ,316,	   0,			0,		   1,		0,			0,0,0]; 		// 2014.01.30
+make_no["重盾兵"]	= ["重盾兵"  ,317,	   0,			0,		   8,		0,			0,0,0]; 		// 2014.01.30
 
 //			 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8
 OPT_BK_LV = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
@@ -6261,8 +6261,7 @@ debugLog("=== Start getSoldier ===");
 				// 現存総数を合算
 				var tables2 = document.evaluate('//table[@class="commonTablesNoMG"]',htmldoc, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
 				for (var i = 0; i < tables2.snapshotLength; i++ ){
-					var htmldoc3 = document.createElement("html");
-					htmldoc3 = tables2.snapshotItem(i);
+					var htmldoc3 = tables2.snapshotItem(i);
 					var tables3 = document.evaluate('*/tr/td[@class="digit"]',htmldoc3, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 					attackerData = addSoldierCount(attackerData, tables3);
 				}
@@ -6409,21 +6408,21 @@ function make_soldier(attackerData){
 							} else {
 								var makeElem  = document.evaluate('//th[@class="mainTtl"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 								for (var i = 1; i < makeElem.snapshotLength; i++ ){
+									var sol_name = makeElem.snapshotItem(i).innerHTML;
 									// 兵作成可能
-									make_no[makeElem.snapshotItem(i).innerHTML][2] = 1;
+									make_no[sol_name][2] = 1;
 									// 兵作成可能数
-									make_no[makeElem.snapshotItem(i).innerHTML][3] = parseInt(sumMaxSoldier(make_no[makeElem.snapshotItem(i).innerHTML][1]),10);
+									make_no[sol_name][3] = parseInt(sumMaxSoldier(make_no[sol_name][1]),10);
 									// 現存合計兵数
-									make_no[makeElem.snapshotItem(i).innerHTML][5] = attackerData[make_no[makeElem.snapshotItem(i).innerHTML][4]];
+									make_no[sol_name][5] = attackerData[make_no[sol_name][4]];
 									// 残必要兵数
-
-									make_no[makeElem.snapshotItem(i).innerHTML][6] = OPT_SOL_MAX[make_no[makeElem.snapshotItem(i).innerHTML][1] - 300] - attackerData[make_no[makeElem.snapshotItem(i).innerHTML][4]];
-									if (make_no[makeElem.snapshotItem(i).innerHTML][6] < 0) {
-										make_no[makeElem.snapshotItem(i).innerHTML][6] = 0;
+									make_no[sol_name][6] = OPT_SOL_MAX[make_no[sol_name][1] - 300] - attackerData[make_no[sol_name][4]];
+									if (make_no[sol_name][6] < 0) {
+										make_no[sol_name][6] = 0;
 									}
 									// 座標
-									make_no[makeElem.snapshotItem(i).innerHTML][7] = _x;
-									make_no[makeElem.snapshotItem(i).innerHTML][8] = _y;
+									make_no[sol_name][7] = _x;
+									make_no[sol_name][8] = _y;
 								};
 							}
 							make_loop(loop + 1);
