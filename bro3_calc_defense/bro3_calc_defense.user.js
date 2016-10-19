@@ -7,16 +7,17 @@
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @author		BSE with RAPT
-// @version 	based on 1.6.1.1
+// @version 	based on 1.6.1.2
 // ==/UserScript==
 
 // ----- BSE 版リリースノート -----
 //	2016.03.13 Ver1.6.1 リリース
 // ----- 改修リリースノート -----
 //	2016.08.20 v1.6.1.1 初版作成。【注意】本スクリプトの内容について BSE 氏に問い合わせないでください。
+//	2016.10.10 v1.6.1.2 y9,y31,y34 鯖対応
 
 //バージョン配置用
-var ver_rack = "ver1.6.1.1";
+var ver_rack = "ver1.6.1.2";
 
 //配布管理系
 var nazeka ="<span style='color:crimson'>■</span>";
@@ -39,13 +40,13 @@ var tile = new Array(0,0,0,0,0,0);
 // 鯖 - 期
 var server_session = {
 	"y1": 17,
-	"y9": 14,
+	"y9": 15,
 	"y17": 10,
 	"y25": 7,
 	"y29": 4,
-	"y31": 2,
-	"y32": 1,
+	"y31": 3,
 	"y33": 1,
+	"y34": 1,
 	"f1": 10, // event-world
 	"w1": 100,
 	"w2": 100
