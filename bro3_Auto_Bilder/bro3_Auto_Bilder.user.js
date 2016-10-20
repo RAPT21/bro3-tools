@@ -18,7 +18,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.08.21
+// @version		2016.10.21
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -136,8 +136,9 @@
 //			  糧変換パターンにスマート変換を追加
 // 2016.08.14 ★5工場村オプションの10～11期対応
 // 2016.08.21 自動造兵機能で保有兵士が正常にカウントできなくなっていた不具合を修正（画面レイアウト変更によるもの）
+// 2016.10.21 糧変換仕様変更対応
 
-var VERSION = "2016.08.21"; 	// バージョン情報
+var VERSION = "2016.10.21"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -6520,6 +6521,8 @@ function OverFlowPrevention() {
 
 	var OverFlowLimit  = Math.floor(RES_NOW["storagemax"] * 0.95);		// 限界容量（倉庫の95%）
 	var ChangeSigenNum = Math.floor(RES_NOW["storagemax"] * 0.05);		// 変換量（倉庫の5%）
+	var percent = OPT_ICHIBA_LV_TABLE[shoplist[0].lv];
+	console.log("市場変換率:" + percent*100.0 + "%");
 
 	// 資源：木石鉄が限界を超えている場合
 	if ( (RES_NOW["wood"] > OverFlowLimit) && (RES_NOW["stone"] > OverFlowLimit) && (RES_NOW["iron"] > OverFlowLimit) ) {
@@ -6530,11 +6533,11 @@ function OverFlowPrevention() {
 
 
 		if(RES_NOW["wood"] == max_sigen) {
-			changeResorceToResorce(WOOD,  ChangeSigenNum, RICE, ichiba_x, ichiba_y);
+			changeResorceToResorce(WOOD,  ChangeSigenNum, RICE, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
 		} else if(RES_NOW["stone"] == max_sigen) {
-			changeResorceToResorce(STONE, ChangeSigenNum, RICE, ichiba_x, ichiba_y);
+			changeResorceToResorce(STONE, ChangeSigenNum, RICE, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
 		} else if(RES_NOW["iron"] == max_sigen) {
-			changeResorceToResorce(IRON,  ChangeSigenNum, RICE, ichiba_x, ichiba_y);
+			changeResorceToResorce(IRON,  ChangeSigenNum, RICE, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
 		}
 
 	}
@@ -6546,9 +6549,9 @@ function OverFlowPrevention() {
 		if (RES_NOW["iron"]  < min_sigen) { min_sigen = RES_NOW["iron"]; }
 
 		if(RES_NOW["stone"] == min_sigen) {
-			changeResorceToResorce(WOOD, ChangeSigenNum, STONE, ichiba_x, ichiba_y);
+			changeResorceToResorce(WOOD, ChangeSigenNum, STONE, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
 		} else if(RES_NOW["iron"] == min_sigen) {
-			changeResorceToResorce(WOOD, ChangeSigenNum, IRON, ichiba_x, ichiba_y);
+			changeResorceToResorce(WOOD, ChangeSigenNum, IRON, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
 		}
 	}
 
@@ -6560,9 +6563,9 @@ function OverFlowPrevention() {
 		if (RES_NOW["iron"]  < min_sigen) { min_sigen = RES_NOW["iron"]; }
 
 		if(RES_NOW["wood"] == min_sigen) {
-			changeResorceToResorce(STONE, ChangeSigenNum, WOOD, ichiba_x, ichiba_y);
+			changeResorceToResorce(STONE, ChangeSigenNum, WOOD, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
 		} else if(RES_NOW["iron"] == min_sigen) {
-			changeResorceToResorce(STONE, ChangeSigenNum, IRON, ichiba_x, ichiba_y);
+			changeResorceToResorce(STONE, ChangeSigenNum, IRON, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
 		}
 	}
 
@@ -6574,9 +6577,9 @@ function OverFlowPrevention() {
 		if (RES_NOW["stone"] < min_sigen) { min_sigen = RES_NOW["stone"]; }
 
 		if(RES_NOW["wood"] == min_sigen) {
-			changeResorceToResorce(IRON, ChangeSigenNum, WOOD, ichiba_x, ichiba_y);
+			changeResorceToResorce(IRON, ChangeSigenNum, WOOD, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
 		} else if(RES_NOW["stone"] == min_sigen) {
-			changeResorceToResorce(IRON, ChangeSigenNum, STONE, ichiba_x, ichiba_y);
+			changeResorceToResorce(IRON, ChangeSigenNum, STONE, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
 		}
 	}
 
@@ -6589,11 +6592,11 @@ function OverFlowPrevention() {
 		if (RES_NOW["iron"]  < min_sigen) { min_sigen = RES_NOW["iron"]; }
 
 		if(RES_NOW["wood"] == min_sigen) {
-			changeResorceToResorce(RICE, ChangeSigenNum, WOOD, ichiba_x, ichiba_y);
+			changeResorceToResorce(RICE, ChangeSigenNum, WOOD, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
 		} else if(RES_NOW["stone"] == min_sigen) {
-			changeResorceToResorce(RICE, ChangeSigenNum, STONE, ichiba_x, ichiba_y);
+			changeResorceToResorce(RICE, ChangeSigenNum, STONE, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
 		} else if(RES_NOW["iron"] == min_sigen) {
-			changeResorceToResorce(RICE, ChangeSigenNum, IRON, ichiba_x, ichiba_y);
+			changeResorceToResorce(RICE, ChangeSigenNum, IRON, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
 		}
 	}
 }
@@ -6718,6 +6721,8 @@ debugLog("=== Start ichibaChange ===");
 
 		if(OPT_ICHIBA_PATS[0] == OPT_ICHIBA_PA){
 			//===== 平均的に変換 =====
+			var percent = OPT_ICHIBA_LV_TABLE[shoplist[0].lv];
+			console.log("市場変換率:" + percent*100.0 + "%");
 			if (OPT_TO_WOOD+OPT_TO_STONE+OPT_TO_IRON == 0) {
 				return;
 			}
@@ -6729,9 +6734,9 @@ debugLog("=== Start ichibaChange ===");
 			if((OPT_TO_IRON  > 0) && (RES_NOW["iron"]  < min_sigen && CHG_NOW["iron"] == 1))  { min_sigen = RES_NOW["iron"]; }
 
 			//糧から他の資源に変換開始
-					if((OPT_TO_WOOD  > 0) && ( RES_NOW["wood"]	== min_sigen ))	{	changeResorceToResorce(RICE, OPT_TO_WOOD, WOOD, ichiba_x, ichiba_y);
-			} else	if((OPT_TO_STONE > 0) && ( RES_NOW["stone"] == min_sigen ))	{	changeResorceToResorce(RICE, OPT_TO_STONE, STONE, ichiba_x, ichiba_y);
-			} else	if((OPT_TO_IRON  > 0) && ( RES_NOW["iron"]	== min_sigen ))	{	changeResorceToResorce(RICE, OPT_TO_IRON, IRON, ichiba_x, ichiba_y);
+					if((OPT_TO_WOOD  > 0) && ( RES_NOW["wood"]	== min_sigen ))	{	changeResorceToResorce(RICE, OPT_TO_WOOD, WOOD, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
+			} else	if((OPT_TO_STONE > 0) && ( RES_NOW["stone"] == min_sigen ))	{	changeResorceToResorce(RICE, OPT_TO_STONE, STONE, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
+			} else	if((OPT_TO_IRON  > 0) && ( RES_NOW["iron"]	== min_sigen ))	{	changeResorceToResorce(RICE, OPT_TO_IRON, IRON, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y);
 			}
 //			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 			return;
@@ -6739,12 +6744,14 @@ debugLog("=== Start ichibaChange ===");
 
 		if(OPT_ICHIBA_PATS[1] == OPT_ICHIBA_PA){
 			//===== 一括変換 =====
+			var percent = OPT_ICHIBA_LV_TABLE[shoplist[0].lv];
+			console.log("市場変換率:" + percent*100.0 + "%");
 			if(OPT_RISE_MAX < OPT_TO_WOOD+OPT_TO_STONE+OPT_TO_IRON){
 //				alert("変換する総合計より糧の値を大きくしてください。");
 			}else{
-				if(CHG_NOW["wood"]	== 1)	{	changeResorceToResorce(RICE, OPT_TO_WOOD,	WOOD,	ichiba_x,	ichiba_y);	}
-				if(CHG_NOW["stone"] == 1)	{	changeResorceToResorce(RICE, OPT_TO_STONE,	STONE,	ichiba_x,	ichiba_y);	}
-				if(CHG_NOW["iron"]	== 1)	{	changeResorceToResorce(RICE, OPT_TO_IRON,	IRON,	ichiba_x,	ichiba_y);	}
+				if(CHG_NOW["wood"]	== 1)	{	changeResorceToResorce(RICE, OPT_TO_WOOD,	WOOD, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"],	ichiba_x,	ichiba_y);	}
+				if(CHG_NOW["stone"] == 1)	{	changeResorceToResorce(RICE, OPT_TO_STONE,	STONE, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"],	ichiba_x,	ichiba_y);	}
+				if(CHG_NOW["iron"]	== 1)	{	changeResorceToResorce(RICE, OPT_TO_IRON,	IRON, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"],	ichiba_x,	ichiba_y);	}
 			}
 //			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 			return;
@@ -6811,9 +6818,9 @@ debugLog("=== Start ichibaChange ===");
 			if ((to_wood > 0) || (to_stone > 0) || (to_iron > 0)) {
 				console.log("[現在庫] 木="+RES_NOW["wood"]+"　石="+RES_NOW["stone"]+"　鉄="+RES_NOW["iron"]+"　糧="+RES_NOW["rice"]+"　期待値:"+hope_amount);
 				console.log("[変換数] 糧→木="+to_wood+"　糧→石="+to_stone+"　糧→鉄="+to_iron);
-				if (to_wood  > 0) { changeResorceToResorceEx(RICE, to_wood , WOOD , ichiba_x, ichiba_y, false); }
-				if (to_stone > 0) { changeResorceToResorceEx(RICE, to_stone, STONE, ichiba_x, ichiba_y, false); }
-				if (to_iron  > 0) { changeResorceToResorceEx(RICE, to_iron , IRON , ichiba_x, ichiba_y, false); }
+				if (to_wood  > 0) { changeResorceToResorceEx(RICE, to_wood , WOOD , percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y, false); }
+				if (to_stone > 0) { changeResorceToResorceEx(RICE, to_stone, STONE, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y, false); }
+				if (to_iron  > 0) { changeResorceToResorceEx(RICE, to_iron , IRON , percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y, false); }
 				var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 			}
 			return;
@@ -6860,23 +6867,45 @@ debugLog("=== Start ichibaChange ===");
 }
 
 //実変換処理通信部 @@
-function changeResorceToResorceEx(from, tc, to, x, y, reload) {
+function changeResorceToResorceEx(from, tc, to, percent, stock_wood, stock_stone, stock_iron, stock_rice, x, y, reload) {
+	console.log("HOGE");
 	var c={};
+	c['change_btn'] = '確定';
+	c['sell_text_rice'] = parseInt(tc,10);
+	c['st'] = '';
+
+	c['stock_wood'] = parseInt(stock_wood,10);
+	c['stock_stone'] = parseInt(stock_stone,10);
+	c['stock_iron'] = parseInt(stock_iron,10);
+	c['stock_rice'] = parseInt(stock_rice,10);
+	c['stock_noselect'] = '';
+
+	c['tc'] = parseInt(tc,10);
+	c['tf_id'] = parseInt(from,10);
+	c['tt_wood'] = '';
+	c['tt_stone'] = '';
+	c['tt_iron'] = '';
+	c['tt_rice'] = '';
+
+	var tt_count = parseInt(tc,10) * parseFloat(percent);
+	var tt_id = parseInt(to,10);
+	if (tt_id == WOOD){
+		c['tt_wood'] = tt_count;
+	} else if (tt_id == STONE){
+		c['tt_stone'] = tt_count;
+	} else if (tt_id == IRON){
+		c['tt_iron'] = tt_count;
+	}
 	c['x'] = parseInt(x,10);
 	c['y'] = parseInt(y,10);
-	c['change_btn'] = encodeURIComponent("はい");
-	c['tc'] = parseInt(tc,10);
-	c['st'] = 1;
-	c['tf_id'] = parseInt(from,10);
-	c['tt_id'] = parseInt(to,10);
-	c['ssid'] = j$.cookie('SSID');
-	j$.post("http://"+HOST+"/facility/facility.php?x=" + parseInt(x,10) + "&y=" + parseInt(y,10) + "#ptop",c,function(){});
+
+	j$.post("http://"+HOST+"/facility/facility.php",c,function(){});
 	if (reload) {
 		var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 	}
 }
-function changeResorceToResorce(from, tc, to, x, y) {
-	changeResorceToResorceEx(from, tc, to, x, y, true);
+function changeResorceToResorce(from, tc, to, percent, stock_wood, stock_stone, stock_iron, stock_rice, x, y) {
+	changeResorceToResorceEx(from, tc, to, percent, stock_wood, stock_stone, stock_iron, stock_rice, x, y, true);
 }
 
 //自動寄付処理
