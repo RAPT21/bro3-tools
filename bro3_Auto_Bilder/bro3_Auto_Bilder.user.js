@@ -18,7 +18,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.10.21
+// @version		2016.11.03
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -137,8 +137,11 @@
 // 2016.08.14 ★5工場村オプションの10～11期対応
 // 2016.08.21 自動造兵機能で保有兵士が正常にカウントできなくなっていた不具合を修正（画面レイアウト変更によるもの）
 // 2016.10.21 糧変換仕様変更対応
+//			  建設中や削除中拠点の表示順が逐一切り替わるよう変更された影響で、拠点建設/削除完了時に巡回設定のチェック状態がおかしくなっています。
+// 2016.11.03 糧変換のスマート変換で、変換ロジックを調整
+//			  糧変換パターンに余剰分を変換を追加
 
-var VERSION = "2016.10.21"; 	// バージョン情報
+var VERSION = "2016.11.03"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -403,7 +406,7 @@ OPT_FNID["見張り台"] =	 22 	 ;
 //市場変換処理用
 var OPT_ICHIBA = 0;
 var OPT_ICHIBA_PA = 0;
-var OPT_ICHIBA_PATS = ["平均的に変換","一括変換","スマート変換"];
+var OPT_ICHIBA_PATS = ["平均的に変換","一括変換","スマート変換","余剰分を変換"];
 						 //   1  2	 3	 4	 5	 6	 7	 8	 9	10
 var OPT_ICHIBA_LV_TABLE = [0,.4,.42,.44,.46,.48,.50,.52,.54,.56,.6]; // 変換料率
 
@@ -4354,7 +4357,7 @@ function addInifacHtml(vId) {
 	ccreateTextBox(td311, "OPT_TO_STONE",		OPT_TO_STONE,										"石に変換する量 ",	"自動で石に変換する糧の量を指定します。", 9, 5);
 	ccreateTextBox(td311, "OPT_TO_IRON",		OPT_TO_IRON,										"鉄に変換する量 ",	"自動で鉄に変換する糧の量を指定します。", 9, 5);
 
-	ccreateComboBox(td312, "OPT_ICHIBA_PA", OPT_ICHIBA_PATS, OPT_ICHIBA_PA, "変換パターン　 ",		"平均変換：糧が一定量になった際に変換指定している一番少ない資源を変換します。   一括変換：糧が一定量になった際に指定してある資源を指定値変換します。   スマート変換：保有資源が均一になるように変換します。",5);
+	ccreateComboBox(td312, "OPT_ICHIBA_PA", OPT_ICHIBA_PATS, OPT_ICHIBA_PA, "変換パターン　 ",		"平均変換：糧が一定量になった際に指定している一番少ない資源へ変換します。\n一括変換：糧が一定量になった際に指定してある資源を指定値変換します。\nスマート変換：糧が一定量になった際に保有資源が均一になるよう一括変換します。\n余剰分変換：糧が一定量になった際に超過分を他資源が均一になるよう一括変換します。",5);
 	ccreateTextBox(td312, "OPT_MAX_WOOD",	OPT_MAX_WOOD,											"木の最大保持量 ",	"木の最大保持量を設定します（0で倉庫上限まで）", 10, 5);
 	ccreateTextBox(td312, "OPT_MAX_STONE",	OPT_MAX_STONE,									"石の最大保持量 ",	"石の最大保持量を設定します（0で倉庫上限まで）", 10, 5);
 	ccreateTextBox(td312, "OPT_MAX_IRON",	OPT_MAX_IRON,											"鉄の最大保持量 ",	"鉄の最大保持量を設定します（0で倉庫上限まで）", 10, 5);
@@ -6668,7 +6671,7 @@ debugLog("=== Start ichibaChange ===");
 	}
 */
 
-	if(OPT_ICHIBA_PATS[3] != OPT_ICHIBA_PA) {
+	if(OPT_ICHIBA_PATS[4] != OPT_ICHIBA_PA) {
 
 		// @@ 2011.06.22 設定上限が0以下の場合倉庫上限に変更
 		if (OPT_MAX_WOOD  < 1) { OPT_MAX_WOOD  = RES_NOW["storagemax"]; }
@@ -6759,7 +6762,7 @@ debugLog("=== Start ichibaChange ===");
 
 		if(OPT_ICHIBA_PATS[2] == OPT_ICHIBA_PA){
 			//===== スマート変換 ===== : 市場変換率を元に加算平均を下回る資源をカバーする
-			var conv_unit = 100; // 変換単位
+			var conv_unit = 1000; // 変換単位
 			var percent = OPT_ICHIBA_LV_TABLE[shoplist[0].lv];
 			console.log("市場変換率:" + percent*100.0 + "%");
 
@@ -6825,6 +6828,62 @@ debugLog("=== Start ichibaChange ===");
 			}
 			return;
 		}
+
+		if(OPT_ICHIBA_PATS[3] == OPT_ICHIBA_PA){
+			//===== 余剰分を変換 ===== : 糧残高超過分について、市場変換率を元に加算平均を下回る資源をカバーする
+			var conv_unit = 1000; // 変換単位
+			var percent = OPT_ICHIBA_LV_TABLE[shoplist[0].lv];
+			console.log("市場変換率:" + percent*100.0 + "%");
+
+			var use_foods = RES_NOW["rice"] - OPT_RISE_MAX;
+			var hope_amount = 99999999;
+
+			// 一部の資源が特出している場合除外する
+			for (var index = 4; index > 0; --index) {
+				var left = 0;  // 変換先現在庫合算値
+				var count = 0; // 変換対象種類数
+				if (hope_amount > RES_NOW["wood"] ) { ++count; left += RES_NOW["wood"]; }
+				if (hope_amount > RES_NOW["stone"]) { ++count; left += RES_NOW["stone"]; }
+				if (hope_amount > RES_NOW["iron"] ) { ++count; left += RES_NOW["iron"]; }
+				if (count && count < index) {
+					// 期待値 A を求める。
+					// A = (L + pU) / C
+					hope_amount = Math.ceil((left + use_foods * percent) / count);
+				}
+			}
+
+			// 変換量
+			var to_wood = 0, to_stone = 0, to_iron = 0;
+
+			// 最小単位ごとに端数切り上げで変換数を算出
+			if (hope_amount > RES_NOW["wood"]) {
+				to_wood  = Math.ceil( (hope_amount - RES_NOW["wood"] ) / percent / conv_unit) * conv_unit;
+			}
+			if (hope_amount > RES_NOW["stone"]) {
+				to_stone = Math.ceil( (hope_amount - RES_NOW["stone"]) / percent / conv_unit) * conv_unit;
+			}
+			if (hope_amount > RES_NOW["iron"] ) {
+				to_iron  = Math.ceil( (hope_amount - RES_NOW["iron"] ) / percent / conv_unit) * conv_unit;
+			}
+
+			// 糧使用量 U を超える場合は按分する
+			var sum_to_use = to_wood + to_stone + to_iron;
+			if (sum_to_use > RES_NOW["rice"]) {
+				to_wood  = use_foods * to_wood	/ sum_to_use;
+				to_stone = use_foods * to_stone / sum_to_use;
+				to_iron  = use_foods * to_iron	/ sum_to_use;
+			}
+
+			if ((to_wood > 0) || (to_stone > 0) || (to_iron > 0)) {
+				console.log("[現在庫] 木="+RES_NOW["wood"]+"　石="+RES_NOW["stone"]+"　鉄="+RES_NOW["iron"]+"　糧="+RES_NOW["rice"]+"　期待値:"+hope_amount);
+				console.log("[変換数] 糧→木="+to_wood+"　糧→石="+to_stone+"　糧→鉄="+to_iron);
+				if (to_wood  > 0) { changeResorceToResorceEx(RICE, to_wood , WOOD , percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y, false); }
+				if (to_stone > 0) { changeResorceToResorceEx(RICE, to_stone, STONE, percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y, false); }
+				if (to_iron  > 0) { changeResorceToResorceEx(RICE, to_iron , IRON , percent, RES_NOW["wood"], RES_NOW["stone"], RES_NOW["iron"], RES_NOW["rice"], ichiba_x, ichiba_y, false); }
+				var tid=setTimeout(function(){location.reload(false);},INTERVAL);
+			}
+			return;
+		}
 	}
 
 	function addShopList(vId,lv,x,y) {
@@ -6868,7 +6927,6 @@ debugLog("=== Start ichibaChange ===");
 
 //実変換処理通信部 @@
 function changeResorceToResorceEx(from, tc, to, percent, stock_wood, stock_stone, stock_iron, stock_rice, x, y, reload) {
-	console.log("HOGE");
 	var c={};
 	c['change_btn'] = '確定';
 	c['sell_text_rice'] = parseInt(tc,10);
