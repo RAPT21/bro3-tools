@@ -7,7 +7,7 @@
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @author		BSE with RAPT
-// @version 	based on 1.6.1.2
+// @version 	based on 1.6.1.3
 // ==/UserScript==
 
 // ----- BSE 版リリースノート -----
