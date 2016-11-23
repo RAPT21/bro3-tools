@@ -18,7 +18,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.11.03
+// @version		2016.11.23
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -140,8 +140,9 @@
 //			  建設中や削除中拠点の表示順が逐一切り替わるよう変更された影響で、拠点建設/削除完了時に巡回設定のチェック状態がおかしくなっています。
 // 2016.11.03 糧変換のスマート変換で、変換ロジックを調整
 //			  糧変換パターンに余剰分を変換を追加
+// 2016.11.23 拠点所有数UPアイテム使用時、従来の獲得名声依存の拠点数に達していると拠点建設予約が作動しない問題を修正
 
-var VERSION = "2016.11.03"; 	// バージョン情報
+var VERSION = "2016.11.23"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -255,6 +256,14 @@ var OPT_RISE_MAX = 30000;	//市場変換開始する糧の量
 var OPT_TO_WOOD = 10000;	//木に変換する糧
 var OPT_TO_STONE = 10000;	//石に変換する糧
 var OPT_TO_IRON = 10000;	//鉄に変換する糧
+
+// 拠点建設/破棄用@2016.11.23変数化
+var VS_BUILD_FAIL	 = 0;
+var VS_BUILD_RESERVE = 1;
+var VS_BUILD_ING	 = 2;
+var VS_BUILD_COMP	 = 3;
+var VS_DESTROY_ING	 = 4;
+var VS_DESTROY_COMP  = 5;
 
 // @@ ADD 2011.09.28 @@
 var LOAD_ROUND_TIME_10 = 10;
@@ -714,7 +723,7 @@ function settleVillages(z){
 		//予約データ取得
 		var lists = cloadData(HOST+"ReserveList", "[]", true, true);
 		if( lists.length == 0 || z >= lists.length) {return;}
-		if( lists[z].status != 1 && lists[z].status != 0) {settleVillages(z+1);return;}
+		if( lists[z].status != VS_BUILD_RESERVE && lists[z].status != VS_BUILD_FAIL) {settleVillages(z+1);return;}
 		var mURL = LANDLINK;
 		mURL = mURL.replace(URL_SITE,HOST);
 		mURL = mURL.replace(URL_X,lists[z].x);
@@ -789,28 +798,37 @@ function settleVillages(z){
 		}
 		// 2014.08.20 ここまで
 
-		//拠点作成に必要な名声
-		var bldtbl = [17, 35, 54, 80, 112, 150, 195, 248, 310, 999];
-		//現在の拠点の数
-		//var villages = loadVillages(HOST);
-		//var villageLength = document.evaluate('//div[@id="lodgment"]/div/ul/li/a', document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null); //拠点数－１になる
-
-		// 2012.04.25 本鯖対応
-		var villageLength = $a('//ul/li/a[contains(@href,"/village_change.php?village_id")]').length; //拠点数－１になる
-
 		//作成中の拠点の数
 		var lists = cloadData(HOST+"ReserveList", "[]", true, true);
 		var x = 0;
 		for (var i=0 ; i<lists.length ; i++) {
-			if(lists[i].status == 2){x++;}
+			if(lists[i].status == VS_BUILD_ING){x++;}
 		}
-//		return (fameMAX >= bldtbl[villageLength.snapshotLength + x]);
-		return (fameMAX >= bldtbl[villageLength + x]);
+
+		var tmp = j$(".villageInfo").text().match(/(\d+)\/(\d+)/);
+		if (tmp.length >= 3) {
+	  		// 現在の拠点の数
+	  		var villageLength = parseInt(tmp[1], 10);
+
+	  		// 建設可能上限数
+	  		var maxLength = parseInt(tmp[2], 10);
+
+			return (villageLength + x) < maxLength;
+		}
+		else {
+			//拠点作成に必要な名声
+			var bldtbl = [17, 35, 54, 80, 112, 150, 195, 248, 310, 1000];
+
+			//現在の拠点の数
+			var villageLength = $a('//ul/li/a[contains(@href,"/village_change.php?village_id")]').length; //拠点数－１になる
+
+			return (fameMAX >= bldtbl[villageLength + x]);
+		}
 	}
 
 	function failSettleVillage(z) {
 		var lists = cloadData(HOST+"ReserveList", "[]", true, true);
-		if (lists[z].status == 1) { lists[z].status = 0;}
+		if (lists[z].status == VS_BUILD_RESERVE) { lists[z].status = VS_BUILD_FAIL;}
 		csaveData(HOST+"ReserveList", lists, true, true );
 	}
 }
@@ -838,8 +856,8 @@ function checkVillageLength() {
 		var flg = 0;
 		for(var i=0 ; i<lists.length ; i++) {
 			if( lists[i].time < ntime ) {
-				if( lists[i].status == 4 ) { lists[i].status = 5; flg = 1;} //破棄 -> 破棄完了
-				if( lists[i].status == 2 ) { lists[i].status = 3; flg = 1;} //作成 -> 作成完了
+				if( lists[i].status == VS_DESTROY_ING ) { lists[i].status = VS_DESTROY_COMP; flg = 1;} //破棄 -> 破棄完了
+				if( lists[i].status == VS_BUILD_ING   ) { lists[i].status = VS_BUILD_COMP;	 flg = 1;} //作成 -> 作成完了
 			}
 		}
 		csaveData(HOST+"ReserveList", lists, true, true );
@@ -971,9 +989,9 @@ function getAddingVillage(htmldoc) {
 	if( rmname ) {
 		var rmtime = htmldoc.innerHTML.match(/(\d+-\d+-\d+ \d+:\d+:\d+)*に完了します。/ );
 		if( rmname[1] == "現在村を建設中です" ) {
-			addList(rmtime[1], 220, 2, x, y );
+			addList(rmtime[1], 220, VS_BUILD_ING, x, y );
 		}else if( rmname[1] == "現在砦を建設中です" ) {
-			addList(rmtime[1], 222, 2, x, y );
+			addList(rmtime[1], 222, VS_BUILD_ING, x, y );
 		}
 	}
 
@@ -1208,7 +1226,7 @@ function addLinkTondenVillage() {
 			(dt.getSeconds()+100).toString().substr(-2);
 
 		for(var i=0 ; i<lists.length ; i++) {
-			if(lists[i].x == x && lists[i].y == y && (lists[i].status == 0 || lists[i].status == 1)) {
+			if(lists[i].x == x && lists[i].y == y && (lists[i].status == VS_BUILD_FAIL || lists[i].status == VS_BUILD_RESERVE)) {
 				return;
 			}
 		}
@@ -1235,9 +1253,9 @@ function getDeletingVillage(htmldoc) {
 	var rmtime = htmldoc.innerHTML.match(/(村を削除中です。|砦を削除中です。)[^\d]*(\d+-\d+-\d+ \d+:\d+:\d+)に完了します。/);
 	if( rmtime ) {
 		if( rmtime[1] == "村を削除中です。" ) {
-			addList(rmtime[2], 220, 4, x, y );
+			addList(rmtime[2], 220, DESTROY_ING, x, y );
 		}else if( rmtime[1] == "砦を削除中です。" ) {
-			addList(rmtime[2], 222, 4, x, y );
+			addList(rmtime[2], 222, DESTROY_ING, x, y );
 		}
 	}else{
 		delList(1, x, y);
@@ -1253,7 +1271,7 @@ function getDeletingVillage(htmldoc) {
 
 		var flg = 0;
 		for(var i=0 ; i<lists.length ; i++) {
-			if(lists[i].x == x && lists[i].y == y && (lists[i].status != 0 && lists[i].status != 1 && lists[i].status != 2)) {
+			if(lists[i].x == x && lists[i].y == y && (lists[i].status != VS_BUILD_FAIL && lists[i].status != VS_BUILD_RESERVE && lists[i].status != VS_BUILD_ING)) {
 				lists[i].time = tim;
 				lists[i].kind = kind;
 				lists[i].status = status;
@@ -1277,7 +1295,7 @@ function getDeletingVillage(htmldoc) {
 
 		for(var i=0 ; i<lists.length ; i++) {
 			if(lists[i].x == x && lists[i].y == y ) {
-				if( lists[i].status == 4 && kind == 1 ) {
+				if( lists[i].status == VS_DESTROY_ING && kind == 1 ) {
 					lists.splice(i,1);
 					csaveData(HOST+"ReserveList", lists, true, true );
 					break;
@@ -3865,14 +3883,14 @@ function addIniBilderHtml() {
 			  if(lists[i].kind == 220){ actionDiv.innerHTML += "「村」";
 		}else if(lists[i].kind == 222){ actionDiv.innerHTML += "「砦」";
 		}
-			  if(lists[i].status == 0){actionDiv.innerHTML += "作成失敗";
-		}else if(lists[i].status == 1){actionDiv.innerHTML += "作成予約";
-		}else if(lists[i].status == 2){actionDiv.innerHTML += "作成中";
-		}else if(lists[i].status == 3){actionDiv.innerHTML += "作成完了";
-		}else if(lists[i].status == 4){actionDiv.innerHTML += "破棄中";
-		}else if(lists[i].status == 5){actionDiv.innerHTML += "破棄完了";
+			  if(lists[i].status == VS_BUILD_FAIL	){actionDiv.innerHTML += "作成失敗";
+		}else if(lists[i].status == VS_BUILD_RESERVE){actionDiv.innerHTML += "作成予約";
+		}else if(lists[i].status == VS_BUILD_ING	){actionDiv.innerHTML += "作成中";
+		}else if(lists[i].status == VS_BUILD_COMP	){actionDiv.innerHTML += "作成完了";
+		}else if(lists[i].status == VS_DESTROY_ING	){actionDiv.innerHTML += "破棄中";
+		}else if(lists[i].status == VS_DESTROY_COMP ){actionDiv.innerHTML += "破棄完了";
 		}
-		if(lists[i].status == 2 || lists[i].status == 4){
+		if(lists[i].status == VS_BUILD_ING || lists[i].status == VS_DESTROY_ING){
 			actionDiv.innerHTML += " (" + lists[i].time + " 完了予定)";
 		}
 
@@ -3883,7 +3901,7 @@ function addIniBilderHtml() {
 		delTd.style.width = "34px";
 		tr.appendChild(delTd);
 
-		if(lists[i].status == 1 || lists[i].status == 0){
+		if(lists[i].status == VS_BUILD_RESERVE || lists[i].status == VS_BUILD_FAIL){
 			var btn = d.createElement("input");
 			btn.style.padding = "1px";
 			btn.type = "button";
@@ -3900,7 +3918,7 @@ function addIniBilderHtml() {
 				delList(x, y)
 			}, true); //delListへ
 		}
-		else if(lists[i].status == 3 || lists[i].status == 5){
+		else if(lists[i].status == VS_BUILD_COMP || lists[i].status == VS_DESTROY_COMP){
 			var btn = d.createElement("input");
 			btn.style.padding = "1px";
 			btn.type = "button";
