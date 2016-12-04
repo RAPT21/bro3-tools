@@ -18,7 +18,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.12.04
+// @version		2016.12.05
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -142,8 +142,9 @@
 //			  糧変換パターンに余剰分を変換を追加
 // 2016.11.23 拠点所有数UPアイテム使用時、従来の獲得名声依存の拠点数に達していると拠点建設予約が作動しない問題を修正
 // 2016.12.04 　↑の対応で、旧仕様の鯖（イベント鯖）でビルダーが動作していなかった不具合を修正
+// 2016.12.05 兵士自動作成機能で、大剣兵、盾兵、重盾兵について、兵数上限、作成単位を正しく判定できていなかったロジック誤りを修正
 
-var VERSION = "2016.12.04"; 	// バージョン情報
+var VERSION = "2016.12.05"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -6401,8 +6402,7 @@ function make_soldier(attackerData){
 				case "兵舎":		if ((OPT_SOL_ADD[3]  <= make_max) && (OPT_SOL_ADD[4]  <= make_max)) 								{ MakeSoldierFlg = true; }		// 槍兵・矛槍兵
 				case "弓兵舎":		if ((OPT_SOL_ADD[8]  <= make_max) && (OPT_SOL_ADD[9]  <= make_max)) 								{ MakeSoldierFlg = true; }		// 弓兵・弩兵
 				case "練兵所":		if ((OPT_SOL_ADD[1]  <= make_max) && (OPT_SOL_ADD[10] <= make_max) &&
-										(OPT_SOL_MAX[14] <= make_max) && (OPT_SOL_MAX[15] <= make_max) &&
-																			(OPT_SOL_MAX[16] <= make_max))								{ MakeSoldierFlg = true; }		// 剣兵・斥候・大剣兵・盾兵・重盾兵
+										(OPT_SOL_ADD[15] <= make_max) && (OPT_SOL_ADD[16] <= make_max) && (OPT_SOL_ADD[17] <= make_max)){ MakeSoldierFlg = true; }		// 剣兵・斥候・大剣兵・盾兵・重盾兵
 			}
 
 			if (MakeSoldierFlg) {
