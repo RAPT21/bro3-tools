@@ -18,7 +18,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.11.23
+// @version		2016.12.04
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -141,8 +141,9 @@
 // 2016.11.03 糧変換のスマート変換で、変換ロジックを調整
 //			  糧変換パターンに余剰分を変換を追加
 // 2016.11.23 拠点所有数UPアイテム使用時、従来の獲得名声依存の拠点数に達していると拠点建設予約が作動しない問題を修正
+// 2016.12.04 　↑の対応で、旧仕様の鯖（イベント鯖）でビルダーが動作していなかった不具合を修正
 
-var VERSION = "2016.11.23"; 	// バージョン情報
+var VERSION = "2016.12.04"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -806,7 +807,7 @@ function settleVillages(z){
 		}
 
 		var tmp = j$(".villageInfo").text().match(/(\d+)\/(\d+)/);
-		if (tmp.length >= 3) {
+		if (tmp && tmp.length >= 3) {
 	  		// 現在の拠点の数
 	  		var villageLength = parseInt(tmp[1], 10);
 
