@@ -18,7 +18,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.12.05
+// @version		2016.12.07
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -143,8 +143,9 @@
 // 2016.11.23 拠点所有数UPアイテム使用時、従来の獲得名声依存の拠点数に達していると拠点建設予約が作動しない問題を修正
 // 2016.12.04 　↑の対応で、旧仕様の鯖（イベント鯖）でビルダーが動作していなかった不具合を修正
 // 2016.12.05 兵士自動作成機能で、大剣兵、盾兵、重盾兵について、兵数上限、作成単位を正しく判定できていなかったロジック誤りを修正
+// 2016.12.07 副将対応でビルダーが動作しなくなっていたのを緊急対応（まだ動かないものがあるかも。発見し次第順次修正していきます）
 
-var VERSION = "2016.12.05"; 	// バージョン情報
+var VERSION = "2016.12.07"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -563,8 +564,8 @@ var DBG_Flg = false;
 
 		var vID = "";
 		//座標を取得
-		var xyElem = document.evaluate('//*[@id="basepoint"]/span[@class="xy"]',document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-		vId = trim(xyElem.snapshotItem(0).innerHTML.match(/(\(-?\d+,-?\d+\))/)[1]); 	// 2014.08.20
+		j$("#basepoint span[class=xy]").text().match(/(\([-]*\d+,[-]*\d+\))/);
+		vId = RegExp.$1;
 		Load_OPT(vId);
 		if (OPT_BUILD_VID != getVillageID(vId)) {
 			GM_setValue(HOST+PGNAME+"OPT_BUILD_VID" , "" );
@@ -980,12 +981,9 @@ function cloadData(key, value, local, ev)
 //領地画面なら拠点建設データ取得
 function getAddingVillage(htmldoc) {
 
-	var xyElem = document.evaluate('//*[@id="basepoint"]/span[@class="xy"]',
-		htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-	var xy = xyElem.snapshotItem(0).innerHTML.match(/(-?\d+,-?\d+)/);
-	var Temp = xy[0].split(",");
-	var x = Temp[0];
-	var y = Temp[1];
+	j$("#basepoint span[class=xy]").text().match(/([-]*\d+),([-]*\d+)/);
+	var x = RegExp.$1;
+	var y = RegExp.$2;
 
 	var rmname = htmldoc.innerHTML.match(/(現在村を建設中です|現在砦を建設中です)/ );
 	if( rmname ) {
@@ -1153,12 +1151,9 @@ function getAddingVillage(htmldoc) {
 //拠点画面で建設予約受付
 function addLinkTondenVillage() {
 
-	var xyElem = document.evaluate('//span[@class="xy"]',
-		document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-	var xy = xyElem.snapshotItem(0).innerHTML.match(/(-?\d+,-?\d+)/);
-	var Temp = xy[0].split(",");
-	var x = Temp[0];
-	var y = Temp[1];
+	j$("span[class=xy]").text().match(/([-]*\d+),([-]*\d+)/);
+	var x = RegExp.$1;
+	var y = RegExp.$2;
 
 	addLink();
 
@@ -1958,8 +1953,8 @@ debugLog("=== Start setVillageFacility ===");
 	var delY = 0;
 
 	//座標を取得
-	var xyElem = document.evaluate('//*[@id="basepoint"]/span[@class="xy"]', document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-	vId = trim(xyElem.snapshotItem(0).innerHTML.match(/(\(-?\d+,-?\d+\))/)[1]); 	// 2014.08.20
+	j$("#basepoint span[class=xy]").text().match(/(\([-]*\d+,[-]*\d+\))/);
+	vId = RegExp.$1;
 
 	//建設情報を取得
 	var actionsElem = document.evaluate('//*[@id="actionLog"]/ul/li', document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -7250,15 +7245,11 @@ function sortAction(actions) {
 function getVillageActions() {
 	var data = new Array();
 	//拠点名を取得
-	var baseNameElem = document.evaluate(
-		'//*[@id="basepoint"]/span[@class="basename"]',
-		document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-	data[IDX_BASE_NAME] = trim(baseNameElem.snapshotItem(0).innerHTML);
+	data[IDX_BASE_NAME] = j$("#basepoint span[class=basename]").text().trim();
 
 	//座標を取得
-	var xyElem = document.evaluate('//*[@id="basepoint"]/span[@class="xy"]',
-		document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-	data[IDX_XY] = trim(xyElem.snapshotItem(0).innerHTML.match(/(\(-?\d+,-?\d+\))/)[1]);		// 2014.08.20
+	j$("#basepoint span[class=xy]").text().match(/(\([-]*\d+,[-]*\d+\))/);
+	data[IDX_XY] = RegExp.$1;
 
 	//建設情報を取得
 	var actionsElem = document.evaluate('//*[@id="actionLog"]/ul/li',
