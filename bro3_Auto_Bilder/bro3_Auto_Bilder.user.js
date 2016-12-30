@@ -18,7 +18,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.12.07
+// @version		2016.12.30
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -144,8 +144,10 @@
 // 2016.12.04 　↑の対応で、旧仕様の鯖（イベント鯖）でビルダーが動作していなかった不具合を修正
 // 2016.12.05 兵士自動作成機能で、大剣兵、盾兵、重盾兵について、兵数上限、作成単位を正しく判定できていなかったロジック誤りを修正
 // 2016.12.07 副将対応でビルダーが動作しなくなっていたのを緊急対応（まだ動かないものがあるかも。発見し次第順次修正していきます）
+// 2016.12.30 ★8(0-0-0-0)水車村オプションを追加
+//			  自動内政スキルから造兵系（練兵/兵舎/厩舎/弓兵/兵器訓練|修練/檄文）のスキルを削除
 
-var VERSION = "2016.12.07"; 	// バージョン情報
+var VERSION = "2016.12.30"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -311,6 +313,7 @@ var OPT_1112MURA	= 0;	 // ★9(1-1-1-2)水車村オプション
 var OPT_0001S3MURA	= 0;	 // ★3(0-0-0-1)水車村オプション
 var OPT_0001S5MURA	= 0;	 // ★5(0-0-0-1)水車村オプション
 var OPT_0001S7MURA	= 0;	 // ★7(0-0-0-1)水車村オプション
+var OPT_0000S8MURA	= 0;	 // ★8(0-0-0-0)水車村オプション@10期～
 var OPT_PLANT5MURAN	= 0;	 // ★5工場村オプション
 var OPT_PLANT5MURAE	= 0;	 // ★5工場村オプション
 var OPT_PLANT5MURAW	= 0;	 // ★5工場村オプション
@@ -473,14 +476,14 @@ var DASkill = [ "■■■■",
 				"豊穣","美玉歌舞",
 				"恵風","人選眼力",
 				"呉の治世","王佐の才",
-				"練兵訓練","練兵修練",
-				"兵舎訓練","兵舎修練",
-				"弓兵訓練","弓兵修練",
-				"厩舎訓練","厩舎修練",
-				"兵器訓練","兵器修練",
-				"強兵の檄文","攻城の檄文",
-				"豊潤祈祷",
-				"食糧革命","陳留王政"//39
+				"練兵訓練","練兵修練",//25,26 removed @2016.12.30
+				"兵舎訓練","兵舎修練",//27,28 removed @2016.12.30
+				"弓兵訓練","弓兵修練",//29,30 removed @2016.12.30
+				"厩舎訓練","厩舎修練",//31,32 removed @2016.12.30
+				"兵器訓練","兵器修練",//33,34 removed @2016.12.30
+				"強兵の檄文","攻城の檄文",//35,36 removed @2016.12.30
+				"豊潤祈祷",//37
+				"食糧革命","陳留王政"//38,39
 ];
 // ＠＠　ここまで　＠＠
 
@@ -2065,6 +2068,9 @@ debugLog("=== Start setVillageFacility ===");
 	else if (OPT_0001S7MURA == 1) {	// ★7(0-0-0-1)水車村
 		if (build0001S7(vId)) return;
 	}
+	else if (OPT_0000S8MURA == 1) {	// ★8(0-0-0-0)水車村
+		if (build0000S8(vId)) return;
+	}
 	else if ((OPT_PLANT5MURAN == 1) || (OPT_PLANT5MURAE == 1) || (OPT_PLANT5MURAW == 1) || (OPT_PLANT5MURAS == 1)) {	// ★5(6-0-0-0),(0-6-0-0),(0-0-6-0)工場村
 		if (buildPlant5(vId)) return;
 	}
@@ -2252,6 +2258,7 @@ function switchToAutoLevelUp(vId){
 	Temp2[235] = 0; // OPT_PLANT5MURAS
 	Temp2[236] = 0; // OPT_0001S7MURA
 	Temp2[237] = 0; // OPT_0001S3MURA
+	Temp2[238] = 0; // OPT_0000S8MURA
 
 	var save = Temp[0] + DELIMIT1 + Temp2.join(DELIMIT2);
 
@@ -2830,6 +2837,70 @@ function build0001S7(vId){
 	return handled;
 }
 
+function build0000S8(vId){
+	var area = get_area_all();
+	if (! checkVillageType(area, 12,0,0,0,0)){
+		return false;
+	}
+
+	// ★8(0-0-0-0)
+	// まず畑で埋める
+	var reached = [false];
+	var handled =
+	createFacilityEx(0, 2, Hatake, 1, area) ||
+	createFacilityEx(0, 3, Hatake, 1, area) ||
+	createFacilityEx(0, 4, Hatake, 1, area) ||
+
+	createFacilityEx(1, 1, Hatake, 1, area) ||
+	createFacilityEx(1, 2, Hatake, 1, area) ||
+//	createFacilityEx(1, 3, Suisha, 1, area) ||
+	createFacilityEx(1, 4, Hatake, 1, area) ||
+	createFacilityEx(1, 5, Hatake, 1, area) ||
+
+	createFacilityEx(2, 0, Hatake, 1, area) ||
+	createFacilityEx(2, 1, Hatake, 1, area) ||
+	createFacilityEx(2, 3, Hatake, 1, area) ||
+	createFacilityEx(2, 5, Hatake, 1, area) ||
+	createFacilityEx(2, 6, Hatake, 1, area) ||
+
+	createFacilityEx(3, 0, Hatake, 1, area) ||
+	createFacilityEx(3, 1, Hatake, 1, area) ||
+	createFacilityEx(3, 2, Hatake, 1, area) ||
+	createFacilityEx(3, 4, Hatake, 1, area) ||
+	createFacilityEx(3, 5, Hatake, 1, area) ||
+	createFacilityEx(3, 6, Hatake, 1, area) ||
+
+	createFacilityEx(4, 0, Hatake, 1, area) ||
+	createFacilityEx(4, 1, Hatake, 1, area) ||
+	createFacilityEx(4, 3, Hatake, 1, area) ||
+	createFacilityEx(4, 5, Hatake, 1, area) ||
+	createFacilityEx(4, 6, Hatake, 1, area) ||
+
+	createFacilityEx(5, 1, Hatake, 1, area) ||
+	createFacilityEx(5, 2, Hatake, 1, area) ||
+	createFacilityEx(5, 3, Hatake, 1, area) ||
+	createFacilityEx(5, 4, Hatake, 1, area) ||
+	createFacilityEx(5, 5, Hatake, 1, area) ||
+
+	createFacilityEx(6, 2, Hatake, 1, area) ||
+	createFacilityEx(6, 3, Hatake, 1, area) ||
+	createFacilityEx(6, 4, Hatake, 1, area) ||
+
+	// 市場を作るのに必要な建設を行なう
+	createFacilityEx(0, 0, Souko,  1, area) ||
+	createFacilityEx(0, 6, Renpei, 3, area) ||
+	createFacilityEx(1, 3, Shukusha, 1, area) ||
+	createFacilityEx(0, 6, Bougu,  2, area) ||
+	createFacilityEx(6, 6, Ichiba, 1, area) ||
+
+	// ここまで来たら既存の自動LVUPに移管する
+	checkReached(reached);
+	if (reached[0]){
+		switchToAutoLevelUp(vId);
+	}
+	return handled;
+}
+
 function areas(name,xy){
 	this.name = name;
 	this.xy = xy;
@@ -3131,6 +3202,7 @@ function clearWaterwheelBox(){
 	var checkbox = $a('//input[@id="OPT_0001S3MURA"]');	checkbox[0].checked = false; // 水車村化
 	var checkbox = $a('//input[@id="OPT_0001S5MURA"]');	checkbox[0].checked = false; // 水車村化
 	var checkbox = $a('//input[@id="OPT_0001S7MURA"]');	checkbox[0].checked = false; // 水車村化
+	var checkbox = $a('//input[@id="OPT_0000S8MURA"]');	checkbox[0].checked = false; // 水車村化
 	var checkbox = $a('//input[@id="OPT_PLANT5MURAN"]');	checkbox[0].checked = false; // 工場村化
 	var checkbox = $a('//input[@id="OPT_PLANT5MURAE"]');	checkbox[0].checked = false; // 工場村化
 	var checkbox = $a('//input[@id="OPT_PLANT5MURAW"]');	checkbox[0].checked = false; // 工場村化
@@ -3212,18 +3284,18 @@ function clearInifacBox() {
 	var checkbox = $a('//input[@id="OPT_DOME22"]'); checkbox[0].checked = false;	// 人選眼力
 	var checkbox = $a('//input[@id="OPT_DOME23"]'); checkbox[0].checked = false;	// 呉の治世
 	var checkbox = $a('//input[@id="OPT_DOME24"]'); checkbox[0].checked = false;	// 王佐の才
-	var checkbox = $a('//input[@id="OPT_DOME25"]'); checkbox[0].checked = false;	// 練兵訓練
-	var checkbox = $a('//input[@id="OPT_DOME26"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME27"]'); checkbox[0].checked = false;	// 兵舎訓練
-	var checkbox = $a('//input[@id="OPT_DOME28"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME29"]'); checkbox[0].checked = false;	// 弓兵訓練
-	var checkbox = $a('//input[@id="OPT_DOME30"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME31"]'); checkbox[0].checked = false;	// 厩舎訓練
-	var checkbox = $a('//input[@id="OPT_DOME32"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME33"]'); checkbox[0].checked = false;	// 兵器訓練
-	var checkbox = $a('//input[@id="OPT_DOME34"]'); checkbox[0].checked = false;	// 　　修練
-	var checkbox = $a('//input[@id="OPT_DOME35"]'); checkbox[0].checked = false;	// 強兵の檄文
-	var checkbox = $a('//input[@id="OPT_DOME36"]'); checkbox[0].checked = false;	// 攻城の檄文
+	//var checkbox = $a('//input[@id="OPT_DOME25"]'); checkbox[0].checked = false;	// 練兵訓練
+	//var checkbox = $a('//input[@id="OPT_DOME26"]'); checkbox[0].checked = false;	// 　　修練
+	//var checkbox = $a('//input[@id="OPT_DOME27"]'); checkbox[0].checked = false;	// 兵舎訓練
+	//var checkbox = $a('//input[@id="OPT_DOME28"]'); checkbox[0].checked = false;	// 　　修練
+	//var checkbox = $a('//input[@id="OPT_DOME29"]'); checkbox[0].checked = false;	// 弓兵訓練
+	//var checkbox = $a('//input[@id="OPT_DOME30"]'); checkbox[0].checked = false;	// 　　修練
+	//var checkbox = $a('//input[@id="OPT_DOME31"]'); checkbox[0].checked = false;	// 厩舎訓練
+	//var checkbox = $a('//input[@id="OPT_DOME32"]'); checkbox[0].checked = false;	// 　　修練
+	//var checkbox = $a('//input[@id="OPT_DOME33"]'); checkbox[0].checked = false;	// 兵器訓練
+	//var checkbox = $a('//input[@id="OPT_DOME34"]'); checkbox[0].checked = false;	// 　　修練
+	//var checkbox = $a('//input[@id="OPT_DOME35"]'); checkbox[0].checked = false;	// 強兵の檄文
+	//var checkbox = $a('//input[@id="OPT_DOME36"]'); checkbox[0].checked = false;	// 攻城の檄文
 	var checkbox = $a('//input[@id="OPT_DOME37"]'); checkbox[0].checked = false;	// 豊潤祈祷
 	var checkbox = $a('//input[@id="OPT_DOME38"]'); checkbox[0].checked = false;	// 食糧革命
 	var checkbox = $a('//input[@id="OPT_DOME39"]'); checkbox[0].checked = false;	// 陳留王政
@@ -3308,7 +3380,7 @@ function InitPreset_03(){	// 遠征訓練所まで
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV13"]');	 textbox[0].value = "15";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV16"]');	 textbox[0].value = "5";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV20"]');	 textbox[0].value = "8";
-	var textbox  = $a('//input[@id="OPT_CHKBOXLV21"]');	 textbox[0].value = "8";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV21"]');	 textbox[0].value = "3";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV22"]');	 textbox[0].value = "8";
 }
 
@@ -3701,7 +3773,7 @@ function addIniBilderHtml() {
 		msg.style.color = "#FFFFFF";
 		msg.style.font = 'bold 120% "ＭＳ ゴシック"';
 		msg.innerHTML = "<br>" +
-								"　　インストールありがとうございます。<br>" +
+						"　　インストールありがとうございます。<br>" +
 						"　　まずは、プロフィール画面を開いて<br>" +
 						"　　拠点情報を取得してください。<br>　";
 		td.appendChild(msg);
@@ -4305,33 +4377,21 @@ function addInifacHtml(vId) {
 		ccreateText(td24, "Dummy" , "　", 0);
 		ccreateText(td25, "Dummy" , "　", 0);
 
-	ccreateCheckBox(td21, "OPT_DOME25", OPT_DOME[25], " " + DASkill[25], "この都市に来たら、自動的に内政スキル（" + DASkill[25]  + "）を発動します。", 0);
-	ccreateCheckBox(td22, "OPT_DOME27", OPT_DOME[27], " " + DASkill[27], "この都市に来たら、自動的に内政スキル（" + DASkill[27]  + "）を発動します。", 0);
-	ccreateCheckBox(td23, "OPT_DOME29", OPT_DOME[29], " " + DASkill[29], "この都市に来たら、自動的に内政スキル（" + DASkill[29]  + "）を発動します。", 0);
-	ccreateCheckBox(td24, "OPT_DOME31", OPT_DOME[31], " " + DASkill[31], "この都市に来たら、自動的に内政スキル（" + DASkill[31]  + "）を発動します。", 0);
-	ccreateCheckBox(td25, "OPT_DOME33", OPT_DOME[33], " " + DASkill[33], "この都市に来たら、自動的に内政スキル（" + DASkill[33]  + "）を発動します。", 0);
-
-	ccreateCheckBox(td21, "OPT_DOME26", OPT_DOME[26], " " + DASkill[26], "この都市に来たら、自動的に内政スキル（" + DASkill[26]  + "）を発動します。", 0);
-	ccreateCheckBox(td22, "OPT_DOME28", OPT_DOME[28], " " + DASkill[28], "この都市に来たら、自動的に内政スキル（" + DASkill[28]  + "）を発動します。", 0);
-	ccreateCheckBox(td23, "OPT_DOME30", OPT_DOME[30], " " + DASkill[30], "この都市に来たら、自動的に内政スキル（" + DASkill[30]  + "）を発動します。", 0);
-	ccreateCheckBox(td24, "OPT_DOME32", OPT_DOME[32], " " + DASkill[32], "この都市に来たら、自動的に内政スキル（" + DASkill[32]  + "）を発動します。", 0);
-	ccreateCheckBox(td25, "OPT_DOME34", OPT_DOME[34], " " + DASkill[34], "この都市に来たら、自動的に内政スキル（" + DASkill[34]  + "）を発動します。", 0);
-
 		ccreateText(td21, "Dummy" , "　", 0);
 	ccreateCheckBox(td23, "OPT_DOME6",	OPT_DOME[6],  " " + DASkill[6], "この都市に来たら、自動的に内政スキル（" + DASkill[6]  + "）を発動します。", 0);
 	ccreateCheckBox(td22, "OPT_DOME3",	OPT_DOME[3],  " " + DASkill[3], "この都市に来たら、自動的に内政スキル（" + DASkill[3]  + "）を発動します。", 0);
 	ccreateCheckBox(td24, "OPT_DOME9",	OPT_DOME[9],  " " + DASkill[9], "この都市に来たら、自動的に内政スキル（" + DASkill[9]  + "）を発動します。", 0);
 		ccreateText(td25, "Dummy" , "　", 0);
 
-	ccreateCheckBox(td21, "OPT_DOME21", OPT_DOME[21], " " + DASkill[21], "この都市に来たら、自動的に内政スキル（" + DASkill[21]  + "）を発動します。", 0);
-	ccreateCheckBox(td22, "OPT_DOME22", OPT_DOME[22], " " + DASkill[22], "この都市に来たら、自動的に内政スキル（" + DASkill[22]  + "）を発動します。", 0);
-	ccreateCheckBox(td23, "OPT_DOME23", OPT_DOME[23], " " + DASkill[23], "この都市に来たら、自動的に内政スキル（" + DASkill[23]  + "）を発動します。", 0);
-	ccreateCheckBox(td24, "OPT_DOME24", OPT_DOME[24], " " + DASkill[24], "この都市に来たら、自動的に内政スキル（" + DASkill[24]  + "）を発動します。", 0);
-	ccreateCheckBox(td25, "OPT_DOME39", OPT_DOME[39], " " + DASkill[39], "この都市に来たら、自動的に内政スキル（" + DASkill[39]  + "）を発動します。", 0);
-
 	ccreateCheckBox(td21, "OPT_DOME37", OPT_DOME[37], " " + DASkill[37], "この都市に来たら、自動的に内政スキル（" + DASkill[37]  + "）を発動します。", 0);
-	ccreateCheckBox(td22, "OPT_DOME35", OPT_DOME[35], " " + DASkill[35], "この都市に来たら、自動的に内政スキル（" + DASkill[35]  + "）を発動します。", 0);
-	ccreateCheckBox(td23, "OPT_DOME36", OPT_DOME[36], " " + DASkill[36], "この都市に来たら、自動的に内政スキル（" + DASkill[36]  + "）を発動します。", 0);
+	ccreateCheckBox(td22, "OPT_DOME21", OPT_DOME[21], " " + DASkill[21], "この都市に来たら、自動的に内政スキル（" + DASkill[21]  + "）を発動します。", 0);
+	ccreateCheckBox(td23, "OPT_DOME22", OPT_DOME[22], " " + DASkill[22], "この都市に来たら、自動的に内政スキル（" + DASkill[22]  + "）を発動します。", 0);
+		ccreateText(td24, "Dummy" , "　", 0);
+		ccreateText(td25, "Dummy" , "　", 0);
+
+	ccreateCheckBox(td21, "OPT_DOME23", OPT_DOME[23], " " + DASkill[23], "この都市に来たら、自動的に内政スキル（" + DASkill[23]  + "）を発動します。", 0);
+	ccreateCheckBox(td22, "OPT_DOME24", OPT_DOME[24], " " + DASkill[24], "この都市に来たら、自動的に内政スキル（" + DASkill[24]  + "）を発動します。", 0);
+	ccreateCheckBox(td23, "OPT_DOME39", OPT_DOME[39], " " + DASkill[39], "この都市に来たら、自動的に内政スキル（" + DASkill[39]  + "）を発動します。", 0);
 
 	// ===== 糧変換設定 =====
 
@@ -4459,7 +4519,7 @@ function addInifacHtml(vId) {
 
 	var td620 = d.createElement("td");
 		td620.colSpan = "2";
-		ccreateCaptionText(td620, "dummy", "■ 水車村化（実験版） ■", 0 );
+		ccreateCaptionText(td620, "dummy", "■ 水車村化 ■", 0 );
 
 	var tr621 = d.createElement("tr");
 		tr621.style.border = "solid 1px black";
@@ -4472,6 +4532,7 @@ function addInifacHtml(vId) {
 		ccreateCheckBoxF(td621a, "OPT_0001S7MURA", OPT_0001S7MURA, " ★7(0-0-0-1)水車村化", "この都市を水車村にする。",0,InitSuishaVillage);
 		ccreateCheckBoxF(td621a, "OPT_0001S5MURA", OPT_0001S5MURA, " ★5(0-0-0-1)水車村化", "この都市を水車村にする。",0,InitSuishaVillage);
 		ccreateCheckBoxF(td621a, "OPT_0001S3MURA", OPT_0001S3MURA, " ★3(0-0-0-1)水車村化", "この都市を水車村にする。",0,InitSuishaVillage);
+		ccreateCheckBoxF(td621a, "OPT_0000S8MURA", OPT_0000S8MURA, " ★8(0-0-0-0)水車村化", "この都市を水車村にする。",0,InitSuishaVillage);
 
 	var td621b = d.createElement("td");
 		td621b.style.padding = "2px";
@@ -5081,18 +5142,18 @@ function SaveInifacBox(vId){
 		strSave += cgetCheckBoxValue($("OPT_DOME22")) + DELIMIT2; //内政使用するかのフラグ
 		strSave += cgetCheckBoxValue($("OPT_DOME23")) + DELIMIT2; //内政使用するかのフラグ
 		strSave += cgetCheckBoxValue($("OPT_DOME24")) + DELIMIT2; //内政使用するかのフラグ
-		strSave += cgetCheckBoxValue($("OPT_DOME25")) + DELIMIT2; //内政使用するかのフラグ
-		strSave += cgetCheckBoxValue($("OPT_DOME26")) + DELIMIT2; //内政使用するかのフラグ
-		strSave += cgetCheckBoxValue($("OPT_DOME27")) + DELIMIT2; //内政使用するかのフラグ
-		strSave += cgetCheckBoxValue($("OPT_DOME28")) + DELIMIT2; //内政使用するかのフラグ
-		strSave += cgetCheckBoxValue($("OPT_DOME29")) + DELIMIT2; //内政使用するかのフラグ
-		strSave += cgetCheckBoxValue($("OPT_DOME30")) + DELIMIT2; //内政使用するかのフラグ
-		strSave += cgetCheckBoxValue($("OPT_DOME31")) + DELIMIT2; //内政使用するかのフラグ
-		strSave += cgetCheckBoxValue($("OPT_DOME32")) + DELIMIT2; //内政使用するかのフラグ
-		strSave += cgetCheckBoxValue($("OPT_DOME33")) + DELIMIT2; //内政使用するかのフラグ
-		strSave += cgetCheckBoxValue($("OPT_DOME34")) + DELIMIT2; //内政使用するかのフラグ
-		strSave += cgetCheckBoxValue($("OPT_DOME35")) + DELIMIT2; //内政使用するかのフラグ
-		strSave += cgetCheckBoxValue($("OPT_DOME36")) + DELIMIT2; //内政使用するかのフラグ
+		strSave += cgetCheckBoxValue($("OPT_DOME25")) + DELIMIT2; //removed @2016.12.30
+		strSave += cgetCheckBoxValue($("OPT_DOME26")) + DELIMIT2; //removed @2016.12.30
+		strSave += cgetCheckBoxValue($("OPT_DOME27")) + DELIMIT2; //removed @2016.12.30
+		strSave += cgetCheckBoxValue($("OPT_DOME28")) + DELIMIT2; //removed @2016.12.30
+		strSave += cgetCheckBoxValue($("OPT_DOME29")) + DELIMIT2; //removed @2016.12.30
+		strSave += cgetCheckBoxValue($("OPT_DOME30")) + DELIMIT2; //removed @2016.12.30
+		strSave += cgetCheckBoxValue($("OPT_DOME31")) + DELIMIT2; //removed @2016.12.30
+		strSave += cgetCheckBoxValue($("OPT_DOME32")) + DELIMIT2; //removed @2016.12.30
+		strSave += cgetCheckBoxValue($("OPT_DOME33")) + DELIMIT2; //removed @2016.12.30
+		strSave += cgetCheckBoxValue($("OPT_DOME34")) + DELIMIT2; //removed @2016.12.30
+		strSave += cgetCheckBoxValue($("OPT_DOME35")) + DELIMIT2; //removed @2016.12.30
+		strSave += cgetCheckBoxValue($("OPT_DOME36")) + DELIMIT2; //removed @2016.12.30
 		strSave += cgetCheckBoxValue($("OPT_DOME37")) + DELIMIT2; //内政使用するかのフラグ
 		strSave += cgetCheckBoxValue($("OPT_DOME38")) + DELIMIT2; //内政使用するかのフラグ
 		strSave += cgetCheckBoxValue($("OPT_DOME39")) + DELIMIT2; //内政使用するかのフラグ
@@ -5128,10 +5189,10 @@ function SaveInifacBox(vId){
 		var opt = $("OPT_SOL_ADD" + i);
 		strSave += cgetTextBoxValue(opt) + DELIMIT2;
 	}
-	strSave += cgetCheckBoxValue($("OPT_BLD_SOL")) + DELIMIT2;; //自動造兵するかのフラグ
+	strSave += cgetCheckBoxValue($("OPT_BLD_SOL"))	+ DELIMIT2; //自動造兵するかのフラグ
 
 	strSave += cgetTextBoxValue($("OPT_BLD_WOOD"))	+ DELIMIT2;
-	strSave += cgetTextBoxValue($("OPT_BLD_STONE")) + DELIMIT2;
+	strSave += cgetTextBoxValue($("OPT_BLD_STONE"))	+ DELIMIT2;
 	strSave += cgetTextBoxValue($("OPT_BLD_IRON"))	+ DELIMIT2;
 	strSave += cgetTextBoxValue($("OPT_BLD_RICE"))	+ DELIMIT2;
 
@@ -5178,6 +5239,7 @@ function SaveInifacBox(vId){
 	strSave += cgetCheckBoxValue($("OPT_PLANT5MURAS")) + DELIMIT2;
 	strSave += cgetCheckBoxValue($("OPT_0001S7MURA")) + DELIMIT2;
 	strSave += cgetCheckBoxValue($("OPT_0001S3MURA")) + DELIMIT2;
+	strSave += cgetCheckBoxValue($("OPT_0000S8MURA")) + DELIMIT2;
 
 	GM_setValue(HOST+PGNAME+vId, strSave);
 }
@@ -5195,6 +5257,7 @@ debugLog("=== Start Load_OPT ===");
 		OPT_0001S3MURA		= 0;
 		OPT_0001S5MURA		= 0;
 		OPT_0001S7MURA		= 0;
+		OPT_0000S8MURA		= 0;
 		OPT_PLANT5MURAN		= 0;
 		OPT_PLANT5MURAE		= 0;
 		OPT_PLANT5MURAW		= 0;
@@ -5228,11 +5291,11 @@ debugLog("=== Start Load_OPT ===");
 			var shiroTemp  = src2.split(DELIMIT1);
 			var shiroTemp2 = shiroTemp[1].split(DELIMIT2);
 
-			OPT_ICHIBA = forInt(shiroTemp2[23]);			// 市場自動変換の利用有無
+			OPT_ICHIBA = forInt(shiroTemp2[23]);		// 市場自動変換の利用有無
 			OPT_RISE_MAX = forInt(shiroTemp2[24]);		// 糧の自動変換開始量
-			OPT_TO_WOOD = forInt(shiroTemp2[25]);			// 木に変換する糧の量
+			OPT_TO_WOOD = forInt(shiroTemp2[25]);		// 木に変換する糧の量
 			OPT_TO_STONE = forInt(shiroTemp2[26]);		// 石　　　 〃
-			OPT_TO_IRON = forInt(shiroTemp2[27]);			// 鉄		〃
+			OPT_TO_IRON = forInt(shiroTemp2[27]);		// 鉄		〃
 			OPT_ICHIBA_PA = shiroTemp2[33]; 			// 変換パターン
 			OPT_MAX_WOOD = forInt(shiroTemp2[97]);		// 木の最大保持量（この量を超えたら変換しない）
 			OPT_MAX_STONE = forInt(shiroTemp2[98]); 	// 石	 〃
@@ -5368,7 +5431,6 @@ debugLog("=== Start Load_OPT ===");
 		for (i=0;i<18;i++){
 			OPT_BG_LV[i] = forInt(Temp2[163 + i]);
 			if (isNaN(OPT_BG_LV[i])) { OPT_BG_LV[i]  = 0; };
-
 		}
 
 		OPT_BKBG_CHK	= forInt(Temp2[181]);
@@ -5398,6 +5460,8 @@ debugLog("=== Start Load_OPT ===");
 		OPT_0001S7MURA = forInt(Temp2[236]);
 		if(Temp2[237] == ""){return;}
 		OPT_0001S3MURA = forInt(Temp2[237]);
+		if(Temp2[238] == ""){return;}
+		OPT_0000S8MURA = forInt(Temp2[238]);
 	}
 }
 //ユーザプロフィール画面の拠点情報を取得
@@ -5514,8 +5578,6 @@ function saveVillages(hostname, newData) {
 	}
 	//Greasemondey領域へ永続保存
 	GM_setValue(hostname, genDelimitString(newDataStr, DELIMIT1));
-
-
 }
 
 //デリミタ区切り文字列生成
