@@ -2890,7 +2890,7 @@ function build0000S8(vId){
 	createFacilityEx(0, 0, Souko,  1, area) ||
 	createFacilityEx(0, 6, Renpei, 3, area) ||
 	createFacilityEx(1, 3, Shukusha, 1, area) ||
-	createFacilityEx(6, 6, Bougu,  2, area) ||
+	createFacilityEx(6, 0, Bougu,  2, area) ||
 	createFacilityEx(6, 6, Ichiba, 1, area) ||
 
 	// ここまで来たら既存の自動LVUPに移管する
