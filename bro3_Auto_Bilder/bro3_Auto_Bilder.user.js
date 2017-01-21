@@ -18,7 +18,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2016.12.30
+// @version		2017.01.22
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -146,8 +146,11 @@
 // 2016.12.07 副将対応でビルダーが動作しなくなっていたのを緊急対応（まだ動かないものがあるかも。発見し次第順次修正していきます）
 // 2016.12.30 ★8(0-0-0-0)水車村オプションを追加
 //			  自動内政スキルから造兵系（練兵/兵舎/厩舎/弓兵/兵器訓練|修練/檄文）のスキルを削除
+// 2017.01.22 回復中の内政スキル情報取得部分を修正
+//			※市場繁栄など市場変換率を変化させるスキル使用時、自動糧変換がうまく動作しません。
+//			後日修正予定ですので、スキル使用時は手で変換を行なってください。
 
-var VERSION = "2016.12.30"; 	// バージョン情報
+var VERSION = "2017.01.22"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -7707,20 +7710,19 @@ function getDomesticSkill(htmldoc) {
 	}
 	// 回復中
 	var dom = document.createElement("html");
-	var RecoveryCheck = document.evaluate('//table[@class="general"]', htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+	var RecoveryCheck = document.evaluate('//table[@class="general domesticGeneralListTbl"]', htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	for (var z=0;z<RecoveryCheck.snapshotLength;z++){
 		if (RecoveryCheck.snapshotItem(z).innerHTML.match("内政中")) {
 			dom.innerHTML = "<table>" + RecoveryCheck.snapshotItem(z).innerHTML + "</table>";
 			// 内政武将名
-			var Name = document.evaluate('//td/a[@class="thickbox"]', dom, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotItem(1).innerHTML;
+			var Name = j$('td>a[class="thickbox"]', dom).text().trim();
 			var RecoverySkill = document.evaluate('//td[@class="recovery"]', dom, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 			for (var x=0;x<RecoverySkill.snapshotLength;x++) {
 				i += 1;
 				data[IDX_ACTIONS][i] = new Array();
 				var SkillName  = RecoverySkill.snapshotItem(x).innerHTML.split("<")[0]; 		// スキル名
 				var SkillRTime = RecoverySkill.snapshotItem(x).innerHTML.split('>')[2].substr(0,8); 	// 回復時間
-				var status = "回復";
-				status = "内政:" + status + "(" + trim(Name) + "：" + SkillName + ")";
+				var status = "内政:回復(" + trim(Name) + "：" + SkillName + ")";
 				data[IDX_ACTIONS][i][IDX2_STATUS] = status;
 				data[IDX_ACTIONS][i][IDX2_TIME] = generateDateString(computeTime(SkillRTime));
 				data[IDX_ACTIONS][i][IDX2_TYPE] = TYPE_DOMESTIC;
