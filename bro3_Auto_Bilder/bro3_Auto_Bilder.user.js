@@ -18,7 +18,7 @@
 // @grant		GM_log
 // @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2017.01.22
+// @version		2017.01.28
 // ==/UserScript==
 
 // 2012.04.22 巡回部分の修正
@@ -147,10 +147,11 @@
 // 2016.12.30 ★8(0-0-0-0)水車村オプションを追加
 //			  自動内政スキルから造兵系（練兵/兵舎/厩舎/弓兵/兵器訓練|修練/檄文）のスキルを削除
 // 2017.01.22 回復中の内政スキル情報取得部分を修正
+// 2017.01.28 内政スキル回復中の文字色を灰色に変更
 //			※市場繁栄など市場変換率を変化させるスキル使用時、自動糧変換がうまく動作しません。
 //			後日修正予定ですので、スキル使用時は手で変換を行なってください。
 
-var VERSION = "2017.01.22"; 	// バージョン情報
+var VERSION = "2017.01.28"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -7444,6 +7445,9 @@ function createActionDiv(action, nowTime, baseXy, host) {
 	var actionDiv = document.createElement("div");
 	if ( action[IDX2_DELETE] == "true" ) {
 		actionDiv.style.backgroundColor = "#BBDDDD";
+	}
+	if ( action[IDX2_STATUS].indexOf("内政:回復") == 0 ) {
+		actionDiv.style.color = "#666666";
 	}
 	//作業完了背景色
 	var actionTime = new Date(action[IDX2_TIME]);
