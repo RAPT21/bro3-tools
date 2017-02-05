@@ -2361,7 +2361,7 @@ function buildShukusha(vId){
 	var heichi = 0, renpei = 0, souko = 0;
 	for(var i=0;i < area.length;i++){
 		if(area[i].name == "平地"){heichi++;}
-		else if(area[i].name.match(/練兵所/)){rehpei++;}
+		else if(area[i].name.match(/練兵所/)){renpei++;}
 		else if(area[i].name.match(/倉庫/)){souko++;}
 	}
 	if (heichi==0){return false;} // 空き地はない
