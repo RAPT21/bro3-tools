@@ -2388,6 +2388,7 @@ function maxAreaLV(info, area) {
 			info.xy = area.xy;
 		}
 	}
+	return info;
 }
 
 function buildDaiShukusha(vId){
@@ -2399,8 +2400,8 @@ function buildDaiShukusha(vId){
 	var mihari	= new lv_sort("見張り台",0,"");
 	for(var i=0;i < area.length;i++){
 		if(area[i].name == "平地"){heichi++;continue;}
-		maxAreaLV(shukusha, area[i]);
-		maxAreaLV(mihari, area[i]);
+		shukusha = maxAreaLV(shukusha, area[i]);
+		mihari = maxAreaLV(mihari, area[i]);
 	}
 	if (heichi==0){return false;} // 空き地はない
 
