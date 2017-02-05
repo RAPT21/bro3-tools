@@ -12,86 +12,12 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @grant		GM_xmlhttpRequest
-// @grant		GM_addStyle
-// @grant		GM_deleteValue
-// @grant		GM_listValues
 // @grant		GM_log
-// @grant		GM_registerMenuCommand
 // @author		RAPT
-// @version		2017.01.28
+// @version		2017.02.05
 // ==/UserScript==
 
-// 2012.04.22 巡回部分の修正
-// 2012.04.23 ビルスクの削除部分の修正（対象施設の対象Lv以下の数＋平地数がビルスク対象施設数以下の場合、対象施設名で一番レベルの低いのを削除に変更）
-// 2012.04.24 2012.04.24のメンテに対応
-// 2012.04.25 id="lodgment" がない場合の対応（本鯖）
-// 2012.04.26 本鯖でのダイアログ表示リンクの位置を変更
-//			  拠点設定データ呼び出しのバグ修正
-//			  糧変換処理がない場合でも市場情報を保存するように修正
-//			  糧変換拠点情報をダイアログに表示追加
-// 2012.05.01 よくわかんないけどＰ鯖対応（動くらしい）
-//			  自動造兵時に宿舎空きがない場合の処理を修正
-//			  userscript.org に公開
-// 2012.05.02 市場情報更新時に即時情報表示に切り替え
-//			  拠点巡回中に自動で内政武将のスキル状況の取得
-//			  スキル使用武将と使用/回復スキル名を表示するように修正
-// 2012.05.03 削除施設がレベルアップ対象になった場合処理が進まない不具合を修正
-//			  拠点のレベルアップ時に、拠点が削除中の場合建設しない処理を追加
-//			  造兵・武器防具強化情報の自動取得処理を追加
-// 2012.05.04 研究所の研究中取得がおかしかったのを修正
-//			  造兵時のチェックが間違っていたのを修正
-// 2012.05.05 造兵施設がLVMAXの場合の処理を追加
-//			  造兵施設での種類数によって取得処理を変更するように修正
-//			  ブラ三ニュースけしたった(・з・)
-// 2012.05.07 兵種研究が即完された場合に表示が残る不具合の修正
-//			  巡回しなくなっていたバグを修正
-// 2012.05.08 内政チェックしなかったのを修正
-// 2012.05.11 最新のGreasemonkeyで動作しないのを修正（setTimeout→unsafeWindow.setTimeout）
-// 2012.05.23 本拠地の設定ページに市場情報初期化ボタンを追加
-//			  巡回時間を修正(2225行あたり）
-// 2012.05.24 Auto_Domestic のバグ修正（過去の巡回しない原因はこれかも）
-//			  自動内政のスキル追加（恵風・人選眼力・訓練系・修練系）
-//			  市場情報をホスト名ごとに保存
-//			  建設完了時間＞設定巡回時間 の時の巡回時間設定が間違ってたのを修正
-//			  巡回時間にランダムで盛っていた秒を0秒～60秒から0秒～10秒に変更
-//			  本拠地以外に市場があった場合に糧変換しなかったのを修正
-//			  市場のある拠点が巡回対象以外でも糧変換するように修正
-//			  内政スキル発動後に各処理が多分動作するように修正
-// 2012.05.25 拠点建設設定のデータがない拠点の初期データが間違っていたのを修正
-//			  設定画面でNaN(Not a Number)が表示されていたのを修正
-// 2012.05.27 ビルスクの設定が反映されないのを修正
-// 2012.06.18 村・砦削除中の場合その拠点のみビルダー動作を停止
-// 2012.09.06 鍛冶場・防具工場の情報取得部分がバグってるのでちょっと削除
-//			  糧変換時に ssid が必要になったので追加（他にもssidいるやも？）
-//			  コメント欄にあった造兵部分を修正 thx.名無しさん
-// 2012.09.12 改悪アップデートに対応
-// 2012.09.15 使用中の内政スキル情報取得部分を修正
-// 2012.09.16 回復中の内政スキル情報取得部分を修正
-// 2012.09.29 資源表示部分のcssの修正
-// 2012.09.30 資源表示部分のcssの修正（プルダウンメニュー・マップ画面）
-// 2012.10.10 地図画面の小さな矢印が押せなかったのを修正
-// 2013.01.10 糧村・資源村のスキルプリセットを修正
-//			  ダイアログデザインをちょっと修正
-//			  情報表示ダイアログを非表示でも強制的に表示される現象の修正（領地画面とか）
-// 2013.03.08 Firefox 19.0.2 + Greasemonkey 1.8 での動作するように修正
-// 2013.12.18 拠点プリセット値変更
-//			  動作ログを最新から表示に変更。完了分は最大５件のみ表示
-// 2013.12.26 村プリセットの追加（軍事拠点）
-//			  拠点設定画面レイアウト変更
-//			  標準巡回時間を180秒に変更
-// 2014.01.30 大剣兵・盾兵・重盾兵の処理追加開始
-// 2014.02.14 Firefox Ver.27 にてFirefoxごと轟沈する処理を修正
-// 2014.02.19 大剣兵・盾兵・重盾兵の造兵処理追加（テストは重盾兵のみ）
-//			  大剣兵・盾兵・重盾兵の武器防具強化処理追加（テストは盾兵のみ）
-//			  武器防具追加テーブルの追加修正（一部データ不足）
-// 2014.02.20 自動内政スキルに「強兵の檄文」「攻城の檄文」を追加
-//			  設定項目が増えたので一旦設定を初期化しました
-//			  糧村に銅雀台が建立されなかったのを修正
-// 2014.03.06 細かいバグ修正
-// 2014.03.07 盾兵・剣兵・重盾兵がある鯖ない鯖の処理分岐追加
-// 2014.03.11 地味にログイン画面に表示されていたのを修正
-// 2014.07.24 最新のGreasemonkeyで動作しないのを修正（unsafeWindow.setTimeout→setTimeout）
-// 2014.08.20 やばげ鯖対応
+// 2014.08.20 (本スクリプトのベース)
 // 2015.05.10 施設削除予約対応 by RAPT
 // 2015.05.13 施設削除予約対応が Google Chrome でも動作するよう修正
 //			  自動内政スキルに豊潤祈祷を追加 by RAPT
@@ -148,10 +74,14 @@
 //			  自動内政スキルから造兵系（練兵/兵舎/厩舎/弓兵/兵器訓練|修練/檄文）のスキルを削除
 // 2017.01.22 回復中の内政スキル情報取得部分を修正
 // 2017.01.28 内政スキル回復中の文字色を灰色に変更
+// 2017.02.05 古代の修正履歴コメントを削除
+//			  宿舎化、大宿舎化オプションをお試し実装。空き地に宿舎、大宿舎を敷き詰めます。
+//			  宿舎化オプションで、倉庫LV1と練兵所LV1がない場合は先に建設します。
+//			  大宿舎化オプションで前提施設がない場合、建設を中止します。
 //			※市場繁栄など市場変換率を変化させるスキル使用時、自動糧変換がうまく動作しません。
 //			後日修正予定ですので、スキル使用時は手で変換を行なってください。
 
-var VERSION = "2017.01.28"; 	// バージョン情報
+var VERSION = "2017.02.05"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -312,6 +242,8 @@ var RICE = 104; 				//糧の内部コード
 
 //新規作成用
 var OPT_KATEMURA	= 0;	 // 自動糧村化オプション
+var OPT_SHUKUSHA	= 0;	 // 宿舎
+var OPT_DAISHUKUSHA	= 0;	 // 大宿舎
 var OPT_DORM		= 0;	 // 自動宿舎村化オプション			2013.12.26
 var OPT_1112MURA	= 0;	 // ★9(1-1-1-2)水車村オプション
 var OPT_0001S3MURA	= 0;	 // ★3(0-0-0-1)水車村オプション
@@ -2079,6 +2011,14 @@ debugLog("=== Start setVillageFacility ===");
 		if (buildPlant5(vId)) return;
 	}
 
+	// 宿舎
+	if (OPT_SHUKUSHA == 1) {
+		if (buildShukusha(vId)) return;
+	}
+	if (OPT_DAISHUKUSHA == 1) {
+		if (buildDaiShukusha(vId)) return;
+	}
+
 	// 糧村化
 	if(OPT_KATEMURA == 1) {
 		var area_all	= new Array();
@@ -2263,6 +2203,10 @@ function switchToAutoLevelUp(vId){
 	Temp2[236] = 0; // OPT_0001S7MURA
 	Temp2[237] = 0; // OPT_0001S3MURA
 	Temp2[238] = 0; // OPT_0000S8MURA
+	if(Temp2[239] != ""){
+		Temp2[239] = 0; // OPT_SHUKUSHA
+		Temp2[240] = 0; // OPT_DAISHUKUSHA
+	}
 
 	var save = Temp[0] + DELIMIT1 + Temp2.join(DELIMIT2);
 
@@ -2340,7 +2284,7 @@ function createFacilityEx(x, y, f, lv, area){
 				||	(f == Bassai   && Chek_Sigen(new lv_sort("伐採所",0,"")) != 1)
 				||	(f == Ishikiri && Chek_Sigen(new lv_sort("石切り場",0,"")) != 1)
 				||	(f == Seitetsu && Chek_Sigen(new lv_sort("製鉄所",0,"")) != 1)
-				||	(f == Koujou   && Chek_Sigen(new lv_sort("大宿舎",0,"")) != 1)
+				||	(f == Daishuku && Chek_Sigen(new lv_sort("大宿舎",0,"")) != 1)
 				){
 					create = 1;
 				}
@@ -2410,6 +2354,73 @@ function checkVillageType(area, Arechi, Shinrin, Iwayama, Tekkouzan, Kokumotsu)
 function checkReached(r){
 	r[0] = true;
 	return true;
+}
+function buildShukusha(vId){
+	var area = get_area_all();
+
+	var heichi = 0, renpei = 0, souko = 0;
+	for(var i=0;i < area.length;i++){
+		if(area[i].name == "平地"){heichi++;}
+		else if(area[i].name.match(/練兵所/)){rehpei++;}
+		else if(area[i].name.match(/倉庫/)){souko++;}
+	}
+	if (heichi==0){return false;} // 空き地はない
+
+	// 宿舎: [練兵所 レベル1]&[倉庫 レベル1]
+	if (souko==0){
+		createFacility(Souko, area);
+		return true;
+	}
+	else if (renpei==0){
+		createFacility(Renpei, area);
+		return true;
+	}
+	else {
+		createFacility(Shukusha, area);
+		return true;
+	}
+}
+function maxAreaLV(info, area) {
+	if (area.name.match(new RegExp('^('+info.name+')\s.*?(\d+)'))) {
+		var area_lv = parseInt(RegExp.$2,10);
+		if (info.lv < area_lv){
+			info.lv = area_lv;
+			info.xy = area.xy;
+		}
+	}
+}
+
+function buildDaiShukusha(vId){
+	var area = get_area_all();
+
+	// 平地の数と、建設済施設および最大施設LVを取得
+	var heichi = 0; // count
+	var shukusha= new lv_sort("宿舎",0,"");
+	var mihari	= new lv_sort("見張り台",0,"");
+	for(var i=0;i < area.length;i++){
+		if(area[i].name == "平地"){heichi++;continue;}
+		maxAreaLV(shukusha, area[i]);
+		maxAreaLV(mihari, area[i]);
+	}
+	if (heichi==0){return false;} // 空き地はない
+
+	if (shukusha.lv >= 15 && mihari.lv >= 8) {
+		if (Chek_Sigen(new lv_sort("大宿舎",0,"")) == 1) {
+			return false;
+		}
+		createFacility(Daishuku, area);
+		return true;
+	}
+
+	// 宿舎
+	if (shukusha.lv < 15) {
+		console.log("宿舎LV15が必要です。");
+	}
+	if (mihari.lv < 8) {
+		console.log("見張り台LV8が必要です。");
+	}
+
+	return false;
 }
 function build1112(vId){
 	var area = get_area_all();
@@ -3288,23 +3299,13 @@ function clearInifacBox() {
 	var checkbox = $a('//input[@id="OPT_DOME22"]'); checkbox[0].checked = false;	// 人選眼力
 	var checkbox = $a('//input[@id="OPT_DOME23"]'); checkbox[0].checked = false;	// 呉の治世
 	var checkbox = $a('//input[@id="OPT_DOME24"]'); checkbox[0].checked = false;	// 王佐の才
-	//var checkbox = $a('//input[@id="OPT_DOME25"]'); checkbox[0].checked = false;	// 練兵訓練
-	//var checkbox = $a('//input[@id="OPT_DOME26"]'); checkbox[0].checked = false;	// 　　修練
-	//var checkbox = $a('//input[@id="OPT_DOME27"]'); checkbox[0].checked = false;	// 兵舎訓練
-	//var checkbox = $a('//input[@id="OPT_DOME28"]'); checkbox[0].checked = false;	// 　　修練
-	//var checkbox = $a('//input[@id="OPT_DOME29"]'); checkbox[0].checked = false;	// 弓兵訓練
-	//var checkbox = $a('//input[@id="OPT_DOME30"]'); checkbox[0].checked = false;	// 　　修練
-	//var checkbox = $a('//input[@id="OPT_DOME31"]'); checkbox[0].checked = false;	// 厩舎訓練
-	//var checkbox = $a('//input[@id="OPT_DOME32"]'); checkbox[0].checked = false;	// 　　修練
-	//var checkbox = $a('//input[@id="OPT_DOME33"]'); checkbox[0].checked = false;	// 兵器訓練
-	//var checkbox = $a('//input[@id="OPT_DOME34"]'); checkbox[0].checked = false;	// 　　修練
-	//var checkbox = $a('//input[@id="OPT_DOME35"]'); checkbox[0].checked = false;	// 強兵の檄文
-	//var checkbox = $a('//input[@id="OPT_DOME36"]'); checkbox[0].checked = false;	// 攻城の檄文
 	var checkbox = $a('//input[@id="OPT_DOME37"]'); checkbox[0].checked = false;	// 豊潤祈祷
 	var checkbox = $a('//input[@id="OPT_DOME38"]'); checkbox[0].checked = false;	// 食糧革命
 	var checkbox = $a('//input[@id="OPT_DOME39"]'); checkbox[0].checked = false;	// 陳留王政
 	// 糧村オプション
 	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = false; // 糧村化
+	var checkbox = $a('//input[@id="OPT_SHUKUSHA"]');	checkbox[0].checked = false; // 宿舎
+	var checkbox = $a('//input[@id="OPT_DAISHUKUSHA"]');checkbox[0].checked = false; // 大宿舎
 	clearWaterwheelBox(); // 水車村オプション
 	// 宿舎村オプション
 	var checkbox = $a('//input[@id="OPT_DORM"]');		checkbox[0].checked = false; // 宿舎村化 2013.12.26
@@ -3386,6 +3387,41 @@ function InitPreset_03(){	// 遠征訓練所まで
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV20"]');	 textbox[0].value = "8";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV21"]');	 textbox[0].value = "3";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV22"]');	 textbox[0].value = "8";
+}
+
+function InitShukushaVillage(cb){
+	// 宿舎化
+	if (cb && !cb.checked) return;
+
+	clearInifacBox();
+	if (cb) cb.checked = true;
+
+	var textbox = $a('//input[@id="OPT_CHKBOXLV5"]');	textbox[0].value = 1;	// 倉庫
+	var textbox = $a('//input[@id="OPT_CHKBOXLV9"]');	textbox[0].value = 1;	// 練兵所
+	var textbox = $a('//input[@id="OPT_CHKBOXLV13"]');	textbox[0].value = 15;	// 宿舎
+	var checkbox= $a('//input[@id="OPT_CHKBOX13"]');   checkbox[0].checked = true;
+}
+
+function InitDaiShukushaVillage(cb){
+	// 大宿舎化
+	if (cb && !cb.checked) return;
+
+	clearInifacBox();
+	if (cb) cb.checked = true;
+
+	var textbox = $a('//input[@id="OPT_CHKBOXLV5"]');	textbox[0].value = 1;	// 倉庫
+	var textbox = $a('//input[@id="OPT_CHKBOXLV9"]');	textbox[0].value = 3;	// 練兵所
+	var textbox = $a('//input[@id="OPT_CHKBOXLV13"]');	textbox[0].value = 15;	// 宿舎
+	var textbox = $a('//input[@id="OPT_CHKBOXLV8"]');	textbox[0].value = 7;	// 防具工場
+	var textbox = $a('//input[@id="OPT_CHKBOXLV22"]');	textbox[0].value = 8;	// 見張り台
+	var textbox = $a('//input[@id="OPT_CHKBOXLV20"]');	textbox[0].value = 20;	// 大宿舎
+	var checkbox= $a('//input[@id="OPT_CHKBOX20"]');   checkbox[0].checked = true;
+
+	var checkbox = $a('//input[@id="OPT_REMOVE"]');  		checkbox[0].checked = false; // 自動削除
+	var checkbox = $a('//input[@id="OPT_RM_CHKBOX5"]');		checkbox[0].checked = true;	// 倉庫
+	var textbox  = $a('//input[@id="OPT_RM_CHKBOXLV5"]');	 textbox[0].value = "0";
+	var checkbox = $a('//input[@id="OPT_RM_CHKBOX9"]');		checkbox[0].checked = true;	// 練兵所
+	var checkbox = $a('//input[@id="OPT_RM_CHKBOX8"]');		checkbox[0].checked = true;	// 防具工場
 }
 
 function InitSuishaVillage(cb){
@@ -4510,6 +4546,40 @@ function addInifacHtml(vId) {
 	Field_Box.appendChild(tr611);
 	tr611.appendChild(td611);
 
+	// ===== 宿舎化 ===
+
+	var SDorm_Box = d.createElement("table");
+		SDorm_Box.style.margin = "0px 4px 4px 0px";
+		SDorm_Box.style.border ="solid 2px black";
+		SDorm_Box.style.width = "100%";
+
+	var tr700 = d.createElement("tr");
+		tr700.style.border = "solid 1px black";
+		tr700.style.backgroundColor =COLOR_TITLE;
+
+	var td700 = d.createElement("td");
+		td700.colSpan = "2";
+		ccreateCaptionText(td700, "dummy", "■ 宿舎化 ■（人柱用）", 0 );
+
+	var tr711 = d.createElement("td");
+		tr711.style.border = "solid 1px black";
+		tr711.style.backgroundColor =COLOR_BACK;
+
+	var td711a = d.createElement("td");
+		td711a.style.padding = "3px";
+		td711a.style.verticalAlign = "top";
+		ccreateCheckBoxF(td711a, "OPT_SHUKUSHA"   , OPT_SHUKUSHA   , " 宿舎化"	, "この都市の空き地に宿舎を建設します。",0,InitShukushaVillage);
+	var td711b = d.createElement("td");
+		td711b.style.padding = "3px";
+		td711b.style.verticalAlign = "top";
+		ccreateCheckBoxF(td711b, "OPT_DAISHUKUSHA", OPT_DAISHUKUSHA, " 大宿舎化", "この都市の空き地に大宿舎を建設します。",0,InitDaiShukushaVillage);
+
+	SDorm_Box.appendChild(tr700);
+	tr700.appendChild(td700);
+	SDorm_Box.appendChild(tr711);
+	tr711.appendChild(td711a);
+	tr711.appendChild(td711b);
+
 	// ===== 水車村化 ===
 
 	var Waterwheel_Box = d.createElement("table");
@@ -5030,6 +5100,7 @@ function addInifacHtml(vId) {
 
 
 		td002.appendChild(Field_Box);		// 糧村化設定
+		td002.appendChild(SDorm_Box);		// 宿舎化
 		td002.appendChild(Waterwheel_Box);	// 水車村
 		td002.appendChild(dorm_Box);		// 宿舎村化設定 2013.12.26
 
@@ -5245,6 +5316,9 @@ function SaveInifacBox(vId){
 	strSave += cgetCheckBoxValue($("OPT_0001S3MURA")) + DELIMIT2;
 	strSave += cgetCheckBoxValue($("OPT_0000S8MURA")) + DELIMIT2;
 
+	strSave += cgetCheckBoxValue($("OPT_SHUKUSHA")) + DELIMIT2;
+	strSave += cgetCheckBoxValue($("OPT_DAISHUKUSHA")) + DELIMIT2;
+
 	GM_setValue(HOST+PGNAME+vId, strSave);
 }
 //拠点単位の設定の読み込み
@@ -5257,6 +5331,8 @@ debugLog("=== Start Load_OPT ===");
 		// 拠点データがない場合
 
 		OPT_KATEMURA		= 0;
+		OPT_SHUKUSHA		= 0;
+		OPT_DAISHUKUSHA		= 0;
 		OPT_1112MURA		= 0;
 		OPT_0001S3MURA		= 0;
 		OPT_0001S5MURA		= 0;
@@ -5466,6 +5542,9 @@ debugLog("=== Start Load_OPT ===");
 		OPT_0001S3MURA = forInt(Temp2[237]);
 		if(Temp2[238] == ""){return;}
 		OPT_0000S8MURA = forInt(Temp2[238]);
+		if(Temp2[239] == ""){return;}
+		OPT_SHUKUSHA = forInt(Temp2[239]);
+		OPT_DAISHUKUSHA = forInt(Temp2[240]);
 	}
 }
 //ユーザプロフィール画面の拠点情報を取得
@@ -7168,16 +7247,6 @@ debugLog("=== Start Auto Domestic ===");
 // @copyright 2009, James Campos
 // @license cc-by-3.0; http://creativecommons.org/licenses/by/3.0/
 if ((typeof GM_getValue == 'undefined') || (GM_getValue('a', 'b') == undefined)) {
-	GM_addStyle = function(css) {
-		var style = document.createElement('style');
-		style.textContent = css;
-		document.getElementsByTagName('head')[0].appendChild(style);
-	};
-
-	GM_deleteValue = function(name) {
-		localStorage.removeItem(name);
-	};
-
 	GM_getValue = function(name, defaultValue) {
 		var value = localStorage.getItem(name);
 		if (!value)
@@ -7199,10 +7268,6 @@ if ((typeof GM_getValue == 'undefined') || (GM_getValue('a', 'b') == undefined))
 			opera.postError(message);
 			return;
 		}
-	};
-
-	GM_registerMenuCommand = function(name, funk) {
-	//todo
 	};
 
 	GM_setValue = function(name, value) {
