@@ -2381,14 +2381,13 @@ function buildShukusha(vId){
 	}
 }
 function maxAreaLV(info, area) {
-	if (area.name.match(new RegExp('^('+info.name+')\s.*?(\d+)'))) {
+	if (area.name.match(new RegExp('^('+info.name+')\\s.*?(\\d+)'))) {
 		var area_lv = parseInt(RegExp.$2,10);
 		if (info.lv < area_lv){
 			info.lv = area_lv;
 			info.xy = area.xy;
 		}
 	}
-	return info;
 }
 
 function buildDaiShukusha(vId){
@@ -2400,11 +2399,11 @@ function buildDaiShukusha(vId){
 	var mihari	= new lv_sort("見張り台",0,"");
 	for(var i=0;i < area.length;i++){
 		if(area[i].name == "平地"){heichi++;continue;}
-		shukusha = maxAreaLV(shukusha, area[i]);
-		mihari = maxAreaLV(mihari, area[i]);
+		maxAreaLV(shukusha, area[i]);
+		maxAreaLV(mihari, area[i]);
 	}
 	if (heichi==0){return false;} // 空き地はない
-
+	
 	if (shukusha.lv >= 15 && mihari.lv >= 8) {
 		if (Chek_Sigen(new lv_sort("大宿舎",0,"")) == 1) {
 			return false;
@@ -2415,10 +2414,10 @@ function buildDaiShukusha(vId){
 
 	// 宿舎
 	if (shukusha.lv < 15) {
-		console.log("宿舎LV15が必要です。");
+		console.log("宿舎LV15が必要です。今はLV"+shukusha.lv);
 	}
 	if (mihari.lv < 8) {
-		console.log("見張り台LV8が必要です。");
+		console.log("見張り台LV8が必要です。今はLV"+mihari.lv);
 	}
 
 	return false;
