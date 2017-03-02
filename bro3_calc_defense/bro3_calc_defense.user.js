@@ -7,7 +7,7 @@
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @author		BSE with RAPT
-// @version 	1.6.1.7
+// @version 	1.6.1.8
 // ==/UserScript==
 
 // ----- BSE 版リリースノート -----
@@ -20,6 +20,7 @@
 //	2016.12.06 v1.6.1.5 f1,y25 鯖対応
 //	2017.01.26 v1.6.1.6 k-1t マップ対応、y9 鯖対応
 //	2017.02.15 v1.6.1.7 y31 鯖対応
+//	2017.03.02 v1.6.1.8 y1,y35 鯖対応
 
 //バージョン配置用
 var ver_rack = "ver1.6.1.7";
@@ -44,7 +45,7 @@ var tile = new Array(0,0,0,0,0,0);
 
 // 鯖 - 期
 var server_session = {
-	"y1": 18,
+	"y1": 19,
 	"y9": 16,
 	"y17": 11,
 	"y25": 8,
@@ -52,6 +53,7 @@ var server_session = {
 	"y31": 4,
 	"y33": 2,
 	"y34": 1,
+	"y35": 1,
 	"f1": 10, // event-world
 	"w1": 22,
 	"w2": 21
