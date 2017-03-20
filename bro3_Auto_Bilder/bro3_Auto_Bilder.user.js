@@ -4,7 +4,7 @@
 // @description	ブラウザ三国志 自動建築スクリプト By nottisan + 5zen（自動内政改良） + RAPT
 // @icon		https://raw.github.com/5zen/fake3gokushi/master/icon.png
 // @include		http://*.3gokushi.jp/*
-// @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
+// @require		http://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js
 // @exclude		http://*.3gokushi.jp/world/select_server_mixi_new.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @exclude		http://info.3gokushi.jp/*
@@ -14,7 +14,7 @@
 // @grant		GM_xmlhttpRequest
 // @grant		GM_log
 // @author		RAPT
-// @version		2017.02.06
+// @version		2017.03.20
 // ==/UserScript==
 
 // 2014.08.20 (本スクリプトのベース)
@@ -81,8 +81,10 @@
 // 2017.02.06 宿舎化/大宿舎化オプションによる自動建設ができていなかった不具合を修正
 //			※市場繁栄など市場変換率を変化させるスキル使用時、自動糧変換がうまく動作しません。
 //			後日修正予定ですので、スキル使用時は手で変換を行なってください。
+// 2017.03.20 jQuery 1.3.2 → 1.12.4 にアップデート　※将来的に高速化 v3 系に移行を見据えています。
+//			  12期★9(7-0-0-4),★9(0-7-0-4),★9(0-0-7-4)に対応する工場村オプション追加（未試験）
 
-var VERSION = "2017.02.06"; 	// バージョン情報
+var VERSION = "2017.03.20"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -255,6 +257,7 @@ var OPT_PLANT5MURAN	= 0;	 // ★5工場村オプション
 var OPT_PLANT5MURAE	= 0;	 // ★5工場村オプション
 var OPT_PLANT5MURAW	= 0;	 // ★5工場村オプション
 var OPT_PLANT5MURAS	= 0;	 // ★5工場村オプション
+var OPT_PLANT9MURA74= 0;	 // ★9(7-4)工場村オプション
 
 var OPT_REMOVE = 0; // 施設削除オプション 2015.05.10
 
@@ -1862,7 +1865,7 @@ function getBuildingInfo() {
 	var info = { x:-1, y:-1, name:"", lv:0, time:-1 };
 
 	// 建設座標
-	if (a.attr("href").match(/x=(\d+).+y=(\d+)/)){
+	if (a.prop("href").match(/x=(\d+).+y=(\d+)/)){
 		info.x = parseInt(RegExp.$1,10);
 		info.y = parseInt(RegExp.$2,10);
 
@@ -2010,6 +2013,9 @@ debugLog("=== Start setVillageFacility ===");
 	}
 	else if ((OPT_PLANT5MURAN == 1) || (OPT_PLANT5MURAE == 1) || (OPT_PLANT5MURAW == 1) || (OPT_PLANT5MURAS == 1)) {	// ★5(6-0-0-0),(0-6-0-0),(0-0-6-0)工場村
 		if (buildPlant5(vId)) return;
+	}
+	else if (OPT_PLANT9MURA74 == 1) { // ★9(7-4)工場村
+		if (buildPlant5m74(vId)) return;
 	}
 
 	// 宿舎
@@ -2208,6 +2214,9 @@ function switchToAutoLevelUp(vId){
 		Temp2[239] = 0; // OPT_SHUKUSHA
 		Temp2[240] = 0; // OPT_DAISHUKUSHA
 	}
+	if(Temp2[241] != ""){
+		Temp2[241] = 0; // OPT_PLANT9MURA74
+	}
 
 	var save = Temp[0] + DELIMIT1 + Temp2.join(DELIMIT2);
 
@@ -2404,7 +2413,7 @@ function buildDaiShukusha(vId){
 		maxAreaLV(mihari, area[i]);
 	}
 	if (heichi==0){return false;} // 空き地はない
-	
+
 	if (shukusha.lv >= 15 && mihari.lv >= 8) {
 		if (Chek_Sigen(new lv_sort("大宿舎",0,"")) == 1) {
 			return false;
@@ -2687,6 +2696,81 @@ function buildPlant5(vId){
 
 		false;
 	}
+	return handled;
+}
+
+// ★9工場村
+function buildPlant5m74(vId){
+	var ArechiCnt		= 0, // 荒地
+		KokumotsuCnt	= 0, // 穀物
+		ShinrinCnt		= 0, // 森林
+		IwayamaCnt		= 0, // 岩山
+		TekkouzanCnt	= 0, // 鉄鉱山
+		TargetType		= 0; // 伐採所 or 石切場 or 鉄鉱所
+
+	var vacant = new Array(); // 平地の座標
+	var area = get_area_all();
+	area.sort(cmp_areas);
+	for(var i=0;i<area.length;i++){
+		if(area[i].name == "荒地") ArechiCnt++; else
+		if(area[i].name == "穀物") KokumotsuCnt++; else
+		if(area[i].name == "森林") ShinrinCnt++; else
+		if(area[i].name == "岩山") IwayamaCnt++; else
+		if(area[i].name == "鉄鉱山") TekkouzanCnt++; else
+		if(area[i].name == "平地") vacant.push(area[i].xy);
+	}
+
+		((ShinrinCnt + IwayamaCnt + TekkouzanCnt) == 7) &&
+		((ShinrinCnt * IwayamaCnt * TekkouzanCnt) == 0)
+
+	if (ArechiCnt == 0 && KokumotsuCnt == 4 && vacant.length == 37)
+	{}else{return false;}
+		 if (ShinrinCnt == 7 && IwayamaCnt == 0 && TekkouzanCnt == 0) TargetType = Bassai;
+	else if (ShinrinCnt == 0 && IwayamaCnt == 7 && TekkouzanCnt == 0) TargetType = Ishikiri;
+	else if (ShinrinCnt == 0 && IwayamaCnt == 0 && TekkouzanCnt == 7) TargetType = Seitetsu;
+	else return false;
+
+	var reached = [false];
+	var handled = false;
+
+	//
+	handled =
+	// 水車周囲の畑を作る
+	createFacilityEx(4, 4, Hatake, 1, area) ||
+	createFacilityEx(4, 6, Hatake, 1, area) ||
+	createFacilityEx(6, 4, Hatake, 1, area) ||
+	createFacilityEx(6, 6, Hatake, 1, area) ||
+
+	// 工場周囲の収穫所を作る
+	createFacilityEx(0, 0, TargetType, 1, area) ||
+	createFacilityEx(0, 2, TargetType, 1, area) ||
+	createFacilityEx(2, 0, TargetType, 1, area) ||
+	createFacilityEx(2, 2, TargetType, 1, area) ||
+
+	// 市場を作るのに必要な建設を行なう
+	createFacilityEx(6, 6, Souko,  1, area) ||
+	createFacilityEx(6, 1, Renpei, 3, area) ||
+	createFacilityEx(6, 2, Shukusha, 1, area) ||
+	createFacilityEx(6, 3, Bougu,  2, area) ||
+	createFacilityEx(5, 0, Ichiba, 1, area) ||
+
+	// 兵器工房を作る
+	createFacilityEx(5, 3, Kajiba, 3, area) ||
+	createFacilityEx(6, 3, Bougu,  3, area) ||
+	createFacilityEx(5, 2, Heiki,  5, area) ||
+
+	// 水車を作る
+	createFacilityEx(3, 1, Renpei, 5, area) ||
+	createFacilityEx(6, 6, Souko, 10, area) ||
+	createFacilityEx(5, 0, Ichiba, 8, area) ||
+	createFacilityEx(5, 5, Suisha, 1, area) ||
+
+	// 工場を作る
+	createFacilityEx(5, 0, Ichiba, 10, area) ||
+	createFacilityEx(1, 1, Koujou,	1, area) ||
+
+	false;
+
 	return handled;
 }
 
@@ -3223,6 +3307,7 @@ function clearWaterwheelBox(){
 	var checkbox = $a('//input[@id="OPT_PLANT5MURAE"]');	checkbox[0].checked = false; // 工場村化
 	var checkbox = $a('//input[@id="OPT_PLANT5MURAW"]');	checkbox[0].checked = false; // 工場村化
 	var checkbox = $a('//input[@id="OPT_PLANT5MURAS"]');	checkbox[0].checked = false; // 工場村化
+	var checkbox = $a('//input[@id="OPT_PLANT9MURA74"]');	checkbox[0].checked = false; // 工場村化
 }
 
 ///LvUP対象施設設のチェックボックスをクリアする
@@ -4612,6 +4697,7 @@ function addInifacHtml(vId) {
 	var td621b = d.createElement("td");
 		td621b.style.padding = "2px";
 		td621b.style.verticalAlign = "top";
+		ccreateCheckBoxF(td621b, "OPT_PLANT9MURA74",OPT_PLANT9MURA74," ★9(7-0-0-4)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
 		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAN", OPT_PLANT5MURAN, " ★5(北部資源)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
 		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAE", OPT_PLANT5MURAE, " ★5(東部資源)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
 		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAW", OPT_PLANT5MURAW, " ★5(西部資源)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
@@ -5042,11 +5128,11 @@ function addInifacHtml(vId) {
 		tr711.appendChild(td711);
 
 	ccreateButton(td711, "保存", "設定内容を保存します", function() {
-		j$(this).attr("value","保存中");
-		j$(this).attr("id","AFSaveButton");
+		j$(this).prop("value","保存中");
+		j$(this).prop("id","AFSaveButton");
 		SaveInifacBox(ABfacContainer.getAttribute('vId'))
 		//alert("保存しました");
-		setTimeout(function(){ j$("#AFSaveButton").attr("value","保存"); },200);
+		setTimeout(function(){ j$("#AFSaveButton").prop("value","保存"); },200);
 	});
 	ccreateButton(td711, "閉じる", "設定内容を保存せず閉じます", function() {
 		closeInifacBox();
@@ -5320,6 +5406,8 @@ function SaveInifacBox(vId){
 	strSave += cgetCheckBoxValue($("OPT_SHUKUSHA")) + DELIMIT2;
 	strSave += cgetCheckBoxValue($("OPT_DAISHUKUSHA")) + DELIMIT2;
 
+	strSave += cgetCheckBoxValue($("OPT_PLANT9MURA74")) + DELIMIT2;
+
 	GM_setValue(HOST+PGNAME+vId, strSave);
 }
 //拠点単位の設定の読み込み
@@ -5343,6 +5431,7 @@ debugLog("=== Start Load_OPT ===");
 		OPT_PLANT5MURAE		= 0;
 		OPT_PLANT5MURAW		= 0;
 		OPT_PLANT5MURAS		= 0;
+		OPT_PLANT9MURA74	= 0;
 		OPT_DORM			= 0;				// 2013.12.16
 		OPT_SOUKO_MAX		= 0;
 		OPT_KIFU			= 0;
@@ -5546,6 +5635,8 @@ debugLog("=== Start Load_OPT ===");
 		if(Temp2[239] == ""){return;}
 		OPT_SHUKUSHA = forInt(Temp2[239]);
 		OPT_DAISHUKUSHA = forInt(Temp2[240]);
+		if(Temp2[241] == ""){return;}
+		OPT_PLANT9MURA74 = forInt(Temp2[241]);
 	}
 }
 //ユーザプロフィール画面の拠点情報を取得
