@@ -7,7 +7,7 @@
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @author		BSE with RAPT
-// @version 	1.6.1.8
+// @version 	1.6.1.9
 // ==/UserScript==
 
 // ----- BSE 版リリースノート -----
@@ -24,7 +24,7 @@
 //	2017.03.16 v1.6.1.9 y33 鯖対応
 
 //バージョン配置用
-var ver_rack = "ver1.6.1.7";
+var ver_rack = "ver1.6.1.9";
 
 //配布管理系
 var nazeka ="<span style='color:crimson'>■</span>";
