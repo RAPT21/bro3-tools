@@ -14,7 +14,7 @@
 // @grant		GM_xmlhttpRequest
 // @grant		GM_log
 // @author		RAPT
-// @version		2017.03.20
+// @version		2017.03.24
 // ==/UserScript==
 
 // 2014.08.20 (本スクリプトのベース)
@@ -83,8 +83,10 @@
 //			後日修正予定ですので、スキル使用時は手で変換を行なってください。
 // 2017.03.20 jQuery 1.3.2 → 1.12.4 にアップデート　※将来的に高速化 v3 系に移行を見据えています。
 //			  12期★9(7-0-0-4),★9(0-7-0-4),★9(0-0-7-4)に対応する工場村オプション追加（未試験）
+// 2017.03.24 12期★9(7-0-0-4)工場村オプションで施設を１つ建設すると続きを建設できない不具合を修正
+//			  2017.03.20 版で、Google Chrome で市場変換できなくなる不具合を修正
 
-var VERSION = "2017.03.20"; 	// バージョン情報
+var VERSION = "2017.03.24"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -1865,7 +1867,7 @@ function getBuildingInfo() {
 	var info = { x:-1, y:-1, name:"", lv:0, time:-1 };
 
 	// 建設座標
-	if (a.prop("href").match(/x=(\d+).+y=(\d+)/)){
+	if (a.attr("href").match(/x=(\d+).+y=(\d+)/)){
 		info.x = parseInt(RegExp.$1,10);
 		info.y = parseInt(RegExp.$2,10);
 
@@ -2723,7 +2725,7 @@ function buildPlant5m74(vId){
 		((ShinrinCnt + IwayamaCnt + TekkouzanCnt) == 7) &&
 		((ShinrinCnt * IwayamaCnt * TekkouzanCnt) == 0)
 
-	if (ArechiCnt == 0 && KokumotsuCnt == 4 && vacant.length == 37)
+	if (ArechiCnt == 0 && KokumotsuCnt == 4 && vacant.length <= 37)
 	{}else{return false;}
 		 if (ShinrinCnt == 7 && IwayamaCnt == 0 && TekkouzanCnt == 0) TargetType = Bassai;
 	else if (ShinrinCnt == 0 && IwayamaCnt == 7 && TekkouzanCnt == 0) TargetType = Ishikiri;
@@ -5128,11 +5130,11 @@ function addInifacHtml(vId) {
 		tr711.appendChild(td711);
 
 	ccreateButton(td711, "保存", "設定内容を保存します", function() {
-		j$(this).prop("value","保存中");
-		j$(this).prop("id","AFSaveButton");
+		j$(this).attr("value","保存中");
+		j$(this).attr("id","AFSaveButton");
 		SaveInifacBox(ABfacContainer.getAttribute('vId'))
 		//alert("保存しました");
-		setTimeout(function(){ j$("#AFSaveButton").prop("value","保存"); },200);
+		setTimeout(function(){ j$("#AFSaveButton").attr("value","保存"); },200);
 	});
 	ccreateButton(td711, "閉じる", "設定内容を保存せず閉じます", function() {
 		closeInifacBox();
