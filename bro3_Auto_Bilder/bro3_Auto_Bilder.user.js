@@ -14,7 +14,7 @@
 // @grant		GM_xmlhttpRequest
 // @grant		GM_log
 // @author		RAPT
-// @version		2017.03.24
+// @version		2017.03.25
 // ==/UserScript==
 
 // 2014.08.20 (本スクリプトのベース)
@@ -85,8 +85,9 @@
 //			  12期★9(7-0-0-4),★9(0-7-0-4),★9(0-0-7-4)に対応する工場村オプション追加（未試験）
 // 2017.03.24 12期★9(7-0-0-4)工場村オプションで施設を１つ建設すると続きを建設できない不具合を修正
 //			  2017.03.20 版で、Google Chrome で市場変換できなくなる不具合を修正
+// 2017.03.25 12期★9(7-0-0-4)工場村オプションで倉庫建設場所をミスっていた不具合を修正
 
-var VERSION = "2017.03.24"; 	// バージョン情報
+var VERSION = "2017.03.25"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -2750,7 +2751,7 @@ function buildPlant5m74(vId){
 	createFacilityEx(2, 2, TargetType, 1, area) ||
 
 	// 市場を作るのに必要な建設を行なう
-	createFacilityEx(6, 6, Souko,  1, area) ||
+	createFacilityEx(6, 0, Souko,  1, area) ||
 	createFacilityEx(6, 1, Renpei, 3, area) ||
 	createFacilityEx(6, 2, Shukusha, 1, area) ||
 	createFacilityEx(6, 3, Bougu,  2, area) ||
