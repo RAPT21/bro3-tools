@@ -2773,8 +2773,8 @@ function buildPlant5m74(vId){
 	createFacilityEx(0, 6, Suzume, 1, area) ||
 
 	// 水車を作る
-	createFacilityEx(3, 1, Renpei, 5, area) ||
-	createFacilityEx(6, 6, Souko, 10, area) ||
+	createFacilityEx(6, 1, Renpei, 5, area) ||
+	createFacilityEx(6, 0, Souko, 10, area) ||
 	createFacilityEx(5, 0, Ichiba, 8, area) ||
 	createFacilityEx(5, 5, Suisha, 1, area) ||
 
