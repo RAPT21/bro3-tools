@@ -2271,6 +2271,7 @@ var Hatake		= 215, // 畑
 	Bassai		= 209, // 伐採所
 	Ishikiri	= 211, // 石切り場
 	Seitetsu	= 213, // 製鉄所
+	Suzume		= 216, // 銅雀台
 	Daishuku	= 244; // 大宿舎
 
 // 指定座標に施設LVまで新規建築＆LVUP
@@ -2297,6 +2298,7 @@ function createFacilityEx(x, y, f, lv, area){
 				||	(f == Bassai   && Chek_Sigen(new lv_sort("伐採所",0,"")) != 1)
 				||	(f == Ishikiri && Chek_Sigen(new lv_sort("石切り場",0,"")) != 1)
 				||	(f == Seitetsu && Chek_Sigen(new lv_sort("製鉄所",0,"")) != 1)
+				||	(f == Suzume   && Chek_Sigen(new lv_sort("銅雀台",0,"")) != 1)
 				||	(f == Daishuku && Chek_Sigen(new lv_sort("大宿舎",0,"")) != 1)
 				){
 					create = 1;
@@ -2316,6 +2318,7 @@ function createFacilityEx(x, y, f, lv, area){
 			else if (f == Bassai   && area[i].name.match(/^(伐採所)\s.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
 			else if (f == Ishikiri && area[i].name.match(/^(石切り場)\s.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
 			else if (f == Seitetsu && area[i].name.match(/^(製鉄所)\s.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Suzume   && area[i].name.match(/^(銅雀台)\s.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
 			else if (f == Daishuku && area[i].name.match(/^(大宿舎)\s.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
 			break;
 		}
@@ -2761,6 +2764,13 @@ function buildPlant5m74(vId){
 	createFacilityEx(5, 3, Kajiba, 3, area) ||
 	createFacilityEx(6, 3, Bougu,  3, area) ||
 	createFacilityEx(5, 2, Heiki,  5, area) ||
+
+	// 水車周囲の畑LVUP+銅雀台を作る
+	createFacilityEx(4, 4, Hatake, 5, area) ||
+	createFacilityEx(4, 6, Hatake, 5, area) ||
+	createFacilityEx(6, 4, Hatake, 5, area) ||
+	createFacilityEx(6, 6, Hatake, 5, area) ||
+	createFacilityEx(0, 6, Suzume, 1, area) ||
 
 	// 水車を作る
 	createFacilityEx(3, 1, Renpei, 5, area) ||
