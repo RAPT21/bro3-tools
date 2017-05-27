@@ -14,9 +14,25 @@
 // @grant		GM_xmlhttpRequest
 // @grant		GM_log
 // @author		RAPT
-// @version		2017.03.25
+// @version		2017.05.28
 // ==/UserScript==
 
+// ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
+// 現在表示している拠点に対して、座標のみの指定しかできません。
+// そのため、指示を送ろうとしている最中に拠点を切り替えられてしまうと意図しない拠点で発動してしまいます。
+// 自動巡回時間を短くし過ぎていたり、指示発動タイミングで拠点を切り替えたりしないようにすることで回避できます。
+// 手動操作を優先したい場合、一度スクリプトを停止させておくことをご検討ください。
+
+// ※施設LVUPは、運営側仕様としては、LV値を指定しての建築はできません。
+// 現在表示している拠点に対して、座標のみを指定してLVUPの指示をするだけです。
+// そのため、ブラウザの動作が重い場合などに、上限指定値を超えて指示が発行される場合がありますので、ご注意ください。
+
+// ----- 動作環境について ----- 2017.05.28
+// Fifefox + Greasemonkey 最新版で開発しています。
+// Google Chrome + Tampermonkey でも動作することを確認しています。
+// Pale Moon など上記以外の環境でも動作するらしいですが動作保証外です。
+
+// ----- 更新履歴
 // 2014.08.20 (本スクリプトのベース)
 // 2015.05.10 施設削除予約対応 by RAPT
 // 2015.05.13 施設削除予約対応が Google Chrome でも動作するよう修正
@@ -86,8 +102,11 @@
 // 2017.03.24 12期★9(7-0-0-4)工場村オプションで施設を１つ建設すると続きを建設できない不具合を修正
 //			  2017.03.20 版で、Google Chrome で市場変換できなくなる不具合を修正
 // 2017.03.25 12期★9(7-0-0-4)工場村オプションで倉庫建設場所をミスっていた不具合を修正
+// 2017.05.28 12期★9(7-0-0-4)工場村オプションで工場周辺空きマスを畑に変更
+//			  ★5工場村オプションの方向選択を不要にした
+//			  倉庫LV18建設必要資源の石と鉄の数値誤りを修正
 
-var VERSION = "2017.03.25"; 	// バージョン情報
+var VERSION = "2017.05.28"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -260,7 +279,7 @@ var OPT_PLANT5MURAN	= 0;	 // ★5工場村オプション
 var OPT_PLANT5MURAE	= 0;	 // ★5工場村オプション
 var OPT_PLANT5MURAW	= 0;	 // ★5工場村オプション
 var OPT_PLANT5MURAS	= 0;	 // ★5工場村オプション
-var OPT_PLANT9MURA74= 0;	 // ★9(7-4)工場村オプション
+var OPT_PLANT9MURA74  = 0;	 // ★9(7-4)工場村オプション
 
 var OPT_REMOVE = 0; // 施設削除オプション 2015.05.10
 
@@ -2018,7 +2037,7 @@ debugLog("=== Start setVillageFacility ===");
 		if (buildPlant5(vId)) return;
 	}
 	else if (OPT_PLANT9MURA74 == 1) { // ★9(7-4)工場村
-		if (buildPlant5m74(vId)) return;
+		if (buildPlant9m74(vId)) return;
 	}
 
 	// 宿舎
@@ -2118,7 +2137,7 @@ debugLog("=== Start setVillageFacility ===");
 						//建築に必要な資源が有るかどうかチェック
 						var ret = Chek_Sigen(area[i]);
 						if(ret == 1){
-							//30分後にリロードするかどうか
+							//1分後にリロードするかどうか
 							Reload_Flg = 1;
 							break;
 						}
@@ -2149,7 +2168,7 @@ debugLog("=== Start setVillageFacility ===");
 
 
 	if(Reload_Flg == 1){
-		//10分後にリロードし、再度建築できるかチェックする。
+		//1分後にリロードし、再度建築できるかチェックする。
 		var tid=setTimeout(function(){location.reload();},60000);
 	}
 
@@ -2512,6 +2531,7 @@ function buildPlant5(vId){
 		IwayamaCnt		= 0, // 岩山
 		TekkouzanCnt	= 0, // 鉄鉱山
 		TargetType		= 0; // 伐採所 or 石切場 or 鉄鉱所
+	var dirNorth = 0, dirSouth = 0, dirEast = 0, dirWest = 0; // 資源ブロックの配置チェック
 
 	var vacant = new Array(); // 平地の座標
 	var area = get_area_all();
@@ -2519,14 +2539,31 @@ function buildPlant5(vId){
 	for(var i=0;i<area.length;i++){
 		if(area[i].name == "荒地") ArechiCnt++; else
 		if(area[i].name == "穀物") KokumotsuCnt++; else
-		if(area[i].name == "森林") ShinrinCnt++; else
-		if(area[i].name == "岩山") IwayamaCnt++; else
-		if(area[i].name == "鉄鉱山") TekkouzanCnt++; else
+		if(area[i].name == "森林") {ShinrinCnt++;
+			if(area[i].xy == "2,3") dirWest=1; else
+			if(area[i].xy == "3,2") dirNorth=1; else
+			if(area[i].xy == "3,4") dirSouth=1; else
+			if(area[i].xy == "4,3") dirEast=1;
+		} else
+		if(area[i].name == "岩山") {IwayamaCnt++;
+			if(area[i].xy == "2,3") dirWest=1; else
+			if(area[i].xy == "3,2") dirNorth=1; else
+			if(area[i].xy == "3,4") dirSouth=1; else
+			if(area[i].xy == "4,3") dirEast=1;
+		} else
+		if(area[i].name == "鉄鉱山") {TekkouzanCnt++;
+			if(area[i].xy == "2,3") dirWest=1; else
+			if(area[i].xy == "3,2") dirNorth=1; else
+			if(area[i].xy == "3,4") dirSouth=1; else
+			if(area[i].xy == "4,3") dirEast=1;
+		} else
 		if(area[i].name == "平地") vacant.push(area[i].xy);
 	}
 	if ((ArechiCnt == 21 && KokumotsuCnt == 0) ||	// 5-9期
 		(ArechiCnt == 23 && KokumotsuCnt == 0))		// 10-11期
 	{}else{return false;}
+	var dirSum = dirNorth + dirSouth + dirEast + dirWest;
+	if (dirSum == 1){}else{return false;}
 		 if (ShinrinCnt == 6 && IwayamaCnt == 0 && TekkouzanCnt == 0) TargetType = Bassai;
 	else if (ShinrinCnt == 0 && IwayamaCnt == 6 && TekkouzanCnt == 0) TargetType = Ishikiri;
 	else if (ShinrinCnt == 0 && IwayamaCnt == 0 && TekkouzanCnt == 6) TargetType = Seitetsu;
@@ -2536,7 +2573,7 @@ function buildPlant5(vId){
 	var handled = false;
 
 	// 資源ブロック 南パターン
-	if (OPT_PLANT5MURAS == 1)
+	if (dirSouth == 1)
 	{
 		handled =
 		// 水車周囲の畑を作る
@@ -2578,7 +2615,7 @@ function buildPlant5(vId){
 	}
 
 	// 資源ブロック 東パターン
-	if (OPT_PLANT5MURAE == 1)
+	if (dirEast == 1)
 	{
 		handled =
 		// 水車周囲の畑を作る
@@ -2620,7 +2657,7 @@ function buildPlant5(vId){
 	}
 
 	// 資源ブロック 西パターン
-	if (OPT_PLANT5MURAW == 1)
+	if (dirWest == 1)
 	{
 		handled =
 		// 水車周囲の畑を作る
@@ -2662,7 +2699,7 @@ function buildPlant5(vId){
 	}
 
 	// 資源ブロック 北パターン
-	if (OPT_PLANT5MURAN == 1)
+	if (dirNorth == 1)
 	{
 		handled =
 		// 水車周囲の畑を作る
@@ -2706,13 +2743,12 @@ function buildPlant5(vId){
 }
 
 // ★9工場村
-function buildPlant5m74(vId){
+function buildPlant9m74(vId){
 	var ArechiCnt		= 0, // 荒地
 		KokumotsuCnt	= 0, // 穀物
 		ShinrinCnt		= 0, // 森林
 		IwayamaCnt		= 0, // 岩山
-		TekkouzanCnt	= 0, // 鉄鉱山
-		TargetType		= 0; // 伐採所 or 石切場 or 鉄鉱所
+		TekkouzanCnt	= 0; // 鉄鉱山
 
 	var vacant = new Array(); // 平地の座標
 	var area = get_area_all();
@@ -2726,60 +2762,69 @@ function buildPlant5m74(vId){
 		if(area[i].name == "平地") vacant.push(area[i].xy);
 	}
 
-		((ShinrinCnt + IwayamaCnt + TekkouzanCnt) == 7) &&
-		((ShinrinCnt * IwayamaCnt * TekkouzanCnt) == 0)
+	if (((ShinrinCnt + IwayamaCnt + TekkouzanCnt) == 7) &&
+		((ShinrinCnt * IwayamaCnt * TekkouzanCnt) == 0))
+	{}else{return false;}
 
 	if (ArechiCnt == 0 && KokumotsuCnt == 4 && vacant.length <= 37)
 	{}else{return false;}
-		 if (ShinrinCnt == 7 && IwayamaCnt == 0 && TekkouzanCnt == 0) TargetType = Bassai;
-	else if (ShinrinCnt == 0 && IwayamaCnt == 7 && TekkouzanCnt == 0) TargetType = Ishikiri;
-	else if (ShinrinCnt == 0 && IwayamaCnt == 0 && TekkouzanCnt == 7) TargetType = Seitetsu;
-	else return false;
 
 	var reached = [false];
 	var handled = false;
 
 	//
 	handled =
-	// 水車周囲の畑を作る
+	// まず水車周囲を含む畑を作る
+	createFacilityEx(0, 0, Hatake, 1, area) ||
+	createFacilityEx(0, 2, Hatake, 1, area) ||
+	createFacilityEx(0, 4, Hatake, 1, area) ||
+	createFacilityEx(1, 3, Hatake, 1, area) ||
+	createFacilityEx(1, 4, Hatake, 1, area) ||
+	createFacilityEx(1, 5, Hatake, 1, area) ||
+	createFacilityEx(2, 0, Hatake, 1, area) ||
+	createFacilityEx(2, 2, Hatake, 1, area) ||
+	createFacilityEx(2, 3, Hatake, 1, area) ||
+	createFacilityEx(2, 4, Hatake, 1, area) ||
+	createFacilityEx(2, 5, Hatake, 1, area) ||
+	createFacilityEx(2, 6, Hatake, 1, area) ||
+	createFacilityEx(3, 4, Hatake, 1, area) ||
+	createFacilityEx(3, 5, Hatake, 1, area) ||
+	createFacilityEx(3, 6, Hatake, 1, area) ||
+	createFacilityEx(4, 3, Hatake, 1, area) ||
 	createFacilityEx(4, 4, Hatake, 1, area) ||
 	createFacilityEx(4, 6, Hatake, 1, area) ||
+	createFacilityEx(5, 3, Hatake, 1, area) ||
+	createFacilityEx(6, 3, Hatake, 1, area) ||
 	createFacilityEx(6, 4, Hatake, 1, area) ||
 	createFacilityEx(6, 6, Hatake, 1, area) ||
 
-	// 工場周囲の収穫所を作る
-	createFacilityEx(0, 0, TargetType, 1, area) ||
-	createFacilityEx(0, 2, TargetType, 1, area) ||
-	createFacilityEx(2, 0, TargetType, 1, area) ||
-	createFacilityEx(2, 2, TargetType, 1, area) ||
-
 	// 市場を作るのに必要な建設を行なう
-	createFacilityEx(6, 0, Souko,  1, area) ||
-	createFacilityEx(6, 1, Renpei, 3, area) ||
-	createFacilityEx(6, 2, Shukusha, 1, area) ||
-	createFacilityEx(6, 3, Bougu,  2, area) ||
-	createFacilityEx(5, 0, Ichiba, 1, area) ||
+	createFacilityEx(3, 0, Souko,  1, area) ||
+	createFacilityEx(4, 0, Renpei, 3, area) ||
+	createFacilityEx(3, 1, Shukusha, 1, area) ||
+	createFacilityEx(4, 1, Bougu,  2, area) ||
+	createFacilityEx(6, 0, Ichiba, 1, area) ||
 
 	// 兵器工房を作る
-	createFacilityEx(5, 3, Kajiba, 3, area) ||
-	createFacilityEx(6, 3, Bougu,  3, area) ||
-	createFacilityEx(5, 2, Heiki,  5, area) ||
+	createFacilityEx(5, 1, Kajiba, 3, area) ||
+	createFacilityEx(4, 1, Bougu,  3, area) ||
+	createFacilityEx(5, 0, Heiki,  5, area) ||
 
-	// 水車周囲の畑LVUP+銅雀台を作る
+	// 水車周囲の畑LVUP,銅雀台の分は空けておく
 	createFacilityEx(4, 4, Hatake, 5, area) ||
 	createFacilityEx(4, 6, Hatake, 5, area) ||
 	createFacilityEx(6, 4, Hatake, 5, area) ||
 	createFacilityEx(6, 6, Hatake, 5, area) ||
-	createFacilityEx(0, 6, Suzume, 1, area) ||
+//	createFacilityEx(0, 6, Suzume, 1, area) ||
 
 	// 水車を作る
-	createFacilityEx(6, 1, Renpei, 5, area) ||
-	createFacilityEx(6, 0, Souko, 10, area) ||
-	createFacilityEx(5, 0, Ichiba, 8, area) ||
+	createFacilityEx(4, 0, Renpei, 5, area) ||
+	createFacilityEx(3, 0, Souko, 10, area) ||
+	createFacilityEx(6, 0, Ichiba, 8, area) ||
 	createFacilityEx(5, 5, Suisha, 1, area) ||
 
 	// 工場を作る
-	createFacilityEx(5, 0, Ichiba, 10, area) ||
+	createFacilityEx(6, 0, Ichiba, 10, area) ||
 	createFacilityEx(1, 1, Koujou,	1, area) ||
 
 	false;
@@ -3317,9 +3362,9 @@ function clearWaterwheelBox(){
 	var checkbox = $a('//input[@id="OPT_0001S7MURA"]');	checkbox[0].checked = false; // 水車村化
 	var checkbox = $a('//input[@id="OPT_0000S8MURA"]');	checkbox[0].checked = false; // 水車村化
 	var checkbox = $a('//input[@id="OPT_PLANT5MURAN"]');	checkbox[0].checked = false; // 工場村化
-	var checkbox = $a('//input[@id="OPT_PLANT5MURAE"]');	checkbox[0].checked = false; // 工場村化
-	var checkbox = $a('//input[@id="OPT_PLANT5MURAW"]');	checkbox[0].checked = false; // 工場村化
-	var checkbox = $a('//input[@id="OPT_PLANT5MURAS"]');	checkbox[0].checked = false; // 工場村化
+//	var checkbox = $a('//input[@id="OPT_PLANT5MURAE"]');	checkbox[0].checked = false; // 工場村化
+//	var checkbox = $a('//input[@id="OPT_PLANT5MURAW"]');	checkbox[0].checked = false; // 工場村化
+//	var checkbox = $a('//input[@id="OPT_PLANT5MURAS"]');	checkbox[0].checked = false; // 工場村化
 	var checkbox = $a('//input[@id="OPT_PLANT9MURA74"]');	checkbox[0].checked = false; // 工場村化
 }
 
@@ -3798,7 +3843,7 @@ function addIniBilderHtml() {
 
 	// 巡回時間プルダウン
 	var typeDiv = document.createElement("span");
-	typeDiv.title = "ROUND_TIME";
+	typeDiv.title = "巡回時間が短すぎると建設や削除の指令が別拠点で発動する場合がありますのでご注意ください";
 	ButtonBox.appendChild(typeDiv);
 
 	var caption = document.createElement("span");
@@ -3811,7 +3856,7 @@ function addIniBilderHtml() {
 	selectBox.id = "dispMode";
 	selectBox.addEventListener("change",
 		function() {
-				GM_setValue(HOST+PGNAME+"OPT_ROUND_TIME1" , document.getElementById("dispMode").value );
+			GM_setValue(HOST+PGNAME+"OPT_ROUND_TIME1" , document.getElementById("dispMode").value );
 			OPT_ROUND_TIME1 = document.getElementById("dispMode").value
 		}, true);
 	typeDiv.appendChild(selectBox);
@@ -4710,11 +4755,11 @@ function addInifacHtml(vId) {
 	var td621b = d.createElement("td");
 		td621b.style.padding = "2px";
 		td621b.style.verticalAlign = "top";
-		ccreateCheckBoxF(td621b, "OPT_PLANT9MURA74",OPT_PLANT9MURA74," ★9(7-0-0-4)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
-		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAN", OPT_PLANT5MURAN, " ★5(北部資源)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
-		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAE", OPT_PLANT5MURAE, " ★5(東部資源)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
-		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAW", OPT_PLANT5MURAW, " ★5(西部資源)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
-		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAS", OPT_PLANT5MURAS, " ★5(南部資源)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
+		ccreateCheckBoxF(td621b, "OPT_PLANT9MURA74",OPT_PLANT9MURA74," ★9(7-4)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
+		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAN", OPT_PLANT5MURAN, " ★5(6-0)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
+//		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAE", OPT_PLANT5MURAE, " ★5(東部資源)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
+//		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAW", OPT_PLANT5MURAW, " ★5(西部資源)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
+//		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAS", OPT_PLANT5MURAS, " ★5(南部資源)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
 
 	Waterwheel_Box.appendChild(tr620);
 	tr620.appendChild(td620);
@@ -5639,6 +5684,9 @@ debugLog("=== Start Load_OPT ===");
 		OPT_PLANT5MURAE = forInt(Temp2[233]);
 		OPT_PLANT5MURAW = forInt(Temp2[234]);
 		OPT_PLANT5MURAS = forInt(Temp2[235]);
+		if ((OPT_PLANT5MURAN+OPT_PLANT5MURAE+OPT_PLANT5MURAW+OPT_PLANT5MURAS) != 0) { // 2017.5.28.互換性のため
+			OPT_PLANT5MURAN = 1;
+		}
 		if(Temp2[236] == ""){return;}
 		OPT_0001S7MURA = forInt(Temp2[236]);
 		if(Temp2[237] == ""){return;}
@@ -6350,7 +6398,7 @@ function getBuildResources(constructorName, level){
 	  {wood: 12819, stone: 15382, iron: 12819, food: 10255, time: 20114},
 	  {wood: 15382, stone: 18459, iron: 15382, food: 12306, time: 23208},
 	  {wood: 18459, stone: 22151, iron: 18459, food: 14767, time: 27850},
-	  {wood: 21228, stone: 21228, iron: 25473, food: 16982, time: 33420},
+	  {wood: 21228, stone: 25473, iron: 21228, food: 16982, time: 33420},
 	  {wood: 24412, stone: 29294, iron: 24412, food: 19529, time: 39034},
 	  {wood: 28074, stone: 33688, iron: 28074, food: 22459, time: 46841}
 	],
