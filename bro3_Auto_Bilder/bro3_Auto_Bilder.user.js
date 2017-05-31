@@ -14,7 +14,7 @@
 // @grant		GM_xmlhttpRequest
 // @grant		GM_log
 // @author		RAPT
-// @version		2017.05.28
+// @version		2017.05.31
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -105,8 +105,9 @@
 // 2017.05.28 12期★9(7-0-0-4)工場村オプションで工場周辺空きマスを畑に変更
 //			  ★5工場村オプションの方向選択を不要にした
 //			  倉庫LV18建設必要資源の石と鉄の数値誤りを修正
+// 2017.05.31 2017.05.28版で★5工場村オプションの方角判定に誤りがあって建設できていなかった不具合を修正
 
-var VERSION = "2017.05.28"; 	// バージョン情報
+var VERSION = "2017.05.31"; 	// バージョン情報
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -2539,29 +2540,18 @@ function buildPlant5(vId){
 	for(var i=0;i<area.length;i++){
 		if(area[i].name == "荒地") ArechiCnt++; else
 		if(area[i].name == "穀物") KokumotsuCnt++; else
-		if(area[i].name == "森林") {ShinrinCnt++;
-			if(area[i].xy == "2,3") dirWest=1; else
-			if(area[i].xy == "3,2") dirNorth=1; else
-			if(area[i].xy == "3,4") dirSouth=1; else
-			if(area[i].xy == "4,3") dirEast=1;
-		} else
-		if(area[i].name == "岩山") {IwayamaCnt++;
-			if(area[i].xy == "2,3") dirWest=1; else
-			if(area[i].xy == "3,2") dirNorth=1; else
-			if(area[i].xy == "3,4") dirSouth=1; else
-			if(area[i].xy == "4,3") dirEast=1;
-		} else
-		if(area[i].name == "鉄鉱山") {TekkouzanCnt++;
-			if(area[i].xy == "2,3") dirWest=1; else
-			if(area[i].xy == "3,2") dirNorth=1; else
-			if(area[i].xy == "3,4") dirSouth=1; else
-			if(area[i].xy == "4,3") dirEast=1;
-		} else
+		if(area[i].name == "森林") ShinrinCnt++; else
+		if(area[i].name == "岩山") IwayamaCnt++; else
+		if(area[i].name == "鉄鉱山") TekkouzanCnt++; else
 		if(area[i].name == "平地") vacant.push(area[i].xy);
 	}
 	if ((ArechiCnt == 21 && KokumotsuCnt == 0) ||	// 5-9期
 		(ArechiCnt == 23 && KokumotsuCnt == 0))		// 10-11期
 	{}else{return false;}
+	if (vacant.indexOf("2,4") >= 0 && vacant.indexOf("4,4") >= 0) dirNorth=1;
+	if (vacant.indexOf("2,2") >= 0 && vacant.indexOf("2,4") >= 0) dirEast=1;
+	if (vacant.indexOf("4,2") >= 0 && vacant.indexOf("4,4") >= 0) dirWest=1;
+	if (vacant.indexOf("2,2") >= 0 && vacant.indexOf("4,2") >= 0) dirSouth=1;
 	var dirSum = dirNorth + dirSouth + dirEast + dirWest;
 	if (dirSum == 1){}else{return false;}
 		 if (ShinrinCnt == 6 && IwayamaCnt == 0 && TekkouzanCnt == 0) TargetType = Bassai;
