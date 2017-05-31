@@ -2535,9 +2535,11 @@ function buildPlant5(vId){
 	var dirNorth = 0, dirSouth = 0, dirEast = 0, dirWest = 0; // 資源ブロックの配置チェック
 
 	var vacant = new Array(); // 平地の座標
+	var maps = new Array();
 	var area = get_area_all();
 	area.sort(cmp_areas);
 	for(var i=0;i<area.length;i++){
+		if(area[i].xy.length) maps.push(area[i].xy);
 		if(area[i].name == "荒地") ArechiCnt++; else
 		if(area[i].name == "穀物") KokumotsuCnt++; else
 		if(area[i].name == "森林") ShinrinCnt++; else
@@ -2548,10 +2550,10 @@ function buildPlant5(vId){
 	if ((ArechiCnt == 21 && KokumotsuCnt == 0) ||	// 5-9期
 		(ArechiCnt == 23 && KokumotsuCnt == 0))		// 10-11期
 	{}else{return false;}
-	if (vacant.indexOf("2,4") >= 0 && vacant.indexOf("4,4") >= 0) dirNorth=1;
-	if (vacant.indexOf("2,2") >= 0 && vacant.indexOf("2,4") >= 0) dirEast=1;
-	if (vacant.indexOf("4,2") >= 0 && vacant.indexOf("4,4") >= 0) dirWest=1;
-	if (vacant.indexOf("2,2") >= 0 && vacant.indexOf("4,2") >= 0) dirSouth=1;
+	if (maps.indexOf("2,2") == -1 && maps.indexOf("4,2") == -1) dirNorth=1;
+	if (maps.indexOf("4,2") == -1 && maps.indexOf("4,4") == -1) dirEast=1;
+	if (maps.indexOf("2,2") == -1 && maps.indexOf("2,4") == -1) dirWest=1;
+	if (maps.indexOf("2,4") == -1 && maps.indexOf("4,4") == -1) dirSouth=1;
 	var dirSum = dirNorth + dirSouth + dirEast + dirWest;
 	if (dirSum == 1){}else{return false;}
 		 if (ShinrinCnt == 6 && IwayamaCnt == 0 && TekkouzanCnt == 0) TargetType = Bassai;
