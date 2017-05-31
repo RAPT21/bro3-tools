@@ -8,7 +8,7 @@
 // @grant		none
 // @connect		3gokushi.jp
 // @author		5zen + RAPT
-// @version		4.8 (2017/05/20)
+// @version		4.9 (2017/05/31)
 // ==/UserScript==
 
 // 2015.08.16	1.0	beyond 3.0.74α (2015/06/28) から 5zen 氏原作のカード表示拡張機能のみ抜粋
