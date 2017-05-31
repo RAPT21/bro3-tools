@@ -14,7 +14,7 @@
 // @grant		GM_xmlhttpRequest
 // @grant		GM_log
 // @author		RAPT
-// @version		2017.05.31
+// @version		2017.06.01
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -106,8 +106,12 @@
 //			  ★5工場村オプションの方向選択を不要にした
 //			  倉庫LV18建設必要資源の石と鉄の数値誤りを修正
 // 2017.05.31 2017.05.28版で★5工場村オプションの方角判定に誤りがあって建設できていなかった不具合を修正
+// 2017.06.01 Google Chrome で「Uncaught TypeError: j$.cookie is not a function」となりビルダーの一部機能が動作しなくなるため。Cookie の取得方法を変更
 
-var VERSION = "2017.05.31"; 	// バージョン情報
+var VERSION = "2017.06.01"; 	// バージョン情報
+
+jQuery.noConflict();
+j$ = jQuery;
 
 //*** これを変更するとダイアログのフォントスタイルが変更できます ***
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
@@ -122,57 +126,6 @@ var COLOR_TITLE = "#FFCC00";	// 各BOXタイトル背景色
 var COLOR_BACK	= "#FFF2BB";	// 各BOX背景色
 
 var DomesticFlg = false;
-
-/*!
-* jQuery Cookie Plugin
-* https://github.com/carhartl/jquery-cookie
-*
-* Copyright 2011, Klaus Hartl
-* Dual licensed under the MIT or GPL Version 2 licenses.
-* http://www.opensource.org/licenses/mit-license.php
-* http://www.opensource.org/licenses/GPL-2.0
-*/
-(function($) {
-	$.cookie = function(key, value, options) {
-
-		// key and at least value given, set cookie...
-		if (arguments.length > 1 && (!/Object/.test(Object.prototype.toString.call(value)) || value === null || value === undefined)) {
-			options = $.extend({}, options);
-
-			if (value === null || value === undefined) {
-				options.expires = -1;
-			}
-
-			if (typeof options.expires === 'number') {
-				var days = options.expires, t = options.expires = new Date();
-				t.setDate(t.getDate() + days);
-			}
-
-			value = String(value);
-
-			return (document.cookie = [
-				encodeURIComponent(key), '=', options.raw ? value : encodeURIComponent(value),
-				options.expires ? '; expires=' + options.expires.toUTCString() : '', // use expires attribute, max-age is not supported by IE
-				options.path ? '; path=' + options.path : '',
-				options.domain ? '; domain=' + options.domain : '',
-				options.secure ? '; secure' : ''
-			].join(''));
-		}
-
-		// key and possibly options given, get cookie...
-		options = value || {};
-		var decode = options.raw ? function(s) { return s; } : decodeURIComponent;
-
-		var pairs = document.cookie.split('; ');
-		for (var i = 0, pair; pair = pairs[i] && pairs[i].split('='); i++) {
-			if (decode(pair[0]) === key) return decode(pair[1] || ''); // IE saves cookies with empty string as "c; ", e.g. without "=" as opposed to EOMB, thus pair[1] may be undefined
-		}
-		return null;
-	};
-})(jQuery);
-
-jQuery.noConflict();
-j$ = jQuery;
 
 // 造兵用
 //				   1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8
@@ -1990,7 +1943,7 @@ debugLog("=== Start setVillageFacility ===");
 							c['x']=parseInt(Temp[0],10);
 							c['y']=parseInt(Temp[1],10);
 							c['remove']='建物を壊す';
-							c['ssid']=j$.cookie('SSID');
+							c['ssid']=getSessionId();
 						j$.post("http://"+HOST+"/facility/facility.php",c,function(){});
 						var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 						return;
@@ -2153,7 +2106,7 @@ debugLog("=== Start setVillageFacility ===");
 						c['x']=parseInt(Temp[0],10);
 						c['y']=parseInt(Temp[1],10);
 						c['village_id']=getVillageID(vId);
-						c['ssid']=j$.cookie('SSID');
+						c['ssid']=getSessionId();
 						j$.post("http://"+HOST+"/facility/build.php",c,function(){});
 						var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 
@@ -2262,7 +2215,7 @@ function createFacility(f, area){
 			mURL = mURL.replace(URL_Y,Temp[1]);
 			mURL = mURL.replace(URL_viID,getVillageID(vId));
 			mURL = mURL.replace(URL_fID,f);
-			mURL = mURL.replace(URL_viSSID,j$.cookie('SSID'));							// 2012.04.24 ssid 追加
+			mURL = mURL.replace(URL_viSSID,getSessionId());							// 2012.04.24 ssid 追加
 			var tid=setTimeout(function(){location.href = mURL;},INTERVAL);
 */
 			var c = {};
@@ -2270,7 +2223,7 @@ function createFacility(f, area){
 			c['y']=parseInt(Temp[1],10);
 			c['village_id']=getVillageID(vId);
 			c['id']=f;
-			c['ssid']=j$.cookie('SSID');
+			c['ssid']=getSessionId();
 			j$.post("http://"+HOST+"/facility/build.php",c,function(){});
 			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 			return;
@@ -2352,7 +2305,7 @@ function createFacilityEx(x, y, f, lv, area){
 		if (create) {
 			c['id']=f;
 		}
-		c['ssid']=j$.cookie('SSID');
+		c['ssid']=getSessionId();
 		j$.post("http://"+HOST+"/facility/build.php",c,function(){});
 		var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 		return true;
@@ -8037,4 +7990,20 @@ function forInt(num,def){
 	} else {
 		return parseInt(num,10);
 	}
+}
+
+function getSessionId() {
+	return getCookie('SSID');
+}
+
+// source: http://stackoverflow.com/questions/10687746/getcookie-returns-null
+function getCookie(name) {
+	var nameEQ = name + "=";
+	var ca = document.cookie.split(';');
+	for(var i=0;i < ca.length;i++) {
+		var c = ca[i];
+		while (c.charAt(0)==' ') c = c.substring(1,c.length);
+		if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+	}
+	return null;
 }
