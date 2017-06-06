@@ -7,7 +7,7 @@
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @author		BSE with RAPT
-// @version 	1.6.1.11
+// @version 	1.6.1.12
 // ==/UserScript==
 
 // ----- BSE 版リリースノート -----
@@ -24,9 +24,10 @@
 //	2017.03.16 v1.6.1.9 y33 鯖対応
 //	2017.03.22 v1.6.1.10 y17 鯖対応
 //	2017.04.26 v1.6.1.11 y25,y29 鯖対応
+//	2017.06.07 v1.6.1.12 y31 鯖対応
 
 //バージョン配置用
-var ver_rack = "ver1.6.1.11";
+var ver_rack = "ver1.6.1.12";
 
 //配布管理系
 var nazeka ="<span style='color:crimson'>■</span>";
@@ -53,10 +54,11 @@ var server_session = {
 	"y17": 12,
 	"y25": 9,
 	"y29": 6,
-	"y31": 4,
+	"y31": 5,
 	"y33": 3,
 	"y35": 1,
 	"f1": 10, // event-world
+	"f2": 12, // event-world
 	"w1": 22,
 	"w2": 21
 };
