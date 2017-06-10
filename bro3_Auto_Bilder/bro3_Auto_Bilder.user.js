@@ -14,7 +14,7 @@
 // @grant		GM_xmlhttpRequest
 // @grant		GM_log
 // @author		RAPT
-// @version		2017.06.01
+// @version		2017.06.11
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -107,8 +107,9 @@
 //			  倉庫LV18建設必要資源の石と鉄の数値誤りを修正
 // 2017.05.31 2017.05.28版で★5工場村オプションの方角判定に誤りがあって建設できていなかった不具合を修正
 // 2017.06.01 Google Chrome で「Uncaught TypeError: j$.cookie is not a function」となりビルダーの一部機能が動作しなくなるため。Cookie の取得方法を変更
+// 2017.06.11 ★9(7-4)工場村オプションで工場建設後自動LVUPへ移行することを忘れていたので修正
 
-var VERSION = "2017.06.01"; 	// バージョン情報
+var VERSION = "2017.06.11"; 	// バージョン情報
 
 jQuery.noConflict();
 j$ = jQuery;
@@ -2772,8 +2773,11 @@ function buildPlant9m74(vId){
 	createFacilityEx(6, 0, Ichiba, 10, area) ||
 	createFacilityEx(1, 1, Koujou,	1, area) ||
 
-	false;
-
+	// ここまで来たら既存の自動LVUPに移管する
+	checkReached(reached);
+	if (reached[0]){
+		switchToAutoLevelUp(vId);
+	}
 	return handled;
 }
 
