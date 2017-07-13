@@ -8,7 +8,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.0
+// @version 	1.1
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -36,6 +36,7 @@ jQuery.noConflict();
 // 2017.05.15	0.3
 // 2017.05.16	0.4
 // 2017.06.24	1.0	初版公開
+// 2017.07.13	1.1	新MAP画面対応
 
 //==========[オプション]==========
 var OPT_COLORING_RESOURCES = true;		// 資源地カラーリングを行うか。falseだと何も行いません。
@@ -58,7 +59,10 @@ var OPT_REFRESH_AFTER_EDITNAME = false;	// 領地名変更後に画面更新す�
 	//------------------------
 	// 準備
 	//------------------------
-	$("#mapAll").css({'height':'1160px'});
+	var isOldMap = $("#change-map-scale ul").length > 0;
+	if (isOldMap) {
+		$("#mapAll").css({'height':'1160px'});
+	}
 
 	// iframeの高さは動的に変えられないので、更新をiframeに通知する
 	$('iframe').on(
@@ -81,7 +85,14 @@ var OPT_REFRESH_AFTER_EDITNAME = false;	// 領地名変更後に画面更新す�
 
 	// 選択されているマップサイズチェック
 	var viewSize = -1;
-	$("div[id=change-map-scale] li[class*=now]").each(
+	var mapSelect;
+	if (isOldMap) {
+		mapSelect = $("div[id=change-map-scale] li[class*=now]");
+	} else {
+		mapSelect = $("div[id=change-map-scale2] a[class*=now]");
+	}
+
+	mapSelect.each(
 		function(){
 			if ($(this).attr("class").match(/sort(\d+) now/)){
 				viewSize = RegExp.$1;
@@ -98,9 +109,18 @@ var OPT_REFRESH_AFTER_EDITNAME = false;	// 領地名変更後に画面更新す�
 	//------------------------
 	// モード切替ボタンの配置
 	//------------------------
-	$("#change-map-scale ul").css({'width' : '350px'});
-	$("#change-map-scale").after(
-		"<div style='margin-top:76px; width:45%;'>" +
+	var parentElement;
+	var marginStyle;
+	if (isOldMap) {
+		$("#change-map-scale ul").css({'width' : '350px'});
+		parentElement = $("#change-map-scale");
+		marginStyle = "margin-top:76px;";
+	} else {
+		parentElement = $("#enemyView2");
+		marginStyle = "margin-top:58px; margin-left:110px;";
+	}
+	parentElement.after(
+		"<div style='" + marginStyle + " width:45%;'>" +
  			"<input type='button' id='enter_custom' style='margin-left:20px;' value='クリック拡張モードにする'></input>" +
 			"<input type='button' id='exit_custom' style='display:none; margin-left:20px;' value='&lt;--　通常マップに戻す　'></input>" +
 		"</div>"
