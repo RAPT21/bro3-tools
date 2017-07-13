@@ -2,8 +2,8 @@
 // @name		bro3_beyond
 // @namespace	bro3_beyond
 // @include		http://*.3gokushi.jp/*
-// @description	ブラウザ三国志beyondリメイク
-// @version		0.91
+// @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
+// @version		0.91.1
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -21,6 +21,9 @@
 // ==/UserScript==
 // version	date
 // 0.01		2016/05/**	試験的に着手
+// 0.91		2017/07/13	Craford 氏	http://silent-stage.air-nifty.com/steps/2017/07/beyond091.html
+// 0.91.1	2017/07/14	RAPT. 2017/07/12 の大型アップデートに伴い、ツールが動作しなくなっていたのを一部修正
+//						デッキ表示小判定の修正、スキル系判定の修正、ついでに内政スキルをホバー時太字にするようにした。
 
 // load jQuery
 jQuery.noConflict();
@@ -349,6 +352,12 @@ var css = "\
 		text-decolation: underline; \
 		color: red; \
 	} \
+	.skb:hover { \
+		font-weight: bold; \
+	} \
+	.skr:hover { \
+		font-weight: bold; \
+	} \
 	.m4l { \
 		margin-left: 4px; \
 	} \
@@ -393,7 +402,7 @@ GM_addStyle(css);
 		return;
 	}
 
-console.log(location.pathname);
+//console.log(location.pathname);
 
 	// 名声タイマーがセッション切れで死んでいたら復旧
 	if (GM_getValue(SERVER_NAME + '_fame_timer', null) == "FAILED") {
@@ -684,7 +693,7 @@ function profileControl() {
 					"</ul>" +
 					"<div id='tab-search-resource'>" +
 						"<div>" +
-							"<div style='font-weight: bold; color: red;'>マップ探索範囲" +
+							"<div style='font-weight: bold; color: red;'>マップ探索範囲" + 
 								"<span id='count_info'></span>" +
 							"</div>" +
 							"<div style='margin-left: 4px;'>" +
@@ -719,11 +728,11 @@ function profileControl() {
 						"<div>" +
 							"<textarea id='result_box' cols='90' rows='10' style='overflow: auto; display: block;'></textarea>" +
 						"</div>" +
-						"<br><input id='close_result' type='button' value='閉じる'></input>" +
+						"<br><input id='close_result' type='button' value='閉じる'></input>" + 
 					"</div>" +
 					"<div id='tab-search-npc'>" +
 						"<div>" +
-							"<div style='font-weight: bold; color: red;'>マップ探索範囲" +
+							"<div style='font-weight: bold; color: red;'>マップ探索範囲" + 
 								"<span id='count_info'></span>" +
 							"</div>" +
 							"<div style='margin-left: 4px;'>" +
@@ -769,7 +778,7 @@ function profileControl() {
 						"<div>" +
 							"<textarea id='result_npc_box' cols='90' rows='10' style='overflow: auto; display: block;'></textarea>" +
 						"</div>" +
-						"<br><input id='close_result' type='button' value='閉じる'></input>" +
+						"<br><input id='close_result' type='button' value='閉じる'></input>" + 
 					"</div>" +
 				"</div>" +
 			"</div>"
@@ -973,7 +982,7 @@ function profileControl() {
 									"', '.*', '" + targets[i].wood +
 									"', '" + targets[i].stone +
 									"', '" + targets[i].iron +
-									"', '"	+ targets[i].food + "', '', '0'\\); over";
+									"', '"  + targets[i].food + "', '', '0'\\); over";
 					var reg = new RegExp(matchstr);
 					matches.push(reg);
 				}
@@ -1067,12 +1076,12 @@ function profileControl() {
 
 							// 結果生成
 							list.push(
-								"★" + targets[index].level +
+								"★" + targets[index].level + 
 								"\t" +
 								"(" + targets[index].wood +
 								"," + targets[index].stone +
 								"," + targets[index].iron +
-								"," + targets[index].food + ")" +
+								"," + targets[index].food + ")" + 
 								"\t" + parseInt(pos[1]) +
 								"\t" + parseInt(pos[2]) +
 								"\t" + match[3] +
@@ -1096,7 +1105,7 @@ function profileControl() {
 								stop = false;
 								g_event_process = false;
 								alert("探索終了");
-							}
+							} 
 						}
 						wait = false;
 					});
@@ -1241,7 +1250,7 @@ function profileControl() {
 									stop = false;
 									g_event_process = false;
 									alert("探索終了");
-								}
+								} 
 							}
 							wait = false;
 						});
@@ -1445,7 +1454,7 @@ function mapTabControl() {
 
 			// 所持兵数の取得
 
-			// 出兵対象 		   剣兵  盾兵	槍兵  弓兵	騎兵  衝車	 斥候	大剣  重盾	 矛槍  弩兵  近衛  投石   斥候騎兵
+			// 出兵対象            剣兵  盾兵   槍兵  弓兵  騎兵  衝車   斥候   大剣  重盾   矛槍  弩兵  近衛  投石   斥候騎兵
 			var dispatchTargets = [true, false, true, true, true, false, false, true, false, true, true, true, false, false];
 			var dispatchNames = ['infantry_count', 'shield_count', 'spear_count', 'archer_count', 'cavalry_count', 'ram_count', 'scout_count',
 								 'large_infantry_count', 'heavy_shield_count', 'halbert_count', 'crossbow_count', 'cavalry_guards_count', 'catapult_count', 'cavalry_scout_count'];
@@ -1558,7 +1567,7 @@ function mapTabControl() {
 						"<input style='margin-right: 4px; margin-top: 8px;' id='exec_multiple_troop' type='button' value='出兵する'>" +
 						"<input id='close_multiple_troop' type='button' value='閉じる'>" +
 					"</div>" +
-				"</div>" +
+				"</div>" + 
 
 				"<div id='reinforce_setting_view' class='roundbox' style='display: none; padding-left: 4px; padding-right: 4px;'>" +
 					"<div style='margin: 4px;font-weight: bold; font-size: 14px; color: #090;'>一斉援軍指定&nbsp;&nbsp;援軍先:(" + troop_x + "," + troop_y +")</div>" +
@@ -1988,11 +1997,11 @@ function allianceTabControl() {
 				htmlText += "<span id='alliance_pos_get_all'><span class='app-lnk'>同盟員本拠座標取得</span></span>";
 			}
 			htmlText += "</div>" +
-				"<div id='result_box' style='position: absolute; background-color: #a9a9a9; display: none;'>" +
+				"<div id='result_box' style='position: absolute; background-color: #a9a9a9; display: none;'>" + 
 					"<div style='background-color: #d3d3d3; margin: 2px;'>" +
-						"<div id='list_title' style='margin-left: 4px; font-weight: bold;'>領地取得中</div>" +
+						"<div id='list_title' style='margin-left: 4px; font-weight: bold;'>領地取得中</div>" + 
 						"<textarea id='result_csv' cols='98' rows='15' style='overflow: auto; margin: 4px; '></textarea>" +
-						"<br><input id='close_result' type='button' value='閉じる'></input>" +
+						"<br><input id='close_result' type='button' value='閉じる'></input>" + 
 					"</div>" +
 				"</div>";
 			tb.before(htmlText);
@@ -2216,7 +2225,7 @@ function allianceTabControl() {
 								"<input style='margin-right: 8px;' type='text' id='search_str' size='20' value=''/>" +
 								"<input style='margin-right: 8px;' type='button' id='exec_search' name='exec_search' value='検索'/>" +
 								"<span style='margin-right: 8px; font-weight: bold;' id='search_status'></span>" +
-							"</div>" +
+							"</div>" + 
 						"</fieldset>" +
 						"<div id='search-result-div' class='roundbox' style='display: none;'>" +
 							"<div style='padding: 4px;'>" +
@@ -2230,7 +2239,7 @@ function allianceTabControl() {
 								"</div>" +
 								"<input type='button' id='close_search_log' style='margin: 4px;' value='閉じる'>&nbsp;" +
 							"</div>" +
-						"</div>" +
+						"</div>" + 
 					"</div>" +
 				"</div>"
 			);
@@ -2356,7 +2365,7 @@ function allianceTabControl() {
 								"<input type='text' id='search_name' size=20 style='margin-left:4px; margin-right: 4px; padding: 2px;'>" +
 								"<input type='button' id='search_sub' value='検索'>&nbsp;" +
 								"<span id='search_status' style='font-weight: bold;'></span>" +
-							"</div>" +
+							"</div>" + 
 						"</fieldset>" +
 						"<div id='search-result-div' class='roundbox' style='display: none;'>" +
 							"<div style='padding: 4px;'>" +
@@ -2368,7 +2377,7 @@ function allianceTabControl() {
 								"</div>" +
 								"<input type='button' id='close_search_box' style='margin: 4px;' value='閉じる'>&nbsp;" +
 							"</div>" +
-						"</div>" +
+						"</div>" + 
 					"</div>" +
 				"</div>"
 			);
@@ -2635,14 +2644,14 @@ function getExpeditionTextReport() {
 		"<div style='margin-left: 4px;'>" +
 			"<input id='tsv_report_button' type='button' value='現ページの討伐・攻撃ログをTSV形式でテキスト出力する'></input>" +
 		"</div>" +
-		"<div id='result_box' style='position: absolute; background-color: #a9a9a9; display: none; margin-top: 4px;'>" +
+		"<div id='result_box' style='position: absolute; background-color: #a9a9a9; display: none; margin-top: 4px;'>" + 
 			"<div style='background-color: #d3d3d3; margin: 2px;'>" +
-				"<div style='margin-left: 4px; font-weight: bold;'>" +
-					"<input id='close_result' style='margin-right: 4px;' type='button' value='閉じる'></input>" +
-					"<span id='list_title'>報告書解析中</span>" +
-				"</div>" +
+				"<div style='margin-left: 4px; font-weight: bold;'>" + 
+					"<input id='close_result' style='margin-right: 4px;' type='button' value='閉じる'></input>" + 
+					"<span id='list_title'>報告書解析中</span>" + 
+				"</div>" + 
 				"<textarea id='result_tsv' cols='98' rows='20' style='overflow: scroll; margin: 4px; '></textarea>" +
-				"<br><input id='close_result' type='button' value='閉じる'></input>" +
+				"<br><input id='close_result' type='button' value='閉じる'></input>" + 
 			"</div>" +
 		"</div>"
 	);
@@ -3046,8 +3055,8 @@ function busyodasControl() {
 							"<input type='button' id='sell-price-check-button' value='即落調査'></input>" +
 						"</span>" +
 						"<span id='sell_frame'></span>" +
-					"</div>" +
-				"</fieldset>"
+					"</div>" + 
+				"</fieldset>" 
 			);
 
 			// 即時落札価格取得イベントの定義
@@ -3279,7 +3288,7 @@ function internalControl() {
 		// 生産時間チェッカー
 		if (g_beyond_options[VILLAGE_01] == true) {
 			var settingHours = parseInt(g_beyond_options[VILLAGE_02]);
-			var time = q$("table[class='commonTables'] tr").eq(2).children("td").text();
+			var time = q$("table[class='commonTables'] tr").eq(2).children("td").text(); 
 			if (time != null || time != undefined) {
 				var match = time.match(/(\d+):\d+:\d+/);
 				if (parseInt(RegExp.$1) >= settingHours) {
@@ -3404,7 +3413,7 @@ function createPagerPulldown() {
 			}
 		}
 		q$("#rotate ul[class='pager']").append(
-			"<span style='margin-left: 4px;'>" +
+			"<span style='margin-left: 4px;'>" + 
 				html +
 			"</span>"
 		);
@@ -4483,7 +4492,7 @@ function execUnionPart() {
 			q$("#multi_levelup_start").on('click',
 				function(){
 					q$("#lvup_alert").text("");
-
+	
 					// ラジオボタンの選択をチェック
 					var target = q$("input[name='skill_name']:checked");
 					if (target.length == 0) {
@@ -4535,7 +4544,7 @@ function execUnionPart() {
 							return;
 						}
 						wait = true;
-
+	
 						q$("#lvup_info").text("ファイル検索中・・・" + count + " / " + max);
 
 						var no = {'p': count, 'cid': base_cid};
@@ -4629,7 +4638,7 @@ function execUnionPart() {
 							return;
 						}
 						wait = true;
-
+	
 						q$("#lvup_result").html(
 							"<div style='color:red; font-weight: bold;'>" +
 								"合成中・・・" + parseInt(count + 1) + " / " + max +
@@ -4788,7 +4797,7 @@ function execUnionPart() {
 			q$("#multi_subup_start").on('click',
 				function(){
 					q$("#lvup_alert").text("");
-
+	
 					// ベースカードのカードNo.を取得
 					var base_card_no = q$("#bacecard div[class='right'] div[class*='omote_4sk'] span[class='cardno']").text();
 
@@ -4826,7 +4835,7 @@ function execUnionPart() {
 							return;
 						}
 						wait = true;
-
+	
 						q$("#lvup_info").text("ファイル検索中・・・" + count + " / " + max);
 
 						var no = {'p': count, 'cid': base_cid};
@@ -5014,7 +5023,7 @@ function execStockPart() {
 			for (var j = 0; j < skills.length; j++) {
 				var match = skills[j].match(/(.*)(LV[0-9]*)/);
 				if (match) {
-					replaced += "<div>" +
+					replaced += "<div>" + 
 						"<a href='http://" + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[1] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + match[1] + "</a>"
 						+ match[2] +
 						"<a href='http://" + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[1] + match[2] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>" + "</div>";
@@ -5335,14 +5344,14 @@ function execBidListPart() {
 					var postdata;
 					if (params[count]['type'] == 'bid') {
 						postdata = {
-							'ssid':params[count]['ssid'],
+							'ssid':params[count]['ssid'], 
 							'exhibit_id':params[count]['exhibit_id'],
 							'exhibit_price':params[count]['exhibit_price'],
 							'bid_btn':'入札する'
 						};
 					} else {
 						postdata = {
-							'ssid':params[count]['ssid'],
+							'ssid':params[count]['ssid'], 
 							'exhibit_cid':params[count]['exhibit_cid'],
 							'exhibit_id':params[count]['exhibit_id'],
 							'buy_btn':'落札する'
@@ -5852,7 +5861,7 @@ function deck_resttime_checker() {
 						"<input type='text' id='search_skill' size=20 style='margin-left:4px; margin-right: 4px; padding: 2px;'>" +
 						"<input type='button' id='search_file' value='検索'>&nbsp;" +
 						"<span id='search_status' style='font-weight: bold;'></span>" +
-					"</div>" +
+					"</div>" + 
 				"</fieldset>" +
 				"<div id='search-result-div' class='roundbox' style='display: none;'>" +
 					"<div style='padding: 4px;'>" +
@@ -5864,7 +5873,7 @@ function deck_resttime_checker() {
 						"</div>" +
 						"<input type='button' id='close_search_file' style='margin: 4px;' value='閉じる'>&nbsp;" +
 					"</div>" +
-				"</div>" +
+				"</div>" + 
 			"</div>" +
 		"</div>"
 	);
@@ -6095,7 +6104,7 @@ function deck_resttime_checker() {
 								"<td class='tpad'>" + result[i].name + "</td>" +
 								"<td class='tpad'>" + result[i].level + "</td>" +
 								"<td class='tpad' " + st + ">" + result[i].hp + "</td>" +
-								"<td class='tpad'>" + result[i].cost + "</td>" +
+								"<td class='tpad'>" + result[i].cost + "</td>" + 
 								"<td class='tpad' style='padding-left: 4px; padding-right: 4px;'>" + result[i].selector + "</td>";
 
 							// スキルの描画
@@ -6293,12 +6302,12 @@ function multipleDeckSet() {
 				"<div id='multiple_set_status'>" +
 					"<span style='margin-left: 4px;'>一括デッキセット</span>" +
 					"<select id='multiple_set_mode' style='margin: 4px;'>" +
-						"<option value='gi'>魏の軍極・軍防・督戦対象武将</option>" +
-						"<option value='go'>呉の軍極・軍防・督戦対象武将</option>" +
-						"<option value='shoku'>蜀の軍極・軍防・督戦対象武将</option>" +
-						"<option value='hoka'>他の軍極・軍防・督戦対象武将</option>" +
-						"<option value='renkan'>連環の計対象武将</option>" +
-						"<option value='lowcost'>低コスト武将（コスト順）</option>" +
+						"<option value='gi'>魏の軍極・軍防・督戦対象武将</option>" + 
+						"<option value='go'>呉の軍極・軍防・督戦対象武将</option>" + 
+						"<option value='shoku'>蜀の軍極・軍防・督戦対象武将</option>" + 
+						"<option value='hoka'>他の軍極・軍防・督戦対象武将</option>" + 
+						"<option value='renkan'>連環の計対象武将</option>" + 
+						"<option value='lowcost'>低コスト武将（コスト順）</option>" + 
 					"</select>" +
 					selects.prop('outerHTML') +
 					"<input id='multi_card_set' type='button' style='font-size: 12px;' value='実行'></input>" +
@@ -6872,7 +6881,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 			var elembase = cards.eq(i).children("div[class='statusDetail clearfix']");
 			var elems = q$("div[class='right'] table[class='statusParameter2'] tbody tr", elembase);
 			var elems_l = q$("div[class='left']", elembase);
-			var match = q$("div[class='illustMini'] a[class='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
+			var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
 			var skills = q$("div[id='cardWindow_" + match[1] + "'] ul[class='back_skill'] li", cards.eq(i));
 			var skillTexts = q$("div[id='cardWindow_" + match[1] + "'] ul[class='back_skill'] div", cards.eq(i));
 
@@ -7087,7 +7096,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 						"<label for='auto_def_10'>防御課金</span>" +
 						"<input type='checkbox' id='auto_spd_10' style='margin-left:6px; margin-right: 4px; padding: 2px;'>" +
 						"<label for='auto_spd_10'>速度課金</span>" +
-					"</div>" +
+					"</div>" + 
 					"<div style='margin: 2px 2px 2px 2px;'>" +
 						"<span style='font-weight: bold;'>全軍補正</span>" +
 						"<span style='margin-left: 6px;'>攻撃</span>" +
@@ -7100,7 +7109,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 						"<input type='text' id='auto_spd' size=6 style='margin-left:4px; margin-right: 4px; padding: 2px;' value='0'>" +
 						"<span>%</span>" +
 						"<input type='button' id='save_settings' style='margin-left: 6px;' value='保存'>" +
-					"</div>" +
+					"</div>" + 
 				"</fieldset>" +
 			"</div>"
 		);
@@ -7156,7 +7165,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 				}
 			}
 			addHtml += "</select>";
-
+			
 			q$("div[id*='card_frontback']", deckcards.eq(i)).eq(0).before(
 				addHtml +
 				"<div>" +
@@ -7235,7 +7244,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 
 			var elembase = cards.eq(i).children("div[class='statusDetail clearfix']");
 			var elems_l = q$("div[class='left']", elembase);
-			var match = q$("div[class='illustMini'] a[class='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
+			var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
 			var cid = match[1];
 
 			var skills = q$("div[id='cardWindow_" + cid + "'] ul[class='back_skill'] li", cards.eq(i));
@@ -7781,7 +7790,10 @@ function calcCharge(tp) {
 
 // デッキモード取得
 function getDeckModeSmall() {
-	return q$("select[name='show_deck_card_count'] option:selected").text().match(/小/) != null;
+	var select = q$("select[name='show_deck_card_count']");
+	var value = select.attr("data-selected-value");
+	return q$("option[value=" + value + "]", select).text().match(/小/) != null;
+	//return q$("select[name='show_deck_card_count'] option:selected").text().match(/小/) != null;
 }
 
 // テーブルソーター
@@ -8328,9 +8340,9 @@ function show_message_image() {
 		for (var i = 0; i < match.length; i++) {
 			elem_body = elem_body.replace(
 				match[i],
-				"<span>" +
-					"<div><a href='" + match[i] + "' target='_blank'>" + match[i] + "</a></div>" +
-					"<img src='" + match[i] + "' style='max-width: 100%; border: 1px solid black;'></img>" +
+				"<span>" + 
+					"<div><a href='" + match[i] + "' target='_blank'>" + match[i] + "</a></div>" + 
+					"<img src='" + match[i] + "' style='max-width: 100%; border: 1px solid black;'></img>" + 
 				"</span>"
 			);
 		}
@@ -8346,9 +8358,9 @@ function show_message_image() {
 			var url = match[i].replace("https://gyazo.com/", "");
 			elem_body = elem_body.replace(
 				"https:\/\/gyazo.com\/" + url,
-				"<span>" +
-					"<div><a href='" + match[i] + "' target='_blank'>" + match[i] + "</a></div>" +
-					"<img id='" + eid + "' src='https://i.gyazo.com/" + url + ".png' style='max-width: 100%; border: 1px solid black;'></img>" +
+				"<span>" + 
+					"<div><a href='" + match[i] + "' target='_blank'>" + match[i] + "</a></div>" + 
+					"<img id='" + eid + "' src='https://i.gyazo.com/" + url + ".png' style='max-width: 100%; border: 1px solid black;'></img>" + 
 				"</span>"
 			);
 		}
