@@ -2,8 +2,8 @@
 // @name         bro3_route_builder
 // @namespace    bro3_route_builder
 // @include      http://*.3gokushi.jp/big_map.php*
-// @description  ブラウザ三国志ルート構築(51x51)
-// @version      1.01
+// @description  ブラウザ三国志ルート構築(51x51) with RAPT
+// @version      1.01.1
 
 // @grant   GM_addStyle
 // @grant   GM_deleteValue
@@ -17,6 +17,7 @@
 // ==/UserScript==
 // version date       author
 // 1.01		2016.03.19	Craford 氏	http://silent-stage.air-nifty.com/steps/2016/03/post-60ac.html
+// 1.01.1	2017.07.14	RAPT. 2017/07/12 の大型アップデートに伴い、ツールが動作しなくなっていたのを修正
 
 // load jQuery
 jQuery.noConflict();
@@ -59,9 +60,17 @@ var chkptn = [ [1,0], [0,1], [-1,0], [0,-1], [1,1], [1,-1], [-1,1], [-1,-1] ];
       return;
   }
 
+  var isOldMap = j$("#change-map-scale ul").length > 0;
+
   // 選択されているマップサイズチェック
   var viewSize = -1;
-  j$("div[id=change-map-scale] li[class*=now]").each(
+  var mapSelect;
+  if (isOldMap) {
+    mapSelect = j$("div[id=change-map-scale] li[class*=now]");
+  } else {
+    mapSelect = j$("div[id=change-map-scale2] a[class*=now]");
+  }
+  mapSelect.each(
       function(){
           if( j$(this).attr("class").match(/sort(\d+) now/) != null ){
               viewSize = RegExp.$1;
@@ -84,9 +93,19 @@ var chkptn = [ [1,0], [0,1], [-1,0], [0,-1], [1,1], [1,-1], [-1,1], [-1,-1] ];
   //------------------------
   // 51x51のマップ情報収集
   //------------------------
-  j$("#change-map-scale ul").css({'width' : '350px'});
-  j$("#change-map-scale").after(
-    "<div style='margin-top:60px;'>" + 
+  var parentElement;
+  var marginStyle;
+  if (isOldMap) {
+    j$("#change-map-scale ul").css({'width' : '350px'});
+    parentElement = j$("#change-map-scale");
+    marginStyle = "margin-top:60px; margin-left: 120px;";
+  } else {
+    parentElement = j$("#enemyView2");
+    marginStyle = "margin-top:60px; margin-left: 120px;";
+  }
+
+  parentElement.after(
+    "<div style='" + marginStyle + "'>" + 
       "<input type='button' id='routing_start' style='margin-left: 20px;' value='ルート構築を開始する'></input>" +
       "<input type='button' id='restore_map' style='display:none; margin-left: 20px;' value='ルート構築をやめる'></input>" +
     "</div>"
