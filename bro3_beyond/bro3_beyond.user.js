@@ -3,7 +3,7 @@
 // @namespace	bro3_beyond
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		0.91.2
+// @version		0.91.3
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -25,6 +25,7 @@
 // 0.91.1	2017/07/14	RAPT. 2017/07/12 の大型アップデートに伴い、ツールが動作しなくなっていたのを一部修正
 //						デッキ表示小判定の修正、スキル系判定の修正、ついでに内政スキルをホバー時太字にするようにした。
 // 0.91.2	2017/07/14	RAPT. 内政スキルが使えていなかったのを修正
+// 0.91.3	2017/07/20	RAPT. 資源パネル探索が使えていなかったのを修正
 
 // load jQuery
 jQuery.noConflict();
@@ -983,7 +984,7 @@ function profileControl() {
 									"', '.*', '" + targets[i].wood +
 									"', '" + targets[i].stone +
 									"', '" + targets[i].iron +
-									"', '"	+ targets[i].food + "', '', '0'\\); over";
+									"', '"	+ targets[i].food + "', '', '0', \\w+\\); over";
 					var reg = new RegExp(matchstr);
 					matches.push(reg);
 				}
@@ -1043,7 +1044,8 @@ function profileControl() {
 							// 一致検索
 							var match;
 							if (search_event == false) {
-								match = q$(area[i]).attr("onmouseover").match(/rewrite\('.*', '(.*)', '.*', '(.*)', '(.*)', '[★]+', '.*', '(\d+)', '(\d+)', '(\d+)', '(\d+)', '', '.*'\); over.*$/);
+							//	match = q$(area[i]).attr("onmouseover").match(/rewrite\('.*', '(.*)', '.*', '(.*)', '(.*)', '[★]+', '.*', '(\d+)', '(\d+)', '(\d+)', '(\d+)', '', '.*'\); over.*$/);
+								match = q$(area[i]).attr("onmouseover").match(/rewriteAddRemoving\('\d+','.*', '(.*)', '.*', '(.*)', '(.*)', '[★]+', '.*', '(\d+)', '(\d+)', '(\d+)', '(\d+)', '', '(\d+)', \w+\); over.*$/);
 							} else {
 								match = q$(area[i]).attr("onmouseover").match(/rewritePF\(.*,'.*', '(.*)', '.*', '(.*)', '(.*)', '[★]+', '.*', '(\d+)', '(\d+)', '(\d+)', '(\d+)', '', '.*'\); over.*$/);
 							}
