@@ -3,7 +3,7 @@
 // @namespace	bro3_beyond
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		0.91.3
+// @version		0.91.4
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -26,6 +26,7 @@
 //						デッキ表示小判定の修正、スキル系判定の修正、ついでに内政スキルをホバー時太字にするようにした。
 // 0.91.2	2017/07/14	RAPT. 内政スキルが使えていなかったのを修正
 // 0.91.3	2017/07/20	RAPT. 資源パネル探索が使えていなかったのを修正
+// 0.91.4	2017/07/22	RAPT. トレード画面にクリアボタンを追加
 
 // load jQuery
 jQuery.noConflict();
@@ -4153,6 +4154,18 @@ function execTradePart() {
 			q$("div[class='ui-tabs-panel'] ul[class='pager']").prop('outerHTML')
 		);
 	}
+
+	// クリアボタンを設置 @RAPT
+	q$("#button").after(
+		"<input type='button' id='clear_search_form' value='クリア' class='btn' style='margin-left: 6px'></input>"
+	);
+	q$("#clear_search_form").on('click',
+		function() {
+			q$("#t option:selected").prop('selected', false);
+			q$("#t").val('name');
+			q$("#k").val('');
+		}
+	);
 
 	// 特定レアリティのみボタン追加
 	if (g_beyond_options[TRADE_02] == true) {
