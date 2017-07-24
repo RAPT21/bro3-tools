@@ -14,13 +14,13 @@
 // @grant		GM_xmlhttpRequest
 // @grant		GM_log
 // @author		RAPT
-// @version		2017.06.11
+// @version		2017.07.24
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
 // 現在表示している拠点に対して、座標のみの指定しかできません。
 // そのため、指示を送ろうとしている最中に拠点を切り替えられてしまうと意図しない拠点で発動してしまいます。
-// 自動巡回時間を短くし過ぎていたり、指示発動タイミングで拠点を切り替えたりしないようにすることで回避できます。
+// 自動巡回時間を短くし過ぎていたり、指示発動タイミングで拠点を切り替えたりしないようにすることで回避できる可能性があります。
 // 手動操作を優先したい場合、一度スクリプトを停止させておくことをご検討ください。
 
 // ※施設LVUPは、運営側仕様としては、LV値を指定しての建築はできません。
@@ -108,8 +108,9 @@
 // 2017.05.31 2017.05.28版で★5工場村オプションの方角判定に誤りがあって建設できていなかった不具合を修正
 // 2017.06.01 Google Chrome で「Uncaught TypeError: j$.cookie is not a function」となりビルダーの一部機能が動作しなくなるため。Cookie の取得方法を変更
 // 2017.06.11 ★9(7-4)工場村オプションで工場建設後自動LVUPへ移行することを忘れていたので修正
+// 2017.07.24 巡回時間が読み込めていないタイミングがあるようなので対処
 
-var VERSION = "2017.06.11"; 	// バージョン情報
+var VERSION = "2017.07.24"; 	// バージョン情報
 
 jQuery.noConflict();
 j$ = jQuery;
@@ -526,6 +527,10 @@ var DBG_Flg = false;
 				_lv = area[i].lv;
 			}
 		}
+
+		// 巡回時間が読み込めていないタイミングがあるようなのでここで再読み込み (thx>ぼっち
+		loadRoundTime();
+
 		if ( _x < 0 ) {
 			// 内政スキルチェック
 			var nText = document.evaluate('//*[@class="base-skill"]/span/a', document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -3836,8 +3841,7 @@ function addIniBilderHtml() {
 		elem.value = options[i][1];
 		selectBox.appendChild(elem);
 	}
-	selectBox.value = GM_getValue(HOST+PGNAME+"OPT_ROUND_TIME1", LOAD_ROUND_TIME_180);
-	OPT_ROUND_TIME1 = GM_getValue(HOST+PGNAME+"OPT_ROUND_TIME1", LOAD_ROUND_TIME_180);
+	selectBox.value = loadRoundTime();
 
 	// 2012.01.11 巡回時間に 1 ~ 10sec 追加
 	OPT_ROUND_TIME1 = parseInt(OPT_ROUND_TIME1,10) + Math.floor( Math.random() * 10 );
@@ -4176,7 +4180,7 @@ function loadAVCBox2(tVID){
 
 // @@@@ add 2011.09.07 @@@@
 function loadRoundTime() {
-	OPT_ROUND_TIME1 = GM_getValue(HOST+PGNAME+"OPT_ROUND_TIME1", 180);
+	OPT_ROUND_TIME1 = GM_getValue(HOST+PGNAME+"OPT_ROUND_TIME1", LOAD_ROUND_TIME_180);
 	return OPT_ROUND_TIME1;
 }
 
