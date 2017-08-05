@@ -3,7 +3,7 @@
 // @namespace	bro3_beyond
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		0.91.4
+// @version		0.91.5
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -27,6 +27,7 @@
 // 0.91.2	2017/07/14	RAPT. 内政スキルが使えていなかったのを修正
 // 0.91.3	2017/07/20	RAPT. 資源パネル探索が使えていなかったのを修正
 // 0.91.4	2017/07/22	RAPT. トレード画面にクリアボタンを追加
+// 0.91.5	2017/08/06	RAPT. 報告書の討伐・攻撃ログのTSV出力機能が動作しない環境があったので対策
 
 // load jQuery
 jQuery.noConflict();
@@ -2708,8 +2709,14 @@ function getExpeditionTextReport() {
 
 					q$("#list_title").text("報告書解析中・・・(" + count + "/" + max + ")");
 
+					// 絶対パスになっている場合もあるので対策
+					var requestUrl = urllist[count - 1];
+					if (requestUrl.indexOf("http://") === -1) {
+						requestUrl = "http://" + location.hostname + "/report/" + requestUrl;
+					}
+
 					q$.ajax({
-						url: "http://" + location.hostname + "/report/" + urllist[count - 1],
+						url: requestUrl,
 						type: 'GET',
 						datatype: 'html',
 						cache: false
