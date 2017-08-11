@@ -109,8 +109,9 @@
 // 2017.06.01 Google Chrome で「Uncaught TypeError: j$.cookie is not a function」となりビルダーの一部機能が動作しなくなるため。Cookie の取得方法を変更
 // 2017.06.11 ★9(7-4)工場村オプションで工場建設後自動LVUPへ移行することを忘れていたので修正
 // 2017.07.24 巡回時間が読み込めていないタイミングがあるようなので対処
+// 2017.08.11 即完時 IP-BAN 対策のため処理後のリロード時間を調整
 
-var VERSION = "2017.07.24"; 	// バージョン情報
+var VERSION = "2017.08.11"; 	// バージョン情報
 
 jQuery.noConflict();
 j$ = jQuery;
@@ -254,8 +255,7 @@ var OPT_BUILD_VID;
 
 
 //グローバル変数
-var INTERVAL  = 1000; // + Math.floor( Math.random() * 5000 );			// 負荷対策 回線速度によっては正常動作しない時があります。その際は数値を増やしてください。1秒=1000
-var INTERVAL2 = 2000; // + Math.floor( Math.random() * 5000 );			// 負荷対策 回線速度によっては正常動作しない時があります。その際は数値を増やしてください。1秒=1000
+var INTERVAL  = 2000; // + Math.floor( Math.random() * 5000 );			// 負荷対策 回線速度によっては正常動作しない時があります。その際は数値を増やしてください。1秒=1000
 var HOST = location.hostname; //アクセスURLホスト
 var PGNAME = "_Auto_Bilder_5zen_v1.21_20140220"; //グリモン領域への保存時のPGの名前
 var TIMEOUT_URL ="/false/login_sessionout.php"; //タイムアウト時のURLの一部
