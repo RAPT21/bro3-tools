@@ -14,7 +14,7 @@
 // @grant		GM_xmlhttpRequest
 // @grant		GM_log
 // @author		RAPT
-// @version		2017.07.24
+// @version		2017.08.12
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -110,8 +110,9 @@
 // 2017.06.11 ★9(7-4)工場村オプションで工場建設後自動LVUPへ移行することを忘れていたので修正
 // 2017.07.24 巡回時間が読み込めていないタイミングがあるようなので対処
 // 2017.08.11 即完時 IP-BAN 対策のため処理後のリロード時間を調整
+// 2017.08.12 運営の自動建設機能による一括建設中、一括建設準備中があるとき、自動建設しようとしてリロードを繰り返していた問題を修正
 
-var VERSION = "2017.08.11"; 	// バージョン情報
+var VERSION = "2017.08.12"; 	// バージョン情報
 
 jQuery.noConflict();
 j$ = jQuery;
@@ -1900,6 +1901,11 @@ debugLog("=== Start setVillageFacility ===");
 					delY = parseInt(RegExp.$2,10);
 				}
 				del++;
+			}
+		} else {
+			var buildStatusText = j$(".buildStatus span", paItem).text();
+			if (/一括建設(準備)?中/.test(buildStatusText)) {
+				cnt++;
 			}
 		}
 	}
@@ -7510,16 +7516,22 @@ function getVillageActions() {
 				buildStatus = "削除:" + trim(buildStatusElem.snapshotItem(0).innerHTML);
 			}
 		} else {
+			var buildStatusText = j$(".buildStatus span", paItem).text();
+			if (/一括建設(準備)?中/.test(buildStatusText)) {
+				newAction[IDX2_DELETE] = false;
+				buildStatus = "一括建設:" + trim(j$(".buildStatus span", paItem).parent().text().replace(/一括建設(準備)?中/, '').trim());
+			} else {
 /*
-			buildStatusElem = document.evaluate('./span[@class="buildStatus"]', 	paItem, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-			if (buildStatusElem.snapshotItem(0).innerHTML.match(/強化/)) {
+				buildStatusElem = document.evaluate('./span[@class="buildStatus"]', 	paItem, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+				if (buildStatusElem.snapshotItem(0).innerHTML.match(/強化/)) {
+					continue;
+				}
+				var tempStr1 = buildStatusElem.snapshotItem(0).innerHTML.split("を");
+				buildStatus = "研究所:" + tempStr1[0];
+				newAction[IDX2_DELETE] = false;
+*/
 				continue;
 			}
-			var tempStr1 = buildStatusElem.snapshotItem(0).innerHTML.split("を");
-			buildStatus = "研究所:" + tempStr1[0];
-			newAction[IDX2_DELETE] = false;
-*/
-			continue;
 		}
 		newAction[IDX2_ROTATION] = 0;
 		newAction[IDX2_TYPE] = TYPE_CONSTRUCTION;
