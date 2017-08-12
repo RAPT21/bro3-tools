@@ -3,7 +3,7 @@
 // @namespace	bro3_beyond
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		0.91.5
+// @version		0.91.6
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -22,12 +22,14 @@
 // version	date
 // 0.01		2016/05/**	試験的に着手
 // 0.91		2017/07/13	Craford 氏	http://silent-stage.air-nifty.com/steps/2017/07/beyond091.html
+//--------------------	以下について、https://gist.github.com/RAPT21?direction=desc&sort=updated で公開しています。
 // 0.91.1	2017/07/14	RAPT. 2017/07/12 の大型アップデートに伴い、ツールが動作しなくなっていたのを一部修正
 //						デッキ表示小判定の修正、スキル系判定の修正、ついでに内政スキルをホバー時太字にするようにした。
 // 0.91.2	2017/07/14	RAPT. 内政スキルが使えていなかったのを修正
 // 0.91.3	2017/07/20	RAPT. 資源パネル探索が使えていなかったのを修正
 // 0.91.4	2017/07/22	RAPT. トレード画面にクリアボタンを追加
 // 0.91.5	2017/08/06	RAPT. 報告書の討伐・攻撃ログのTSV出力機能が動作しない環境があったので対策
+// 0.91.6	2017/08/13	RAPT. 内政官をセットして即スキルを使う処理を新方式で対応してみた、少し速くなったかも。
 
 // load jQuery
 jQuery.noConflict();
@@ -8475,13 +8477,71 @@ function exec_domestic_skill_step1(element, is_after_drop, village_id, card_id, 
 				}
 
 				// step2の実行
-				exec_domestic_skill_step2(element, village_id, card_id, use_skill, is_after_drop, success_func, fail_func);
+				//exec_domestic_skill_step2(element, village_id, card_id, use_skill, is_after_drop, success_func, fail_func);
+				exec_domestic_skill_step2_ex(element, village_id, card_id, use_skill, is_after_drop, success_func, fail_func);
 			});
 		}, 200
 	);
 }
 
 // 自動内政スキル実行 STEP2：デッキ設定
+function exec_domestic_skill_step2_ex(element, village_id, card_id, use_skill, is_after_drop, success_func, fail_func) {
+	// ステータス表示変更
+	element.html(
+		"<span style='color: blue;'>スキルEX発動中</span>"
+	);
+
+	// 使用するスキルのIDを調べる
+	var skill_id = '';
+	var skills = element.closest(".cardStatusDetail").find(".card_back_extra .back_skill li span[class*='skill_name']");
+	skills.each(function(){
+	  if (q$(this).text().substr(2).trim() === use_skill) {
+			var match = q$(this).next().children('a[class="btn_detail_s"]').attr("onclick").match(/openSkillInfoThick\('([a-z0-9]+)'/);
+			if (match !== null) {
+				skill_id = match[1];
+			}
+		}
+	});
+
+	if (skill_id.length === 0) {
+		console.log("スキルIDが取得できませんでした。");
+		fail_func();
+		return;
+	}
+
+	// 200ms後にデッキセット実行
+	setTimeout(
+		function() {
+			// 送信データ作成
+			var ssid = getSessionId();
+			var target_url = 'http://' + location.hostname + '/card/deck.php';
+			var action_type = is_after_drop ? '2' : '1';
+			var param = {
+				'ssid': ssid,
+				'target_card': card_id,
+				'mode': 'domestic_set',
+				'l': '0',	// Labelのようだが指定しても特に変化はみられない
+				'p': '1',	// Page のようだが指定しても特に変化はみられない
+				'action_type': action_type,
+				'choose_attr1_skill': skill_id
+			};
+			param["selected_village[" + card_id + "]"] = village_id;
+
+			// 通信処理
+			q$.ajax({
+				url: target_url,
+				type: 'POST',
+				datatype: 'html',
+				cache: false,
+				data: param
+			})
+			.done(function(res) {
+				success_func();
+			});
+		}, 200
+	);
+}
+
 function exec_domestic_skill_step2(element, village_id, card_id, use_skill, is_after_drop, success_func, fail_func) {
 	// ステータス表示変更
 	element.html(
