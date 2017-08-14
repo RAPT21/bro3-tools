@@ -3,12 +3,13 @@
 // @namespace	https://gist.github.com/RAPT21/
 // @description	ブラウザ三国志 マップ画面遠征ツール(51x51)
 // @include 	http://*.3gokushi.jp/big_map.php*
+// @include		http://*.3gokushi.jp/facility/unit_status.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.1
+// @version 	1.2
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -37,11 +38,13 @@ jQuery.noConflict();
 // 2017.05.16	0.4
 // 2017.06.24	1.0	初版公開
 // 2017.07.13	1.1	新MAP画面対応
+// 2017.08.14	1.2	12期～のカラーリング追加、出兵後の兵士管理画面が「全て表示」に自動的に切り替わるようにした
 
 //==========[オプション]==========
 var OPT_COLORING_RESOURCES = true;		// 資源地カラーリングを行うか。falseだと何も行いません。
 var OPT_TROOP_OPEN_NEW_WINDOW = true;	// 出兵画面を新規ウィンドウで開くか。falseだと同一画面で遷移します。
 var OPT_REFRESH_AFTER_EDITNAME = false;	// 領地名変更後に画面更新するか。falseだと処理成功時マス目が点滅します。
+var OPT_UNIT_STATUS_SWITCH_SORTIE_TO_ALL = true;	// 出兵管理画面で出撃タブ表示時、全て表示に切り替える
 
 //==========[本体]==========
 (function($) {
@@ -77,6 +80,16 @@ var OPT_REFRESH_AFTER_EDITNAME = false;	// 領地名変更後に画面更新す�
 	//------------------------
 	// メイン
 	//------------------------
+
+	// 兵士管理画面: 出撃タブを自動的に全て表示に切り替える
+	if (OPT_UNIT_STATUS_SWITCH_SORTIE_TO_ALL) {
+		if (location.href.indexOf("/facility/unit_status.php?type=sortie") >= 0) {
+			setTimeout(function(){
+		  		location.href = "/facility/unit_status.php?type=all";
+			}, 200);
+			return;
+		}
+	}
 
 	// 51x51マップ画面以外はなにもしない
 	if (!location.href.match(/big_map.php/)) {
@@ -482,6 +495,14 @@ var OPT_REFRESH_AFTER_EDITNAME = false;	// 領地名変更後に画面更新す�
 			col = "orange";
 		} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food >= 12) {
 			col = "yellow";
+		} else if (obj.stars === 8) {	// ★8特化
+			if (obj.wood >= 5 && obj.stone === 4 && obj.iron === 4 && obj.food === 2) { // 12期～
+				col = "springgreen";
+			} else if (obj.wood === 4 && obj.stone >= 5 && obj.iron === 4 && obj.food === 2) { // 12期～
+				col = "aqua";
+			} else if (obj.wood === 4 && obj.stone === 4 && obj.iron >= 5 && obj.food === 2) { // 12期～
+				col = "orange";
+			}
 		} else if (obj.stars === 9) {	// ★9特化
 			if (obj.wood === 1 && obj.stone === 1 && obj.iron === 1 && obj.food === 2) { // 2～11期:平地39
 				col = "red";
