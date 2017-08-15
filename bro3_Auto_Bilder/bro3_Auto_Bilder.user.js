@@ -14,7 +14,7 @@
 // @grant		GM_xmlhttpRequest
 // @grant		GM_log
 // @author		RAPT
-// @version		2017.08.12
+// @version		2017.08.16
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -111,8 +111,9 @@
 // 2017.07.24 巡回時間が読み込めていないタイミングがあるようなので対処
 // 2017.08.11 即完時 IP-BAN 対策のため処理後のリロード時間を調整
 // 2017.08.12 運営の自動建設機能による一括建設中、一括建設準備中があるとき、自動建設しようとしてリロードを繰り返していた問題を修正
+// 2017.08.16 運営の自動建設機能による全建設中の検出対応
 
-var VERSION = "2017.08.12"; 	// バージョン情報
+var VERSION = "2017.08.16"; 	// バージョン情報
 
 jQuery.noConflict();
 j$ = jQuery;
@@ -1905,6 +1906,9 @@ debugLog("=== Start setVillageFacility ===");
 		} else {
 			var buildStatusText = j$(".buildStatus span", paItem).text();
 			if (/一括建設(準備)?中/.test(buildStatusText)) {
+				cnt++;
+			}
+			else if (/^全建設中/.test(buildStatusText)) {
 				cnt++;
 			}
 		}
@@ -7520,6 +7524,9 @@ function getVillageActions() {
 			if (/一括建設(準備)?中/.test(buildStatusText)) {
 				newAction[IDX2_DELETE] = false;
 				buildStatus = "一括建設:" + trim(j$(".buildStatus span", paItem).parent().text().replace(/一括建設(準備)?中/, '').trim());
+			} else if (/^全建設中/.test(buildStatusText)) {
+				newAction[IDX2_DELETE] = false;
+				buildStatus = "全建設:" + trim(j$(".buildStatus span", paItem).parent().text().replace(/全建設中/, '').trim());
 			} else {
 /*
 				buildStatusElem = document.evaluate('./span[@class="buildStatus"]', 	paItem, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
