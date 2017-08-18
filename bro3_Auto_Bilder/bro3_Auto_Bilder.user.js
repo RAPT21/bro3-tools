@@ -113,8 +113,9 @@
 // 2017.08.12 運営の自動建設機能による一括建設中、一括建設準備中があるとき、自動建設しようとしてリロードを繰り返していた問題を修正
 // 2017.08.16 運営の自動建設機能による全建設中の検出対応
 // 2017.08.18 市場変換対象の拠点で運営の自動建設機能による一括建設中に市場変換など一部機能が動作しない問題への対処（一括建設中は運営タイマーバグ対策が作動しないようにした）
+// 2017.08.19 運営の自動建設機能による自動建設中の検出対応
 
-var VERSION = "2017.08.18"; 	// バージョン情報
+var VERSION = "2017.08.19"; 	// バージョン情報
 
 jQuery.noConflict();
 j$ = jQuery;
@@ -1908,6 +1909,9 @@ debugLog("=== Start setVillageFacility ===");
 		} else {
 			var buildStatusText = j$(".buildStatus span", paItem).text();
 			if (/一括建設(準備)?中/.test(buildStatusText)) {
+				cnt++;
+			}
+			else if (/自動建設(準備)?中/.test(buildStatusText)) {
 				cnt++;
 			}
 			else if (/^全建設中/.test(buildStatusText)) {
@@ -7528,6 +7532,9 @@ function getVillageActions() {
 			if (/一括建設(準備)?中/.test(buildStatusText)) {
 				newAction[IDX2_DELETE] = false;
 				buildStatus = "一括建設:" + trim(j$(".buildStatus span", paItem).parent().text().replace(/一括建設(準備)?中/, '').trim());
+			} else if (/自動建設(準備)?中/.test(buildStatusText)) {
+				newAction[IDX2_DELETE] = false;
+				buildStatus = "自動建設:" + trim(j$(".buildStatus span", paItem).parent().text().replace(/自動建設(準備)?中/, '').trim());
 			} else if (/^全建設中/.test(buildStatusText)) {
 				newAction[IDX2_DELETE] = false;
 				buildStatus = "全建設:" + trim(j$(".buildStatus span", paItem).parent().text().replace(/全建設中/, '').trim());
