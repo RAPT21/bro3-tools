@@ -14,7 +14,7 @@
 // @grant		GM_xmlhttpRequest
 // @grant		GM_log
 // @author		RAPT
-// @version		2017.08.18
+// @version		2017.08.19
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
