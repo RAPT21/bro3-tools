@@ -14,7 +14,7 @@
 // @grant		GM_xmlhttpRequest
 // @grant		GM_log
 // @author		RAPT
-// @version		2017.08.16
+// @version		2017.08.18
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -112,8 +112,9 @@
 // 2017.08.11 即完時 IP-BAN 対策のため処理後のリロード時間を調整
 // 2017.08.12 運営の自動建設機能による一括建設中、一括建設準備中があるとき、自動建設しようとしてリロードを繰り返していた問題を修正
 // 2017.08.16 運営の自動建設機能による全建設中の検出対応
+// 2017.08.18 市場変換対象の拠点で運営の自動建設機能による一括建設中に市場変換など一部機能が動作しない問題への対処（一括建設中は運営タイマーバグ対策が作動しないようにした）
 
-var VERSION = "2017.08.16"; 	// バージョン情報
+var VERSION = "2017.08.18"; 	// バージョン情報
 
 jQuery.noConflict();
 j$ = jQuery;
@@ -1849,7 +1850,8 @@ function getBuildingInfo() {
 	var info = { x:-1, y:-1, name:"", lv:0, time:-1 };
 
 	// 建設座標
-	if (a.attr("href").match(/x=(\d+).+y=(\d+)/)){
+	var href = a.attr("href");
+	if (href && href.match(/x=(\d+).+y=(\d+)/)){
 		info.x = parseInt(RegExp.$1,10);
 		info.y = parseInt(RegExp.$2,10);
 
@@ -1973,7 +1975,7 @@ debugLog("=== Start setVillageFacility ===");
 	if((cnt - del) >= 1) {
 		// 運営のタイマーバグ対策。最大時間を異常に超えている場合、リロードする。
 		var info = getBuildingInfo();
-		if (info) {
+		if (info && info.x != -1 && info.y != -1) {
 			console.log("x="+info.x+" y="+info.y+" name="+info.name+" lv="+info.lv+" time="+info.time);
 			// info.log は建築中施設のLV。getBuildResources は現在LVなので-1する
 			var cost = getBuildResources(info.name, info.lv-1);
@@ -3923,6 +3925,8 @@ function addIniBilderHtml() {
 						"　　インストールありがとうございます。<br>" +
 						"　　まずは、プロフィール画面を開いて<br>" +
 						"　　拠点情報を取得してください。<br>　";
+						"　　うまく動作しない場合、他のツールを<br>　";
+						"　　一旦OFFにしてから再度実行してください。<br>　";
 		td.appendChild(msg);
 	} else {
 		var landElems = document.evaluate(
@@ -8033,4 +8037,9 @@ function getCookie(name) {
 		if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
 	}
 	return null;
+}
+
+// for debug print object
+function po(obj, ext = "") {
+	console.log(ext + JSON.stringify(obj, null, '\t'));
 }
