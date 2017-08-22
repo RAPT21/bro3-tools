@@ -6993,8 +6993,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 											// 失敗時挙動
 											_this.parent().children('td').html(recover_html);
 											_this.html("<span class='skr'>[使用]</span>");
-										},
-										true
+										}
 									);
 								}
 							}
@@ -7048,8 +7047,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 											// 失敗時挙動
 											_this.parent().children('td').html(recover_html);
 											_this.html("<span class='skb'>[使用]</span>");
-										},
-										true										,true
+										}
 									);
 								}
 							}
@@ -8445,7 +8443,7 @@ function formatSeconds(remain) {
 
 //--- スキル使用 ---//
 // 自動内政スキル実行 STEP1：内政官設定チェック
-function exec_domestic_skill_step1(element, is_after_drop, village_id, card_id, use_skill, success_func, fail_func, use_fast_method = false) {
+function exec_domestic_skill_step1(element, is_after_drop, village_id, card_id, use_skill, success_func, fail_func) {
 	// ステータス表示変更
 	element.html(
 		"<span style='color: blue;'>拠点確認中</span>"
@@ -8480,11 +8478,8 @@ function exec_domestic_skill_step1(element, is_after_drop, village_id, card_id, 
 				}
 
 				// step2の実行
-				if (use_fast_method) {
-					exec_domestic_skill_step2_ex(element, village_id, card_id, use_skill, is_after_drop, success_func, fail_func);
-				} else {
-					exec_domestic_skill_step2(element, village_id, card_id, use_skill, is_after_drop, success_func, fail_func);
-				}
+				//exec_domestic_skill_step2(element, village_id, card_id, use_skill, is_after_drop, success_func, fail_func);
+				exec_domestic_skill_step2_ex(element, village_id, card_id, use_skill, is_after_drop, success_func, fail_func);
 			});
 		}, 200
 	);
@@ -8510,8 +8505,8 @@ function exec_domestic_skill_step2_ex(element, village_id, card_id, use_skill, i
 	});
 
 	if (skill_id.length === 0) {
-		console.log("スキルIDが取得できませんでした。");
-		fail_func();
+		console.log("スキルIDが取得できませんでした。従来方式で実行を試みます。");
+		exec_domestic_skill_step2(element, village_id, card_id, use_skill, is_after_drop, success_func, fail_func);
 		return;
 	}
 
