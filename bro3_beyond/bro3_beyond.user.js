@@ -3,7 +3,7 @@
 // @namespace	bro3_beyond
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		0.91.6
+// @version		0.91.7
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -24,12 +24,13 @@
 // 0.91		2017/07/13	Craford 氏	http://silent-stage.air-nifty.com/steps/2017/07/beyond091.html
 //--------------------	以下について、https://gist.github.com/RAPT21?direction=desc&sort=updated で公開しています。
 // 0.91.1	2017/07/14	RAPT. 2017/07/12 の大型アップデートに伴い、ツールが動作しなくなっていたのを一部修正
-//						デッキ表示小判定の修正、スキル系判定の修正、ついでに内政スキルをホバー時太字にするようにした。
+//								デッキ表示小判定の修正、スキル系判定の修正、ついでに内政スキルをホバー時太字にするようにした。
 // 0.91.2	2017/07/14	RAPT. 内政スキルが使えていなかったのを修正
 // 0.91.3	2017/07/20	RAPT. 資源パネル探索が使えていなかったのを修正
 // 0.91.4	2017/07/22	RAPT. トレード画面にクリアボタンを追加
 // 0.91.5	2017/08/06	RAPT. 報告書の討伐・攻撃ログのTSV出力機能が動作しない環境があったので対策
 // 0.91.6	2017/08/13	RAPT. 内政官をセットして即スキルを使う処理を新方式で対応してみた、少し速くなったかも。
+// 0.91.7	2017/08/23	RAPT. 0.91.6 の改修の影響で、スキル検索結果からスキルが使えなくなっていたのを修正。（スキル検索結果からは従来方式でスキルを使います）
 
 // load jQuery
 jQuery.noConflict();
@@ -6992,7 +6993,8 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 											// 失敗時挙動
 											_this.parent().children('td').html(recover_html);
 											_this.html("<span class='skr'>[使用]</span>");
-										}
+										},
+										true
 									);
 								}
 							}
@@ -7046,7 +7048,8 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 											// 失敗時挙動
 											_this.parent().children('td').html(recover_html);
 											_this.html("<span class='skb'>[使用]</span>");
-										}
+										},
+										true										,true
 									);
 								}
 							}
@@ -8442,7 +8445,7 @@ function formatSeconds(remain) {
 
 //--- スキル使用 ---//
 // 自動内政スキル実行 STEP1：内政官設定チェック
-function exec_domestic_skill_step1(element, is_after_drop, village_id, card_id, use_skill, success_func, fail_func) {
+function exec_domestic_skill_step1(element, is_after_drop, village_id, card_id, use_skill, success_func, fail_func, use_fast_method = false) {
 	// ステータス表示変更
 	element.html(
 		"<span style='color: blue;'>拠点確認中</span>"
@@ -8477,8 +8480,11 @@ function exec_domestic_skill_step1(element, is_after_drop, village_id, card_id, 
 				}
 
 				// step2の実行
-				//exec_domestic_skill_step2(element, village_id, card_id, use_skill, is_after_drop, success_func, fail_func);
-				exec_domestic_skill_step2_ex(element, village_id, card_id, use_skill, is_after_drop, success_func, fail_func);
+				if (use_fast_method) {
+					exec_domestic_skill_step2_ex(element, village_id, card_id, use_skill, is_after_drop, success_func, fail_func);
+				} else {
+					exec_domestic_skill_step2(element, village_id, card_id, use_skill, is_after_drop, success_func, fail_func);
+				}
 			});
 		}, 200
 	);
