@@ -12,9 +12,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2016.07.27
+// @version 	2017.09.05
 // ==/UserScript==
-var VERSION = "2016.07.27"; 	// バージョン情報
+var VERSION = "2017.09.05"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -63,35 +63,10 @@ var OPT_VALUE_IGNORE_SECONDS = -1; // 負荷を下げる為、指定秒数以内
 //			  ※出兵時にスキルを使用したり兵士を引率することはできません。
 // 2016.06.04 自動出兵が有効で、出兵条件を満たさなかった時、寄付クエとデュエルクエ以外の機能が動作していなかった不具合を修正。
 // 2016.07.27 スクリプトを推奨フォーマットで書き直した。
+// 2017.09.05 受信箱の仕様が変わり、受信箱に 5 個以上アイテムがあるとき、受け取れなくなっていたのを修正。
 
-/*!
-* jQuery Cookie Plugin
-* https://github.com/carhartl/jquery-cookie
-*
-* Copyright 2011, Klaus Hartl
-* Dual licensed under the MIT or GPL Version 2 licenses.
-* http://www.opensource.org/licenses/mit-license.php
-* http://www.opensource.org/licenses/GPL-2.0
-*/
-(function($) {
-	$.cookie = function(key, value, options) {
-
-		// key and possibly options given, get cookie...
-		options = value || {};
-		var decode = options.raw ? function(s) { return s; } : decodeURIComponent;
-
-		var pairs = document.cookie.split('; ');
-		for(var i = 0, pair; pair = pairs[i] && pairs[i].split('='); i++) {
-			if(decode(pair[0]) === key) return decode(pair[1] || ''); // IE saves cookies with empty string as "c; ", e.g. without "=" as opposed to EOMB, thus pair[1] may be undefined
-		}
-		return null;
-	};
-	$.fn.outerHTML = function(s) {
-		return (s) ? this.before(s).remove() : $("<p>").append(this.eq(0).clone()).html();
-	}
-})(jQuery);
 jQuery.noConflict();
-j$ = jQuery;
+q$ = jQuery;
 
 
 var HOST		= location.hostname;
@@ -114,7 +89,7 @@ function xpath(query,targetDoc) {
 
 // ラッパー
 function httpGET(url, callback) {
-//	j$.get(url, callback);
+//	q$.get(url, callback);
 	GM_xmlhttpRequest({
 		method:"GET",
 		url:url,
@@ -128,7 +103,7 @@ function httpGET(url, callback) {
 	});
 }
 function httpPOST(url, params, callback) {
-	j$.post(url, params, callback);
+	q$.post(url, params, callback);
 }
 function getVALUE(key, defaultValue) {
 	return GM_getValue(HOST+PGNAME+key , defaultValue );
@@ -188,33 +163,13 @@ function moveFromInbox(reloadIfNeed){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 
-		var regexp = /confirmItemSub\(this,\s*\d+,\s*(\d+),\s*'移動する'\)/;
-		var item_id_list = '';
-
-		var item_id_items = xpath('//ul[contains(@class,"itemIconList")]/li/div/a',htmldoc);
 		var count = 0;
-		for(var i = 0; i < item_id_items.snapshotLength; i++){
-			var item_id = item_id_items.snapshotItem(i).outerHTML.match(regexp);
-			if (item_id){
-				if (item_id_list.length > 0){
-					item_id_list += "_";
-				}
-				item_id_list += item_id[1];
-				count++;
-				if (count >= 5) {
-					break;
-				}
-			}
-		}
-
-		if (count == 0) {
-			var script_list = xpath('//div[@id="whiteWrapper"]/script',htmldoc);
-			if (script_list.snapshotLength) {
-				var match_result = script_list.snapshotItem(0).innerHTML.match(/initItemCheck\(\d+,\s*\d+,\s*'([\d_]+)'/);
-				if (match_result && match_result.length == 2) {
-					item_id_list = match_result[1];
-					count = 1;
-				}
+		var script_list = xpath('//div[@id="whiteWrapper"]/script',htmldoc);
+		if (script_list.snapshotLength) {
+			var match_result = script_list.snapshotItem(0).innerHTML.match(/initItemCheck\(\d+,\s*\d+,\s*'([\d_]+)'/);
+			if (match_result && match_result.length == 2) {
+				item_id_list = match_result[1].split("_", 5).join("_");
+				count = 1;
 			}
 		}
 
@@ -495,8 +450,8 @@ function callSendTroop()
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 
-		j$(htmldoc).find("dd:contains('待機中')").each(function(){
-			var m = j$("a", this).attr("href").match(/village_id%3D(\d+)%26card_id%3D(\d+)/i);
+		q$(htmldoc).find("dd:contains('待機中')").each(function(){
+			var m = q$("a", this).attr("href").match(/village_id%3D(\d+)%26card_id%3D(\d+)/i);
 
 			// 指定されている武将カードIDと配置拠点IDが一致したもののみ有効とする
 			if (m && m.length == 3 && m[2] == cardID) {
@@ -504,8 +459,8 @@ function callSendTroop()
 				vID = m[1];
 
 				// 討伐ゲージを取得
-				j$(this).siblings(".subdue").each(function(){
-					var gage = j$("span.gage", this).text();
+				q$(this).siblings(".subdue").each(function(){
+					var gage = q$("span.gage", this).text();
 					if (gage.length) {
 						cardGage = gage;
 						return false;
@@ -589,9 +544,9 @@ function callSendTroop()
 		//========================================
 		// 出兵画面で動作
 		//========================================
-		var targetX = j$("*[name=village_x_value]").val(); // 出兵先座標x
-		var targetY = j$("*[name=village_y_value]").val(); // 出兵先座標y
-		var cardID = j$("*[name=unit_assign_card_id]").val(); // 武将カードID
+		var targetX = q$("*[name=village_x_value]").val(); // 出兵先座標x
+		var targetY = q$("*[name=village_y_value]").val(); // 出兵先座標y
+		var cardID = q$("*[name=unit_assign_card_id]").val(); // 武将カードID
 		if (cardID) {
 			var clearInfo = d.createElement("input");
 				clearInfo.id = "Auto_Daily_Quest_Clear_Troops";
@@ -633,7 +588,7 @@ function callSendTroop()
 					saveSettingLocal();
 					var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 				}, true);
-			j$("#btn_send").after(regInfo).after(clearInfo);
+			q$("#btn_send").after(regInfo).after(clearInfo);
 		}
 	}
 })();
