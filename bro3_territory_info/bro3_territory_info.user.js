@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name		bro3_territory_info
 // @namespace	https://gist.github.com/RAPT21/
-// @description	ブラウザ三国志 領土検索ツール by RAPT
+// @description	ブラウザ三国志 全領土情報取ツール by RAPT
 // @include 	http://*.3gokushi.jp/alliance/info.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
