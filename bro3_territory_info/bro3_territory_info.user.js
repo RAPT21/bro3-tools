@@ -8,11 +8,12 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	0.1
+// @version 	0.2
 // ==/UserScript==
-var VERSION = "0.1";
+var VERSION = "0.2";
 
 // 2017.10.05	0.1	同盟タブで「全領土をCSV形式でテキスト出力する」ボタンをクリックすると全領土のCSV情報を取得します。
+// 2017.10.06	0.2	構造上の誤りを修正
 
 jQuery.noConflict();
 
@@ -39,7 +40,7 @@ var lineSeparator = "\n";
 	var search_results = [];
 	var searchText = '全領土をCSV形式でテキスト出力する';
 	var stopText = '全領土の走査処理を中断する';
-	var timer1 = null, timer2 = null;
+	var timer1 = null;
 	$("#statMenu").after(
 		"<div style='margin-left: 4px;'>" +
 			"<input id='territory_report_button' type='button' value='" + searchText + "'></input>" +
@@ -87,7 +88,7 @@ var lineSeparator = "\n";
 
 			getMapList(function(mapInfo){
 				$("#territory_list_title").text("MAPサイズ: ("+mapInfo.x+"x"+mapInfo.y+") / 画面数: "+mapInfo.screen +" / リスト数: "+mapInfo.list.length);
-				enumulateMapList(mapInfo.list, function(reports){
+				enumulateMapList(mapInfo.list, function(){
 					displaySearchResults('終了しました');
 				});
 			});
@@ -120,7 +121,7 @@ var lineSeparator = "\n";
 				timer1 = null;
 
 				if (handler) {
-					handler(search_results);
+					handler();
 				}
 				return;
 			}
@@ -140,7 +141,7 @@ var lineSeparator = "\n";
 	// MAP データを取得
 	function getMap(x, y, handler){
 		$.ajax({
-			url: 'http://' + HOST + '/big_map.php',
+			url: 'http://' + HOST + '/map.php',
 			type: 'GET',
 			datatype: 'html',
 			cache: false,
@@ -191,7 +192,7 @@ var lineSeparator = "\n";
 			});
 
 			if (handler){
-				handler(data.join(lineSeparator));
+				handler(data);
 			}
 		});
 	}
@@ -199,7 +200,7 @@ var lineSeparator = "\n";
 	// MAP サイズを取得
 	function getMapList(handler){
 		$.ajax({
-			url: 'http://' + HOST + '/big_map.php',
+			url: 'http://' + HOST + '/map.php',
 			type: 'GET',
 			datatype: 'html',
 			cache: false,
