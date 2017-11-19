@@ -3,7 +3,7 @@
 // @namespace	bro3_beyond
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		0.91.7
+// @version		0.91.8
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -31,6 +31,12 @@
 // 0.91.5	2017/08/06	RAPT. 報告書の討伐・攻撃ログのTSV出力機能が動作しない環境があったので対策
 // 0.91.6	2017/08/13	RAPT. 内政官をセットして即スキルを使う処理を新方式で対応してみた、少し速くなったかも。
 // 0.91.7	2017/08/23	RAPT. 0.91.6 の改修の影響で、スキル検索結果からスキルが使えなくなっていたのを修正。（スキル検索結果からは従来方式でスキルを使います）
+// 0.91.8	2017/11/19	RAPT. カードの武将名が上部に移動された影響で、自動スキルレベルアップ合成の「水鏡を素材として使用する」をチェック時に動作しなくなっていたのを修正
+//
+// TODO:
+// 内政ボタンで、拠点を変更せずにセットする新方式対応
+// 回復系スキルは、空いている拠点で実行するオプション
+// 内政ボタン/内政スキルで、すでにその拠点に内政官がいる場合、置き換えるかの確認。「呉の治世」スキル発動中です。内政官を置き換えますか？　はい「いいえ」
 
 // load jQuery
 jQuery.noConflict();
@@ -1462,7 +1468,7 @@ function mapTabControl() {
 
 			// 所持兵数の取得
 
-			// 出兵対象 		   剣兵  盾兵	槍兵  弓兵	騎兵  衝車	 斥候	大剣  重盾	 矛槍  弩兵  近衛  投石   斥候騎兵
+			// 出兵対象 			 剣兵  盾兵	槍兵	弓兵	騎兵	衝車	 斥候	大剣	重盾	 矛槍  弩兵  近衛  投石 	斥候騎兵
 			var dispatchTargets = [true, false, true, true, true, false, false, true, false, true, true, true, false, false];
 			var dispatchNames = ['infantry_count', 'shield_count', 'spear_count', 'archer_count', 'cavalry_count', 'ram_count', 'scout_count',
 								 'large_infantry_count', 'heavy_shield_count', 'halbert_count', 'crossbow_count', 'cavalry_guards_count', 'catapult_count', 'cavalry_scout_count'];
@@ -4602,7 +4608,7 @@ function execUnionPart() {
 									// 水鏡指定がある場合、水鏡かどうかを判定
 									var almighty = false;
 									if (use_almighty == true) {
-										var card_name = q$("div[class='right'] table[class='statusParameter1'] tbody tr", cards[i]).eq(1).children('td').eq(0).text();
+										var card_name = q$("div[class='left'] div[class='illustMini__div--name']", cards[i]).eq(0).text();
 										card_name = card_name.replace(/[ \t]/g, "");
 										if (card_name == "水鏡" || card_name == "水鏡(自分用)") {
 											almighty = true;
@@ -4888,7 +4894,7 @@ function execUnionPart() {
 									// 水鏡指定がある場合、水鏡かどうかを判定
 									var almighty = false;
 									if (use_almighty == true) {
-										var card_name = q$("div[class='right'] table[class='statusParameter1'] tbody tr", cards[i]).eq(1).children('td').eq(0).text();
+										var card_name = q$("div[class='left'] div[class='illustMini__div--name']", cards[i]).eq(0).text();
 										card_name = card_name.replace(/[ \t]/g, "");
 										if (card_name == "水鏡" || card_name == "水鏡(自分用)") {
 											almighty = true;
@@ -6111,7 +6117,7 @@ function deck_resttime_checker() {
 									 "<th class='tpad'>ラベル</th>";
 						for (var i = 0; i < maxhits; i++) {
 							tr += "<th class='tpad'>スキル</th>" +
-								  "<th class='tpad' style='width:75px;'>回復予定</th>";
+									"<th class='tpad' style='width:75px;'>回復予定</th>";
 						}
 						tr += "</tr>";
 
@@ -6158,7 +6164,7 @@ function deck_resttime_checker() {
 									}
 								} else {
 									tr += "<td class='tpad'>-</td>" +
-										  "<td class='tpad'>-</td>";
+											"<td class='tpad'>-</td>";
 								}
 							}
 							tr += "</tr>";
@@ -8257,8 +8263,8 @@ function reformat_report(is_view_damaged) {
 			var t2 = result_tr.eq(3).clone();
 			t1.attr('id', 'add_repo1');
 			t2.attr('id', 'add_repo2');
-			result_tr.eq(6).after(t1.prop('outerHTML'));   // 上級死傷
-			result_tr.eq(3).after(t2.prop('outerHTML'));   // 下級死傷
+			result_tr.eq(6).after(t1.prop('outerHTML'));	 // 上級死傷
+			result_tr.eq(3).after(t2.prop('outerHTML'));	 // 下級死傷
 
 			result_tr = q$("tr", result_elem);
 
@@ -8309,8 +8315,8 @@ function reformat_report(is_view_damaged) {
 		var t2 = result_tr.eq(3).clone();
 		t1.attr('id', 'add_repo3');
 		t2.attr('id', 'add_repo4');
-		result_tr.eq(6).after(t1.prop('outerHTML'));   // 上級死傷
-		result_tr.eq(3).after(t2.prop('outerHTML'));   // 下級死傷
+		result_tr.eq(6).after(t1.prop('outerHTML'));	 // 上級死傷
+		result_tr.eq(3).after(t2.prop('outerHTML'));	 // 下級死傷
 
 		result_tr = q$("tr", elem_reports.eq(2));
 
@@ -8496,7 +8502,7 @@ function exec_domestic_skill_step2_ex(element, village_id, card_id, use_skill, i
 	var skill_id = '';
 	var skills = element.closest(".cardStatusDetail").find(".card_back_extra .back_skill li span[class*='skill_name']");
 	skills.each(function(){
-	  if (q$(this).text().substr(2).trim() === use_skill) {
+		if (q$(this).text().substr(2).trim() === use_skill) {
 			var match = q$(this).next().children('a[class="btn_detail_s"]').attr("onclick").match(/openSkillInfoThick\('([a-z0-9]+)'/);
 			if (match !== null) {
 				skill_id = match[1];
