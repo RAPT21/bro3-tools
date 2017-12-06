@@ -3,7 +3,7 @@
 // @namespace	bro3_beyond
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		0.91.8
+// @version		0.91.9
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -32,6 +32,7 @@
 // 0.91.6	2017/08/13	RAPT. 内政官をセットして即スキルを使う処理を新方式で対応してみた、少し速くなったかも。
 // 0.91.7	2017/08/23	RAPT. 0.91.6 の改修の影響で、スキル検索結果からスキルが使えなくなっていたのを修正。（スキル検索結果からは従来方式でスキルを使います）
 // 0.91.8	2017/11/19	RAPT. カードの武将名が上部に移動された影響で、自動スキルレベルアップ合成の「水鏡を素材として使用する」をチェック時に動作しなくなっていたのを修正
+// 0.91.9	2017/12/06	RAPT. Google Chrome で動かなくなったらしいので修正
 //
 // TODO:
 // 内政ボタンで、拠点を変更せずにセットする新方式対応
@@ -419,7 +420,7 @@ GM_addStyle(css);
 
 	// 名声タイマーがセッション切れで死んでいたら復旧
 	if (GM_getValue(SERVER_NAME + '_fame_timer', null) == "FAILED") {
-		GM_setValue(SERVER_NAME + '_fame_timer', null)
+		GM_setValue(SERVER_NAME + '_fame_timer', null);
 	}
 
 	// 設定のロード
@@ -671,7 +672,7 @@ function profileControl() {
 		var func = function(a) {
 			var match = a.children('a').attr('href').match(/village_id=([0-9]*)/);
 			return match[1];
-		}
+		};
 		q$("#lowersort_obtained").on('click',
 			{selector: "#gray02Wrapper table[class='commonTables'] tr", offset: pos, index: 0, order_ascend: true},
 			function(param) {
@@ -1123,7 +1124,7 @@ function profileControl() {
 						}
 						wait = false;
 					});
-				}
+				};
 
 				var search_resource_timer = setInterval(search_resource_func, 150);
 			}
@@ -1268,7 +1269,7 @@ function profileControl() {
 							}
 							wait = false;
 						});
-					}
+					};
 					npc_timer = setInterval(npc_search_func, 150);
 				} else {
 					//-------------
@@ -1392,7 +1393,7 @@ function profileControl() {
 							}
 							wait = false;
 						});
-					}
+					};
 					npc_timer = setInterval(neighbor_search_func, 150);
 				}
 			}
@@ -3164,7 +3165,7 @@ function cardbookControl() {
 						q$("input[id='sell-price-check-button" + index + "']").on('click',
 							function() {
 								cardno = q$(this).parents("tr").children("td[class='center card-no']").text();
-								searchBuyRate(q$(this).attr("id"), cardno, true)
+								searchBuyRate(q$(this).attr("id"), cardno, true);
 							}
 						);
 					}
@@ -3469,7 +3470,7 @@ function createPagerPulldown() {
 				}
 				location.href = location.pathname + redirect_url;
 			}
-		)
+		);
 	}
 }
 
@@ -4030,7 +4031,7 @@ function execResourceTimer() {
 				}
 				q$("#res_4").css('color', 'yellow').html(display);
 			}
-		}
+		};
 		res_timer = setInterval(
 			timer_func, 1000
 		);
@@ -4319,7 +4320,7 @@ function execTradePart() {
 
 						var rate = 40 + rarebase[rarity][1] + skillsbase[skillct] + (sel_rarity == rarebase[rarity][2]) * 4 + (sel_group == group) * 4 + (group == 4) * 4;
 						var sumexp = parseInt(exp * rate / 100) + rarebase[rarity][0];
-						var per = Math.floor(sumexp / tp)
+						var per = Math.floor(sumexp / tp);
 						q$("td[class='right']", tradelist[tri]).eq(3).append(
 							"<div id='effect-view' style='font-size: 9px; color:green;'><span>+" + sumexp + "</span><br><span>" + per + "/TP</span></div>"
 						);
@@ -4330,7 +4331,7 @@ function execTradePart() {
 					for (var tri = 0; tri < tradelist.length; tri++) {
 						var tp = parseInt(q$("td[class='right']", tradelist[tri]).eq(3).text().replace(/,/g, ''));
 						var score = parseInt(q$("td[class='right']", tradelist[tri]).eq(2).text().replace(/,/g, ''));
-						var per = Math.floor(score / tp)
+						var per = Math.floor(score / tp);
 						q$("td[class='right']", tradelist[tri]).eq(3).append(
 							"<div id='effect-view' style='font-size: 9px; color:blue;'><span>" + per + "/TP</span></div>"
 						);
@@ -5441,7 +5442,7 @@ function execTradeCardPart() {
 			function() {
 				var base = q$(this).parents("div[class='cardStatusDetail label-setting-mode']");
 				var no_elem = q$("table[class='statusParameter1'] tbody tr", base).eq(0).children("td").eq(0);
-				searchBuyRate(q$(this).attr("id"), no_elem.text(), false)
+				searchBuyRate(q$(this).attr("id"), no_elem.text(), false);
 			}
 		);
 	}
@@ -6452,7 +6453,7 @@ function multipleDeckSet() {
 
 								// 基礎情報(武将名、武将レベル、コスト）
 								var info = q$("table[class='statusParameter1'] tbody tr", cards.eq(i));
-								var chp = parseInt(q$("td", info.eq(5)).eq(0).text())
+								var chp = parseInt(q$("td", info.eq(5)).eq(0).text());
 								if (chp < 100) {
 									// HPが不足している場合は除外
 									continue;
@@ -7385,7 +7386,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 					);
 				}
 			}
-		)
+		);
 
 		// チェックボックス選択時のイベント
 		q$("input[id*='auto_calc']").on('click',
@@ -7419,7 +7420,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 					);
 				}
 			}
-		)
+		);
 
 		//-----------------------------
 		// 自動補正値の設定内容ロード
@@ -7939,7 +7940,7 @@ function searchBuyRate(id, cardno, addBuyButton) {
 				q$("#" + id).parent().html(html);
 			}
 		} else {
-			html = "<span style='font-family:Verdana,arial,sans-serif; font-size: 14px; font-weight: bold; color: blue;'>即落なし</span>"
+			html = "<span style='font-family:Verdana,arial,sans-serif; font-size: 14px; font-weight: bold; color: blue;'>即落なし</span>";
 			q$("#" + id).parent().html(html);
 		}
 	});
