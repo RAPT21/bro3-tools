@@ -14,7 +14,7 @@
 // @grant		GM_xmlhttpRequest
 // @grant		GM_log
 // @author		RAPT
-// @version		2017.08.19
+// @version		2017.12.06
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -114,8 +114,9 @@
 // 2017.08.16 運営の自動建設機能による全建設中の検出対応
 // 2017.08.18 市場変換対象の拠点で運営の自動建設機能による一括建設中に市場変換など一部機能が動作しない問題への対処（一括建設中は運営タイマーバグ対策が作動しないようにした）
 // 2017.08.19 運営の自動建設機能による自動建設中の検出対応
+// 2017.12.06 Google Chrome で動かなくなったらしいので修正
 
-var VERSION = "2017.08.19"; 	// バージョン情報
+var VERSION = "2017.12.06"; 	// バージョン情報
 
 jQuery.noConflict();
 j$ = jQuery;
@@ -378,8 +379,8 @@ var KAZIBA		= 232;	// 鍛冶場	2013.12.26
 var FACLINK = "http://SITE/facility/facility.php?x=urlX&y=urlY";
 var VILLAGELINK = "http://SITE/village.php#ptop";
 // 2012.04.10
-var LANDLINK = "http://SITE/land.php?x=urlX&y=urlY"
-var SETTLELINK = "http://SITE/facility/select_type.php?x=urlX&y=urlY&mode=build&type=fID"
+var LANDLINK = "http://SITE/land.php?x=urlX&y=urlY";
+var SETTLELINK = "http://SITE/facility/select_type.php?x=urlX&y=urlY&mode=build&type=fID";
 
 var VillageData = new Array();
 var OPT_VILLAGE = new Array();
@@ -444,10 +445,10 @@ var DBG_Flg = false;
 		mixi_ad_news.snapshotItem(0).style.display = "none";
 	}
 
-	addOpenLinkHtml()
+	addOpenLinkHtml();
 	if ( getStayMode() ) {
-		closeIniBilderBox()
-		openIniBilderBox()
+		closeIniBilderBox();
+		openIniBilderBox();
 	}
 	// =============================================================================================
 
@@ -473,8 +474,8 @@ var DBG_Flg = false;
 		getParameter("user_id") == "") {
 		getUserProf(document);
 		if ( getStayMode() ) {
-			closeIniBilderBox()
-			openIniBilderBox()
+			closeIniBilderBox();
+			openIniBilderBox();
 		}
 	}
 	OPT_BUILD_VID = GM_getValue(HOST+PGNAME+"OPT_BUILD_VID" , "" );
@@ -554,8 +555,8 @@ var DBG_Flg = false;
 				data[IDX_ACTIONS] = new Array();
 				saveVillage(data, TYPE_DOMESTIC);
 				if ( getStayMode() ) {
-					closeIniBilderBox()
-					openIniBilderBox()
+					closeIniBilderBox();
+					openIniBilderBox();
 				}
 				forwardNextVillage();						// 次の拠点へ移動
 			}
@@ -585,8 +586,8 @@ var DBG_Flg = false;
 						data[IDX_ACTIONS] = new Array();
 						saveVillage(data, TYPE_DOMESTIC);
 						if ( getStayMode() ) {
-							closeIniBilderBox()
-							openIniBilderBox()
+							closeIniBilderBox();
+							openIniBilderBox();
 						}
 						forwardNextVillage();						// 次の拠点へ移動
 					}
@@ -608,8 +609,8 @@ var DBG_Flg = false;
 				htmldoc.innerHTML = x;
 			getTrainingSoldier(htmldoc);
 			if ( getStayMode() ) {
-				closeIniBilderBox()
-				openIniBilderBox()
+				closeIniBilderBox();
+				openIniBilderBox();
 			}
 		});
 
@@ -617,9 +618,9 @@ var DBG_Flg = false;
 
 })();
 
-function log() { console.log.apply(console, Array.slice(arguments)) };
+function log() { console.log.apply(console, Array.slice(arguments)); }
 
-function debugLog( mes ) {	if (DEBUG) { console.log(mes); }	};
+function debugLog( mes ) {	if (DEBUG) { console.log(mes); }	}
 
 // ===========================================================================================================
 
@@ -690,8 +691,8 @@ function settleVillages(z){
 									if (!htmldoc.innerHTML.match(/名声が不足しています/)) {
 										getAddingVillage(htmldoc);
 										if ( getStayMode() ) {
-											closeIniBilderBox()
-											openIniBilderBox()
+											closeIniBilderBox();
+											openIniBilderBox();
 										}
 									}
 								}
@@ -815,8 +816,8 @@ function checkVillageLength() {
 					//拠点リストを更新
 					getUserProf(htmldoc);
 					if ( getStayMode() ) {
-						closeIniBilderBox()
-						openIniBilderBox()
+						closeIniBilderBox();
+						openIniBilderBox();
 					}
 					//本拠地に強制ジャンプ
 					var villages = loadVillages(HOST+PGNAME);
@@ -868,8 +869,8 @@ debugLog("=== Start checkVillageLengthDiff ===");
 							htmldoc.innerHTML = x.responseText;
 						getUserProf(htmldoc);
 						if ( getStayMode() ) {
-							closeIniBilderBox()
-							openIniBilderBox()
+							closeIniBilderBox();
+							openIniBilderBox();
 						}
 						var tid=setTimeout(function(){location.reload();},INTERVAL);
 					}
@@ -965,7 +966,7 @@ function getAddingVillage(htmldoc) {
 		villageLink.id = "village";
 		villageLink.href = "javascript:void(0);";
 		villageLink.innerHTML = "村建設予約";
-		villageLink.addEventListener("click", function() {addReserveVillages(220)}, true);
+		villageLink.addEventListener("click", function() {addReserveVillages(220);}, true);
 		tMenu.snapshotItem(0).appendChild(villageLink);
 
 		//砦作成予約
@@ -973,7 +974,7 @@ function getAddingVillage(htmldoc) {
 		fortLink.id = "fort";
 		fortLink.href = "javascript:void(0);";
 		fortLink.innerHTML = "砦建設予約";
-		fortLink.addEventListener("click", function() {addReserveVillages(222)}, true);
+		fortLink.addEventListener("click", function() {addReserveVillages(222);}, true);
 		tMenu.snapshotItem(0).appendChild(fortLink);
 
 	}
@@ -1004,7 +1005,7 @@ function getAddingVillage(htmldoc) {
 		villageLink.style.textAlign = "center";
 		villageLink.href = "javascript:void(0);";
 		villageLink.innerHTML = "村";
-		villageLink.addEventListener("click", function() {addReserveVillages(220)}, true);
+		villageLink.addEventListener("click", function() {addReserveVillages(220);}, true);
 		tMenu.snapshotItem(0).appendChild(villageLink);
 
 		var villageLink = document.createElement("span");
@@ -1022,7 +1023,7 @@ function getAddingVillage(htmldoc) {
 		fortLink.style.textAlign = "center";
 		fortLink.href = "javascript:void(0);";
 		fortLink.innerHTML = "砦";
-		fortLink.addEventListener("click", function() {addReserveVillages(222)}, true);
+		fortLink.addEventListener("click", function() {addReserveVillages(222);}, true);
 		tMenu.snapshotItem(0).appendChild(fortLink);
 
 	}
@@ -1036,14 +1037,14 @@ function getAddingVillage(htmldoc) {
 				  if(kind == 220){msg += "村建設予約";
 			}else if(kind == 222){msg += "砦建設予約";
 			}
-			msg += "を受け付けました。"
+			msg += "を受け付けました。";
 		} else {
 			msg += "(" + URL_PARAM.x + "," + URL_PARAM.y + ")には、すでに建設予約があります。";
 		}
 		alert(msg);
 		if ( getStayMode() ) {
-			closeIniBilderBox()
-			openIniBilderBox()
+			closeIniBilderBox();
+			openIniBilderBox();
 		}
 	}
 
@@ -1102,7 +1103,7 @@ function addLinkTondenVillage() {
 		villageLink.id = "village";
 		villageLink.href = "javascript:void(0);";
 		villageLink.innerHTML = "村";
-		villageLink.addEventListener("click", function() {addReserveVillages(220)}, true);
+		villageLink.addEventListener("click", function() {addReserveVillages(220);}, true);
 		tMenu.snapshotItem(0).appendChild(villageLink);
 
 		var villageLink = document.createElement("span");
@@ -1114,7 +1115,7 @@ function addLinkTondenVillage() {
 		fortLink.id = "fort";
 		fortLink.href = "javascript:void(0);";
 		fortLink.innerHTML = "砦";
-		fortLink.addEventListener("click", function() {addReserveVillages(222)}, true);
+		fortLink.addEventListener("click", function() {addReserveVillages(222);}, true);
 		tMenu.snapshotItem(0).appendChild(fortLink);
 
 	}
@@ -1128,14 +1129,14 @@ function addLinkTondenVillage() {
 				  if(kind == 220){msg += "村建設予約";
 			}else if(kind == 222){msg += "砦建設予約";
 			}
-			msg += "を受け付けました。"
+			msg += "を受け付けました。";
 		} else {
 			msg += "(" + x + "," + y + ")には、すでに建設予約があります。";
 		}
 		alert(msg);
 		if ( getStayMode() ) {
-			closeIniBilderBox()
-			openIniBilderBox()
+			closeIniBilderBox();
+			openIniBilderBox();
 		}
 	}
 
@@ -1187,8 +1188,8 @@ function getDeletingVillage(htmldoc) {
 		delList(1, x, y);
 	}
 	if ( getStayMode() ) {
-		closeIniBilderBox()
-		openIniBilderBox()
+		closeIniBilderBox();
+		openIniBilderBox();
 	}
 
 	function addList(tim, kind, status, x, y)
@@ -1725,8 +1726,8 @@ debugLog("=== Start autoLvup ===");
 						// 鍛冶場・防具工場情報の取得
 						getTrainingSoldier(htmldoc);
 						if ( getStayMode() ) {
-							closeIniBilderBox()
-							openIniBilderBox()
+							closeIniBilderBox();
+							openIniBilderBox();
 						}
 
 						var actionsElem  = document.evaluate('//th[@class="mainTtl6"]', htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -1823,7 +1824,7 @@ debugLog("=== Start autoLvup ===");
 				});
 			},0);
 		}
-	}
+	};
 	make_loop(0);
 }
 
@@ -2100,7 +2101,7 @@ debugLog("=== Start setVillageFacility ===");
 				OPT_CHKBOX.push(0,0,0);
 				OPT_CHKBOXLV.push(0,0,0);
 			}
-			OPT_CHKBOX.push
+			OPT_CHKBOX.push;
 			for(var ii=0;ii<OPT_FUC_NAME.length;ii++){
 				//ソートしたLvの低い順に比較する
 				if(area[i].name == OPT_FUC_NAME[ii]){
@@ -3764,13 +3765,13 @@ function addIniBilderHtml() {
 	// 確認済みボタン
 	var Button2 = d.createElement("span");
 		ccreateButton(Button2, "確認済", "完了済の作業を削除します",
-			function() { confirmTimer() });
+			function() { confirmTimer(); });
 	ButtonBox.appendChild(Button2);
 
 	// 閉じるボタン
 	var Button3 = d.createElement("span");
 		ccreateButton(Button3, "閉じる", "ウインドウを閉じます",
-			function() {closeIniBilderBox()});
+			function() {closeIniBilderBox();});
 	ButtonBox.appendChild(Button3);
 
 	// 常駐チェックボックス
@@ -3783,7 +3784,7 @@ function addIniBilderHtml() {
 	stayBox.style.verticalAlign = "middle";
 	stayBox.checked = getStayMode();
 	stayBox.addEventListener("change",
-		function() {changeStayMode(this.checked)}, true);
+		function() {changeStayMode(this.checked);}, true);
 	ButtonBox.appendChild(stayBox);
 
 	var stayCap = document.createElement("span");
@@ -3802,7 +3803,7 @@ function addIniBilderHtml() {
 	reverseBox.style.verticalAlign = "middle";
 	reverseBox.checked = getReverseMode();
 	reverseBox.addEventListener("change",
-		function() {changeReverseMode(this.checked)}, true);
+		function() {changeReverseMode(this.checked);}, true);
 	ButtonBox.appendChild(reverseBox);
 
 	var reverseCap = document.createElement("span");
@@ -3827,7 +3828,7 @@ function addIniBilderHtml() {
 	selectBox.addEventListener("change",
 		function() {
 			GM_setValue(HOST+PGNAME+"OPT_ROUND_TIME1" , document.getElementById("dispMode").value );
-			OPT_ROUND_TIME1 = document.getElementById("dispMode").value
+			OPT_ROUND_TIME1 = document.getElementById("dispMode").value;
 		}, true);
 	typeDiv.appendChild(selectBox);
 
@@ -3928,8 +3929,8 @@ function addIniBilderHtml() {
 		msg.innerHTML = "<br>" +
 						"　　インストールありがとうございます。<br>" +
 						"　　まずは、プロフィール画面を開いて<br>" +
-						"　　拠点情報を取得してください。<br>　";
-						"　　うまく動作しない場合、他のツールを<br>　";
+						"　　拠点情報を取得してください。<br>　"+
+						"　　うまく動作しない場合、他のツールを<br>　"+
 						"　　一旦OFFにしてから再度実行してください。<br>　";
 		td.appendChild(msg);
 	} else {
@@ -4033,8 +4034,8 @@ function addIniBilderHtml() {
 								if (exists) {
 									saveVillages(hosts[ii] + PGNAME, villages);
 									if ( getStayMode() ) {
-										closeIniBilderBox()
-										openIniBilderBox()
+										closeIniBilderBox();
+										openIniBilderBox();
 									}
 									return;
 								}
@@ -4139,7 +4140,7 @@ function addIniBilderHtml() {
 			delTd.addEventListener("click", function() {
 				var x = this.getAttribute('x');
 				var y = this.getAttribute('y');
-				delList(x, y)
+				delList(x, y);
 			}, true); //delListへ
 		}
 		else if(lists[i].status == VS_BUILD_COMP || lists[i].status == VS_DESTROY_COMP){
@@ -4156,7 +4157,7 @@ function addIniBilderHtml() {
 			delTd.addEventListener("click", function() {
 				var x = this.getAttribute('x');
 				var y = this.getAttribute('y');
-				delList(x, y)
+				delList(x, y);
 			}, true); //delListへ
 
 		}
@@ -4176,8 +4177,8 @@ function addIniBilderHtml() {
 				csaveData(HOST+"ReserveList", lists, true, true );
 
 				//更新後内容で表示
-				closeIniBilderBox()
-				openIniBilderBox()
+				closeIniBilderBox();
+				openIniBilderBox();
 
 				break;
 			}
@@ -4384,10 +4385,10 @@ function addInifacHtml(vId) {
 	ccreateCheckBoxKai2(td113, "OPT_CHKBOX", 19, " 研究所 　　","自動でLv上げをする建築物にチェックをしてください。",0);
 	ccreateCheckBoxKai2(td113, "OPT_CHKBOX", 22, " 見張り台 　","自動でLv上げをする建築物にチェックをしてください。",0);
 
-	ccreateButton(td31, "衝車研究",		"衝車研究までの設定にします。",				function() {InitPreset_01()});
-	ccreateButton(td31, "訓練所",		"訓練所までの設定にします。",				function() {InitPreset_02()});
-	ccreateButton(td31, "遠征訓練",		"遠征訓練所までの設定にします。",			function() {InitPreset_03()});
-	ccreateButton(td31, "初期化",		"自動建設設定を消去します。",				function() {clearInifacBox()});
+	ccreateButton(td31, "衝車研究",		"衝車研究までの設定にします。",				function() {InitPreset_01();});
+	ccreateButton(td31, "訓練所",		"訓練所までの設定にします。",				function() {InitPreset_02();});
+	ccreateButton(td31, "遠征訓練",		"遠征訓練所までの設定にします。",			function() {InitPreset_03();});
+	ccreateButton(td31, "初期化",		"自動建設設定を消去します。",				function() {clearInifacBox();});
 
 	// ===== 自動削除 ===== 2015.05.10
 	var Remove_Box = d.createElement("table");
@@ -4882,7 +4883,7 @@ function addInifacHtml(vId) {
 	ccreateTextBox(td826,"OPT_SOL_ADD12", OPT_SOL_ADD[12],"","衝車の作成単位",7,0);
 	ccreateTextBox(td827,"OPT_SOL_ADD13", OPT_SOL_ADD[13],"","投石機の作成単位",7,0);
 	ccreateText(td828, "dummy", "　", 0 );
-	ccreateButton(td829, "作成中止", "兵士の作成単位を初期化します。", function() {clearInitSoldier()});
+	ccreateButton(td829, "作成中止", "兵士の作成単位を初期化します。", function() {clearInitSoldier();});
 
 
 	// ===== 自動 武器・防具強化 ====
@@ -5010,7 +5011,7 @@ function addInifacHtml(vId) {
 	ccreateTextBox(td916,"OPT_BG_LV12", OPT_BG_LV[12],"","衝車の防具レベル",7,0);
 	ccreateTextBox(td917,"OPT_BG_LV13", OPT_BG_LV[13],"","投石機の防具レベル",7,0);
 	ccreateText(td918, "dummy", "　", 0 );
-	ccreateButton(td919, "初期化", "武器・防具の設定レベルを消去します。", function() {clearInitArmsArmor()});
+	ccreateButton(td919, "初期化", "武器・防具の設定レベルを消去します。", function() {clearInitArmsArmor();});
 
 
 	// ===== 残す資源量 ====
@@ -5077,7 +5078,7 @@ function addInifacHtml(vId) {
 	ccreateTextBox(tda12,"OPT_BLD_STONE", OPT_BLD_STONE,"","石を残す量",7,0);
 	ccreateTextBox(tda13,"OPT_BLD_IRON", OPT_BLD_IRON,"","鉄を残す量",7,0);
 	ccreateTextBox(tda14,"OPT_BLD_RICE", OPT_BLD_RICE,"","糧を残す量",7,0);
-	var btn = ccreateButton(tda15, "初期化", "残す資源量の設定内容を消去します。", function() {clearInitRemainingRes()},54,0);
+	var btn = ccreateButton(tda15, "初期化", "残す資源量の設定内容を消去します。", function() {clearInitRemainingRes();},54,0);
 	j$(btn).before("　　");
 
 	// ===== 宿舎村設定 ===== 2013.12.26
@@ -5159,7 +5160,7 @@ function addInifacHtml(vId) {
 	ccreateButton(td711, "保存", "設定内容を保存します", function() {
 		j$(this).attr("value","保存中");
 		j$(this).attr("id","AFSaveButton");
-		SaveInifacBox(ABfacContainer.getAttribute('vId'))
+		SaveInifacBox(ABfacContainer.getAttribute('vId'));
 		//alert("保存しました");
 		setTimeout(function(){ j$("#AFSaveButton").attr("value","保存"); },200);
 	});
@@ -5169,7 +5170,7 @@ function addInifacHtml(vId) {
 		tidMain2=setTimeout(function(){location.reload();},INTERVAL);
 	});
 	ccreateButton(td711, "保存して閉じる", "設定内容を保存して閉じます(リロードなし)", function() {
-		SaveInifacBox(ABfacContainer.getAttribute('vId'))
+		SaveInifacBox(ABfacContainer.getAttribute('vId'));
 		closeInifacBox();
 	},90);
 
@@ -5178,8 +5179,8 @@ function addInifacHtml(vId) {
 		ccreateButton(td711, "市場情報初期化", "市場情報を初期化します", function() {
 
 			csaveData(HOST+"ShopList",[],true,true);
-			closeIniBilderBox()
-			openIniBilderBox()
+			closeIniBilderBox();
+			openIniBilderBox();
 			alert("市場情報を初期化しました");
 		},90);
 	}
@@ -5201,11 +5202,11 @@ function addInifacHtml(vId) {
 			td001.appendChild(tut_Box); 				// 2013.12.18
 		}
 
-		td001.appendChild(Domestic_Box)
+		td001.appendChild(Domestic_Box);
 
 		// 本拠地かどうか
 		if (vId == villages[0][IDX_XY]) {
-			td001.appendChild(Market_Box)
+			td001.appendChild(Market_Box);
 		}
 
 
@@ -5719,7 +5720,7 @@ function getUserProf(htmldoc) {
 		newVil[IDX_XY] = xy;
 		newVil[IDX_BASE_NAME] = name;
 		newVil[IDX_URL] = url;
-		newVil[IDX_BASE_ID]=getParameter2(url, "village_id")
+		newVil[IDX_BASE_ID]=getParameter2(url, "village_id");
 		newVillages.push(newVil);
 	}
 
@@ -6591,7 +6592,7 @@ function addSoldierCount(total, add) {
 }
 
 function make_soldier(attackerData){
-	var make_name = ["兵器工房","厩舎","兵舎","弓兵舎","練兵所"]
+	var make_name = ["兵器工房","厩舎","兵舎","弓兵舎","練兵所"];
 
 	var make_loop = function(loop) {
 		if (loop == 5) {
@@ -6689,8 +6690,8 @@ function make_soldier(attackerData){
 								// 兵士は作成中
 								getTrainingSoldier(htmldoc);
 								if ( getStayMode() ) {
-									closeIniBilderBox()
-									openIniBilderBox()
+									closeIniBilderBox();
+									openIniBilderBox();
 								}
 							} else {
 								var makeElem  = document.evaluate('//th[@class="mainTtl"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -6720,7 +6721,7 @@ function make_soldier(attackerData){
 				make_loop(loop + 1);
 			}
 		}
-	}
+	};
 
 	make_loop(0);
 
@@ -7015,7 +7016,7 @@ debugLog("=== Start ichibaChange ===");
 
 			var min_sigen = 9999999999;
 
-			if((OPT_TO_WOOD  > 0) && (RES_NOW["wood"]  < min_sigen && CHG_NOW["wood"] == 1))  { min_sigen = RES_NOW["wood"] };
+			if((OPT_TO_WOOD  > 0) && (RES_NOW["wood"]  < min_sigen && CHG_NOW["wood"] == 1))  { min_sigen = RES_NOW["wood"]; };
 			if((OPT_TO_STONE > 0) && (RES_NOW["stone"] < min_sigen && CHG_NOW["stone"] == 1)) { min_sigen = RES_NOW["stone"]; }
 			if((OPT_TO_IRON  > 0) && (RES_NOW["iron"]  < min_sigen && CHG_NOW["iron"] == 1))  { min_sigen = RES_NOW["iron"]; }
 
@@ -7187,8 +7188,8 @@ debugLog("=== Start ichibaChange ===");
 		csaveData(HOST+"ShopList",shoplist,true,true);
 		// 市場情報が更新されたら表示しなおし
 		if ( getStayMode() ) {
-			closeIniBilderBox()
-			openIniBilderBox()
+			closeIniBilderBox();
+			openIniBilderBox();
 		}
 	}
 
@@ -7202,8 +7203,8 @@ debugLog("=== Start ichibaChange ===");
 		}
 		// 市場情報が更新されたら表示しなおし
 		if ( getStayMode() ) {
-			closeIniBilderBox()
-			openIniBilderBox()
+			closeIniBilderBox();
+			openIniBilderBox();
 		}
 	}
 }
@@ -7330,7 +7331,7 @@ debugLog("=== Start Auto Domestic ===");
 							var link = skillTag.substring(skillTag.indexOf("href=",0)+6,skillTag.indexOf("\"",skillTag.indexOf("href=",0)+7));
 							do {
 								link = link.replace(/&amp;/,"&");
-							}while(link.indexOf("&amp;",0) > 1)
+							}while(link.indexOf("&amp;",0) > 1);
 							DomesticFlg    = true;
 
 							GM_xmlhttpRequest({ 	method:"GET", url:"http://" + HOST + link, headers:{"Content-type":"text/html"}, overrideMimeType:'text/html; charset=utf-8',	onload:function(x){
@@ -7600,8 +7601,8 @@ function getVillageActions() {
 	data[IDX_ACTIONS] = actions2;
 	saveVillage(data, TYPE_MARCH);
 	if ( getStayMode() ) {
-		closeIniBilderBox()
-		openIniBilderBox()
+		closeIniBilderBox();
+		openIniBilderBox();
 	}
 }
 
@@ -7680,7 +7681,7 @@ function createActionDiv(action, nowTime, baseXy, host) {
 		var key = host + DELIMIT1 + baseXy + DELIMIT1 + action[IDX2_TIME];
 		delLink.addEventListener("click",
 			(function(key_) {
-				return function() { deleteAction(key_); }
+				return function() { deleteAction(key_); };
 			})(key), true);
 		actionDiv.appendChild(delLink);
 	}
@@ -7712,8 +7713,8 @@ function confirmTimer() {
 
 	//更新後内容で表示　2013.01.10 ???
 	if ( getStayMode() ) {
-		closeIniBilderBox()
-		openIniBilderBox()
+		closeIniBilderBox();
+		openIniBilderBox();
 	}
 
 }
@@ -7753,8 +7754,8 @@ function deleteAction(key) {
 		if (exists) {
 			saveVillages(hosts[ii] + PGNAME, villages);
 			if ( getStayMode() ) {
-				closeIniBilderBox()
-				openIniBilderBox()
+				closeIniBilderBox();
+				openIniBilderBox();
 			}
 			return;
 		}
@@ -7782,8 +7783,8 @@ function getTrainingSoldier(htmldoc) {
 	if (mSolTypeT.snapshotLength > 2) {
 		var mSolType = document.evaluate('//*[@class="mainTtl"]',mSolTypeT.snapshotItem(1), null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 		for(var r=1;r < mSolType.snapshotLength;r++) {
-			tt[r-1] = new Array()
-			tt[r-1] = mSolType.snapshotItem(r).innerHTML
+			tt[r-1] = new Array();
+			tt[r-1] = mSolType.snapshotItem(r).innerHTML;
 			var endflg = false;
 			if (r > 1) {
 				for (var q=0;q<r-1;q++) {
@@ -7938,8 +7939,8 @@ function getDomesticSkill(htmldoc) {
 	}
 	saveVillage(data, TYPE_DOMESTIC);
 	if ( getStayMode() ) {
-		closeIniBilderBox()
-		openIniBilderBox()
+		closeIniBilderBox();
+		openIniBilderBox();
 	}
 }
 //常駐モード取得
