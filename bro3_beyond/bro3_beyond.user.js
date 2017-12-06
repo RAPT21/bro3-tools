@@ -3,7 +3,7 @@
 // @namespace	bro3_beyond
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		0.91.9
+// @version		0.91.10
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -33,6 +33,7 @@
 // 0.91.7	2017/08/23	RAPT. 0.91.6 の改修の影響で、スキル検索結果からスキルが使えなくなっていたのを修正。（スキル検索結果からは従来方式でスキルを使います）
 // 0.91.8	2017/11/19	RAPT. カードの武将名が上部に移動された影響で、自動スキルレベルアップ合成の「水鏡を素材として使用する」をチェック時に動作しなくなっていたのを修正
 // 0.91.9	2017/12/06	RAPT. Google Chrome で動かなくなったらしいので修正
+// 0.91.10	2017/12/06	RAPT. 運営のメンテ？にて、Google Chrome で内政スキル使用リンクの追加機能が動作しなくなった問題を修正
 //
 // TODO:
 // 内政ボタンで、拠点を変更せずにセットする新方式対応
@@ -4623,7 +4624,7 @@ function execUnionPart() {
 									}
 
 									// 2つ目のスキルを保持するカードは無視する
-									var second_skill = q$("div[class='right'] table[class='statusParameter2'] tbody tr", cards[i]).eq(3).children('td').text();
+									var second_skill = q$("div[class='right'] table[class^='statusParameter2'] tbody tr", cards[i]).eq(3).children('td').text();
 									second_skill = second_skill.replace(/[ \t]/g, "");
 									if (second_skill != "") {
 										continue;
@@ -4909,7 +4910,7 @@ function execUnionPart() {
 									}
 
 									// 2つ目のスキルを保持するカードは無視する
-									var second_skill = q$("div[class='right'] table[class='statusParameter2'] tbody tr", cards[i]).eq(3).children('td').text();
+									var second_skill = q$("div[class='right'] table[class^='statusParameter2'] tbody tr", cards[i]).eq(3).children('td').text();
 									second_skill = second_skill.replace(/[ \t]/g, "");
 									if (second_skill != "") {
 										continue;
@@ -6912,7 +6913,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 		for (var i = 0; i < cards.length; i++) {
 			// パッシブ判定
 			var elembase = cards.eq(i).children("div[class='statusDetail clearfix']");
-			var elems = q$("div[class='right'] table[class='statusParameter2'] tbody tr", elembase);
+			var elems = q$("div[class='right'] table[class^='statusParameter2'] tbody tr", elembase);
 			var elems_l = q$("div[class='left']", elembase);
 			var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
 			var skills = q$("div[id='cardWindow_" + match[1] + "'] ul[class='back_skill'] li", cards.eq(i));
@@ -7889,7 +7890,7 @@ function addTradeLinkOnSmallCardDeck() {
 		);
 
 		// スキル名検索のリンクをつける
-		var elems = q$("table[class='statusParameter2'] tbody tr", base);
+		var elems = q$("table[class^='statusParameter2'] tbody tr", base);
 		for (var j = 2; j < elems.length; j++) {
 			var skillname = elems.eq(j).children("td").eq(0).text();
 			var match = skillname.match(/(.*)(LV[0-9]*)/);
