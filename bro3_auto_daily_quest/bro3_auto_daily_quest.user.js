@@ -12,9 +12,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2017.09.05
+// @version 	2017.12.06
 // ==/UserScript==
-var VERSION = "2017.09.05"; 	// バージョン情報
+var VERSION = "2017.12.06"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -64,6 +64,7 @@ var OPT_VALUE_IGNORE_SECONDS = -1; // 負荷を下げる為、指定秒数以内
 // 2016.06.04 自動出兵が有効で、出兵条件を満たさなかった時、寄付クエとデュエルクエ以外の機能が動作していなかった不具合を修正。
 // 2016.07.27 スクリプトを推奨フォーマットで書き直した。
 // 2017.09.05 受信箱の仕様が変わり、受信箱に 5 個以上アイテムがあるとき、受け取れなくなっていたのを修正。
+// 2017.12.06 Google Chrome で動かなくなったらしいので修正
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -175,10 +176,11 @@ function moveFromInbox(reloadIfNeed){
 
 		if (count) {
 			var ssid = xpath('//form[@name="multimoveform"]/input[@name="ssid"]',htmldoc).snapshotItem(0);
-			var c = {};
-			c['item_id_list'] = item_id_list;
-			c['ssid'] = ssid.value;
-			httpPOST('http://'+HOST+'/item/inbox.php',c,function(x){moveFromInbox(true)});
+			var c = {
+				'item_id_list': item_id_list,
+				'ssid': ssid.value
+            };
+			httpPOST('http://'+HOST+'/item/inbox.php',c,function(x){moveFromInbox(true);});
 		} else if (reloadIfNeed) {
 			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 		}
@@ -187,13 +189,14 @@ function moveFromInbox(reloadIfNeed){
 
 // 寄付
 function postDonate(callback) {
-	var c={};
-	c['contributionForm'] = "";
-	c['wood'] = 0;
-	c['stone'] = 0;
-	c['iron'] = 0;
-	c['rice'] = 500;
-	c['contribution'] = 1;
+	var c = {
+        'contributionForm': "",
+        'wood': 0,
+        'stone': 0,
+        'iron': 0,
+        'rice': 500,
+        'contribution': 1
+    };
 	httpPOST('http://'+HOST+'/alliance/level.php',c,function(x){
 		if (callback) {
 			callback();
@@ -227,13 +230,14 @@ function duel(callback){
 
 					x.match(/battleStart\((\d+),\s(\d+),\s(\d+)\)/);
 
-					var c = {};
-					c['deck']	=	1;
-					c['euid']	=	parseInt(RegExp.$2,10);
-					c['edeck']	=	0;
+					var c = {
+                        'deck': 1,
+                        'euid': parseInt(RegExp.$2,10),
+                        'edeck': 0
+                    };
 
 					// デュエルの開始
-					httpGET("http://" + HOST + "/pvp_duel/process_json.php?deck=1&euid=" + c['euid'] + "&edeck=0", c , function(x) {
+					httpGET("http://" + HOST + "/pvp_duel/process_json.php?deck=1&euid=" + c.euid + "&edeck=0", c , function(x) {
 						//location.reload();
 						if (callback) {
 							callback(true);
@@ -274,9 +278,10 @@ function yorozudas(callback){
 
 		var reward_list = xpath('//form/input[@value="ヨロズダスを引く" and not(contains(text(),"ヨロズダスの残り回数がありません"))]', htmldoc);
 		if (reward_list.snapshotLength) {
-			var c={};
-			c['send']='send';
-			c['got_type']=0;
+			var c = {
+                'send': 'send',
+                'got_type': 0
+            };
 			httpPOST('http://'+HOST+'/reward_vendor/reward_vendor.php',c,function(das){
 				var div = document.createElement('div');
 					div.innerHTML = das.responseText;
@@ -391,7 +396,7 @@ function acceptAttentionQuest(callback) {
 			}
 		}
 
-		if (quest_list.length == 0) {
+		if (quest_list.length === 0) {
 			checkAttentionQuest(htmldoc, callback);
 			return;
 		}
@@ -416,15 +421,16 @@ function acceptAttentionQuest(callback) {
 function sendTroop(vID, cardID, cardGage, targetX, targetY, callback) {
 	// 指定の武将を指定の拠点から指定座標に向ける
 	httpGET('http://'+HOST+'/village_change.php?village_id='+vID+'&from=menu&page=%2Fvillage.php#ptop',function(x){
-		var c = {};
-		c['village_x_value'] = targetX; // 出兵先座標x
-		c['village_y_value'] = targetY; // 出兵先座標y
-		c['unit_assign_card_id'] = cardID; // 武将カードID
-		c['radio_move_type'] = '302'; // 301=援軍,302=殲滅,303=強襲,306=偵察
+		var c = {
+            'village_x_value': targetX, // 出兵先座標x
+            'village_y_value': targetY, // 出兵先座標y
+            'unit_assign_card_id': cardID, // 武将カードID
+            'radio_move_type': '302', // 301=援軍,302=殲滅,303=強襲,306=偵察
 
-	 	c['radio_reserve_type'] = '0';
-		c['btn_send'] = '出兵';
-		c['card_id'] = '204';
+            'radio_reserve_type': '0',
+            'btn_send': '出兵',
+            'card_id': '204'
+        };
 
 		console.log(SERVER+"拠点 "+vID+" から ("+targetX+","+targetY+") へ "+cardID+" [討伐:"+cardGage+"] で出兵します。");
 		httpPOST('http://'+HOST+'/facility/castle_send_troop.php',c,function(x){
@@ -439,7 +445,7 @@ function callSendTroop()
 	var targetX	= OPT_TROOPS_X;			// 出兵先座標x
 	var targetY	= OPT_TROOPS_Y;			// 出兵先座標y
 
-	if (OPT_TROOPS_CARD_ID == 0) {
+	if (OPT_TROOPS_CARD_ID === 0) {
 		console.log(SERVER+"出兵クエ情報が登録されていません！");
 		return false;
 	}
@@ -510,7 +516,7 @@ function callSendTroop()
 				}
 				if (quest_id == ID_DUEL && OPT_QUEST_DUEL){
 					// デュエルクエ
-					duel(function(worked){receiveRewards()});
+					duel(function(worked){receiveRewards();});
 					return;
 				}
 				if (quest_id == ID_TROOPS && OPT_QUEST_TROOPS){
@@ -776,23 +782,23 @@ function openSettingBox() {
 
 	// 保存ボタン
 	var Button2 = d.createElement("span");
-		ccreateButton(Button2, "保存して閉じる", "設定内容を保存してウィンドウを閉じます。", function() {saveSettingBox(); closeSettingBox()}, 120);
+		ccreateButton(Button2, "保存して閉じる", "設定内容を保存してウィンドウを閉じます。", function() {saveSettingBox(); closeSettingBox();}, 120);
 	ButtonBox.appendChild(Button2);
 
 	// 閉じるボタン
 	var Button3 = d.createElement("span");
-		ccreateButton(Button3, "キャンセル", "設定内容を破棄してウィンドウを閉じます。", function() {closeSettingBox()}, 88);
+		ccreateButton(Button3, "キャンセル", "設定内容を破棄してウィンドウを閉じます。", function() {closeSettingBox();}, 88);
 	ButtonBox.appendChild(Button3);
 }
 
 
 function closeSettingBox() {
 	var elem = d.getElementById("ADContainer");
-	if (elem == undefined) return;
+	if (elem === undefined) return;
 	d.body.removeChild(d.getElementById("ADContainer"));
 
-	var elem = d.getElementById("ADContainer");
-	if (elem == undefined) return;
+	elem = d.getElementById("ADContainer");
+	if (elem === undefined) return;
 	d.body.removeChild(document.getElementById("ADContainer"));
 }
 
@@ -834,7 +840,7 @@ function saveSettingLocal() {
 
 function loadSettingBox() {
 	var src = getVALUE("", "");
-	if (src == "") {
+	if (src === "") {
 		OPT_QUEST_DONATE		= 1; // 自動寄付糧500
 		OPT_QUEST_DUEL			= 1; // 自動デュエル
 		OPT_QUEST_TROOPS		= 0; // 自動出兵
@@ -894,10 +900,10 @@ function ccreateButton(container, text, title, func, width, top)
 		btn.style.padding = "0px";
 		btn.type = "button";
 		btn.value = text;
-	if (top != undefined) {
+	if (top !== undefined) {
 		btn.style.marginTop = top + "px";
 	}
-	if (width == undefined) {
+	if (width === undefined) {
 		btn.style.width = "54px";
 	} else {
 		btn.style.width = width + "px";
@@ -951,7 +957,7 @@ function cgetCheckBoxValue(id)
 
 
 function forInt(num,def){
-	if (def == undefined) { def = 0; }
+	if (def === undefined) { def = 0; }
 	if (isNaN(parseInt(num,10))) {
 		return def;
 	} else {
