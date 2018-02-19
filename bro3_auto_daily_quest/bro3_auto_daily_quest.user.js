@@ -12,9 +12,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2017.12.06
+// @version 	2018.02.19
 // ==/UserScript==
-var VERSION = "2017.12.06"; 	// バージョン情報
+var VERSION = "2018.02.19"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -34,6 +34,7 @@ var OPT_TROOPS_Y			= 0;// 出兵先座標y
 
 // 内部設定
 var OPT_VALUE_IGNORE_SECONDS = -1; // 負荷を下げる為、指定秒数以内のリロード時は処理を行なわない(0以下指定で無効化)
+var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 
 
 // 2015.05.17 初版作成。繰り返しクエスト受注、寄付クエ実施、クエクリ、ヨロズダス引き、受信箱からアイテムを移す
@@ -65,6 +66,7 @@ var OPT_VALUE_IGNORE_SECONDS = -1; // 負荷を下げる為、指定秒数以内
 // 2016.07.27 スクリプトを推奨フォーマットで書き直した。
 // 2017.09.05 受信箱の仕様が変わり、受信箱に 5 個以上アイテムがあるとき、受け取れなくなっていたのを修正。
 // 2017.12.06 Google Chrome で動かなくなったらしいので修正
+// 2018.02.19 環境により他のタイマーとタイミングが重なる場合があるようなので、クエスト受注タイミングを少しずらすようにした。
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -179,7 +181,7 @@ function moveFromInbox(reloadIfNeed){
 			var c = {
 				'item_id_list': item_id_list,
 				'ssid': ssid.value
-            };
+			};
 			httpPOST('http://'+HOST+'/item/inbox.php',c,function(x){moveFromInbox(true);});
 		} else if (reloadIfNeed) {
 			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
@@ -190,13 +192,13 @@ function moveFromInbox(reloadIfNeed){
 // 寄付
 function postDonate(callback) {
 	var c = {
-        'contributionForm': "",
-        'wood': 0,
-        'stone': 0,
-        'iron': 0,
-        'rice': 500,
-        'contribution': 1
-    };
+		'contributionForm': "",
+		'wood': 0,
+		'stone': 0,
+		'iron': 0,
+		'rice': 500,
+		'contribution': 1
+	};
 	httpPOST('http://'+HOST+'/alliance/level.php',c,function(x){
 		if (callback) {
 			callback();
@@ -231,10 +233,10 @@ function duel(callback){
 					x.match(/battleStart\((\d+),\s(\d+),\s(\d+)\)/);
 
 					var c = {
-                        'deck': 1,
-                        'euid': parseInt(RegExp.$2,10),
-                        'edeck': 0
-                    };
+						'deck': 1,
+						'euid': parseInt(RegExp.$2,10),
+						'edeck': 0
+					};
 
 					// デュエルの開始
 					httpGET("http://" + HOST + "/pvp_duel/process_json.php?deck=1&euid=" + c.euid + "&edeck=0", c , function(x) {
@@ -279,9 +281,9 @@ function yorozudas(callback){
 		var reward_list = xpath('//form/input[@value="ヨロズダスを引く" and not(contains(text(),"ヨロズダスの残り回数がありません"))]', htmldoc);
 		if (reward_list.snapshotLength) {
 			var c = {
-                'send': 'send',
-                'got_type': 0
-            };
+				'send': 'send',
+				'got_type': 0
+			};
 			httpPOST('http://'+HOST+'/reward_vendor/reward_vendor.php',c,function(das){
 				var div = document.createElement('div');
 					div.innerHTML = das.responseText;
@@ -422,15 +424,15 @@ function sendTroop(vID, cardID, cardGage, targetX, targetY, callback) {
 	// 指定の武将を指定の拠点から指定座標に向ける
 	httpGET('http://'+HOST+'/village_change.php?village_id='+vID+'&from=menu&page=%2Fvillage.php#ptop',function(x){
 		var c = {
-            'village_x_value': targetX, // 出兵先座標x
-            'village_y_value': targetY, // 出兵先座標y
-            'unit_assign_card_id': cardID, // 武将カードID
-            'radio_move_type': '302', // 301=援軍,302=殲滅,303=強襲,306=偵察
+			'village_x_value': targetX, // 出兵先座標x
+			'village_y_value': targetY, // 出兵先座標y
+			'unit_assign_card_id': cardID, // 武将カードID
+			'radio_move_type': '302', // 301=援軍,302=殲滅,303=強襲,306=偵察
 
-            'radio_reserve_type': '0',
-            'btn_send': '出兵',
-            'card_id': '204'
-        };
+			'radio_reserve_type': '0',
+			'btn_send': '出兵',
+			'card_id': '204'
+		};
 
 		console.log(SERVER+"拠点 "+vID+" から ("+targetX+","+targetY+") へ "+cardID+" [討伐:"+cardGage+"] で出兵します。");
 		httpPOST('http://'+HOST+'/facility/castle_send_troop.php',c,function(x){
@@ -504,47 +506,49 @@ function callSendTroop()
 		//========================================
 
 		// クエスト受注
-		acceptAttentionQuest(function(quest_list){
+		setTimeout(function(){
+			acceptAttentionQuest(function(quest_list){
 
-			// 未クリアの繰り返しクエストマッチング
-			for (var i = 0; i < quest_list.length; i++){
-				var quest_id = parseInt(quest_list[i],10);
-				if (quest_id == ID_DONATE && OPT_QUEST_DONATE){
-					// 寄付クエ
-					postDonate(receiveRewards);
-					return;
-				}
-				if (quest_id == ID_DUEL && OPT_QUEST_DUEL){
-					// デュエルクエ
-					duel(function(worked){receiveRewards();});
-					return;
-				}
-				if (quest_id == ID_TROOPS && OPT_QUEST_TROOPS){
-					// 出兵クエ
-					if (callSendTroop()) {
+				// 未クリアの繰り返しクエストマッチング
+				for (var i = 0; i < quest_list.length; i++){
+					var quest_id = parseInt(quest_list[i],10);
+					if (quest_id == ID_DONATE && OPT_QUEST_DONATE){
+						// 寄付クエ
+						postDonate(receiveRewards);
 						return;
 					}
+					if (quest_id == ID_DUEL && OPT_QUEST_DUEL){
+						// デュエルクエ
+						duel(function(worked){receiveRewards();});
+						return;
+					}
+					if (quest_id == ID_TROOPS && OPT_QUEST_TROOPS){
+						// 出兵クエ
+						if (callSendTroop()) {
+							return;
+						}
+					}
 				}
-			}
 
-			// 受信箱から移す
-			if (OPT_MOVE_FROM_INBOX) {
-				moveFromInbox(false);
-			}
+				// 受信箱から移す
+				if (OPT_MOVE_FROM_INBOX) {
+					moveFromInbox(false);
+				}
 
-			// 自動助力
-			if (OPT_AUTO_JORYOKU) {
-				joryoku();
-			}
+				// 自動助力
+				if (OPT_AUTO_JORYOKU) {
+					joryoku();
+				}
 
-			// サーバー時刻が [00:00:00 - 01:59:59] or [05:00:00 - 23:59:59] であれば自動デュエルする
-			if (OPT_AUTO_DUEL) {
-				auto_duel();
-			}
+				// サーバー時刻が [00:00:00 - 01:59:59] or [05:00:00 - 23:59:59] であれば自動デュエルする
+				if (OPT_AUTO_DUEL) {
+					auto_duel();
+				}
 
-			// ツールに連動しない報酬受領
-			receiveRewards();
-		});
+				// ツールに連動しない報酬受領
+				receiveRewards();
+			});
+		}, OPT_QUEST_TIMEINTERVAL);
 	}
 	else if (location.pathname == "/facility/castle_send_troop.php") {
 		//========================================
