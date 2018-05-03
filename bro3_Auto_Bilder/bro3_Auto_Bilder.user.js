@@ -5,6 +5,7 @@
 // @icon		https://raw.github.com/5zen/fake3gokushi/master/icon.png
 // @include		http://*.3gokushi.jp/*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js
+// @require		https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @exclude		http://*.3gokushi.jp/world/select_server_mixi_new.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @exclude		http://info.3gokushi.jp/*
@@ -13,8 +14,12 @@
 // @grant		GM_setValue
 // @grant		GM_xmlhttpRequest
 // @grant		GM_log
+// @grant		GM.getValue
+// @grant		GM.setValue
+// @grant		GM.xmlhttpRequest
+// @grant		GM.log
 // @author		RAPT
-// @version		2017.12.06
+// @version		2018.01.08
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -115,8 +120,10 @@
 // 2017.08.18 市場変換対象の拠点で運営の自動建設機能による一括建設中に市場変換など一部機能が動作しない問題への対処（一括建設中は運営タイマーバグ対策が作動しないようにした）
 // 2017.08.19 運営の自動建設機能による自動建設中の検出対応
 // 2017.12.06 Google Chrome で動かなくなったらしいので修正
+// 2018.01.08 Greasemonkey 4 暫定対応
+//			  運営の自動建設機能による全建設準備中の検出対応
 
-var VERSION = "2017.12.06"; 	// バージョン情報
+var VERSION = "2018.01.08"; 	// バージョン情報
 
 jQuery.noConflict();
 j$ = jQuery;
@@ -1915,7 +1922,7 @@ debugLog("=== Start setVillageFacility ===");
 			else if (/自動建設(準備)?中/.test(buildStatusText)) {
 				cnt++;
 			}
-			else if (/^全建設中/.test(buildStatusText)) {
+			else if (/^全建設(準備)?中/.test(buildStatusText)) {
 				cnt++;
 			}
 		}
@@ -7536,9 +7543,9 @@ function getVillageActions() {
 			} else if (/自動建設(準備)?中/.test(buildStatusText)) {
 				newAction[IDX2_DELETE] = false;
 				buildStatus = "自動建設:" + trim(j$(".buildStatus span", paItem).parent().text().replace(/自動建設(準備)?中/, '').trim());
-			} else if (/^全建設中/.test(buildStatusText)) {
+			} else if (/^全建設(準備)?中/.test(buildStatusText)) {
 				newAction[IDX2_DELETE] = false;
-				buildStatus = "全建設:" + trim(j$(".buildStatus span", paItem).parent().text().replace(/全建設中/, '').trim());
+				buildStatus = "全建設:" + trim(j$(".buildStatus span", paItem).parent().text().replace(/全建設(準備)?中/, '').trim());
 			} else {
 /*
 				buildStatusElem = document.evaluate('./span[@class="buildStatus"]', 	paItem, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
