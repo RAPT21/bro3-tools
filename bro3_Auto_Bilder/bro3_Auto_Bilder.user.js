@@ -19,7 +19,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2018.01.08
+// @version		2018.05.03
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -122,8 +122,9 @@
 // 2017.12.06 Google Chrome で動かなくなったらしいので修正
 // 2018.01.08 Greasemonkey 4 暫定対応
 //			  運営の自動建設機能による全建設準備中の検出対応
+// 2018.05.03 10期？★4(1-1-1-1)水車村オプションを追加
 
-var VERSION = "2018.01.08"; 	// バージョン情報
+var VERSION = "2018.05.03"; 	// バージョン情報
 
 jQuery.noConflict();
 j$ = jQuery;
@@ -244,6 +245,7 @@ var OPT_0001S3MURA	= 0;	 // ★3(0-0-0-1)水車村オプション
 var OPT_0001S5MURA	= 0;	 // ★5(0-0-0-1)水車村オプション
 var OPT_0001S7MURA	= 0;	 // ★7(0-0-0-1)水車村オプション
 var OPT_0000S8MURA	= 0;	 // ★8(0-0-0-0)水車村オプション@10期～
+var OPT_1111S4MURA	= 0;	 // ★4(1-1-1-1)資源+水車村オプション@10期？～
 var OPT_PLANT5MURAN	= 0;	 // ★5工場村オプション
 var OPT_PLANT5MURAE	= 0;	 // ★5工場村オプション
 var OPT_PLANT5MURAW	= 0;	 // ★5工場村オプション
@@ -1696,6 +1698,7 @@ debugLog("=== Start autoLvup ===");
 			UnitID["大剣兵"]	= [315];
 			UnitID["盾兵"]		= [316];
 			UnitID["重盾兵"]	= [317];
+			UnitID["戦斧兵"]	= [318];
 
 			var _x = -1;
 			var _y = -1;
@@ -2023,6 +2026,9 @@ debugLog("=== Start setVillageFacility ===");
 	else if (OPT_PLANT9MURA74 == 1) { // ★9(7-4)工場村
 		if (buildPlant9m74(vId)) return;
 	}
+	else if (OPT_1111S4MURA == 1) { // ★4(1-1-1-1)水車村+資源
+		if (build1111S4(vId)) return;
+	}
 
 	// 宿舎
 	if (OPT_SHUKUSHA == 1) {
@@ -2222,6 +2228,9 @@ function switchToAutoLevelUp(vId){
 	}
 	if(Temp2[241] != ""){
 		Temp2[241] = 0; // OPT_PLANT9MURA74
+	}
+	if(Temp2[242] != ""){
+		Temp2[242] = 0; // OPT_1111S4MURA
 	}
 
 	var save = Temp[0] + DELIMIT1 + Temp2.join(DELIMIT2);
@@ -3037,6 +3046,50 @@ function build0000S8(vId){
 	return handled;
 }
 
+function build1111S4(vId){
+	var area = get_area_all();
+	if (! checkVillageType(area, 18,1,1,1,1)){
+		return false;
+	}
+
+	// ★4(1-1-1-1) 資源+水車
+	var reached = [false];
+	var handled =
+	createFacilityEx(3, 4, Hatake, 1, area) ||
+	createFacilityEx(3, 5, Hatake, 1, area) ||
+
+	createFacilityEx(4, 3, Hatake, 1, area) ||
+//	createFacilityEx(4, 4, Suisha, 1, area) ||
+	createFacilityEx(4, 5, Hatake, 1, area) ||
+
+	createFacilityEx(5, 3, Hatake, 1, area) ||
+	createFacilityEx(5, 4, Hatake, 1, area) ||
+	createFacilityEx(5, 5, Hatake, 1, area) ||
+
+	createFacilityEx(1, 2, Bassai, 1, area) ||
+	createFacilityEx(2, 1, Bassai, 1, area) ||
+
+	createFacilityEx(4, 1, Ishikiri, 1, area) ||
+	createFacilityEx(5, 2, Ishikiri, 1, area) ||
+
+	createFacilityEx(1, 4, Seitetsu, 1, area) ||
+	createFacilityEx(2, 5, Seitetsu, 1, area) ||
+
+	// 市場を作るのに必要な建設を行なう
+	createFacilityEx(0, 0, Souko,  1, area) ||
+	createFacilityEx(0, 3, Renpei, 3, area) ||
+	createFacilityEx(1, 3, Shukusha, 1, area) ||
+	createFacilityEx(2, 3, Bougu,  2, area) ||
+	createFacilityEx(0, 6, Ichiba, 1, area) ||
+
+	// ここまで来たら既存の自動LVUPに移管する
+	checkReached(reached);
+	if (reached[0]){
+		switchToAutoLevelUp(vId);
+	}
+	return handled;
+}
+
 function areas(name,xy){
 	this.name = name;
 	this.xy = xy;
@@ -3339,10 +3392,8 @@ function clearWaterwheelBox(){
 	var checkbox = $a('//input[@id="OPT_0001S5MURA"]');	checkbox[0].checked = false; // 水車村化
 	var checkbox = $a('//input[@id="OPT_0001S7MURA"]');	checkbox[0].checked = false; // 水車村化
 	var checkbox = $a('//input[@id="OPT_0000S8MURA"]');	checkbox[0].checked = false; // 水車村化
+	var checkbox = $a('//input[@id="OPT_1111S4MURA"]');	checkbox[0].checked = false; // 水車村化
 	var checkbox = $a('//input[@id="OPT_PLANT5MURAN"]');	checkbox[0].checked = false; // 工場村化
-//	var checkbox = $a('//input[@id="OPT_PLANT5MURAE"]');	checkbox[0].checked = false; // 工場村化
-//	var checkbox = $a('//input[@id="OPT_PLANT5MURAW"]');	checkbox[0].checked = false; // 工場村化
-//	var checkbox = $a('//input[@id="OPT_PLANT5MURAS"]');	checkbox[0].checked = false; // 工場村化
 	var checkbox = $a('//input[@id="OPT_PLANT9MURA74"]');	checkbox[0].checked = false; // 工場村化
 }
 
@@ -4730,15 +4781,13 @@ function addInifacHtml(vId) {
 		ccreateCheckBoxF(td621a, "OPT_0001S5MURA", OPT_0001S5MURA, " ★5(0-0-0-1)水車村化", "この都市を水車村にする。",0,InitSuishaVillage);
 		ccreateCheckBoxF(td621a, "OPT_0001S3MURA", OPT_0001S3MURA, " ★3(0-0-0-1)水車村化", "この都市を水車村にする。",0,InitSuishaVillage);
 		ccreateCheckBoxF(td621a, "OPT_0000S8MURA", OPT_0000S8MURA, " ★8(0-0-0-0)水車村化", "この都市を水車村にする。",0,InitSuishaVillage);
+		ccreateCheckBoxF(td621a, "OPT_1111S4MURA", OPT_1111S4MURA, " ★4(1-1-1-1)水車村化", "この都市を資源+水車村にする。",0,InitSuishaVillage);
 
 	var td621b = d.createElement("td");
 		td621b.style.padding = "2px";
 		td621b.style.verticalAlign = "top";
 		ccreateCheckBoxF(td621b, "OPT_PLANT9MURA74",OPT_PLANT9MURA74," ★9(7-4)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
 		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAN", OPT_PLANT5MURAN, " ★5(6-0)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
-//		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAE", OPT_PLANT5MURAE, " ★5(東部資源)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
-//		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAW", OPT_PLANT5MURAW, " ★5(西部資源)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
-//		ccreateCheckBoxF(td621b, "OPT_PLANT5MURAS", OPT_PLANT5MURAS, " ★5(南部資源)工場村化", "この都市を工場+水車村にする。",0,InitKoujoVillage);
 
 	Waterwheel_Box.appendChild(tr620);
 	tr620.appendChild(td620);
@@ -5445,6 +5494,8 @@ function SaveInifacBox(vId){
 
 	strSave += cgetCheckBoxValue($("OPT_PLANT9MURA74")) + DELIMIT2;
 
+	strSave += cgetCheckBoxValue($("OPT_1111S4MURA")) + DELIMIT2;
+
 	GM_setValue(HOST+PGNAME+vId, strSave);
 }
 //拠点単位の設定の読み込み
@@ -5469,6 +5520,7 @@ debugLog("=== Start Load_OPT ===");
 		OPT_PLANT5MURAW		= 0;
 		OPT_PLANT5MURAS		= 0;
 		OPT_PLANT9MURA74	= 0;
+		OPT_1111S4MURA		= 0;
 		OPT_DORM			= 0;				// 2013.12.16
 		OPT_SOUKO_MAX		= 0;
 		OPT_KIFU			= 0;
@@ -5677,6 +5729,8 @@ debugLog("=== Start Load_OPT ===");
 		OPT_DAISHUKUSHA = forInt(Temp2[240]);
 		if(Temp2[241] == ""){return;}
 		OPT_PLANT9MURA74 = forInt(Temp2[241]);
+		if(Temp2[242] == ""){return;}
+		OPT_1111S4MURA = forInt(Temp2[242]);
 	}
 }
 //ユーザプロフィール画面の拠点情報を取得
