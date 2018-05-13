@@ -19,7 +19,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2018.05.03
+// @version		2018.05.13
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -123,8 +123,9 @@
 // 2018.01.08 Greasemonkey 4 暫定対応
 //			  運営の自動建設機能による全建設準備中の検出対応
 // 2018.05.03 10期？★4(1-1-1-1)水車村オプションを追加
+// 2018.05.13 6期？★6(0-0-0-0)水車村オプションを追加
 
-var VERSION = "2018.05.03"; 	// バージョン情報
+var VERSION = "2018.05.13"; 	// バージョン情報
 
 jQuery.noConflict();
 j$ = jQuery;
@@ -246,6 +247,7 @@ var OPT_0001S5MURA	= 0;	 // ★5(0-0-0-1)水車村オプション
 var OPT_0001S7MURA	= 0;	 // ★7(0-0-0-1)水車村オプション
 var OPT_0000S8MURA	= 0;	 // ★8(0-0-0-0)水車村オプション@10期～
 var OPT_1111S4MURA	= 0;	 // ★4(1-1-1-1)資源+水車村オプション@10期？～
+var OPT_0000S6MURA	= 0;	 // ★6(0-0-0-0)水車村オプション@10期？～
 var OPT_PLANT5MURAN	= 0;	 // ★5工場村オプション
 var OPT_PLANT5MURAE	= 0;	 // ★5工場村オプション
 var OPT_PLANT5MURAW	= 0;	 // ★5工場村オプション
@@ -2029,6 +2031,9 @@ debugLog("=== Start setVillageFacility ===");
 	else if (OPT_1111S4MURA == 1) { // ★4(1-1-1-1)水車村+資源
 		if (build1111S4(vId)) return;
 	}
+	else if (OPT_0000S6MURA == 1) { // ★6(0-0-0-0)水車村+資源
+		if (build0000S6(vId)) return;
+	}
 
 	// 宿舎
 	if (OPT_SHUKUSHA == 1) {
@@ -2231,6 +2236,9 @@ function switchToAutoLevelUp(vId){
 	}
 	if(Temp2[242] != ""){
 		Temp2[242] = 0; // OPT_1111S4MURA
+	}
+	if(Temp2[243] != ""){
+		Temp2[243] = 0; // OPT_0000S6MURA
 	}
 
 	var save = Temp[0] + DELIMIT1 + Temp2.join(DELIMIT2);
@@ -3090,6 +3098,41 @@ function build1111S4(vId){
 	return handled;
 }
 
+function build0000S6(vId){
+	var area = get_area_all();
+	if (! checkVillageType(area, 21,0,0,0,0)){
+		return false;
+	}
+
+	// ★6(0-0-0-0) 水車
+	var reached = [false];
+	var handled =
+	createFacilityEx(1, 1, Hatake, 1, area) ||
+	createFacilityEx(1, 2, Hatake, 1, area) ||
+	createFacilityEx(1, 3, Hatake, 1, area) ||
+
+	createFacilityEx(2, 1, Hatake, 1, area) ||
+//	createFacilityEx(2, 2, Suisha, 1, area) ||
+	createFacilityEx(2, 3, Hatake, 1, area) ||
+
+	createFacilityEx(3, 1, Hatake, 1, area) ||
+	createFacilityEx(3, 2, Hatake, 1, area) ||
+
+	// 市場を作るのに必要な建設を行なう
+	createFacilityEx(0, 3, Souko,  1, area) ||
+	createFacilityEx(3, 0, Renpei, 3, area) ||
+	createFacilityEx(4, 1, Shukusha, 1, area) ||
+	createFacilityEx(5, 1, Bougu,  2, area) ||
+	createFacilityEx(6, 3, Ichiba, 1, area) ||
+
+	// ここまで来たら既存の自動LVUPに移管する
+	checkReached(reached);
+	if (reached[0]){
+		switchToAutoLevelUp(vId);
+	}
+	return handled;
+}
+
 function areas(name,xy){
 	this.name = name;
 	this.xy = xy;
@@ -3393,6 +3436,7 @@ function clearWaterwheelBox(){
 	var checkbox = $a('//input[@id="OPT_0001S7MURA"]');	checkbox[0].checked = false; // 水車村化
 	var checkbox = $a('//input[@id="OPT_0000S8MURA"]');	checkbox[0].checked = false; // 水車村化
 	var checkbox = $a('//input[@id="OPT_1111S4MURA"]');	checkbox[0].checked = false; // 水車村化
+	var checkbox = $a('//input[@id="OPT_0000S6MURA"]');	checkbox[0].checked = false; // 水車村化
 	var checkbox = $a('//input[@id="OPT_PLANT5MURAN"]');	checkbox[0].checked = false; // 工場村化
 	var checkbox = $a('//input[@id="OPT_PLANT9MURA74"]');	checkbox[0].checked = false; // 工場村化
 }
@@ -4782,6 +4826,7 @@ function addInifacHtml(vId) {
 		ccreateCheckBoxF(td621a, "OPT_0001S3MURA", OPT_0001S3MURA, " ★3(0-0-0-1)水車村化", "この都市を水車村にする。",0,InitSuishaVillage);
 		ccreateCheckBoxF(td621a, "OPT_0000S8MURA", OPT_0000S8MURA, " ★8(0-0-0-0)水車村化", "この都市を水車村にする。",0,InitSuishaVillage);
 		ccreateCheckBoxF(td621a, "OPT_1111S4MURA", OPT_1111S4MURA, " ★4(1-1-1-1)水車村化", "この都市を資源+水車村にする。",0,InitSuishaVillage);
+		ccreateCheckBoxF(td621a, "OPT_0000S6MURA", OPT_0000S6MURA, " ★6(0-0-0-0)水車村化", "この都市を水車村にする。",0,InitSuishaVillage);
 
 	var td621b = d.createElement("td");
 		td621b.style.padding = "2px";
@@ -5496,6 +5541,8 @@ function SaveInifacBox(vId){
 
 	strSave += cgetCheckBoxValue($("OPT_1111S4MURA")) + DELIMIT2;
 
+	strSave += cgetCheckBoxValue($("OPT_0000S6MURA")) + DELIMIT2;
+
 	GM_setValue(HOST+PGNAME+vId, strSave);
 }
 //拠点単位の設定の読み込み
@@ -5521,6 +5568,7 @@ debugLog("=== Start Load_OPT ===");
 		OPT_PLANT5MURAS		= 0;
 		OPT_PLANT9MURA74	= 0;
 		OPT_1111S4MURA		= 0;
+		OPT_0000S6MURA		= 0;
 		OPT_DORM			= 0;				// 2013.12.16
 		OPT_SOUKO_MAX		= 0;
 		OPT_KIFU			= 0;
@@ -5731,6 +5779,8 @@ debugLog("=== Start Load_OPT ===");
 		OPT_PLANT9MURA74 = forInt(Temp2[241]);
 		if(Temp2[242] == ""){return;}
 		OPT_1111S4MURA = forInt(Temp2[242]);
+		if(Temp2[243] == ""){return;}
+		OPT_0000S6MURA = forInt(Temp2[243]);
 	}
 }
 //ユーザプロフィール画面の拠点情報を取得
