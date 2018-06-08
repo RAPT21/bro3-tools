@@ -12,9 +12,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2018.02.19
+// @version 	2018.06.09
 // ==/UserScript==
-var VERSION = "2018.02.19"; 	// バージョン情報
+var VERSION = "2018.06.09"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -67,6 +67,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2017.09.05 受信箱の仕様が変わり、受信箱に 5 個以上アイテムがあるとき、受け取れなくなっていたのを修正。
 // 2017.12.06 Google Chrome で動かなくなったらしいので修正
 // 2018.02.19 環境により他のタイマーとタイミングが重なる場合があるようなので、クエスト受注タイミングを少しずらすようにした。
+// 2018.06.09 環境により設定画面が開けない場合があるようなので対処
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -797,13 +798,8 @@ function openSettingBox() {
 
 
 function closeSettingBox() {
-	var elem = d.getElementById("ADContainer");
-	if (elem === undefined) return;
-	d.body.removeChild(d.getElementById("ADContainer"));
-
-	elem = d.getElementById("ADContainer");
-	if (elem === undefined) return;
-	d.body.removeChild(document.getElementById("ADContainer"));
+	q$('#ADContainer', d).remove();
+	q$('#ADContainer', document).remove();
 }
 
 
