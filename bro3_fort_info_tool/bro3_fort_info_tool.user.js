@@ -30,12 +30,14 @@ const VERSION = "2.0"; 	// バージョン情報
 // 2017.12.06	0.9	とりあえず14期MAP対応。
 // 2017.12.07	1.0	14期MAPで砦番号順に取得するよう修正、武将砦は★LV→X座標→Y座標の順番。
 // 2018.06.30	2.0	async/await を使って書き直した。
-//					GUI 設定画面で探索範囲を選びやすくした。
-//					下記環境にて動作確認済。
-//						Firefox 56 + Greasemonkey 3.17
-//						Firefox 61 + Tampermonkey 4.7
-//						Chrome 67 + Tampermonkey 4.7
-//						Sleipnir 4.5.13 + Tampermonkey 4.6
+//		GUI 設定画面で探索範囲を選びやすくした。
+//		以前は 11x11 MAP 画面でサイドバーにリンクを用意していましたが、
+//		GUI 設定画面に伴い、同盟トップに移動しました。「NPC包囲情報取得」リンクをクリックすることで設定画面を開くことができます。
+//		下記環境にて動作確認済。
+//			Firefox 56 + Greasemonkey 3.17
+//			Firefox 61 + Tampermonkey 4.7
+//			Chrome 67 + Tampermonkey 4.7
+//			Sleipnir 4.5.13 + Tampermonkey 4.6
 
 //====================[ 定義 ]====================
 
