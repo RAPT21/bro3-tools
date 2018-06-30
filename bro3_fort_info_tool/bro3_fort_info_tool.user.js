@@ -417,7 +417,7 @@ function performSearch(mode, axisList) {
 			workingIndex++;
 
 			const info = await getMap(allyName, axisItem[0], axisItem[1]);
-			buffers.push(info);
+			buffers.push(info.join("\t"));
 		}
 
 		working = false;
