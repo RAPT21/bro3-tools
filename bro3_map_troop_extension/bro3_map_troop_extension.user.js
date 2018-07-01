@@ -9,7 +9,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.2
+// @version 	1.3
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -39,12 +39,14 @@ jQuery.noConflict();
 // 2017.06.24	1.0	初版公開
 // 2017.07.13	1.1	新MAP画面対応
 // 2017.08.14	1.2	12期～のカラーリング追加、出兵後の兵士管理画面が「全て表示」に自動的に切り替わるようにした
+// 2018.07.02	1.3	10期～のカラーリング追加、★4～6 の領地もカラーリングするかのオプション(デフォルトfalse)を追加
 
 //==========[オプション]==========
 var OPT_COLORING_RESOURCES = true;		// 資源地カラーリングを行うか。falseだと何も行いません。
 var OPT_TROOP_OPEN_NEW_WINDOW = true;	// 出兵画面を新規ウィンドウで開くか。falseだと同一画面で遷移します。
 var OPT_REFRESH_AFTER_EDITNAME = false;	// 領地名変更後に画面更新するか。falseだと処理成功時マス目が点滅します。
 var OPT_UNIT_STATUS_SWITCH_SORTIE_TO_ALL = true;	// 出兵管理画面で出撃タブ表示時、全て表示に切り替える
+var OPT_SUPPORT_MIDDLE_RANGE_LAND = false;	// ★4～6 の領地もカラーリングするか
 
 //==========[本体]==========
 (function($) {
@@ -481,41 +483,79 @@ var OPT_UNIT_STATUS_SWITCH_SORTIE_TO_ALL = true;	// 出兵管理画面で出撃�
 			return;
 		}
 
-		// ★7未満は無視
-		if (obj.stars < 7) {
+		const cWood = "springgreen";
+		const cStone = "aqua";
+		const cIron = "orange";
+		const cRice = "yellow";
+		const cFacility = "red";
+		const cResource = "fuchsia";
+		const cRiceField = "snow";
+		const cMultiField = "red";
+		let col = "";
+
+		if (OPT_SUPPORT_MIDDLE_RANGE_LAND && obj.stars >= 4) {
+			// ★4～6 をサポート
+			if (obj.stars === 4 && obj.wood === 1 && obj.stone === 1 && obj.iron === 1 && obj.food === 1) { // ★4:平地26
+				// ★4(1-1-1-1) は3種資源施設各2＋水車＋倉庫12＋雀村に最適
+				col = cMultiField;
+			} else if (obj.stars === 5 || obj.stars === 6) {
+				// (6-0) 系、(10-0) 系、(0-1) 系、ALL-0 をまとめてカラーリング。
+				if (obj.wood !== 0 && obj.stone === 0 && obj.iron === 0 && obj.food === 0) {
+					col = cWood;
+				} else if (obj.wood === 0 && obj.stone !== 0 && obj.iron === 0 && obj.food === 0) {
+					col = cStone;
+				} else if (obj.wood === 0 && obj.stone === 0 && obj.iron !== 0 && obj.food === 0) {
+					col = cIron;
+				} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food !== 0) {
+					if (obj.food === 1) {	// ★5:平地28
+						col = cRiceField;
+					} else {
+						col = cRice;
+					}
+			//	} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food === 0) { // ★6:平地27
+			//		col = cFacility;
+				}
+			}
+		} else if (obj.stars < 7) {
+			// ★7未満は無視
 			return;
 		}
 
-		var col = "";
 		if (obj.wood >= 14 && obj.stone === 0 && obj.iron === 0 && obj.food === 0) {
-			col = "springgreen";
+			col = cWood;
 		} else if (obj.wood === 0 && obj.stone >= 14 && obj.iron === 0 && obj.food === 0) {
-			col = "aqua";
+			col = cStone;
 		} else if (obj.wood === 0 && obj.stone === 0 && obj.iron >= 14 && obj.food === 0) {
-			col = "orange";
+			col = cIron;
 		} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food >= 12) {
-			col = "yellow";
+			col = cRice;
+		} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food === 1) { // ★7:平地32
+			col = cRiceField;
 		} else if (obj.stars === 8) {	// ★8特化
 			if (obj.wood >= 5 && obj.stone === 4 && obj.iron === 4 && obj.food === 2) { // 12期～
-				col = "springgreen";
+				col = cWood;
 			} else if (obj.wood === 4 && obj.stone >= 5 && obj.iron === 4 && obj.food === 2) { // 12期～
-				col = "aqua";
+				col = cStone;
 			} else if (obj.wood === 4 && obj.stone === 4 && obj.iron >= 5 && obj.food === 2) { // 12期～
-				col = "orange";
+				col = cIron;
+			} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food === 0) { // 10期～:平地37
+				col = cFacility;
 			}
 		} else if (obj.stars === 9) {	// ★9特化
 			if (obj.wood === 1 && obj.stone === 1 && obj.iron === 1 && obj.food === 2) { // 2～11期:平地39
-				col = "red";
+				col = cFacility;
+			} else if (obj.wood === 3 && obj.stone === 3 && obj.iron === 3 && obj.food === 3) { // (3-3-3-3) 資源地
+				col = cResource;
 			} else if (obj.wood === 4 && obj.stone === 4 && obj.iron === 4 && obj.food === 4) { // (4-4-4-4) 資源地
-				col = "fuchsia";
+				col = cResource;
 			} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food === 0) { // 12期～:平地40
-				col = "red";
+				col = cFacility;
 			} else if (obj.wood === 7 && obj.stone === 0 && obj.iron === 0 && obj.food === 4) { // 12期～:平地37,工場村
-				col = "springgreen";
+				col = cWood;
 			} else if (obj.wood === 0 && obj.stone >= 7 && obj.iron === 0 && obj.food === 4) { // 12期～:平地37,工場村
-				col = "aqua";
+				col = cStone;
 			} else if (obj.wood === 0 && obj.stone === 0 && obj.iron >= 7 && obj.food === 4) { // 12期～:平地37,工場村
-				col = "orange";
+				col = cIron;
 			}
 		}
 		if (col.length) {
