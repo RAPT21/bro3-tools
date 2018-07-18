@@ -12,9 +12,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2018.06.09
+// @version 	2018.07.18
 // ==/UserScript==
-var VERSION = "2018.06.09"; 	// バージョン情報
+var VERSION = "2018.07.18"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -68,6 +68,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2017.12.06 Google Chrome で動かなくなったらしいので修正
 // 2018.02.19 環境により他のタイマーとタイミングが重なる場合があるようなので、クエスト受注タイミングを少しずらすようにした。
 // 2018.06.09 環境により設定画面が開けない場合があるようなので対処
+// 2018.07.18 出兵種別が鹵獲以外では資源獲得できなくなる仕様変更に対応。距離20以上ないと鹵獲出兵できないようなので設定を確認してください。
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -428,7 +429,7 @@ function sendTroop(vID, cardID, cardGage, targetX, targetY, callback) {
 			'village_x_value': targetX, // 出兵先座標x
 			'village_y_value': targetY, // 出兵先座標y
 			'unit_assign_card_id': cardID, // 武将カードID
-			'radio_move_type': '302', // 301=援軍,302=殲滅,303=強襲,306=偵察
+			'radio_move_type': '307', // 301=援軍,302=殲滅,303=強襲,306=偵察,307=鹵獲
 
 			'radio_reserve_type': '0',
 			'btn_send': '出兵',
