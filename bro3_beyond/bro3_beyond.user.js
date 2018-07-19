@@ -3,7 +3,7 @@
 // @namespace	bro3_beyond
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		0.91.10
+// @version		0.94
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -14,8 +14,8 @@
 // @grant	GM_setValue
 // @grant	GM_xmlhttpRequest
 // @grant	GM_getResourceText
-// @require	http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js
-// @require	http://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js
+// @require	https://code.jquery.com/jquery-2.1.4.min.js
+// @require	https://code.jquery.com/ui/1.11.4/jquery-ui.min.js
 // @resource	jqueryui_css	http://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css
 
 // ==/UserScript==
@@ -34,27 +34,49 @@
 // 0.91.8	2017/11/19	RAPT. カードの武将名が上部に移動された影響で、自動スキルレベルアップ合成の「水鏡を素材として使用する」をチェック時に動作しなくなっていたのを修正
 // 0.91.9	2017/12/06	RAPT. Google Chrome で動かなくなったらしいので修正
 // 0.91.10	2017/12/06	RAPT. 運営のメンテ？にて、Google Chrome で内政スキル使用リンクの追加機能が動作しなくなった問題を修正
+// 0.92		2018/01/08	Greasemonkey4で動かない問題を修正
+// 0.93		2018/03/05	運営のアップデートにより連続合成、連続副将合成が動かなくなっていた問題を修正。武将図鑑から即完検索ができない問題を修正。名声タイマーをステータス右に移動。一括ラベルセット機能を追加。その他微修正。
+// 0.94		2018/07/19	一括出兵に鹵獲モードを追加
 //
 // TODO:
 // 内政ボタンで、拠点を変更せずにセットする新方式対応
 // 回復系スキルは、空いている拠点で実行するオプション
 // 内政ボタン/内政スキルで、すでにその拠点に内政官がいる場合、置き換えるかの確認。「呉の治世」スキル発動中です。内政官を置き換えますか？　はい「いいえ」
 
-// load jQuery
-jQuery.noConflict();
-q$ = jQuery;
+var ua = window.navigator.userAgent;
 
-// load jQueryUI css
-var jqueryUICss = GM_getResourceText("jqueryui_css");
+if (ua.indexOf("Firefox") > 0 && GM_info.version >= 4) {
+	// Firefox+GreaseMonkey4ではjQueryとjQuery-uiの読み込み方を変える
 
-// jquery-ui で404になる画像の設定を除去
-jqueryUICss = jqueryUICss.replace(/ url\("images\/ui-bg_highlight-soft_75_cccccc_1x100.png"\)/, "");
-jqueryUICss = jqueryUICss.replace(/ url\("images\/ui-bg_flat_75_ffffff_40x100.png"\)/, "");
-jqueryUICss = jqueryUICss.replace(/ url\("images\/ui-bg_glass_75_dadada_1x400.png"\)/, "");
-jqueryUICss = jqueryUICss.replace(/ url\("images\/ui-bg_glass_65_ffffff_1x400.png"\)/, "");
-jqueryUICss = jqueryUICss.replace(/ url\("images\/ui-bg_glass_75_e6e6e6_1x400.png"\)/, "");
+	// GreaseMonkeyラッパー関数の定義
+	initGMWrapper();
 
-GM_addStyle(jqueryUICss);
+	// load jQuery
+	q$ = $;
+
+	q$.ajax({
+		url:'http://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/redmond/jquery-ui.min.css',
+		success:function(data){
+			$('<style></style>').appendTo('head').html(data);
+		}
+	});
+} else {
+	// load jQuery
+	jQuery.noConflict();
+	q$ = jQuery;
+
+	// load jQueryUI css
+	var jqueryUICss = GM_getResourceText("jqueryui_css");
+
+	// jquery-ui で404になる画像の設定を除去
+	jqueryUICss = jqueryUICss.replace(/ url\("images\/ui-bg_highlight-soft_75_cccccc_1x100.png"\)/, "");
+	jqueryUICss = jqueryUICss.replace(/ url\("images\/ui-bg_flat_75_ffffff_40x100.png"\)/, "");
+	jqueryUICss = jqueryUICss.replace(/ url\("images\/ui-bg_glass_75_dadada_1x400.png"\)/, "");
+	jqueryUICss = jqueryUICss.replace(/ url\("images\/ui-bg_glass_65_ffffff_1x400.png"\)/, "");
+	jqueryUICss = jqueryUICss.replace(/ url\("images\/ui-bg_glass_75_e6e6e6_1x400.png"\)/, "");
+
+	GM_addStyle(jqueryUICss);
+}
 
 var SERVER_NAME = location.hostname.match(/^(.*)\.3gokushi/)[1];
 var SORT_UP_ICON = "http://" + location.hostname + "/20160427-03/extend_project/w945/img/trade/icon_up.gif";
@@ -102,13 +124,14 @@ var DECK_03 = 'de03';		// 共通：ページ切り替えのプルダウンを追
 var DECK_11 = 'de11';		// デッキ：ファイル内スキル検索機能の追加
 var DECK_12 = 'de12';		// デッキ：スキル補正効果表示機能の追加
 var DECK_13 = 'de13';		// デッキ：内政スキル使用リンクの追加（回復：赤、内政：青）
-var DECK_1A = 'de1a';		// デッキ：内政スキル使用後画面を強制更新する
 var DECK_14 = 'de14';		// デッキ：1クリックデッキセットボタン追加
 var DECK_15 = 'de15';		// デッキ：ファイルに下げるボタンを1クリックで使用に変更
 var DECK_16 = 'de16';		// デッキ：内政官を1クリックでファイルに下げるボタンを追加
 var DECK_17 = 'de17';		// デッキ：内政官以外を1クリックで全てファイルに下げるボタンを追加
 var DECK_18 = 'de18';		// デッキ：一括デッキセット機能を追加
 var DECK_19 = 'de19';		// デッキ：内政官解除後にデッキを更新する
+var DECK_1A = 'de1a';		// デッキ：内政スキル使用後画面を強制更新する
+var DECK_1B = 'de1b';		// デッキ：一括ラベルセット機能を追加
 var DECK_21 = 'de21';		// 領地一覧：領地一覧のソートに取得順を追加
 var DECK_22 = 'de22';		// 領地一覧：「新領地」で始まる領地を全て破棄
 var DECK_31 = 'de31';		// 修行合成でレベルが上がった時に、レベルアップボタンを追加
@@ -1528,7 +1551,7 @@ function mapTabControl() {
 				}
 				html +=
 					"<div>" +
-						"<input type='checkbox' id='g_troop" + i + "' cardno='" + generals[i].id + "' gauge='" + generals[i].gauge + "' prize='" + generals[i].prize + "'>" +
+						"<input type='checkbox' id='g_troop" + i + "' cardno='" + generals[i].id + "' gauge='" + generals[i].gauge + "' prize='" + generals[i].prize + "' style='vertical-align: middle'>" +
 							"<label style='margin-left: 4px; margin-right: 4px;' for='g_troop" + i + "'>" +
 								gn +
 								"（レベル: " + generals[i].lv +
@@ -1541,7 +1564,7 @@ function mapTabControl() {
 					"</div>";
 				html_r +=
 					"<div>" +
-						"<input type='checkbox' id='g_reinforce" + i + "' cardno='" + generals[i].id + "' gauge='" + generals[i].gauge + "' prize='" + generals[i].prize + "'>" +
+						"<input type='checkbox' id='g_reinforce" + i + "' cardno='" + generals[i].id + "' gauge='" + generals[i].gauge + "' prize='" + generals[i].prize + "' style='vertical-align: middle'>" +
 							"<label style='margin-left: 4px; margin-right: 4px;' for='g_reinforce" + i + "'>" +
 								gn +
 								"（レベル: " + generals[i].lv +
@@ -1573,9 +1596,16 @@ function mapTabControl() {
 						html +
 					"</div>" +
 					"<div style='margin-top: 10px; margin-bottom: 4px;'>" +
-						"<input type='checkbox' id='use_sol'>" +
+						"<input type='checkbox' id='use_sol' style='vertical-align: middle'>" +
 							"<label style='margin-left: 4px; margin-right: 4px;' for='use_sol'>" +
 								"兵士をつけて出兵（出兵時に盾・車・斥候以外の兵を均等割り配分します）" +
+							"</label>" +
+						"</input>" +
+					"</div>" +
+					"<div style='margin-bottom: 4px;'>" +
+						"<input type='checkbox' id='use_prize' style='vertical-align: middle'>" +
+							"<label style='margin-left: 4px; margin-right: 4px;' for='use_prize'>" +
+								"鹵獲として出兵" +
 							"</label>" +
 						"</input>" +
 					"</div>" +
@@ -1730,7 +1760,11 @@ function mapTabControl() {
 					}
 					postdata['village_x_value'] = parseInt(troop_x);
 					postdata['village_y_value'] = parseInt(troop_y);
-					postdata['radio_move_type'] = 302;
+					if (q$("#use_prize").prop('checked') == true) {
+						postdata['radio_move_type'] = 307;		// 鹵獲
+					} else {
+						postdata['radio_move_type'] = 302;		// 通常出兵
+					}
 					postdata['show_beat_bandit_flg'] = 1;
 					postdata['radio_reserve_type'] = 0;
 					postdata['card_id'] = 204;
@@ -2465,7 +2499,7 @@ function allianceTabControl() {
 
 						no = {'p': count};
 						q$.ajax({
-							url: '/alliance/manage_dep.php',
+							url: 'http://' + location.hostname + '/alliance/manage_dep.php',
 							type: 'GET',
 							datatype: 'html',
 							cache: false,
@@ -2985,7 +3019,7 @@ function messageTabControl() {
 					}
 
 					q$.ajax({
-						url: openurl[pos],
+						url: 'http://' + location.hostname + '/message/' + openurl[pos],
 						type: 'GET',
 						datatype: 'html',
 						cache: false
@@ -3156,7 +3190,7 @@ function cardbookControl() {
 
 					// 即時落札
 					if (g_beyond_options[BOOK_02] == true) {
-						q$("td[class='busyo-name']", this).append(
+						q$("td[class*='busyo-name']", this).append(
 							"<div style='font-size: 14px;'>" +
 								"<input type='button' id='sell-price-check-button" + index + "' value='即落調査' style='font-size: 12px;'></input>" +
 							"</div>"
@@ -3378,6 +3412,11 @@ function deckControl() {
 	// 一括デッキセット
 	if (g_beyond_options[DECK_18] == true) {
 		multipleDeckSet();
+	}
+
+	// 一括ラベルセット
+	if (g_beyond_options[DECK_1B] == true) {
+		multipleLabelSet();
 	}
 
 	if (g_beyond_options[DECK_11] == true) {
@@ -3983,12 +4022,17 @@ function execResourceTimer() {
 			}
 		);
 
+		// bp, tp, cp の描画エリアを移動
+		q$("#status_resources").css('height', 46);
+		q$("#status_point").css('margin-top', 24);
+
 		// タイマー描画エリアを作成
 		var li = q$("#status_resources ul[class='resorces'] li");
 		for (var i = 0; i < 5; i++) {
+			q$(li[i]).attr('class', null);
 			var left = parseInt(q$(li[i]).offset().left - 17);
 			var id = "res_" + i;
-			var top = 11 + (i == 4) * 20;
+			var top = 13;
 			q$(li[i]).append(
 				"<div id='" + id + "' style='position: absolute; top: " + top + "px; left: " + left + "px; font-size: 10px;'></div>"
 			);
@@ -4494,8 +4538,8 @@ function execUnionPart() {
 			);
 
 			// レベルアップ選択ラジオボタンの描画
-			var skills = q$("#gray02Wrapper div[class='right'] ul[class='back_skill'] li:not([class='subgeneral']) span");
-			var stats = q$("#gray02Wrapper div[class='right'] ul[class='back_skill'] li a[class*=btn_detail_s]");
+			var skills = q$("#gray02Wrapper div[class*='right'] ul[class='back_skill'] li:not([class='subgeneral']) span");
+			var stats = q$("#gray02Wrapper div[class*='right'] ul[class='back_skill'] li a[class*=btn_detail_s]");
 			for (var i = 0; i < skills.length && i < stats.length; i++) {
 				var skillText = skills.eq(i).text().replace(/[ \t\r\n]/g, "");
 				if (skillText == "") {
@@ -4542,7 +4586,7 @@ function execUnionPart() {
 					}
 
 					// ベースカードのカードNo.を取得
-					var base_card_no = q$("#bacecard div[class='right'] div[class*='omote_4sk'] span[class='cardno']").text();
+					var base_card_no = q$("#bacecard div[class*='right'] div[class*='omote_4sk'] span[class='cardno']").text();
 
 					// ベースカードのidを取得
 					var base_cid = q$("input[name='base_cid']").val();
@@ -4583,7 +4627,7 @@ function execUnionPart() {
 
 						var no = {'p': count, 'cid': base_cid};
 						q$.ajax({
-							url: '/union/lvup.php',
+							url: 'http://' + location.hostname + '/union/lvup.php',
 							type: 'GET',
 							datatype: 'html',
 							cache: false,
@@ -4618,13 +4662,13 @@ function execUnionPart() {
 									}
 
 									// 同一カードNo.でないものは無視する
-									var card_no = parseInt(q$("div[class='right'] table[class='statusParameter1'] tbody tr", cards[i]).eq(0).children('td').eq(0).text());
+									var card_no = parseInt(q$("div[class*='right'] table[class='statusParameter1'] tbody tr", cards[i]).eq(0).children('td').eq(0).text());
 									if (isNaN(card_no) || (almighty == false && card_no != base_card_no)) {
 										continue;
 									}
 
 									// 2つ目のスキルを保持するカードは無視する
-									var second_skill = q$("div[class='right'] table[class^='statusParameter2'] tbody tr", cards[i]).eq(3).children('td').text();
+									var second_skill = q$("div[class*='right'] table[class^='statusParameter2'] tbody tr", cards[i]).eq(3).children('td').text();
 									second_skill = second_skill.replace(/[ \t]/g, "");
 									if (second_skill != "") {
 										continue;
@@ -4874,7 +4918,7 @@ function execUnionPart() {
 
 						var no = {'p': count, 'cid': base_cid};
 						q$.ajax({
-							url: '/union/subgeneral.php',
+							url: 'http://' + location.hostname + '/union/subgeneral.php',
 							type: 'GET',
 							datatype: 'html',
 							cache: false,
@@ -4904,13 +4948,13 @@ function execUnionPart() {
 									}
 
 									// 同一カードNo.でないものは無視する
-									var card_no = parseInt(q$("div[class='right'] table[class='statusParameter1'] tbody tr", cards[i]).eq(0).children('td').eq(0).text());
+									var card_no = parseInt(q$("div[class*='right'] table[class='statusParameter1'] tbody tr", cards[i]).eq(0).children('td').eq(0).text());
 									if (isNaN(card_no) || (almighty == false && card_no != base_card_no)) {
 										continue;
 									}
 
 									// 2つ目のスキルを保持するカードは無視する
-									var second_skill = q$("div[class='right'] table[class^='statusParameter2'] tbody tr", cards[i]).eq(3).children('td').text();
+									var second_skill = q$("div[class*='right'] table[class^='statusParameter2'] tbody tr", cards[i]).eq(3).children('td').text();
 									second_skill = second_skill.replace(/[ \t]/g, "");
 									if (second_skill != "") {
 										continue;
@@ -5495,7 +5539,8 @@ function draw_setting_window(append_target) {
 					<li><a href='#tab-map'>地図</a></li> \
 					<li><a href='#tab-alliance'>同盟</a></li> \
 					<li><a href='#tab-deck'>デッキ</a></li> \
-					<li><a href='#tab-trade'>トレード</a></li> \
+					<li><a href='#tab-deck2'>デッキ2</a></li> \
+					<li><a href='#tab-trade'>Trade</a></li> \
 					<li><a href='#tab-report'>報告書</a></li> \
 					<li><a href='#tab-note'>書簡</a></li> \
 					<li><a href='#tab-busyodas'>武将ダス</a></li> \
@@ -5591,6 +5636,7 @@ function draw_setting_window(append_target) {
 						</div> \
 						<div><input type='checkbox' id='" + DECK_17 + "'><label for='" + DECK_17 + "'>デッキ：内政官以外を1クリックで全てファイルに下げるボタンを追加</label></input></div> \
 						<div><input type='checkbox' id='" + DECK_18 + "'><label for='" + DECK_18 + "'>デッキ：一括デッキセット機能を追加</label></input></div> \
+						<div><input type='checkbox' id='" + DECK_1B + "'><label for='" + DECK_1B + "'>デッキ：一括ラベルセット機能を追加</label></input></div> \
 						<div class='red'>以下の機能はカード表示モード（小）でのみ有効です</div> \
 						<div><input type='checkbox' id='" + DECK_11 + "'><label for='" + DECK_11 + "'>ファイル内スキル検索機能を追加</label></input></div> \
 						<div><input type='checkbox' id='" + DECK_12 + "'><label for='" + DECK_12 + "'>スキル補正効果表示機能を追加</label></input></div> \
@@ -5610,7 +5656,8 @@ function draw_setting_window(append_target) {
 						<div><input type='checkbox' id='" + DECK_33 + "'><label for='" + DECK_33 + "'>スキルレベルアップ合成画面でベースカードの交換機能を追加</label></input></div> \
 						<div><input type='checkbox' id='" + DECK_35 + "'><label for='" + DECK_35 + "'>自動副将枠解放合成機能を追加</label></input></div> \
 					</div> \
-					<br> \
+				</div> \
+				<div id='tab-deck2'> \
 					<div stype='font-weight: bold'>倉庫画面</div> \
 					<div style='margin-left: 8px;'> \
 						<div><input type='checkbox' id='" + DECK_61 + "'><label for='" + DECK_61 + "'>スキル3つ以上、レベル50、スコア100万のいずれかに該当するカードを倉庫へ移動できなくする</label></input></div> \
@@ -5738,7 +5785,7 @@ function draw_setting_window(append_target) {
 	q$("#beyond_tabs li").css({'padding':'0px', 'min-width':'0px'});
 	q$("#beyond_tabs li a").css({'background':'none'});
 	q$("#beyond_tabs div label").css({'font-size':'12px', 'margin-left':'4px', 'vertical-align':'0.2em'});
-	q$("div[id*='tab-'] div").css({'padding':'2px'});
+	q$("div[id*='tab-'] div").css({'padding':'1px'});
 
 	q$("#beyond_tabs").tabs();
 
@@ -5982,13 +6029,13 @@ function deck_resttime_checker() {
 				q$("#search_status").text("ファイル検索中・・・" + count + " / " + max);
 
 				var no;
-				if (l != 0) {
+				if (lab != 0) {
 					no = {'p': count, 'l' : lab};
 				} else {
 					no = {'p': count};
 				}
 				q$.ajax({
-					url: '/card/deck.php',
+					url: 'http://' + location.hostname + '/card/deck.php',
 					type: 'GET',
 					datatype: 'html',
 					cache: false,
@@ -6321,6 +6368,173 @@ function addAllDropDeckButton() {
 	);
 }
 
+//------------------------//
+// デッキ：一括ラベル設定 //
+//------------------------//
+function multipleLabelSet() {
+	// 簡易ラベルセット用選択肢
+	var label_texts = [];
+	q$("#tab-labels li a").each(
+		function() {
+			if (q$(this).attr("href").indexOf("l=99") >= 0) {
+				return;
+			}
+			label_texts.push(q$(this).text());
+		}
+	);
+
+	var select_label_html = "";
+	for (var i = 0; i < label_texts.length; i++) {
+		select_label_html += "<option value='" + i + "'>" + label_texts[i] + "</option>";
+	}
+
+	// 一括ラベルセットボタン追加
+	q$("#rotate div[class='number card_count clearfix']").eq(0).append(
+		"<fieldset style='-moz-border-radius:5px; border-radius: 5px; -webkit-border-radius: 5px; border: 2px solid black; float: right;'>" +
+			"<div style='margin: 2px 2px 2px 2px;'>" +
+				"<div id='multiple_set_status'>" +
+					"<span style='margin-left: 4px;'>一括ラベル</span>" +
+					"<select id='multiple_label_set' style='margin: 4px;'>" + select_label_html +
+					"</select>" +
+					"<span>" +
+						"<span id='multi_label_set_status' style='display: none;'></span>" +
+						"<input id='multi_label_set' type='button' style='font-size: 12px;' value='実行'></input>" +
+					"</span>" +
+				"</div>" +
+			"</div>" +
+		"</fieldset>"
+	);
+
+	// 一括デッキセットボタン
+	q$("#multi_label_set").on('click',
+		function() {
+			q$("#multi_label_set").css('display', 'none');
+			q$("#multi_label_set_status").css('display', 'inline');
+			q$("#multiple_label_set").css('enabled', 'false');
+
+			var selected_label = q$("#multiple_label_set option:selected").val();
+
+			// 最大ページ番号の取得
+			var max = 1;
+			if (q$("#rotate ul[class=pager]").length > 0) {
+				var pages = q$("#rotate ul[class=pager] li");
+				for (var i = 0; i < pages.length; i++) {
+					var page = parseInt(q$(pages[i]).text());
+					if (!isNaN(page) && max < page) {
+						max = page;
+					}
+				}
+			}
+
+			// ラベル取得
+			match = location.search.match(/l=(\d+)/);
+			var lab = 0;
+			if (match != null) {
+				lab = match[1];
+			}
+
+			// ファイルの検索
+			var base_search_string = location.search.replace(/[?&]p=\d+/,"").replace(/[?&]l=\d+/,"").replace(/#file.*$/,"");
+			var wait = false;
+			var count = 1;
+			var cids = [];
+			var timer1 = setInterval(
+				function () {
+					if (wait) {
+						return;
+					}
+					wait = true;
+
+					var no;
+					if (base_search_string === "") {
+						base_search_string += "?";
+					} else {
+						base_search_string += "&";
+					}
+					if (lab != 0) {
+						base_search_string += "p=" + count + "&l=" + lab;
+					} else {
+						base_search_string += "p=" + count;
+					}
+
+					q$("#multi_label_set_status").text("検索中(" + Math.floor((count - 1)/max * 100) + "%)");
+
+					q$.ajax({
+						url: 'http://' + location.hostname + '/card/deck.php' + base_search_string,
+						type: 'GET',
+						datatype: 'html',
+						cache: false
+					})
+					.done(function(res) {
+						var resp = q$("<div>").append(res);
+						var cards = q$("#cardFileList div[class='cardStatusDetail label-setting-mode']", resp);
+						if (cards.length > 0) {
+							for (var i = 0; i < cards.length; i++) {
+								// カードID
+								var match = q$("div[class='left'] a[class^='thickbox']", cards.eq(i)).attr('href').match(/cardWindow_(\d+)/);
+								if (match == null) {
+									continue;
+								}
+								cids.push(match[1]);
+							}
+						}
+
+						count++;
+						if (count > max) {
+							clearInterval(timer1);
+
+							q$("#multi_label_set_status").text("検索中(100%)");
+
+							// ラベル一括変更
+							multiple_labe_set_finalstep(selected_label, cids);
+						}
+
+ 						wait = false;
+					});
+				}, 150
+			);
+		}
+	);
+
+	// 選定された武将のラベルを変更する
+	function multiple_labe_set_finalstep(select_label, cids) {
+		var ssid = getSessionId();
+
+		// ラベル変更
+		var wait = false;
+		var count = 1;
+		var max = cids.length;
+		var timer1 = setInterval(
+			function () {
+				if (wait) {
+					return;
+				}
+				wait = true;
+
+				q$("#multi_label_set_status").text("変更中(" + Math.floor((count - 1)/max * 100) + "%)");
+
+				var target_url = 'http://' + location.hostname + '/card/change_card_label.php';
+				var param = {'SSID':ssid, 'label':select_label, 'target_card':cids[count - 1]};
+				q$.ajax({
+					url: target_url,
+					type: 'GET',
+					datatype: 'html',
+					cache: false,
+					data: param
+				})
+				.done(function(res) {
+					count++;
+					if (count > max) {
+						clearInterval(timer1);
+						location.reload();
+					}
+					wait = false;
+				});
+			}, 150
+		);
+	}
+}
+
 //--------------------------//
 // デッキ：一括デッキセット //
 //--------------------------//
@@ -6369,7 +6583,7 @@ function multipleDeckSet() {
 			q$("#multiple_deckset_div").css('display', 'block');
 
 			// コスト抽出
-			var match = q$("div[class='number cost clearfix'] div[class='state'] span[class='volume']").text().match(/(\d+) \/ (\d+)/);
+			var match = q$("div[class='number cost deck-cost__div'] div[class='state'] span[class='volume']").text().match(/(\d+) \/ (\d+)/)
 			var freecost = parseFloat(parseInt(match[2]) - parseInt(match[1]));
 
 			// 選択した一括対象
@@ -6414,14 +6628,14 @@ function multipleDeckSet() {
 					q$("#multiple_deckset_status").text("一括デッキセット 対象検索中 (" + count + "/" + max + "), 候補武将数：" + general_ct);
 
 					var no;
-					if (l != 0) {
+					if (lab != 0) {
 						no = {'p': count, 'l' : lab};
 					} else {
 						no = {'p': count};
 					}
 
 					q$.ajax({
-						url: '/card/deck.php',
+						url: 'http://' + location.hostname + '/card/deck.php',
 						type: 'GET',
 						datatype: 'html',
 						cache: false,
@@ -9021,13 +9235,14 @@ function getDefaultOptions() {
 	settings[DECK_11] = true;		// デッキ：ファイル内スキル検索機能の追加
 	settings[DECK_12] = true;		// デッキ：スキル補正効果表示機能の追加
 	settings[DECK_13] = true;		// デッキ：内政スキル使用リンクの追加（回復：赤、内政：青）
-	settings[DECK_1A] = true;		// デッキ：内政スキル使用後画面を強制更新する
 	settings[DECK_14] = true;		// デッキ：1クリックデッキセットボタン追加
 	settings[DECK_15] = false;		// デッキ：ファイルに下げるボタンを1クリックで使用に変更
 	settings[DECK_16] = false;		// デッキ：内政官を1クリックでファイルに下げるボタンを追加
 	settings[DECK_17] = false;		// デッキ：内政官以外を1クリックで全てファイルに下げるボタンを追加
 	settings[DECK_18] = false;		// デッキ：一括デッキセット機能を追加
 	settings[DECK_19] = false;		// デッキ：内政官解除後にデッキを更新する
+	settings[DECK_1A] = true;		// デッキ：内政スキル使用後画面を強制更新する
+	settings[DECK_1B] = true;		// デッキ：一括ラベルセット機能を追加
 	settings[DECK_21] = true;		// 領地一覧：領地一覧の並び方を初期状態に戻す
 	settings[DECK_22] = true;		// 領地一覧：「新領地」で始まる領地を全て破棄
 	settings[DECK_31] = true;		// 修行合成でレベルが上がった時に、レベルアップボタンを追加
@@ -9120,4 +9335,54 @@ function getCookie(name) {
 		if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
 	}
 	return null;
+}
+
+//----------------------//
+// Greasemonkey Wrapper //
+//----------------------//
+// Firefox + GreaseMonkey4 でGMラッパー関数を動かすための定義
+function initGMWrapper() {
+	// @copyright		2009, James Campos
+	// @license		cc-by-3.0; http://creativecommons.org/licenses/by/3.0/
+	if ((typeof GM_getValue == 'undefined') || (GM_getValue('a', 'b') == undefined)) {
+		GM_addStyle = function (css) {
+			var style = document.createElement('style');
+			style.textContent = css;
+			document.getElementsByTagName('head')[0].appendChild(style);
+		};
+		GM_deleteValue = function (name) {
+			sessionStorage.removeItem(name);
+			localStorage.removeItem(name);
+		};
+		GM_getValue = function (name, defaultValue) {
+			var value;
+			value = sessionStorage.getItem(name);
+			if (!value) {
+				value = localStorage.getItem(name);
+				if (!value) {
+					return defaultValue;
+				}
+			}
+			var type = value[0];
+			value = value.substring(1);
+			switch (type) {
+			case 'b':
+				return value == 'true';
+			case 'n':
+				return Number(value);
+			default:
+				return value;
+			}
+		};
+		GM_setValue = function (name, value) {
+			value = (typeof value)[0] + value;
+			try {
+				localStorage.setItem(name, value);
+			} catch (e) {
+				localStorage.removeItem(name);
+				sessionStorage.setItem(name, value);
+				throw e;
+			}
+		};
+	}
 }
