@@ -3,7 +3,7 @@
 // @namespace	bro3_beyond
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		0.94
+// @version		0.94.1
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -37,6 +37,7 @@
 // 0.92		2018/01/08	Greasemonkey4で動かない問題を修正
 // 0.93		2018/03/05	運営のアップデートにより連続合成、連続副将合成が動かなくなっていた問題を修正。武将図鑑から即完検索ができない問題を修正。名声タイマーをステータス右に移動。一括ラベルセット機能を追加。その他微修正。
 // 0.94		2018/07/19	一括出兵に鹵獲モードを追加
+// 0.91.1	2018/07/20	RAPT. 2018/07/18 の大型アップデートに伴い、内政官を1クリックでファイルに下げるボタンが表示できなくなっていたのを修正
 //
 // TODO:
 // 内政ボタンで、拠点を変更せずにセットする新方式対応
@@ -6930,16 +6931,16 @@ function addDropDomesticDeckCard() {
 		}
 		var btnvalue = "";
 		if (html.indexOf("village_id=" + village_id) >= 0) {
-			btnvalue = "現：内政解除&amp;ファイル下げ";
+			btnvalue = "現：内政解除&amp;\nファイル下げ";
 		} else {
-			btnvalue = "他：内政解除&amp;ファイル下げ";
+			btnvalue = "他：内政解除&amp;\nファイル下げ";
 		}
 
 		// 内政官の所在拠点ID
 		var match = q$("dd[class='btm_none'] a", base).attr('href').match(/village_change.php\?village_id=(\d+)/);
 
-		q$("img[class='btn_deck_set']", base).replaceWith(
-			"<span class='btn_deck_set' id='drop_vid_" + match[1] + "' style='font-weight: bold; vertical-align: middle; height: 33.0333px;'>" +
+		q$("img[class='btn_deck_set_s']", base).replaceWith(
+			"<span class='btn_deck_set_s' id='drop_vid_" + match[1] + "' style='font-weight: bold; vertical-align: middle; height: 33.0333px;'>" +
 				"<input value='" + btnvalue + "' type='button'></input>" +
 			"</span>"
 		);
