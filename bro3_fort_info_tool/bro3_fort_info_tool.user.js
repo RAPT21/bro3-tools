@@ -12,10 +12,10 @@
 // @grant		GM.getValue
 // @grant		GM.setValue
 // @author		RAPT
-// @version 	2.0
+// @version 	2.1
 // ==/UserScript==
 
-const VERSION = "2.0"; 	// バージョン情報
+const VERSION = "2.1"; 	// バージョン情報
 
 // 2015.08.10	0.1	プロトタイプ版です。
 // 2015.08.11	0.2	処理結果を UI で表示対応。
@@ -38,6 +38,7 @@ const VERSION = "2.0"; 	// バージョン情報
 //			Firefox 61 + Tampermonkey 4.7
 //			Chrome 67 + Tampermonkey 4.7
 //			Sleipnir 4.5.13 + Tampermonkey 4.6
+// 2018.07.25	2.1	運営の仕様変更に対応し、期表示ではなくマップタイプで選択するよう変更
 
 //====================[ 定義 ]====================
 
@@ -73,9 +74,9 @@ const MODE_02 = 'fimo02';	// シンプルモード
 const SEASON_01 = 'fise01'; // 1期
 const SEASON_02 = 'fise02'; // 2期
 const SEASON_03 = 'fise03'; // 3-4期
-const SEASON_04 = 'fise04'; // 5-9期
-const SEASON_05 = 'fise05'; // 10-13期
-const SEASON_06 = 'fise06'; // 14期-
+const SEASON_04 = 'fise04'; // 5-9期/5-6期
+const SEASON_05 = 'fise05'; // 10-13期/7-12期
+const SEASON_06 = 'fise06'; // 14期-/13期-
 const AREA_01 = 'fiar01';	// 北西エリア
 const AREA_02 = 'fiar02';	// 北東エリア
 const AREA_03 = 'fiar03';	// 南西エリア
@@ -178,31 +179,31 @@ function createMainWindow() {
 					</li>
 				</ul>
 			</div>
-			<div style="margin: 10px 0;" title="期を選択してください。">
+			<div style="margin: 10px 0;" title="マップタイプを選択してください。">
 				<ul style="list-style: none;">
 					<li>
 						<input id="${SEASON_01}" type="radio" name="season" value="1" />
-						<label for="${SEASON_01}">1期</label>
+						<label for="${SEASON_01}" title="1期">a-1t</label>
 					</li>
 					<li>
 						<input id="${SEASON_02}" type="radio" name="season" value="2" />
-						<label for="${SEASON_02}">2期</label>
+						<label for="${SEASON_02}" title="2期">b-1t</label>
 					</li>
 					<li>
 						<input id="${SEASON_03}" type="radio" name="season" value="3" />
-						<label for="${SEASON_03}">3-4期</label>
+						<label for="${SEASON_03}" title="3-4期">c-1t</label>
 					</li>
 					<li>
 						<input id="${SEASON_04}" type="radio" name="season" value="5" />
-						<label for="${SEASON_04}">5-9期</label>
+						<label for="${SEASON_04}" title="5-9期/5-6期">d-1t</label>
 					</li>
 					<li>
 						<input id="${SEASON_05}" type="radio" name="season" value="10" />
-						<label for="${SEASON_05}">10-13期</label>
+						<label for="${SEASON_05}" title="10-13期/7-12期">e-2t, f-1t</label>
 					</li>
 					<li class='last'>
 						<input id="${SEASON_06}" type="radio" name="season" value="14" />
-						<label for="${SEASON_06}">14期～</label>
+						<label for="${SEASON_06}" title="14期～/13期～">g-1t～</label>
 					</li>
 				</ul>
 			</div>
@@ -621,9 +622,44 @@ function getAllyName() {
 		if (!name) {
 			name = html.match(/<td[^>]*>同盟<\/td>[^<]*<td[^>]*>[^>]*<a href="[^"]*">([^<]+)<\/a>[^>]*<\/td>/);
 		}
-		const ally_name = (name && name.length >= 2) ? name[1] : null;
+		let ally_name = (name && name.length >= 2) ? name[1] : null;
+
+		// イベント鯖対応
+		if (!ally_name) {
+			const resp = $("<div>").append(html);
+			const ally = $("table.commonTables td:contains(同盟)", resp).next();
+			const name = $.trim($("a", ally).text());
+			if (name.length) {
+				ally_name = name;
+			}
+		}
+		//
+
 		resolve(ally_name);
 	});
+}
+
+// 勢力情報あり（イベント鯖）
+function genMapInfoInfluence(x,y,m,influence,h,k,g,l,e,c,b,f,j,d,i,a,p,t){
+	info.influence = influence;	// 勢力(int)
+	this.x = x; // center-x
+	this.y = y; // center-y
+	this.m = m; // 削除中
+	this.h = h; // 地名
+	this.k = k; // 君主名
+	this.g = g; // 人口-
+	this.l = l; // 座標(x,y)
+	this.e = e; // 同盟名
+	this.c = c.length; // 戦力★
+	this.b = b; // 距離
+	this.f = f; // 森
+	this.j = j; // 岩
+	this.d = d; // 鉄
+	this.i = i; // 糧
+	this.a = parseInt(a,10); // NPCフラグ
+	this.p = p; // 保護期間
+	this.t = t; // 深夜停戦
+	this.xy = l.replace(/^\((-?[0-9]+\,-?[0-9]+)\)$/, "$1");
 }
 
 // MAP データをオブジェクトに変換して返す
@@ -680,8 +716,10 @@ function getMap(ally, x, y) {
 			let mapInfo; // eval は内部スコープで実行されるため、値を取り出すには上位層で宣言した変数に代入する必要がある
 			const code = $(area).attr("onmouseover")
 				.replace(/^.*rewriteAddRemoving/, "genMapInfo")
+				.replace(/^.*rewriteInfluenceAddRemoving/, "genMapInfoInfluence")
 				.replace(/\); .*$/, ");")
-				.replace(/^genMapInfo\(/, `mapInfo = new genMapInfo(${x},${y},`);
+				.replace(/^genMapInfo\(/, `mapInfo = new genMapInfo(${x},${y},`)
+				.replace(/^genMapInfoInfluence\(/, `mapInfo = new genMapInfoInfluence(${x},${y},`);
 			eval(code);
 
 			for (const target of targets) {
@@ -718,7 +756,7 @@ function getMap(ally, x, y) {
 		const vacant_cell_count = 8 - neighbors.length;
 
 		// 隣接同盟の重複を外す
-        neighbors = array_unique(neighbors);
+		neighbors = array_unique(neighbors);
 
 		// 隣接状況
 		const status = statusForNeighbors(ally, capture, neighbors, vacant_cell_count);
