@@ -1,7 +1,7 @@
 # bro3-tools
 ブラウザ三国志用のツール置き場
 
-| ツール名 | 目的 |
+| ツール名 | 機能 |
 | - | - |
 | [bro3_Auto_Bilder](bro3_Auto_Bilder) | 通称ビルダー。自動内政（建築/削除）、武器防具強化、造兵、糧変換など |
 | [bro3_auto_daily_quest](bro3_auto_daily_quest) | 繰り返しクエストのクエクリ補助 |
