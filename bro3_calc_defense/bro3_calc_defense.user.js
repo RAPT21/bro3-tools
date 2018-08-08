@@ -7,7 +7,7 @@
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @author		BSE with RAPT
-// @version 	1.6.1.22
+// @version 	1.6.1.23
 // ==/UserScript==
 
 // ----- BSE 版リリースノート -----
@@ -35,9 +35,10 @@
 //	2018.04.22 v1.6.1.20 y17,y25,y33,y35,y37 鯖対応
 //	2018.05.13 v1.6.1.21 k-1t は現状 25 期まで運用されている模様
 //	2018.07.25 v1.6.1.22 y1,y9,y29,y35,y38,y39 鯖対応
+//	2018.08.08 v1.6.1.23 y33 鯖対応
 
 //バージョン配置用
-var ver_rack = "ver1.6.1.22";
+var ver_rack = "ver1.6.1.23";
 
 //配布管理系
 var nazeka ="<span style='color:crimson'>■</span>";
@@ -64,7 +65,7 @@ var server_session = {
 	"y17": 15,
 	"y25": 12,
 	"y29": 9,
-	"y33": 6,
+	"y33": 10, // 本来7期だが、e-2t になるので暫定で10期扱いにしている
 	"y35": 5,
 	"y37": 2,
 	"y38": 1,
