@@ -7,7 +7,7 @@
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @author		BSE with RAPT
-// @version 	1.6.1.24
+// @version 	1.6.1.25
 // ==/UserScript==
 
 // ----- BSE 版リリースノート -----
@@ -37,9 +37,10 @@
 //	2018.07.25 v1.6.1.22 y1,y9,y29,y35,y38,y39 鯖対応
 //	2018.08.08 v1.6.1.23 y33 鯖対応
 //	2018.08.22 v1.6.1.24 y17,y37 鯖対応
+//	2018.09.06 v1.6.1.25 y38 鯖対応
 
 //バージョン配置用
-var ver_rack = "ver1.6.1.24";
+var ver_rack = "ver1.6.1.25";
 
 //配布管理系
 var nazeka ="<span style='color:crimson'>■</span>";
@@ -69,7 +70,7 @@ var server_session = {
 	"y33": 10, // 本来7期だが、e-2t になるので暫定で10期扱いにしている
 	"y35": 5,
 	"y37": 3,
-	"y38": 1,
+	"y38": 2,
 	"y39": 1,
 	"f1": 10, // event-world
 	"f2": 12, // event-world
