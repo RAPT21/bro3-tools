@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name		bro3_beyond
 // @namespace	bro3_beyond
+// @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		0.94.1
+// @version		0.98
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -38,6 +39,7 @@
 // 0.93		2018/03/05	運営のアップデートにより連続合成、連続副将合成が動かなくなっていた問題を修正。武将図鑑から即完検索ができない問題を修正。名声タイマーをステータス右に移動。一括ラベルセット機能を追加。その他微修正。
 // 0.94		2018/07/19	一括出兵に鹵獲モードを追加
 // 0.94.1	2018/07/20	RAPT. 2018/07/18 の大型アップデートに伴い、内政官を1クリックでファイルに下げるボタンが表示できなくなっていたのを修正
+// 0.96		2018/08/02	スキーム変更に対応
 //
 // TODO:
 // 内政ボタンで、拠点を変更せずにセットする新方式対応
@@ -79,9 +81,10 @@ if (ua.indexOf("Firefox") > 0 && GM_info.version >= 4) {
 	GM_addStyle(jqueryUICss);
 }
 
+var SERVER_SCHEME = location.protocol + "//";
 var SERVER_NAME = location.hostname.match(/^(.*)\.3gokushi/)[1];
-var SORT_UP_ICON = "http://" + location.hostname + "/20160427-03/extend_project/w945/img/trade/icon_up.gif";
-var SORT_DOWN_ICON = "http://" + location.hostname + "/20160427-03/extend_project/w945/img/trade/icon_down.gif";
+var SORT_UP_ICON = SERVER_SCHEME + location.hostname + "/20160427-03/extend_project/w945/img/trade/icon_up.gif";
+var SORT_DOWN_ICON = SERVER_SCHEME + location.hostname + "/20160427-03/extend_project/w945/img/trade/icon_down.gif";
 
 //------------------//
 // 保存設定部品定義 //
@@ -555,42 +558,42 @@ function profileControl() {
 
 		// 同盟総合ランク
 		elem.eq(3).children("td").eq(3).html(
-			"<a href='http://" + location.hostname + "/alliance/list.php' target='blank'>同盟</a>"
+			"<a href='" + SERVER_SCHEME + location.hostname + "/alliance/list.php' target='blank'>同盟</a>"
 		);
 
 		// 個人総合ランク
 		elem.eq(4).children("td").eq(0).html(
-			"<a href='http://" + location.hostname + "/user/ranking.php' target='blank'>総合</a>"
+			"<a href='" + SERVER_SCHEME + location.hostname + "/user/ranking.php' target='blank'>総合</a>"
 		);
 
 		// 人口ランク
 		elem.eq(5).children("td").eq(0).html(
-			"<a href='http://" + location.hostname + "/user/ranking.php?m=population' target='blank'>総人口</a>"
+			"<a href='" + SERVER_SCHEME + location.hostname + "/user/ranking.php?m=population' target='blank'>総人口</a>"
 		);
 
 		// 攻撃ランク
 		elem.eq(6).children("td").eq(0).html(
-			"<a href='http://" + location.hostname + "/user/ranking.php?m=attack' target='blank'>攻撃</a>"
+			"<a href='" + SERVER_SCHEME + location.hostname + "/user/ranking.php?m=attack' target='blank'>攻撃</a>"
 		);
 
 		// 防御ランク
 		elem.eq(6).children("td").eq(2).html(
-			"<a href='http://" + location.hostname + "/user/ranking.php?m=defence' target='blank'>防御</a>"
+			"<a href='" + SERVER_SCHEME + location.hostname + "/user/ranking.php?m=defence' target='blank'>防御</a>"
 		);
 
 		// 撃破スコアランク
 		elem.eq(7).children("td").eq(0).html(
-			"<a href='http://" + location.hostname + "/user/ranking.php?m=attack_score' target='blank'>撃破スコア</a>"
+			"<a href='" + SERVER_SCHEME + location.hostname + "/user/ranking.php?m=attack_score' target='blank'>撃破スコア</a>"
 		);
 
 		// 防御スコアランク
 		elem.eq(7).children("td").eq(2).html(
-			"<a href='http://" + location.hostname + "/user/ranking.php?m=defence_score' target='blank'>防御スコア</a>"
+			"<a href='" + SERVER_SCHEME + location.hostname + "/user/ranking.php?m=defence_score' target='blank'>防御スコア</a>"
 		);
 
 		// デュエルランク
 		elem.eq(8).children("td").eq(0).html(
-			"<a href='http://" + location.hostname + "/user/ranking.php?m=duel' target='blank'>DP</a>"
+			"<a href='" + SERVER_SCHEME + location.hostname + "/user/ranking.php?m=duel' target='blank'>DP</a>"
 		);
 	}
 
@@ -625,7 +628,7 @@ function profileControl() {
 		for (var i = start; i < elem.length; i++) {
 			var match = elem.eq(i).children("td").eq(1).text().match(/([-]*[0-9]*),([-]*[0-9]*)/);
 			elem.eq(i).children("td").eq(1).html(
-				"<a href='http://" + location.hostname + "/map.php?x=" + match[1] + "&y=" + match[2] + "' target='_blank'>(" + match[0] + ")</a>"
+				"<a href='" + SERVER_SCHEME + location.hostname + "/map.php?x=" + match[1] + "&y=" + match[2] + "' target='_blank'>(" + match[0] + ")</a>"
 			);
 		}
 	}
@@ -1057,7 +1060,7 @@ function profileControl() {
 
 					var loc = {'x':sx, 'y':sy, 'type':5};
 					q$.ajax({
-						url: 'http://' + location.hostname + '/map.php',
+						url: SERVER_SCHEME + location.hostname + '/map.php',
 						type: 'GET',
 						datatype: 'html',
 						cache: false,
@@ -1230,7 +1233,7 @@ function profileControl() {
 
 						var loc = {'x':sx, 'y':sy, 'type':5};
 						q$.ajax({
-							url: 'http://' + location.hostname + '/map.php',
+							url: SERVER_SCHEME + location.hostname + '/map.php',
 							type: 'GET',
 							datatype: 'html',
 							cache: false,
@@ -1357,7 +1360,7 @@ function profileControl() {
 
 						var loc = {'x':search_target[count-1].x, 'y':search_target[count-1].y, 'type':1};
 						q$.ajax({
-							url: 'http://' + location.hostname + '/map.php',
+							url: SERVER_SCHEME + location.hostname + '/map.php',
 							type: 'GET',
 							datatype: 'html',
 							cache: false,
@@ -1788,7 +1791,7 @@ function mapTabControl() {
 							q$("#multiple_troop_info").text("一斉出兵中 (" + count + "/" + max + ")");
 
 							q$.ajax({
-								url: "http://" + location.hostname + "/facility/castle_send_troop.php",
+								url: SERVER_SCHEME + location.hostname + "/facility/castle_send_troop.php",
 								type: 'POST',
 								datatype: 'html',
 								cache: false,
@@ -1811,7 +1814,7 @@ function mapTabControl() {
 								if (count > max) {
 									clearInterval(timer1);
 									timer1 = null;
-									location.href = "http://" + location.hostname + "/facility/unit_status.php?type=sortie";
+									location.href = SERVER_SCHEME + location.hostname + "/facility/unit_status.php?type=sortie";
 								}
 								wait = false;
 							});
@@ -1893,7 +1896,7 @@ function mapTabControl() {
 							q$("#multiple_troop_info").text("一斉援軍中 (" + count + "/" + max + ")");
 
 							q$.ajax({
-								url: "http://" + location.hostname + "/facility/castle_send_troop.php",
+								url: SERVER_SCHEME + location.hostname + "/facility/castle_send_troop.php",
 								type: 'POST',
 								datatype: 'html',
 								cache: false,
@@ -1916,7 +1919,7 @@ function mapTabControl() {
 								if (count > max) {
 									clearInterval(timer1);
 									timer1 = null;
-									location.href = "http://" + location.hostname + "/facility/unit_status.php?type=sortie";
+									location.href = SERVER_SCHEME + location.hostname + "/facility/unit_status.php?type=sortie";
 								}
 								wait = false;
 							});
@@ -2096,7 +2099,7 @@ function allianceTabControl() {
 
 								q$("#list_title").text('( ' + count + ' / ' + max + ' ) ' + usernames[count-1] + 'の領地取得中...');
 								q$.ajax({
-									url: "http://" + location.hostname + "/user",
+									url: SERVER_SCHEME + location.hostname + "/user",
 									type: 'GET',
 									datatype: 'html',
 									cache: false,
@@ -2182,7 +2185,7 @@ function allianceTabControl() {
 
 								q$("#alliance_pos_get_all").text('(' + count + '/' + max + ')人目の座標取得中...');
 								q$.ajax({
-									url: "http://" + location.hostname + "/user",
+									url: SERVER_SCHEME + location.hostname + "/user",
 									type: 'GET',
 									datatype: 'html',
 									cache: false,
@@ -2199,7 +2202,7 @@ function allianceTabControl() {
 										pos = 7;
 									}
 									elems.eq(count + 1).children('td').eq(pos).html(
-										"<a href='http://" + location.hostname + "/map.php?x=" + match[1] + "&y=" + match[2] + "' target='_blank'>(" + match[0] + ")</a>"
+										"<a href='" + SERVER_SCHEME + location.hostname + "/map.php?x=" + match[1] + "&y=" + match[2] + "' target='_blank'>(" + match[0] + ")</a>"
 									);
 
 									count++;
@@ -2341,7 +2344,7 @@ function allianceTabControl() {
 							q$("#search_status").text('(' + count + '/' + max + ')のログ検索中...');
 
 							q$.ajax({
-								url: "http://" + location.hostname + "/alliance/alliance_log.php",
+								url: SERVER_SCHEME + location.hostname + "/alliance/alliance_log.php",
 								type: 'GET',
 								datatype: 'html',
 								cache: false,
@@ -2500,7 +2503,7 @@ function allianceTabControl() {
 
 						no = {'p': count};
 						q$.ajax({
-							url: 'http://' + location.hostname + '/alliance/manage_dep.php',
+							url: SERVER_SCHEME + location.hostname + '/alliance/manage_dep.php',
 							type: 'GET',
 							datatype: 'html',
 							cache: false,
@@ -2628,7 +2631,7 @@ function deckTabControl() {
 					if (cid > 0) {
 						q$("div[class='front'] span[class='status_frontback']").append(
 							"<span class='status_levelup'>" +
-								"<a href='http://" + location.hostname + "/card/status_info.php?cid=" + cid + "'>" +
+								"<a href='" + SERVER_SCHEME + location.hostname + "/card/status_info.php?cid=" + cid + "'>" +
 									"<img src='/20160620-01/extend_project/w945/img/card/common/btn_levelup.png' alt='ステータス強化' title='ステータス強化' class='levelup'>" +
 								"</a>" +
 							"</span>"
@@ -2757,8 +2760,8 @@ function getExpeditionTextReport() {
 
 					// 絶対パスになっている場合もあるので対策
 					var requestUrl = urllist[count - 1];
-					if (requestUrl.indexOf("http://") === -1) {
-						requestUrl = "http://" + location.hostname + "/report/" + requestUrl;
+					if (requestUrl.indexOf(SERVER_SCHEME) === -1) {
+						requestUrl = SERVER_SCHEME + location.hostname + "/report/" + requestUrl;
 					}
 
 					q$.ajax({
@@ -3020,7 +3023,7 @@ function messageTabControl() {
 					}
 
 					q$.ajax({
-						url: 'http://' + location.hostname + '/message/' + openurl[pos],
+						url: SERVER_SCHEME + location.hostname + '/message/' + openurl[pos],
 						type: 'GET',
 						datatype: 'html',
 						cache: false
@@ -3072,7 +3075,7 @@ function messageTabControl() {
 		q$("#open_info").text("");
 		if (post_target.length > 0) {
 			q$("#open_info").text("書簡削除中");
-			var target_url = 'http://' + location.hostname + '/message/delete.php';
+			var target_url = SERVER_SCHEME + location.hostname + '/message/delete.php';
 			var param = {'chk':post_target, 'mode':mode, 'p':page};
 
 			q$.ajax({
@@ -3144,13 +3147,13 @@ function busyodasControl() {
 						var elem = q$("td", this).eq(0);
 						var cardno = elem.text();
 						elem.html(
-							"<a href='http://" + location.hostname + "/card/trade.php?t=no&k=" + cardno + "&tl=1&s=price&o=a&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + cardno + "</a>"
+							"<a href='" + SERVER_SCHEME + location.hostname + "/card/trade.php?t=no&k=" + cardno + "&tl=1&s=price&o=a&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + cardno + "</a>"
 						);
 
 						// 武将名に図鑑リンクを作成
 						elem = q$("td", this).eq(2);
 						elem.html(
-							"<a href='http://" + location.hostname + "/card/busyo_data.php?search_options=&q=&status=&ability_type=&ability_value=&sort=card-no-asc&search_mode=detail&view_mode=&double_skill_height=&card_number=" + cardno + "' target='_blank'>" + elem.text() + "</a>"
+							"<a href='" + SERVER_SCHEME + location.hostname + "/card/busyo_data.php?search_options=&q=&status=&ability_type=&ability_value=&sort=card-no-asc&search_mode=detail&view_mode=&double_skill_height=&card_number=" + cardno + "' target='_blank'>" + elem.text() + "</a>"
 						);
 					}
 				}
@@ -3176,14 +3179,14 @@ function cardbookControl() {
 					if (g_beyond_options[BOOK_01] == true) {
 						var cardno = q$("td[class='center card-no']", this).text();
 						q$("td[class='center card-no']", this).html(
-							"<a href='http://" + location.hostname + "/card/trade.php?t=no&k=" + cardno + "&tl=1&s=price&o=a&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + cardno + "</a>"
+							"<a href='" + SERVER_SCHEME + location.hostname + "/card/trade.php?t=no&k=" + cardno + "&tl=1&s=price&o=a&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + cardno + "</a>"
 						);
 						var elem = q$("td[class='left skill'] a", this);
 						for (var i = 0; i < elem.length; i++) {
 							var match = elem.eq(i).text().match(/(.*)LV[0-9]*/);
 							if (match) {
 								elem.eq(i).after(
-									"<a href='http://" + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[1] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>"
+									"<a href='" + SERVER_SCHEME + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[1] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>"
 								);
 							}
 						}
@@ -3311,7 +3314,7 @@ function skillbookControl() {
 					var elem = q$(this).children("td").eq(0).children("a");
 					var skill = elem.text().replace(/LV1/, "");
 					elem.after(
-						"<a href='http://" + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + skill + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>"
+						"<a href='" + SERVER_SCHEME + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + skill + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>"
 					);
 				}
 			);
@@ -3329,7 +3332,7 @@ function skillbookControl() {
 					}
 
 					q$(this).after(
-							"<a href='http://" + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + skill + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>"
+							"<a href='" + SERVER_SCHEME + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + skill + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>"
 					);
 				}
 			);
@@ -3552,12 +3555,12 @@ function anyControl() {
 					var battle_id = q$("#event_target_id").val();
 					if (scope != 1) {
 						if (!isNaN(parseInt(battle_id)) != "") {
-							location.href = "http://" + location.hostname + "/card/event_battle_top.php?filter_damege=" + filter_damage + "&filter_hp=-1&scope=" + scope + "&battle_id=" + battle_id;
+							location.href = SERVER_SCHEME + location.hostname + "/card/event_battle_top.php?filter_damege=" + filter_damage + "&filter_hp=-1&scope=" + scope + "&battle_id=" + battle_id;
 						} else {
-							location.href = "http://" + location.hostname + "/card/event_battle_top.php?filter_damege=" + filter_damage + "&filter_hp=-1&scope=" + scope + "&battle_id=";
+							location.href = SERVER_SCHEME + location.hostname + "/card/event_battle_top.php?filter_damege=" + filter_damage + "&filter_hp=-1&scope=" + scope + "&battle_id=";
 						}
 					} else {
-						location.href = "http://" + location.hostname + "/card/event_battle_top.php?scope=" + scope;
+						location.href = SERVER_SCHEME + location.hostname + "/card/event_battle_top.php?scope=" + scope;
 					}
 				}
 			);
@@ -3579,7 +3582,7 @@ function anyControl() {
 					var m = match[j].match(/([-]*[0-9]+),([-]*[0-9]+)/);
 					html = html.replace(
 						match[j],
-						"<a href='http://" + location.hostname + "/map.php?x=" + m[1] + "&y=" + m[2] + "' target='_blank'>" + match[j] + "</a>"
+						"<a href='" + SERVER_SCHEME + location.hostname + "/map.php?x=" + m[1] + "&y=" + m[2] + "' target='_blank'>" + match[j] + "</a>"
 					);
 				}
 				colist.eq(i).html(html);
@@ -3598,7 +3601,7 @@ function execCommonPart() {
 		q$("#menu_container").remove();
 
 		// 独自のメニューを追加
-		var baseurl = 'http://' + location.hostname;
+		var baseurl = SERVER_SCHEME + location.hostname;
 		var cardnourl = baseurl + '/card/trade.php?t=no&tl=1&s=price&o=a&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1&k=';
 		var nameurl = baseurl + '/card/trade.php?t=name&tl=1&s=&o=&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1&sub=&e-type=0&e-group=0&e-rarity=0&k=';
 		var sklurl = baseurl + '/card/trade.php?t=skill&tl=1&s=&o=&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1&sub=&e-type=0&e-group=0&e-rarity=0&k=';
@@ -3928,7 +3931,7 @@ function execCommonPart() {
 						q$("#quest_status").text(quests[count - 1][1] + "クエ受領中");
 
 						q$.ajax({
-							url: "http://" + location.hostname +
+							url: SERVER_SCHEME + location.hostname +
 									"/quest/index.php?list=1&p=1&mode=0&action=take_quest&disp_mode=0&scroll_pos=&selected_tab=1&filter_reward=-1&id=" + quests[count - 1][0] + "&p=1&selected_tab=1",
 							type: 'GET',
 							datatype: 'html',
@@ -3953,18 +3956,18 @@ function execCommonPart() {
 	if (1) {
 		var img = [
 			// 内政設定
-http://w9.3gokushi.jp/village_change.php?village_id=40560&from=menu&page=%2Fcard%2Fdomestic_setting.php
+https://w9.3gokushi.jp/village_change.php?village_id=40560&from=menu&page=%2Fcard%2Fdomestic_setting.php
 			// マップ
 			[
-http://w9.3gokushi.jp/map.php?x=-151&y=-416
+https://w9.3gokushi.jp/map.php?x=-151&y=-416
 				'data:image/bmp;base64,Qk1WAQAAAAAAADYAAAAoAAAACgAAAAkAAAABABgAAAAAACABAAAAAAAAAAAAAAAAAAAAAAAAw8PDJ3//J3//J3//J3//J3//J3//J3//w8PDw8PDAAAnf/////8nf/8nf/////8nf/8nf/////8nf//Dw8MAACd//////yd//yd//////yd//yd//////yd//8PDwwAAJ3//////J3//////J3//////J3//////J3//w8PDAAAnf/////8nf/////8nf/////8nf/////8nf//Dw8MAACd//////////yd//yd//yd//////////yd//8PDwwAAJ3//////////J3//J3//J3//////////J3//w8PDAAAnf/////8nf/8nf/8nf/8nf/8nf/////8nf//Dw8MAAMPDwyd//yd//yd//yd//yd//yd//yd//8PDw8PDwwAA
 ',
 			],
 			// 兵士管理
-//http://w9.3gokushi.jp/village_change.php?village_id=214664&from=menu&page=%2Ffacility%2Funit_status.php?type=all
+//https://w9.3gokushi.jp/village_change.php?village_id=214664&from=menu&page=%2Ffacility%2Funit_status.php?type=all
 			// 出兵
 			[
-//http://w9.3gokushi.jp/facility/castle_send_troop.php?x=-151&y=-416
+//https://w9.3gokushi.jp/facility/castle_send_troop.php?x=-151&y=-416
 				'data:image/bmp;base64,Qk1WAQAAAAAAADYAAAAoAAAACgAAAAkAAAABABgAAAAAACABAAAAAAAAAAAAAAAAAAAAAAAAw8PDJBztJBztJBztJBztJBztJBztJBztw8PDw8PDAAAkHO0kHO0kHO0kHO3///8kHO0kHO0kHO0kHO3Dw8MAACQc7SQc7SQc7SQc7f///yQc7SQc7SQc7SQc7cPDwwAAJBztJBztJBztJBzt////JBztJBztJBztJBztw8PDAAAkHO0kHO0kHO0kHO3///8kHO0kHO0kHO0kHO3Dw8MAACQc7SQc7SQc7SQc7f///yQc7SQc7SQc7SQc7cPDwwAAJBztJBzt////////////////////JBztJBztw8PDAAAkHO0kHO0kHO0kHO0kHO0kHO0kHO0kHO0kHO3Dw8MAAMPDwyQc7SQc7SQc7SQc7SQc7SQc7SQc7cPDw8PDwwAA',
 
 			],
@@ -4094,7 +4097,7 @@ function getFameTimer() {
 
 	// 名声タイマーの取得
 	q$.ajax({
-		url: "http://" + location.hostname + "/facility/facility.php?x=3&y=3",
+		url: SERVER_SCHEME + location.hostname + "/facility/facility.php?x=3&y=3",
 		type: 'GET',
 		datatype: 'html',
 		cache: false
@@ -4139,7 +4142,7 @@ function execFacilityPart() {
 	if (g_beyond_options[DECK_21] == true) {
 		q$("#all table[class='commonTables']").eq(0).before(
 			"<span style='margin-right: 10px;'>" +
-				"<a href='http://" + location.hostname + "/facility/territory_status.php?p=1&s=0&o=0'>領地一覧の並び方を初期状態に戻す</a>" +
+				"<a href='" + SERVER_SCHEME + location.hostname + "/facility/territory_status.php?p=1&s=0&o=0'>領地一覧の並び方を初期状態に戻す</a>" +
 			"</span>"
 		);
 	}
@@ -4186,7 +4189,7 @@ function execFacilityPart() {
 						);
 
 						q$.ajax({
-							url: "http://" + location.hostname + "/territory_proc.php",
+							url: SERVER_SCHEME + location.hostname + "/territory_proc.php",
 							type: 'GET',
 							datatype: 'html',
 							cache: false,
@@ -4398,7 +4401,7 @@ function execTradePart() {
 				var id = q$("td[class='center']", tradelist[tri]).eq(0).text();
 				q$("td[class='center']", tradelist[tri]).eq(0).html(
 					"<a href='trade.php?s=price&o=a&t=no&k=" + id + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + id + "</a>" +
-					"<br><a href='http://" + location.hostname + "/card/busyo_data.php?search_options=&q=&status=&ability_type=&ability_value=&sort=card-no-asc&search_mode=detail&view_mode=&double_skill_height=&card_number=" + id + "' target='_blank'>(図鑑)</a>"
+					"<br><a href='" + SERVER_SCHEME + location.hostname + "/card/busyo_data.php?search_options=&q=&status=&ability_type=&ability_value=&sort=card-no-asc&search_mode=detail&view_mode=&double_skill_height=&card_number=" + id + "' target='_blank'>(図鑑)</a>"
 				);
 
 				// カードID表示
@@ -4414,9 +4417,9 @@ function execTradePart() {
 					if (match) {
 						skills.eq(j).html(
 							match[1] +
-							":<a href='http://" + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[2] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + match[2] + "</a>"
+							":<a href='" + SERVER_SCHEME + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[2] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + match[2] + "</a>"
 							+ match[3] +
-							"<a href='http://" + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[2] + match[3] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>"
+							"<a href='" + SERVER_SCHEME + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[2] + match[3] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>"
 						);
 					}
 				}
@@ -4628,7 +4631,7 @@ function execUnionPart() {
 
 						var no = {'p': count, 'cid': base_cid};
 						q$.ajax({
-							url: 'http://' + location.hostname + '/union/lvup.php',
+							url: SERVER_SCHEME + location.hostname + '/union/lvup.php',
 							type: 'GET',
 							datatype: 'html',
 							cache: false,
@@ -4726,7 +4729,7 @@ function execUnionPart() {
 
 						var params = {'ssid': ssid, 'selected_skill_radio': skill_id, 'base_cid': base_cid, 'added_cid': target_cards[count], 'union_item_id': 0, 'buy_and_use': ''};
 						q$.ajax({
-							url: 'http://' + location.hostname + '/union/union_lv.php',
+							url: SERVER_SCHEME + location.hostname + '/union/union_lv.php',
 							type: 'POST',
 							datatype: 'html',
 							cache: false,
@@ -4802,7 +4805,7 @@ function execUnionPart() {
 					var card_id = match[1];
 
 					q$("div[class='left']", cards[i]).eq(0).append(
-						'<a href=' + 'http://' + location.hostname + '/union/lvup.php?cid=' + card_id + '>' +
+						'<a href=' + SERVER_SCHEME + location.hostname + '/union/lvup.php?cid=' + card_id + '>' +
 							'<img style="width: 90%; cursor: pointer;" src="/20161222-01/extend_project/w945/img/union/btn_levelupskill_mini.png" alt="ベースカードをこのカードに変更" title="ベースカードをこのカードに変更">' +
 						'</a>'
 					);
@@ -4919,7 +4922,7 @@ function execUnionPart() {
 
 						var no = {'p': count, 'cid': base_cid};
 						q$.ajax({
-							url: 'http://' + location.hostname + '/union/subgeneral.php',
+							url: SERVER_SCHEME + location.hostname + '/union/subgeneral.php',
 							type: 'GET',
 							datatype: 'html',
 							cache: false,
@@ -5017,7 +5020,7 @@ function execUnionPart() {
 
 						var params = {'ssid': ssid, 'base_cid': base_cid, 'added_cid': target_cards[count], 'union_item_id': 0, 'buy_and_use': '', 'submit_subgeneral': 1};
 						q$.ajax({
-							url: 'http://' + location.hostname + '/union/union_subgeneral.php',
+							url: SERVER_SCHEME + location.hostname + '/union/union_subgeneral.php',
 							type: 'POST',
 							datatype: 'html',
 							cache: false,
@@ -5103,9 +5106,9 @@ function execStockPart() {
 				var match = skills[j].match(/(.*)(LV[0-9]*)/);
 				if (match) {
 					replaced += "<div>" +
-						"<a href='http://" + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[1] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + match[1] + "</a>"
+						"<a href='" + SERVER_SCHEME + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[1] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + match[1] + "</a>"
 						+ match[2] +
-						"<a href='http://" + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[1] + match[2] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>" + "</div>";
+						"<a href='" + SERVER_SCHEME + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[1] + match[2] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>" + "</div>";
 				} else {
 					replaced += "<div>" + skills[j] + "</div>";
 				}
@@ -5200,7 +5203,7 @@ function execExhibitListPart() {
 			var id = q$("td[class='center']", tradelist[tri]).eq(0).text();
 			q$("td[class='center']", tradelist[tri]).eq(0).html(
 				"<a href='trade.php?s=price&o=a&t=no&k=" + id + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + id + "</a>" +
-				"<br><a href='http://" + location.hostname + "/card/busyo_data.php?search_options=&q=&status=&ability_type=&ability_value=&sort=card-no-asc&search_mode=detail&view_mode=&double_skill_height=&card_number=" + id + "' target='_blank'>(図鑑)</a>"
+				"<br><a href='" + SERVER_SCHEME + location.hostname + "/card/busyo_data.php?search_options=&q=&status=&ability_type=&ability_value=&sort=card-no-asc&search_mode=detail&view_mode=&double_skill_height=&card_number=" + id + "' target='_blank'>(図鑑)</a>"
 			);
 
 			// カードID表示
@@ -5216,9 +5219,9 @@ function execExhibitListPart() {
 				if (match) {
 					skills.eq(j).html(
 						match[1] +
-						":<a href='http://" + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[2] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + match[2] + "</a>"
+						":<a href='" + SERVER_SCHEME + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[2] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + match[2] + "</a>"
 						+ match[3] +
-						"<a href='http://" + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[2] + match[3] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>"
+						"<a href='" + SERVER_SCHEME + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[2] + match[3] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>"
 					);
 				}
 			}
@@ -5242,7 +5245,7 @@ function execExhibitListPart() {
 				continue;
 			}
 			var match = elem.attr('href').match(/del_id=([0-9]*)/);
-			text += "http://" + location.hostname + "/card/trade_bid.php?id=" + match[1] + "\n";
+			text += SERVER_SCHEME + location.hostname + "/card/trade_bid.php?id=" + match[1] + "\n";
 		}
 
 		q$("#sell-box").text(text);
@@ -5326,7 +5329,7 @@ function execBidListPart() {
 
 		q$("#auto-buy-button").on('click',
 			function() {
-				var base_url = 'http://' + location.hostname + '/card/trade_bid.php';
+				var base_url = SERVER_SCHEME + location.hostname + '/card/trade_bid.php';
 
 				// 入力URLリストを精査
 				var lists = q$("#buy-box").val().split(/\r\n|\r|\n/);
@@ -5438,7 +5441,7 @@ function execBidListPart() {
 					}
 
 					q$.ajax({
-						url: 'http://' + location.hostname + '/card/trade_bid.php',
+						url: SERVER_SCHEME + location.hostname + '/card/trade_bid.php',
 						type: 'POST',
 						datatype: 'html',
 						cache: false,
@@ -6036,7 +6039,7 @@ function deck_resttime_checker() {
 					no = {'p': count};
 				}
 				q$.ajax({
-					url: 'http://' + location.hostname + '/card/deck.php',
+					url: SERVER_SCHEME + location.hostname + '/card/deck.php',
 					type: 'GET',
 					datatype: 'html',
 					cache: false,
@@ -6342,7 +6345,7 @@ function addAllDropDeckButton() {
 
 					// 送信データ作成
 					var ssid = getSessionId();
-					var target_url = 'http://' + location.hostname + '/card/deck.php';
+					var target_url = SERVER_SCHEME + location.hostname + '/card/deck.php';
 					var param = {'ssid':ssid, 'mode':'unset', 'target_card':cardid_list[count - 1]};
 
 					// 通信処理
@@ -6461,7 +6464,7 @@ function multipleLabelSet() {
 					q$("#multi_label_set_status").text("検索中(" + Math.floor((count - 1)/max * 100) + "%)");
 
 					q$.ajax({
-						url: 'http://' + location.hostname + '/card/deck.php' + base_search_string,
+						url: SERVER_SCHEME + location.hostname + '/card/deck.php' + base_search_string,
 						type: 'GET',
 						datatype: 'html',
 						cache: false
@@ -6514,7 +6517,7 @@ function multipleLabelSet() {
 
 				q$("#multi_label_set_status").text("変更中(" + Math.floor((count - 1)/max * 100) + "%)");
 
-				var target_url = 'http://' + location.hostname + '/card/change_card_label.php';
+				var target_url = SERVER_SCHEME + location.hostname + '/card/change_card_label.php';
 				var param = {'SSID':ssid, 'label':select_label, 'target_card':cids[count - 1]};
 				q$.ajax({
 					url: target_url,
@@ -6636,7 +6639,7 @@ function multipleDeckSet() {
 					}
 
 					q$.ajax({
-						url: 'http://' + location.hostname + '/card/deck.php',
+						url: SERVER_SCHEME + location.hostname + '/card/deck.php',
 						type: 'GET',
 						datatype: 'html',
 						cache: false,
@@ -6810,7 +6813,7 @@ function multipleDeckSet() {
 					wait = true;
 
 					q$("#multiple_deckset_status").text("一括デッキセット 武将配置中 (" + count + "/" + max + ")");
-					var target_url = 'http://' + location.hostname + '/card/deck.php';
+					var target_url = SERVER_SCHEME + location.hostname + '/card/deck.php';
 					var card_id = targets[count - 1].cardid;
 					var param = {'ssid':ssid, 'target_card':card_id, 'mode':'set'};
 					param["selected_village[" + card_id + "]"] = select_village;
@@ -6872,7 +6875,7 @@ function addDropDeckCard() {
 							function() {
 								// 送信データ作成
 								var ssid = getSessionId();
-								var target_url = 'http://' + location.hostname + '/card/deck.php';
+								var target_url = SERVER_SCHEME + location.hostname + '/card/deck.php';
 								var param = {'ssid':ssid, 'mode':'unset', 'target_card':card_id};
 
 								// 通信処理
@@ -6977,7 +6980,7 @@ function addDropDomesticDeckCard() {
 		setTimeout(
 			function() {
 				// host
-				var host = 'http://' + location.hostname;
+				var host = SERVER_SCHEME + location.hostname;
 
 				// 送信データ作成
 				var target_url = host + '/village_change.php?village_id=' + match[1] + '&from=menu&page=' + host + '/card/domestic_setting.php?village_id=' +  + match[1];
@@ -7042,7 +7045,7 @@ function addDropDomesticDeckCard() {
 			function() {
 				// 送信データ作成
 				var ssid = getSessionId();
-				var target_url = 'http://' + location.hostname + '/card/domestic_setting.php';
+				var target_url = SERVER_SCHEME + location.hostname + '/card/domestic_setting.php';
 				var param = {'mode':'u_domestic', 'id':card_id};
 
 				// 通信処理
@@ -7071,7 +7074,7 @@ function addDropDomesticDeckCard() {
 			function() {
 				// 送信データ作成
 				var ssid = getSessionId();
-				var target_url = 'http://' + location.hostname + '/card/deck.php';
+				var target_url = SERVER_SCHEME + location.hostname + '/card/deck.php';
 				var param = {'ssid':ssid, 'mode':'unset', 'target_card':card_id};
 
 				// 通信処理
@@ -7841,7 +7844,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 
 		// 送信データ作成
 		var ssid = getSessionId();
-		var target_url = 'http://' + location.hostname + '/card/deck.php';
+		var target_url = SERVER_SCHEME + location.hostname + '/card/deck.php';
 		var param = {'ssid':ssid, 'target_card':card_id, 'mode':'set'};
 		param["selected_village[" + card_id + "]"] = village_id;
 
@@ -7878,7 +7881,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 		setTimeout(
 			function() {
 				// host
-				var host = 'http://' + location.hostname;
+				var host = SERVER_SCHEME + location.hostname;
 
 				// 送信データ作成
 				var target_url = host + '/village_change.php?village_id=' + village_id + '&from=menu&page=' + host + '/card/domestic_setting.php?village_id=' + village_id;
@@ -7922,7 +7925,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 			function() {
 				// 送信データ作成
 				var ssid = getSessionId();
-				var target_url = 'http://' + location.hostname + '/card/deck.php';
+				var target_url = SERVER_SCHEME + location.hostname + '/card/deck.php';
 				var param = {'ssid':ssid, 'target_card':card_id, 'mode':'set'};
 				param["selected_village[" + card_id + "]"] = village_id;
 
@@ -7961,7 +7964,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 		setTimeout(
 			function() {
 				// 送信データ作成
-				var target_url = 'http://' + location.hostname + '/card/domestic_setting.php';
+				var target_url = SERVER_SCHEME + location.hostname + '/card/domestic_setting.php';
 				var param = {'id':card_id, 'mode':'domestic'};
 
 				// 通信処理
@@ -8101,7 +8104,7 @@ function addTradeLinkOnSmallCardDeck() {
 		var no_elem = q$("table[class='statusParameter1'] tbody tr", base).eq(0).children("td").eq(0);
 		var cardno = no_elem.text();
 		q$(no_elem).html(
-			cardno + "<a href='http://" + location.hostname + "/card/trade.php?t=no&k=" + cardno + "&tl=1&s=price&o=a&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>"
+			cardno + "<a href='" + SERVER_SCHEME + location.hostname + "/card/trade.php?t=no&k=" + cardno + "&tl=1&s=price&o=a&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>"
 		);
 
 		// スキル名検索のリンクをつける
@@ -8111,9 +8114,9 @@ function addTradeLinkOnSmallCardDeck() {
 			var match = skillname.match(/(.*)(LV[0-9]*)/);
 			if (match) {
 				elems.eq(j).children("td").eq(0).html(
-					"<a href='http://" + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[1] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + match[1] + "</a>" +
+					"<a href='" + SERVER_SCHEME + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[1] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + match[1] + "</a>" +
 					match[2] +
-					"<a href='http://" + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[1] + match[2] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>"
+					"<a href='" + SERVER_SCHEME + location.hostname + "/card/trade.php?s=price&o=a&t=skill&k=" + match[1] + match[2] + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>(T)</a>"
 				);
 
 //				elems.eq(j).children("td").eq(0).attr('title', 'aaa');
@@ -8125,7 +8128,7 @@ function addTradeLinkOnSmallCardDeck() {
 
 // 即時落札価格調査
 function searchBuyRate(id, cardno, addBuyButton) {
-	var url = "http://" + location.hostname + "/card/trade.php?t=no&k=" + cardno + "&tl=1&s=price&o=a&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=0";
+	var url = SERVER_SCHEME + location.hostname + "/card/trade.php?t=no&k=" + cardno + "&tl=1&s=price&o=a&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=0";
 	q$.ajax({
 		url: url,
 		type: 'GET',
@@ -8182,7 +8185,7 @@ function createJustBuyButton(id, bid) {
 	);
 
 	// 落札ボタンクリック時の動作定義
-	var url = "http://" + location.hostname + "/card/trade_bid.php?id=" + bid + "&t=&k=&p=&s=&o=";
+	var url = SERVER_SCHEME + location.hostname + "/card/trade_bid.php?id=" + bid + "&t=&k=&p=&s=&o=";
 	q$("#" + tr_id).on('click',
 		{url: url, id: tr_id},
 		function(trade_param) {
@@ -8216,7 +8219,7 @@ function createJustBuyButton(id, bid) {
 				var trade_p = q$("input[name='p']", trade_form).attr('value');
 				var trade_s = q$("input[name='s']", trade_form).attr('value');
 				var trade_o = q$("input[name='o']", trade_form).attr('value');
-				var target_url = 'http://' + location.hostname + '/card/trade_bid.php';
+				var target_url = SERVER_SCHEME + location.hostname + '/card/trade_bid.php';
 				var target_params = {
 					'exhibit_cid':trade_exhibit_cid,
 					'exhibit_id':trade_exhibit_id,
@@ -8268,7 +8271,7 @@ function sellCard(id, cardid, price, rarity) {
 		'exhibit_btn':'出品する'
 	};
 
-	var target_url = "http://" + location.hostname + "/card/exhibit_confirm.php";
+	var target_url = SERVER_SCHEME + location.hostname + "/card/exhibit_confirm.php";
 	q$.ajax({
 		url: target_url,
 		type: 'POST',
@@ -8604,12 +8607,12 @@ function show_message_image() {
 		// まずpngにしてみる
 		for (var i = 0; i < match.length; i++) {
 			var eid = "gimg_" + i;
-			var url = match[i].replace("https://gyazo.com/", "");
+			var url = match[i].replace("http://gyazo.com/", "");
 			elem_body = elem_body.replace(
-				"https:\/\/gyazo.com\/" + url,
+				"http:\/\/gyazo.com\/" + url,
 				"<span>" +
 					"<div><a href='" + match[i] + "' target='_blank'>" + match[i] + "</a></div>" +
-					"<img id='" + eid + "' src='https://i.gyazo.com/" + url + ".png' style='max-width: 100%; border: 1px solid black;'></img>" +
+					"<img id='" + eid + "' src='http://i.gyazo.com/" + url + ".png' style='max-width: 100%; border: 1px solid black;'></img>" +
 				"</span>"
 			);
 		}
@@ -8676,7 +8679,7 @@ function exec_domestic_skill_step1(element, is_after_drop, village_id, card_id, 
 	setTimeout(
 		function() {
 			// host
-			var host = 'http://' + location.hostname;
+			var host = SERVER_SCHEME + location.hostname;
 
 			// 送信データ作成
 			var target_url = host + '/village_change.php?village_id=' + village_id + '&from=menu&page=' + host + '/card/domestic_setting.php?village_id=' + village_id;
@@ -8738,7 +8741,7 @@ function exec_domestic_skill_step2_ex(element, village_id, card_id, use_skill, i
 		function() {
 			// 送信データ作成
 			var ssid = getSessionId();
-			var target_url = 'http://' + location.hostname + '/card/deck.php';
+			var target_url = SERVER_SCHEME + location.hostname + '/card/deck.php';
 			var action_type = is_after_drop ? '2' : '1';
 			var param = {
 				'ssid': ssid,
@@ -8778,7 +8781,7 @@ function exec_domestic_skill_step2(element, village_id, card_id, use_skill, is_a
 
 			// 送信データ作成
 			var ssid = getSessionId();
-			var target_url = 'http://' + location.hostname + '/card/deck.php';
+			var target_url = SERVER_SCHEME + location.hostname + '/card/deck.php';
 			var param = {'ssid':ssid, 'target_card':card_id, 'mode':'set'};
 			param["selected_village[" + card_id + "]"] = village_id;
 
@@ -8816,7 +8819,7 @@ function exec_domestic_skill_step3(element, card_id, use_skill, is_after_drop, s
 	setTimeout(
 		function() {
 			// 送信データ作成
-			var target_url = 'http://' + location.hostname + '/card/domestic_setting.php';
+			var target_url = SERVER_SCHEME + location.hostname + '/card/domestic_setting.php';
 			var param = {'id':card_id, 'mode':'domestic'};
 
 			// 通信処理
@@ -8910,7 +8913,7 @@ function exec_domestic_skill_step4(element, card_id, skill_id, is_after_drop, su
 		function() {
 			// 送信データ作成
 			var ssid = getSessionId();
-			var target_url = 'http://' + location.hostname + '/card/domestic_setting.php';
+			var target_url = SERVER_SCHEME + location.hostname + '/card/domestic_setting.php';
 			var param = {'mode':'skill', 'id':card_id, 'sid':skill_id};
 
 			// 通信処理
@@ -8946,7 +8949,7 @@ function exec_domestic_skill_step5(element, card_id, success_func, fail_func) {
 		function() {
 			// 送信データ作成
 			var ssid = getSessionId();
-			var target_url = 'http://' + location.hostname + '/card/domestic_setting.php';
+			var target_url = SERVER_SCHEME + location.hostname + '/card/domestic_setting.php';
 			var param = {'mode':'u_domestic', 'id':card_id};
 
 			// 通信処理
@@ -8977,7 +8980,7 @@ function exec_domestic_skill_step_final(element, card_id, success_func, fail_fun
 		function() {
 			// 送信データ作成
 			var ssid = getSessionId();
-			var target_url = 'http://' + location.hostname + '/card/deck.php';
+			var target_url = SERVER_SCHEME + location.hostname + '/card/deck.php';
 			var param = {'ssid':ssid, 'mode':'unset', 'target_card':card_id};
 
 			// 通信処理
