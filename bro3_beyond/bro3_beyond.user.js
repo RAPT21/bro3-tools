@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		0.98
+// @version		0.98.1
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -40,6 +40,8 @@
 // 0.94		2018/07/19	一括出兵に鹵獲モードを追加
 // 0.94.1	2018/07/20	RAPT. 2018/07/18 の大型アップデートに伴い、内政官を1クリックでファイルに下げるボタンが表示できなくなっていたのを修正
 // 0.96		2018/08/02	スキーム変更に対応
+//--------------------	以下について、https://github.com/RAPT21/bro3-tools で公開しています。
+// 0.98.1	2018/10/12	RAPT. プルダウンメニュー項目を調整（全体地図、統計、鹵獲関係、南蛮襲来関係）
 //
 // TODO:
 // 内政ボタンで、拠点を変更せずにセットする新方式対応
@@ -3611,6 +3613,7 @@ function execCommonPart() {
 		var facsturl = facurl + '/unit_status.php';
 
 		var loc = q$("li.gnavi02 a").attr('href');
+		var bigloc = loc.replace('/map.php?', '/big_map.php?');
 		var menus = [
 			// 都市
 			[
@@ -3618,7 +3621,7 @@ function execCommonPart() {
 			],
 			// 全体地図
 			[
-				['11x11', loc + '&type=1'], ['15x15', loc + '&type=2'], ['21x21', loc + '&type=5'], ['51x51', loc + '&type=4'],
+				['11x11', loc + '&type=1'], ['21x21', loc + '&type=5'], ['51x51', loc + '&type=4'], ['スクロール21x21', bigloc + '&type=6&ssize=21'], ['スクロール51x51', bigloc + '&type=6&ssize=51'],
 			],
 			// 同盟
 			[
@@ -3765,6 +3768,7 @@ function execCommonPart() {
 				],
 				['トレード獲得履歴', baseurl + '/card/trade_history.php?mode=buy'],
 				['トレード放出履歴', baseurl + '/card/trade_history.php?mode=sell'],
+				['自動鹵獲出兵設定', baseurl + '/auto_capture_material/setting.php'],
 			],
 			// アイテム
 			[
@@ -3773,8 +3777,20 @@ function execCommonPart() {
 			],
 			// 統計
 			[
-				['全体', baseurl + '/conditions/top.php'],
-				['同盟', baseurl + '/alliance/npc_mastery_ranking.php'],
+				['全体', baseurl + '/conditions/top.php',
+					[
+						['自城・拠点表示', baseurl + '/conditions/top.php#mode-my'],
+						['NPC砦・城表示', baseurl + '/conditions/top.php#mode-npc'],
+						['直近陥落表示', baseurl + '/conditions/top.php#mode-fall'],
+					],
+				],
+				['同盟', baseurl + '/alliance/npc_mastery_ranking.php',
+					[
+						['制圧', baseurl + '/alliance/npc_mastery_ranking.php'],
+						['総合', baseurl + '/alliance/list.php'],
+						['週間', baseurl + '/alliance/weekly_ranking.php'],
+					],
+				],
 				['個人', baseurl + '/user/ranking.php',
 					[
 						['総合', baseurl + '/user/ranking.php'],
@@ -3784,6 +3800,7 @@ function execCommonPart() {
 						['撃破スコア', baseurl + '/user/ranking.php?m=attack_score'],
 						['防衛スコア', baseurl + '/user/ranking.php?m=defense_score'],
 						['デュエル', baseurl + '/user/ranking.php?m=duel'],
+						['南蛮襲来', baseurl + '/user/ranking.php?m=npc_assault'],
 						['期間', baseurl + '/user/period_ranking.php'],
 						['週間', baseurl + '/user/weekly_ranking.php'],
 					],
@@ -3793,11 +3810,13 @@ function execCommonPart() {
 			[
 				['全て', baseurl + '/report/list.php?u='],
 				['攻撃', baseurl + '/report/list.php?m=attack&u='],
+				['鹵獲', baseurl + '/report/list.php?m=capture&u='],
 				['防御', baseurl + '/report/list.php?m=defence&u='],
 				['偵察', baseurl + '/report/list.php?m=scout&u='],
 				['破壊', baseurl + '/report/list.php?m=fall&u='],
 				['援軍', baseurl + '/report/list.php?m=reinforcement&u='],
 				['同盟', baseurl + '/report/list.php?m=alliance&u='],
+				['南蛮襲来', baseurl + '/report/list.php?m=npc_assault&u='],
 			],
 			// 書簡
 			[
