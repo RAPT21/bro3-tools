@@ -24,6 +24,6 @@
 拙作ツールは原則として Windows 10 (64bit) 日本語版 + 下記ブラウザで動作確認しています。
 下記環境以外でも動作するようですが、詳細については把握していませんのでお問い合わせいただいてもお答えいたしかねます。
 
-- [Firefox 56.0.2 (64bit) 日本語版](https://ftp.mozilla.org/pub/firefox/releases/56.0.2/win64/ja/) + Greasemonkey 3.17
+- [Firefox 56.0.2 (64bit) 日本語版](https://ftp.mozilla.org/pub/firefox/releases/56.0.2/win64/ja/) + [Greasemonkey 3.17](https://addons.mozilla.org/ja/firefox/addon/greasemonkey/versions/?page=1#version-3.17)
 - Google Chrome 68 (64bit) + Tampermonkey
 - Sleipnir 4.5.14 + Tampermonkey
