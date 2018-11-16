@@ -7,7 +7,7 @@
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @author		BSE with RAPT
-// @version 	1.6.1.27
+// @version 	1.6.1.28
 // ==/UserScript==
 
 // ----- BSE 版リリースノート -----
@@ -39,10 +39,11 @@
 //	2018.08.22 v1.6.1.24 y17,y37 鯖対応
 //	2018.09.06 v1.6.1.25 y38 鯖対応
 //	2018.09.11 v1.6.1.26 y29 鯖対応
-//	2018.09.19 v1.6.1.27 y25 鯖対応, y29 鯖対応
+//	2018.09.19 v1.6.1.27 y25,y29 鯖対応
+//	2018.11.16 v1.6.1.28 y1,y9,y39,y40 鯖対応
 
 //バージョン配置用
-var ver_rack = "ver1.6.1.27";
+var ver_rack = "ver1.6.1.28";
 
 //配布管理系
 var nazeka ="<span style='color:crimson'>■</span>";
@@ -64,8 +65,8 @@ var tile = new Array(0,0,0,0,0,0);
 
 // 鯖 - 期
 var server_session = {
-	"y1": 23,
-	"y9": 20,
+	"y1": 24,
+	"y9": 21,
 	"y17": 16,
 	"y25": 14, // 本来13期だが、g-1t になるので暫定で14期扱いにしている
 	"y29": 10, // 本来10期で、f-1t になるはずがなぜか e-2t のまま。運営の設定ミス？
@@ -73,7 +74,8 @@ var server_session = {
 	"y35": 5,
 	"y37": 3,
 	"y38": 2,
-	"y39": 1,
+	"y39": 2,
+	"y40": 1,
 	"f1": 10, // event-world
 	"f2": 12, // event-world
 	"w1": 22,
