@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.06
+// @version		1.06.1
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -48,6 +48,10 @@
 // 1.04 	2018/11/21	天気情報をすべてのタブで表示されるように修正。簡易補正情報の表示を追加。設定の位置を移動。
 // 1.05 	2018/11/23	一斉出兵が新兵科マップで動かない問題を修正
 // 1.06 	2018/12/05	天気のヘルプリンクがmixi固定になっていた問題を修正。天候鯖で一斉出兵で兵士が出兵できない問題を修正。
+//--------------------	以下について、https://github.com/RAPT21/bro3-tools で公開しています。
+// 0.98.1	2018/10/12	RAPT. プルダウンメニュー項目を調整（全体地図、統計、鹵獲関係、南蛮襲来関係）
+// 1.06.1	2018/12/20	全体スクロール機能復元。0.98->0.98.1のパッチ適用。
+//						「天気バー上に天気予告を常時表示する」にチェックありのとき、現在の天候にマウスを乗せるとチラチラする運営の表示を隠すようにした。
 //
 // TODO:
 // 内政ボタンで、拠点を変更せずにセットする新方式対応
@@ -170,6 +174,7 @@ var VILLAGE_01 = 'vi01';	// 兵士生産時間制限
 var VILLAGE_02 = 'vi02';	// 兵士生産時間縛りの設定時間
 
 // 全体地図タブ
+var MAP_01 = 'ma01';		// ドラッグ＆ドロップでのマップ移動機能追加
 var MAP_11 = 'ma11';		// 出兵時にデッキ武将を一斉出兵する機能を追加
 var MAP_12 = 'ma12';		// 出兵種別初期選択の制御をできる機能を追加
 var MAP_13 = 'ma13';		// 鹵獲先座標リスト
@@ -626,7 +631,7 @@ function profileControl() {
 	// テーブルエレメントアクセス用の変数
 	var selector_path = "#gray02Wrapper table[class='commonTables'] tr";
 	var elem = q$(selector_path);
-	
+
 	// デュエルランク情報追加（ダイレクトリンク作成前に行う）
 	if (g_beyond_options[PROFILE_02] == true) {
 		var dpindex = -1;
@@ -679,7 +684,7 @@ function profileControl() {
 			['防衛スコア','/user/ranking.php?m=defense_score'],
 			['DP', '/user/ranking.php?m=duel']
 		];
-		
+
 		elem.each(function(i) {
 			if (i <= 3 || i >= 9) return;
 			var items = q$(this).children("td");
@@ -1528,6 +1533,43 @@ function villageTabControl() {
 // 全体地図の実行制御
 //----------------------------------------------------------------------
 function mapTabControl() {
+	// 51x51モード
+	if (location.pathname == "/big_map.php") {
+		// 全体地図のドラッグ＆ドロップによる移動許可
+		if (g_beyond_options[MAP_01] == true) {
+			q$("#map51-content").draggable();
+
+			var sx;
+			var sy;
+			var ex;
+			var ey;
+			q$("#map51-content").draggable({
+				// ドラッグ開始時に呼ばれる
+				start : function (e , ui){
+					sx = e.screenX;
+					sy = e.screenY;
+				},
+				// ドラッグ終了時に呼ばれる
+				stop : function (e , ui){
+					ex = e.screenX;
+					ey = e.screenY;
+
+					var dx = Math.floor((sx - ex) / 15);
+					var dy = Math.floor((sy - ey) / 15);
+					var cx = q$("input[name='x']").val();
+					var cy = q$("input[name='y']").val();
+
+					var nextx = parseInt(cx) + parseInt(dx);
+					var nexty = parseInt(cy) - parseInt(dy);
+
+					q$("input[name='x']").val(nextx);
+					q$("input[name='y']").val(nexty);
+					q$("input[value='検索']").click();
+				}
+			});
+		}
+	}
+
 	// 出兵画面
 	if (location.pathname === "/facility/castle_send_troop.php") {
 		// 出兵時にデッキ武将を一斉出兵する
@@ -2217,7 +2259,7 @@ function allianceTabControl() {
 						userlist = JSON.parse(userlist);
 					}
 				}
-				
+
 				// 本拠地列を作る
 				var elems = q$("table[class='tables'] tbody tr");
 				var myAlliance = (elems.eq(1).children('th').length == 7);
@@ -3726,6 +3768,7 @@ function execCommonPart() {
 		var facsturl = facurl + '/unit_status.php';
 
 		var loc = q$("li.gnavi02 a").attr('href');
+		var bigloc = loc.replace('/map.php?', '/big_map.php?');
 		var menus = [
 			// 都市
 			[
@@ -3733,7 +3776,7 @@ function execCommonPart() {
 			],
 			// 全体地図
 			[
-				['11x11', loc + '&type=1'], ['15x15', loc + '&type=2'], ['21x21', loc + '&type=5'], ['51x51', loc + '&type=4'],
+				['11x11', loc + '&type=1'], ['21x21', loc + '&type=5'], ['51x51', loc + '&type=4'], ['スクロール21x21', bigloc + '&type=6&ssize=21'], ['スクロール51x51', bigloc + '&type=6&ssize=51'],
 			],
 			// 同盟
 			[
@@ -3880,6 +3923,7 @@ function execCommonPart() {
 				],
 				['トレード獲得履歴', BASE_URL + '/card/trade_history.php?mode=buy'],
 				['トレード放出履歴', BASE_URL + '/card/trade_history.php?mode=sell'],
+				['自動鹵獲出兵設定', BASE_URL + '/auto_capture_material/setting.php'],
 			],
 			// アイテム
 			[
@@ -3888,8 +3932,20 @@ function execCommonPart() {
 			],
 			// 統計
 			[
-				['全体', BASE_URL + '/conditions/top.php'],
-				['同盟', BASE_URL + '/alliance/npc_mastery_ranking.php'],
+				['全体', BASE_URL + '/conditions/top.php',
+					[
+						['自城・拠点表示', BASE_URL + '/conditions/top.php#mode-my'],
+						['NPC砦・城表示', BASE_URL + '/conditions/top.php#mode-npc'],
+						['直近陥落表示', BASE_URL + '/conditions/top.php#mode-fall'],
+					],
+				],
+				['同盟', BASE_URL + '/alliance/npc_mastery_ranking.php',
+					[
+						['制圧', BASE_URL + '/alliance/npc_mastery_ranking.php'],
+						['総合', BASE_URL + '/alliance/list.php'],
+						['週間', BASE_URL + '/alliance/weekly_ranking.php'],
+					],
+				],
 				['個人', BASE_URL + '/user/ranking.php',
 					[
 						['総合', BASE_URL + '/user/ranking.php'],
@@ -3899,6 +3955,7 @@ function execCommonPart() {
 						['撃破スコア', BASE_URL + '/user/ranking.php?m=attack_score'],
 						['防衛スコア', BASE_URL + '/user/ranking.php?m=defense_score'],
 						['デュエル', BASE_URL + '/user/ranking.php?m=duel'],
+						['南蛮襲来', BASE_URL + '/user/ranking.php?m=npc_assault'],
 						['期間', BASE_URL + '/user/period_ranking.php'],
 						['週間', BASE_URL + '/user/weekly_ranking.php'],
 					],
@@ -3908,11 +3965,13 @@ function execCommonPart() {
 			[
 				['全て', BASE_URL + '/report/list.php?u='],
 				['攻撃', BASE_URL + '/report/list.php?m=attack&u='],
+				['鹵獲', BASE_URL + '/report/list.php?m=capture&u='],
 				['防御', BASE_URL + '/report/list.php?m=defence&u='],
 				['偵察', BASE_URL + '/report/list.php?m=scout&u='],
 				['破壊', BASE_URL + '/report/list.php?m=fall&u='],
 				['援軍', BASE_URL + '/report/list.php?m=reinforcement&u='],
 				['同盟', BASE_URL + '/report/list.php?m=alliance&u='],
+				['南蛮襲来', BASE_URL + '/report/list.php?m=npc_assault&u='],
 			],
 			// 書簡
 			[
@@ -4070,7 +4129,7 @@ function execCommonPart() {
 		if (q$("#weather-ui").length === 0) {
 			return;
 		}
-		
+
 		// 天候効果
 		var weather_effects = [
 			['晴れ', '↑:なし', '↓:なし'],
@@ -4078,7 +4137,7 @@ function execCommonPart() {
 			['曇り', '↑:剣、斧', '↓:槍、弓、双'],
 			['雪', '↑:馬、錘', '↓:剣、斧']
 		];
-		
+
 		// 現在の天気のリストを作る
 		var weather_list = q$("#weather-information table[class='weather-information__table']").children("tbody").children("tr");
 		var weather_html = [];
@@ -4088,7 +4147,7 @@ function execCommonPart() {
 			var weathers = q$(now).children("td").eq(0);
 			var timeline = q$(weather_spans).text().replace(/[\n \t]/g, "");
 			var weather = q$(weathers).text().replace(/[\n \t]/g, "");
-				
+
 			var weather_no = 0;
 			var effect = '';
 			if (weather === '雨') {
@@ -4109,7 +4168,7 @@ function execCommonPart() {
 					'&nbsp;' +
 					'<span class="weather-name">' + weather + '</span>' +
 					effect +
-				'</p>'				  
+				'</p>'
 			);
 			if (i === 2) {
 				weather_html.push(q$("#weather-ui p[class='weather-ui__p--about-weather']").prop('outerHTML'));
@@ -4118,6 +4177,7 @@ function execCommonPart() {
 
 		q$("#weather-ui").css('height', '48px');
 		q$("#weather-ui").html(weather_html.join(''));
+		q$("#weather-information").hide();
 	}
 
 	// デッキ：兵士管理のURLを書き換える（デッキ機能だが、URLに統一性がないので処理は共通側に配置）
@@ -4139,7 +4199,7 @@ function execResourceTimer() {
 		if (GM_getValue(SERVER_NAME + '_fame_timer', null) == "FAILED") {
 		  GM_setValue(SERVER_NAME + '_fame_timer', null);
 		}
-		
+
 		// 資源倉庫上限までの時間を計算
 		if (g_res_timer != null) {
 			clearInterval(g_res_timer);
@@ -5726,6 +5786,11 @@ function draw_setting_window(append_target) {
 					</div> \
 				</div> \
 				<div id='tab-map'> \
+					<div stype='font-weight: bold'>全体地図画面</div> \
+					<div style='margin-left: 8px;'> \
+						<div><input type='checkbox' id='" + MAP_01 + "'><label for='" + MAP_01 + "'>ドラッグ＆ドロップでのマップ移動機能追加(51x51限定)</label></input></div> \
+					</div> \
+					<br> \
 					<div style='font-weight: bold'>出兵画面</div> \
 					<div style='margin-left: 8px;'> \
 						<div><input type='checkbox' id='" + MAP_11 + "'><label for='" + MAP_11 + "'>出兵時にデッキ武将を一斉出兵する機能を追加</label></input></div> \
@@ -7291,7 +7356,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 			var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
 			var skills = q$("div[id='cardWindow_" + match[1] + "'] ul[class='back_skill'] li", cards.eq(i));
 			var skillTexts = q$("div[id='cardWindow_" + match[1] + "'] ul[class='back_skill'] div", cards.eq(i));
-			
+
 			// デッキにセットできるかチェック
 			var is_active = false;
 			if (elems_l.children("div[class='set']").length == 1) {
@@ -8533,7 +8598,7 @@ function createSellBox(id, subid, cardid, cardno, rarity, showFixPriceButton) {
 	if (showFixPriceButton == true) {
 		q$("#sell_box_fix_price" + subid).css('display', 'block');
 	}
-	
+
 	// カード売却前事前チェック
 	function sellCardCheckAdvance(id, cardid, cardno, price, rarity) {
 		if (rarity === 'undefined') {
@@ -8556,7 +8621,7 @@ function createSellBox(id, subid, cardid, cardno, rarity, showFixPriceButton) {
 }
 
 // 報告書整形
-function reformat_report(is_view_damaged) {    
+function reformat_report(is_view_damaged) {
 	var elem_reports = q$("#gray02Wrapper table");
 	if (q$("#gray02Wrapper table").text().match(/援軍が到着しました/)) {
 		return;
@@ -8590,7 +8655,7 @@ function reformat_report(is_view_damaged) {
 		columns = 7;	// 新兵種では表の横が7列になる
 		reportRows = 3; // 新兵種は3段
 	}
-	
+
 	var summary = new Object;
 	summary.ct = new Array();
 	var ct = 0;
@@ -8661,7 +8726,7 @@ function reformat_report(is_view_damaged) {
 				}
 			}
 			pos ++;
-			
+
 			// 見出し行を飛ばす必要があるため
 			if (pos % 2 === 0) {
 				delta ++;
@@ -8704,7 +8769,7 @@ function reformat_report(is_view_damaged) {
 		result_tr = q$("tr", elem_reports.eq(2));
 		drawReport(summary, result_tr, columns, reportRows, 0);
 	}
-	
+
 	// レポート反映共通処理
 	function drawReport(sum, items, cols, rows, itemIndex) {
 		for (var k = 0; k < rows; k++) {
@@ -9378,6 +9443,7 @@ function getDefaultOptions() {
 	settings[VILLAGE_02] = 24;		// 制限時間
 
 	// 全体地図
+	settings[MAP_01] = true;		// ドラッグ＆ドロップでのマップ移動機能追加
 	settings[MAP_11] = false;		// 出兵時にデッキ武将を一斉出兵する機能を追加
 	settings[MAP_12] = false;		// 出兵種別初期選択を有効にする機能を追加
 	settings[MAP_13] = '';			// 鹵獲先座標設定用ボックス
