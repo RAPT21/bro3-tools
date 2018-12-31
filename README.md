@@ -12,6 +12,7 @@
 | [bro3_make_scouts_cavalrymans_checker](bro3_make_scouts_cavalrymans_checker) | 斥候騎兵作成予防 |
 | [bro3_map_troop_extension](bro3_map_troop_extension) | 51x51 MAP での遠征補助。出兵補助のほかに、高領地カラーリングやワンクリックで領地を削除したり領地名や拠点名などを変更できる |
 | [bro3_territory_info](bro3_territory_info) | 全領地情報収集 |
+| [bro3_hide_build_button](bro3_hide_build_button) | 「研究・建設即完了」ボタンを隠す |
 
 ## 臨時
 
@@ -25,5 +26,5 @@
 下記環境以外でも動作するようですが、詳細については把握していませんのでお問い合わせいただいてもお答えいたしかねます。
 
 - [Firefox 56.0.2 (64bit) 日本語版](https://ftp.mozilla.org/pub/firefox/releases/56.0.2/win64/ja/) + [Greasemonkey 3.17](https://addons.mozilla.org/ja/firefox/addon/greasemonkey/versions/?page=1#version-3.17)
-- Google Chrome 68 (64bit) + Tampermonkey
-- Sleipnir 4.5.14 + Tampermonkey
+- Google Chrome 71 (64bit) + Tampermonkey
+- Sleipnir 4.6.3 + Tampermonkey
