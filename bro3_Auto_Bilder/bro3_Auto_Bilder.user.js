@@ -19,7 +19,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2019.01.10
+// @version		2019.02.03
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -127,8 +127,9 @@
 // 2019.01.10 ★4(1-1-1-1)水車村オプションで (5, 5) に畑を作るのは誤りなので修正
 //			  運営のタイマーバグ対策でリロード間隔を2秒→5秒に変更
 //			  戦斧兵,双剣兵,大錘兵の自動武器LVUP/防具LVUP対応
+// 2019.02.03 拠点に鍛冶場がないと、防具工場があっても防具LVUPが動作しない既存バグを修正
 
-var VERSION = "2019.01.10"; 	// バージョン情報
+var VERSION = "2019.02.03"; 	// バージョン情報
 
 jQuery.noConflict();
 j$ = jQuery;
@@ -1820,6 +1821,7 @@ debugLog("=== Start autoLvup ===");
 				}
 			}
 			if ( _x < 0 ) {
+				make_loop(loop + 1);
 				return;
 			}
 			var tid=setTimeout(function(){
