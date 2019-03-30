@@ -19,7 +19,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2018.05.13
+// @version		2019.01.10
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -124,8 +124,11 @@
 //			  運営の自動建設機能による全建設準備中の検出対応
 // 2018.05.03 10期？★4(1-1-1-1)水車村オプションを追加
 // 2018.05.13 6期？★6(0-0-0-0)水車村オプションを追加
+// 2019.01.10 ★4(1-1-1-1)水車村オプションで (5, 5) に畑を作るのは誤りなので修正
+//			  運営のタイマーバグ対策でリロード間隔を2秒→5秒に変更
+//			  戦斧兵,双剣兵,大錘兵の自動武器LVUP/防具LVUP対応
 
-var VERSION = "2018.05.13"; 	// バージョン情報
+var VERSION = "2019.01.10"; 	// バージョン情報
 
 jQuery.noConflict();
 j$ = jQuery;
@@ -171,10 +174,13 @@ make_no["投石機"]	= ["投石機"  ,313,	   0,			0,		  12,		0,			0,0,0];
 make_no["大剣兵"]	= ["大剣兵"  ,315,	   0,			0,		   7,		0,			0,0,0]; 		// 2014.01.30
 make_no["盾兵"] 	= ["盾兵"	 ,316,	   0,			0,		   1,		0,			0,0,0]; 		// 2014.01.30
 make_no["重盾兵"]	= ["重盾兵"  ,317,	   0,			0,		   8,		0,			0,0,0]; 		// 2014.01.30
+make_no["戦斧兵"]	= ["戦斧兵"  ,318,	   0,			0,		   8,		0,			0,0,0]; 		// 2019.01.10
+make_no["双剣兵"]	= ["双剣兵"  ,319,	   0,			0,		   8,		0,			0,0,0]; 		// 2019.01.10
+make_no["大錘兵"]	= ["大錘兵"  ,320,	   0,			0,		   8,		0,			0,0,0]; 		// 2019.01.10
 
-//			 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8
-OPT_BK_LV = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-OPT_BG_LV = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+//			 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+OPT_BK_LV = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+OPT_BG_LV = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 
 //巡回用
 var tidMain2;
@@ -313,18 +319,19 @@ var TYPE_FACILITY = "F"; //施設
 var TYPE_DELETE = "B"; //建設
 
 var OPT_CHKBOX_AVC = 0;
-//						拠 木 石 鉄 畑 倉 雀 武 防 練 槍 弓 騎 宿 車 市 訓 水 工 研 大 遠 見 平
-//						点			   庫	 器 具 兵 兵 兵 兵 舎 兵 場 練 車 場 究 宿 征 張 地
-//						 1	2  3  4  5	6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
-var OPT_CHKBOX		 = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-var OPT_CHKBOXLV	 = [ 8,15,15,15,15,20,10,10,10,10,15,15,15,15,15,10,10,10,10,10,20,20,20, 0];
-var OPT_RM_CHKBOX	 = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; //削除する施設 2015.05.10
-var OPT_RM_CHKBOXLV  = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; //残す数 2015.05.10
+//						拠 木 石 鉄 畑 倉 雀 武 防 練 槍 弓 騎 宿 車 市 訓 水 工 研 大 遠 見 平 斧 双 錘
+//						点			   庫	 器 具 兵 兵 兵 兵 舎 兵 場 練 車 場 究 宿 征 張 地 兵 兵 兵
+//						 1	2  3  4  5	6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
+var OPT_CHKBOX		 = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+var OPT_CHKBOXLV	 = [ 8,15,15,15,15,20,10,10,10,10,15,15,15,15,15,10,10,10,10,10,20,20,20, 0,15,15,15];
+var OPT_RM_CHKBOX	 = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; //削除する施設 2015.05.10
+var OPT_RM_CHKBOXLV  = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; //残す数 2015.05.10
 var OPT_MAX_LV = "2";
 var OPT_FUC_NAME = ["拠点","伐採所","石切り場","製鉄所","畑","倉庫",
 					"銅雀台","鍛冶場","防具工場","練兵所","兵舎","弓兵舎",
 					"厩舎","宿舎","兵器工房","市場","訓練所","水車","工場",
-					"研究所","大宿舎","遠征訓練所","見張り台","平地"];
+					"研究所","大宿舎","遠征訓練所","見張り台","平地",
+					"斧兵舎","双兵舎","錘兵舎"];
 
 var OPT_FNID = new Array();
 OPT_FNID["拠点"] =		 0	 ;
@@ -351,6 +358,9 @@ OPT_FNID["大宿舎"] =	 20 	 ;
 OPT_FNID["遠征訓練所"] = 21 	 ;
 OPT_FNID["見張り台"] =	 22 	 ;
 //OPT_FNID["修行所"] =	   23	 ;
+OPT_FNID["斧兵舎"] =	 24 	 ;
+OPT_FNID["双兵舎"] =	 25 	 ;
+OPT_FNID["錘兵舎"] =	 26 	 ;
 
 //市場変換処理用
 var OPT_ICHIBA = 0;
@@ -1421,7 +1431,7 @@ debugLog("=== Start autoLvup ===");
 	];
 	// 盾兵
 	var cost_bk_shield=[
-		[0,0,0,0,0],					// Lv1
+		[	2044,	2044,	2044,	0,13500],	// Lv1
 		[0,0,0,0,0],					// Lv2
 		[0,0,0,0,0],					// Lv3
 		[0,0,0,0,0],					// Lv4
@@ -1435,6 +1445,48 @@ debugLog("=== Start autoLvup ===");
 	];
 	// 重盾兵
 	var cost_bk_bigshield=[
+		[	15576,	15576,	15576,	0,	18600],	// Lv1
+		[0,0,0,0,0],					// Lv2
+		[0,0,0,0,0],					// Lv3
+		[0,0,0,0,0],					// Lv4
+		[0,0,0,0,0],					// Lv5
+		[0,0,0,0,0],					// Lv6
+		[0,0,0,0,0],					// Lv7
+		[0,0,0,0,0],					// Lv8
+		[0,0,0,0,0],					// Lv9
+		[0,0,0,0,0],					// Lv10
+		[0,0,0,0,0]
+	];
+	// 戦斧兵
+	var cost_bk_battleax=[
+		[0,0,0,0,0],					// Lv1
+		[0,0,0,0,0],					// Lv2
+		[0,0,0,0,0],					// Lv3
+		[0,0,0,0,0],					// Lv4
+		[0,0,0,0,0],					// Lv5
+		[0,0,0,0,0],					// Lv6
+		[0,0,0,0,0],					// Lv7
+		[0,0,0,0,0],					// Lv8
+		[0,0,0,0,0],					// Lv9
+		[0,0,0,0,0],					// Lv10
+		[0,0,0,0,0]
+	];
+	// 双剣兵
+	var cost_bk_twinsword=[
+		[	35000,	5500,	5500,	20000,	20700],	// Lv1
+		[0,0,0,0,0],					// Lv2
+		[0,0,0,0,0],					// Lv3
+		[0,0,0,0,0],					// Lv4
+		[0,0,0,0,0],					// Lv5
+		[0,0,0,0,0],					// Lv6
+		[0,0,0,0,0],					// Lv7
+		[0,0,0,0,0],					// Lv8
+		[0,0,0,0,0],					// Lv9
+		[0,0,0,0,0],					// Lv10
+		[0,0,0,0,0]
+	];
+	// 大錘兵
+	var cost_bk_largeweight=[
 		[0,0,0,0,0],					// Lv1
 		[0,0,0,0,0],					// Lv2
 		[0,0,0,0,0],					// Lv3
@@ -1504,7 +1556,7 @@ debugLog("=== Start autoLvup ===");
 		[160238,49528,81576,   0,55350],
 		[0,0,0,0,0]
 	];
-	// 弩級
+	// 弩兵
 	var cost_bg_dokyu=[
 		[  27225,	  0,   8415,13860,18600],
 		[  54450,	  0,  16830,27720,25110],
@@ -1604,7 +1656,7 @@ debugLog("=== Start autoLvup ===");
 	];
 	// 大剣兵
 	var cost_bg_bigken=[
-		[0,0,0,0,0],					// Lv1
+		[	22290,	18251,	0,	0,	18600],	// Lv1
 		[0,0,0,0,0],					// Lv2
 		[0,0,0,0,0],					// Lv3
 		[0,0,0,0,0],					// Lv4
@@ -1619,7 +1671,7 @@ debugLog("=== Start autoLvup ===");
 	// 盾兵
 	var cost_bg_shield=[
 		[0,0,0,0,0],					// Lv1
-		[0,0,0,0,0],					// Lv2
+		[	3679,	3679,	3679,	0,	18224],	// Lv2
 		[0,0,0,0,0],					// Lv3
 		[0,0,0,0,0],					// Lv4
 		[0,0,0,0,0],					// Lv5
@@ -1632,6 +1684,48 @@ debugLog("=== Start autoLvup ===");
 	];
 	// 重盾兵
 	var cost_bg_bigshield=[
+		[0,0,0,0,0],					// Lv1
+		[0,0,0,0,0],					// Lv2
+		[0,0,0,0,0],					// Lv3
+		[0,0,0,0,0],					// Lv4
+		[0,0,0,0,0],					// Lv5
+		[0,0,0,0,0],					// Lv6
+		[0,0,0,0,0],					// Lv7
+		[0,0,0,0,0],					// Lv8
+		[	712025,	712025,	712025,	0,	65100],	// Lv9
+		[0,0,0,0,0],					// Lv10
+		[0,0,0,0,0]
+	];
+	// 戦斧兵
+	var cost_bg_battleax=[
+		[0,0,0,0,0],					// Lv1
+		[0,0,0,0,0],					// Lv2
+		[0,0,0,0,0],					// Lv3
+		[0,0,0,0,0],					// Lv4
+		[0,0,0,0,0],					// Lv5
+		[0,0,0,0,0],					// Lv6
+		[0,0,0,0,0],					// Lv7
+		[0,0,0,0,0],					// Lv8
+		[0,0,0,0,0],					// Lv9
+		[0,0,0,0,0],					// Lv10
+		[0,0,0,0,0]
+	];
+	// 双剣兵
+	var cost_bg_twinsword=[
+		[	33000,	3000,	3000,	18500,	20700],	// Lv1
+		[0,0,0,0,0],					// Lv2
+		[0,0,0,0,0],					// Lv3
+		[0,0,0,0,0],					// Lv4
+		[0,0,0,0,0],					// Lv5
+		[0,0,0,0,0],					// Lv6
+		[0,0,0,0,0],					// Lv7
+		[0,0,0,0,0],					// Lv8
+		[0,0,0,0,0],					// Lv9
+		[0,0,0,0,0],					// Lv10
+		[0,0,0,0,0]
+	];
+	// 大錘兵
+	var cost_bg_largeweight=[
 		[0,0,0,0,0],					// Lv1
 		[0,0,0,0,0],					// Lv2
 		[0,0,0,0,0],					// Lv3
@@ -1657,6 +1751,9 @@ debugLog("=== Start autoLvup ===");
 	costs["鍛冶場大剣兵"]		= cost_bk_bigken;			// 2014.02.19
 	costs["鍛冶場盾兵"] 		= cost_bk_shield;			// 2014.02.19
 	costs["鍛冶場重盾兵"]		= cost_bk_bigshield;		// 2014.02.19
+	costs["鍛冶場戦斧兵"]		= cost_bk_battleax;			// 2019.01.10
+	costs["鍛冶場双剣兵"]		= cost_bk_twinsword;		// 2019.01.10
+	costs["鍛冶場大錘兵"]		= cost_bk_largeweight;		// 2019.01.10
 
 	costs["防具工場剣兵"]		= cost_bg_ken;
 	costs["防具工場槍兵"]		= cost_bg_yari;
@@ -1672,6 +1769,9 @@ debugLog("=== Start autoLvup ===");
 	costs["防具工場大剣兵"] 	= cost_bg_bigken;			// 2014.02.19
 	costs["防具工場盾兵"]		= cost_bg_shield;			// 2014.02.19
 	costs["防具工場重盾兵"] 	= cost_bg_bigshield;		// 2014.02.19
+	costs["防具工場戦斧兵"]		= cost_bg_battleax;			// 2019.01.10
+	costs["防具工場双剣兵"]		= cost_bg_twinsword;		// 2019.01.10
+	costs["防具工場大錘兵"]		= cost_bg_largeweight;		// 2019.01.10
 
 	var make_loop = function(loop) {
 
@@ -1701,6 +1801,8 @@ debugLog("=== Start autoLvup ===");
 			UnitID["盾兵"]		= [316];
 			UnitID["重盾兵"]	= [317];
 			UnitID["戦斧兵"]	= [318];
+			UnitID["双剣兵"]	= [319];
+			UnitID["大錘兵"]	= [320];
 
 			var _x = -1;
 			var _y = -1;
@@ -1999,7 +2101,7 @@ debugLog("=== Start setVillageFacility ===");
 			if (cost) {
 				if (cost.time > 0 && info.time > cost.time) {
 					console.log("建築時間がバグっているのでリロードしてみる");
-					var tid=setTimeout(function(){location.reload();},2000);
+					var tid=setTimeout(function(){location.reload();},5000);
 				}
 			}
 		}
@@ -3072,7 +3174,6 @@ function build1111S4(vId){
 
 	createFacilityEx(5, 3, Hatake, 1, area) ||
 	createFacilityEx(5, 4, Hatake, 1, area) ||
-	createFacilityEx(5, 5, Hatake, 1, area) ||
 
 	createFacilityEx(1, 2, Bassai, 1, area) ||
 	createFacilityEx(2, 1, Bassai, 1, area) ||
@@ -3716,6 +3817,9 @@ function clearInitArmsArmor(){
 	var textbox = $a('//input[@id="OPT_BK_LV15"]'); textbox[0].value = 0;
 	var textbox = $a('//input[@id="OPT_BK_LV16"]'); textbox[0].value = 0;
 	var textbox = $a('//input[@id="OPT_BK_LV17"]'); textbox[0].value = 0;
+	var textbox = $a('//input[@id="OPT_BK_LV18"]'); textbox[0].value = 0;
+	var textbox = $a('//input[@id="OPT_BK_LV19"]'); textbox[0].value = 0;
+	var textbox = $a('//input[@id="OPT_BK_LV20"]'); textbox[0].value = 0;
 
 	var textbox = $a('//input[@id="OPT_BG_LV1"]');	textbox[0].value = 0;
 	var textbox = $a('//input[@id="OPT_BG_LV8"]');	textbox[0].value = 0;
@@ -3731,6 +3835,9 @@ function clearInitArmsArmor(){
 	var textbox = $a('//input[@id="OPT_BG_LV15"]'); textbox[0].value = 0;
 	var textbox = $a('//input[@id="OPT_BG_LV16"]'); textbox[0].value = 0;
 	var textbox = $a('//input[@id="OPT_BG_LV17"]'); textbox[0].value = 0;
+	var textbox = $a('//input[@id="OPT_BG_LV18"]'); textbox[0].value = 0;
+	var textbox = $a('//input[@id="OPT_BG_LV19"]'); textbox[0].value = 0;
+	var textbox = $a('//input[@id="OPT_BG_LV20"]'); textbox[0].value = 0;
 }
 
 // 造兵時作成単位初期化
@@ -5020,9 +5127,9 @@ function addInifacHtml(vId) {
 	var td920 = d.createElement("td");		td920.style.padding = "3px";		td920.style.verticalAlign = "top";	td920.style.textAlign = "center";
 	var td921 = d.createElement("td");		td921.style.padding = "3px";		td921.style.verticalAlign = "top";	td921.style.textAlign = "center";
 	var td922 = d.createElement("td");		td922.style.padding = "3px";		td922.style.verticalAlign = "top";	td922.style.textAlign = "center";
-	var td923 = d.createElement("td");		td911.style.padding = "3px";		td911.style.verticalAlign = "bottom";
-	var td924 = d.createElement("td");		td912.style.padding = "3px";		td912.style.verticalAlign = "top";	td912.style.textAlign = "center";
-	var td925 = d.createElement("td");		td913.style.padding = "3px";		td913.style.verticalAlign = "top";	td913.style.textAlign = "center";
+	var td923 = d.createElement("td");		td923.style.padding = "3px";		td923.style.verticalAlign = "top";	td923.style.textAlign = "center";
+	var td924 = d.createElement("td");		td924.style.padding = "3px";		td924.style.verticalAlign = "top";	td924.style.textAlign = "center";
+	var td925 = d.createElement("td");		td925.style.padding = "3px";		td925.style.verticalAlign = "top";	td925.style.textAlign = "center";
 
 	Blacksmith_Box.appendChild(tr900);
 		tr900.appendChild(td900);
@@ -5039,6 +5146,7 @@ function addInifacHtml(vId) {
 		tr911.appendChild(td917);
 		tr911.appendChild(td918);
 		tr911.appendChild(td919);
+		tr911.appendChild(td920);
 
 //	ABfacContainer.appendChild(Blacksmith_Box);
 
@@ -5049,9 +5157,9 @@ function addInifacHtml(vId) {
 	ccreateText(td915, "dummy", "矛槍兵", 0 );
 	ccreateText(td916, "dummy", "弩兵", 0 );
 	ccreateText(td917, "dummy", "近衛騎兵", 0 );
-	ccreateText(td918, "dummy", "斥候", 0 );
-	ccreateText(td919, "dummy", "斥候騎兵", 0 );
-
+	ccreateText(td918, "dummy", "戦斧兵", 0 );
+	ccreateText(td919, "dummy", "双剣兵", 0 );
+	ccreateText(td920, "dummy", "大錘兵", 0 );
 
 	ccreateText(td911, "dummy", "武器レベル", 0 );
 	ccreateTextBox(td912,"OPT_BK_LV3", OPT_BK_LV[3],"","槍兵の武器レベル",7,0);
@@ -5060,8 +5168,9 @@ function addInifacHtml(vId) {
 	ccreateTextBox(td915,"OPT_BK_LV4", OPT_BK_LV[4],"","矛槍兵の武器レベル",7,0);
 	ccreateTextBox(td916,"OPT_BK_LV9", OPT_BK_LV[9],"","弩兵の武器レベル",7,0);
 	ccreateTextBox(td917,"OPT_BK_LV7", OPT_BK_LV[7],"","近衛騎兵の武器レベル",7,0);
-	ccreateText(td918, "dummy", "　", 0 );
-	ccreateText(td919, "dummy", "　", 0 );
+	ccreateTextBox(td918,"OPT_BK_LV18", OPT_BK_LV[18],"","戦斧兵の武器レベル",7,0);
+	ccreateTextBox(td919,"OPT_BK_LV19", OPT_BK_LV[19],"","双剣兵の武器レベル",7,0);
+	ccreateTextBox(td920,"OPT_BK_LV20", OPT_BK_LV[20],"","大錘兵の武器レベル",7,0);
 
 	ccreateText(td911, "dummy", "防具レベル", 0 );
 	ccreateTextBox(td912,"OPT_BG_LV3", OPT_BG_LV[3],"","槍兵の防具レベル",7,0);
@@ -5070,8 +5179,9 @@ function addInifacHtml(vId) {
 	ccreateTextBox(td915,"OPT_BG_LV4", OPT_BG_LV[4],"","矛槍兵の防具レベル",7,0);
 	ccreateTextBox(td916,"OPT_BG_LV9", OPT_BG_LV[9],"","弩兵の防具レベル",7,0);
 	ccreateTextBox(td917,"OPT_BG_LV7", OPT_BG_LV[7],"","近衛騎兵の防具レベル",7,0);
-	ccreateTextBox(td918,"OPT_BG_LV10", OPT_BG_LV[10],"","斥候の防具レベル",7,0);
-	ccreateTextBox(td919,"OPT_BG_LV11", OPT_BG_LV[11],"","斥候騎兵の防具レベル",7,0);
+	ccreateTextBox(td918,"OPT_BG_LV18", OPT_BG_LV[18],"","戦斧兵の防具レベル",7,0);
+	ccreateTextBox(td919,"OPT_BG_LV19", OPT_BG_LV[19],"","双剣兵の防具レベル",7,0);
+	ccreateTextBox(td920,"OPT_BG_LV20", OPT_BG_LV[20],"","大錘兵の防具レベル",7,0);
 
 	ccreateText(td911, "dummy", "　", 0 );
 	ccreateText(td912, "dummy", "　", 0 );
@@ -5082,6 +5192,7 @@ function addInifacHtml(vId) {
 	ccreateText(td917, "dummy", "　", 0 );
 	ccreateText(td918, "dummy", "　", 0 );
 	ccreateText(td919, "dummy", "　", 0 );
+	ccreateText(td920, "dummy", "　", 0 );
 
 	ccreateText(td911, "dummy", "　", 0 );
 	ccreateText(td912, "dummy", "剣兵", 0 );
@@ -5090,9 +5201,9 @@ function addInifacHtml(vId) {
 	ccreateText(td915, "dummy", "重盾兵", 0 );
 	ccreateText(td916, "dummy", "衝車", 0 );
 	ccreateText(td917, "dummy", "投石機", 0 );
-	ccreateText(td918, "dummy", "　", 0 );
-	ccreateText(td919, "dummy", "　", 0 );
-
+	ccreateText(td918, "dummy", "斥候", 0 );
+	ccreateText(td919, "dummy", "斥候騎兵", 0 );
+	ccreateText(td920, "dummy", "　", 0 );
 
 	ccreateText(td911, "dummy", "武器レベル", 0 );
 	ccreateTextBox(td912,"OPT_BK_LV1" , OPT_BK_LV[1] ,"","剣兵の武器レベル",7,0);
@@ -5103,6 +5214,7 @@ function addInifacHtml(vId) {
 	ccreateTextBox(td917,"OPT_BK_LV13", OPT_BK_LV[13],"","投石機の武器レベル",7,0);
 	ccreateText(td918, "dummy", "　", 0 );
 	ccreateText(td919, "dummy", "　", 0 );
+	ccreateText(td920, "dummy", "　", 0 );
 
 	ccreateText(td911, "dummy", "防具レベル", 0 );
 	ccreateTextBox(td912,"OPT_BG_LV1" , OPT_BG_LV[1] ,"","剣兵の防具レベル",7,0);
@@ -5111,8 +5223,9 @@ function addInifacHtml(vId) {
 	ccreateTextBox(td915,"OPT_BG_LV17", OPT_BG_LV[17],"","重盾兵の防具レベル",7,0);
 	ccreateTextBox(td916,"OPT_BG_LV12", OPT_BG_LV[12],"","衝車の防具レベル",7,0);
 	ccreateTextBox(td917,"OPT_BG_LV13", OPT_BG_LV[13],"","投石機の防具レベル",7,0);
-	ccreateText(td918, "dummy", "　", 0 );
-	ccreateButton(td919, "初期化", "武器・防具の設定レベルを消去します。", function() {clearInitArmsArmor();});
+	ccreateTextBox(td918,"OPT_BG_LV10", OPT_BG_LV[10],"","斥候の防具レベル",7,0);
+	ccreateTextBox(td919,"OPT_BG_LV11", OPT_BG_LV[11],"","斥候騎兵の防具レベル",7,0);
+	ccreateButton(td920, "初期化", "武器・防具の設定レベルを消去します。", function() {clearInitArmsArmor();});
 
 
 	// ===== 残す資源量 ====
@@ -5490,11 +5603,11 @@ function SaveInifacBox(vId){
 	strSave += cgetTextBoxValue($("OPT_BLD_RICE"))	+ DELIMIT2;
 
 	for (i=0;i<18;i++){
-		if ((i == 10) || (i == 11)) {
+		if ((i == 10) || (i == 11)) { // 斥候,斥候騎兵は0固定
 			strSave += "0" + DELIMIT2;
 		} else {
 			var opt = $("OPT_BK_LV" + i);
-			if (cgetTextBoxValue(opt) > 10) {
+			if (cgetTextBoxValue(opt) > 10) { // 10上限
 				strSave += "10" + DELIMIT2;
 			} else {
 				strSave += cgetTextBoxValue(opt) + DELIMIT2;
@@ -5503,7 +5616,7 @@ function SaveInifacBox(vId){
 	}
 	for (i=0;i<18;i++){
 		var opt = $("OPT_BG_LV" + i);
-		if (cgetTextBoxValue(opt) > 10) {
+		if (cgetTextBoxValue(opt) > 10) { // 10上限
 			strSave += "10" + DELIMIT2;
 		} else {
 			strSave += cgetTextBoxValue(opt) + DELIMIT2;
@@ -5543,6 +5656,25 @@ function SaveInifacBox(vId){
 
 	strSave += cgetCheckBoxValue($("OPT_0000S6MURA")) + DELIMIT2;
 
+	// @2019.01.10: 戦斧兵,双剣兵,大錘兵の武器LV/防具LV
+	for (i=18;i<21;i++){
+		var opt = $("OPT_BK_LV" + i);
+		if (cgetTextBoxValue(opt) > 10) { // 10上限
+			strSave += "10" + DELIMIT2;
+		} else {
+			strSave += cgetTextBoxValue(opt) + DELIMIT2;
+		}
+	}
+	for (i=18;i<21;i++){
+		var opt = $("OPT_BG_LV" + i);
+		if (cgetTextBoxValue(opt) > 10) { // 10上限
+			strSave += "10" + DELIMIT2;
+		} else {
+			strSave += cgetTextBoxValue(opt) + DELIMIT2;
+		}
+	}
+
+	// save
 	GM_setValue(HOST+PGNAME+vId, strSave);
 }
 //拠点単位の設定の読み込み
@@ -5617,8 +5749,8 @@ debugLog("=== Start Load_OPT ===");
 		OPT_MAXLV = 6;
 
 		// 兵作成情報
-		for (i=0;i<18;i++){ 	OPT_SOL_MAX[i] = 0; 	OPT_SOL_MAX[i]	= 0; };
-		for (i=0;i<18;i++){ 	OPT_SOL_ADD[i] = 0; OPT_SOL_ADD[i]	= 0; };
+		for (i=0;i<18;i++){ OPT_SOL_MAX[i] = 0; };
+		for (i=0;i<18;i++){ OPT_SOL_ADD[i] = 0; };
 		OPT_BLD_SOL   = 0;
 		OPT_BLD_WOOD  = 0;
 		OPT_BLD_STONE = 0;
@@ -5630,8 +5762,8 @@ debugLog("=== Start Load_OPT ===");
 		OPT_BLD_IRON  = 0;
 		OPT_BLD_RICE  = 0;
 
-		for (i=0;i<18;i++){ OPT_BK_LV[i] = 0; OPT_BK_LV[i]	= 0; };
-		for (i=0;i<18;i++){ OPT_BG_LV[i] = 0; OPT_BG_LV[i]	= 0; };
+		for (i=0;i<21;i++){ OPT_BK_LV[i] = 0; };
+		for (i=0;i<21;i++){ OPT_BG_LV[i] = 0; };
 		OPT_BKBG_CHK  = 0;
 
 //		SaveInifacBox(vId); 	// 拠点情報の保存
@@ -5781,6 +5913,17 @@ debugLog("=== Start Load_OPT ===");
 		OPT_1111S4MURA = forInt(Temp2[242]);
 		if(Temp2[243] == ""){return;}
 		OPT_0000S6MURA = forInt(Temp2[243]);
+
+		// @2019.01.10: 戦斧兵,双剣兵,大錘兵の武器LV/防具LV
+		if(Temp2[244] == ""){return;}
+		for (i=18;i<21;i++){
+			OPT_BK_LV[i] = forInt(Temp2[244 - 18 + i]);
+			if (isNaN(OPT_BK_LV[i])) { OPT_BK_LV[i]  = 0; };
+		}
+		for (i=18;i<21;i++){
+			OPT_BG_LV[i] = forInt(Temp2[244 - 18 + 3 + i]);
+			if (isNaN(OPT_BG_LV[i])) { OPT_BG_LV[i]  = 0; };
+		}
 	}
 }
 //ユーザプロフィール画面の拠点情報を取得
