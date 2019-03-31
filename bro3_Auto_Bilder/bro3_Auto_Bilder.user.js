@@ -19,7 +19,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2019.02.03
+// @version		2019.04.01
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -128,8 +128,9 @@
 //			  運営のタイマーバグ対策でリロード間隔を2秒→5秒に変更
 //			  戦斧兵,双剣兵,大錘兵の自動武器LVUP/防具LVUP対応
 // 2019.02.03 拠点に鍛冶場がないと、防具工場があっても防具LVUPが動作しない既存バグを修正
+// 2019.04.01 3/27のメンテ以降？、プロフィール画面の座標フォーマットが変更されたため拠点情報を正しく取得できなくなっていた問題への対応
 
-var VERSION = "2019.02.03"; 	// バージョン情報
+var VERSION = "2019.04.01"; 	// バージョン情報
 
 jQuery.noConflict();
 j$ = jQuery;
@@ -5956,11 +5957,11 @@ function getUserProf(htmldoc) {
 
 		//座標項目を取得
 		//var xy = "(" + getChildElement(item, 1).innerHTML + ")";
-		var xy = "(" + getChildElement(item, 1).innerHTML.match(/-?[0-9]+\,-?[0-9]+/i) + ")";
-
+		getChildElement(item, 1).innerHTML.match(/(-?[0-9]+)\,\s*(-?[0-9]+)/i)
+		var xy = `(${RegExp.$1},${RegExp.$2})`;
 
 		//人口項目を取得
-		var popul = getChildElement(item, 2).innerHTML;
+		var popul = trim(getChildElement(item, 2).innerHTML);
 
 		//拠点じゃなければ終了
 		if (!isNumeric(popul)) break;
