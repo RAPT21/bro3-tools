@@ -10,6 +10,7 @@
 | [bro3_donate_window](bro3_donate_window) | 同盟タブで寄付をしやすくする。残す量や寄付後の合計値を確認しながら寄付したり、一括寄付に対応。 |
 | [bro3_fort_info_tool](bro3_fort_info_tool) | NPC砦包囲情報収集 |
 | [bro3_hide_build_button](bro3_hide_build_button) | 「研究・建設即完了」ボタンを隠す |
+| [bro3_initial_quest_helper](bro3_initial_quest_helper) | 初期クエクリ補助 |
 | [bro3_make_scouts_cavalrymans_checker](bro3_make_scouts_cavalrymans_checker) | 斥候騎兵作成予防 |
 | [bro3_map_troop_extension](bro3_map_troop_extension) | 51x51 MAP での遠征補助。出兵補助のほかに、高領地カラーリングやワンクリックで領地を削除したり領地名や拠点名などを変更できる |
 | [bro3_territory_info](bro3_territory_info) | 全領地情報収集 |
