@@ -8,12 +8,17 @@
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @author		RAPT
-// @version 	2016.07.25
+// @version 	2016.08.17
 // ==/UserScript==
-var VERSION = "2016.07.25"; 	// バージョン情報
+var VERSION = "2016.08.17"; 	// バージョン情報
 
 
 // 2016.07.25 初版作成
+// 2016.08.17 Firefox サポート
+
+
+jQuery.noConflict();
+j$ = jQuery;
 
 
 var HOST		= location.hostname;
