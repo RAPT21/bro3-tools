@@ -8,15 +8,16 @@
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @author		RAPT
-// @version 	2017.06.05
+// @version 	2019.04.10
 // ==/UserScript==
-var VERSION = "2017.06.05"; 	// バージョン情報
+var VERSION = "2019.04.10"; 	// バージョン情報
 
 
 // 2016.07.25 初版作成
 // 2016.08.17 Firefox サポート
 // 2017.03.18 同盟盟主座標,同盟貢献ポイントの検出対応、同盟ポイント,同盟貢献ポイントのクエクリ情報対応
 // 2017.06.05 個人ランク、週間ランク、同盟ランクについて、TEXTBOX 自動入力対応
+// 2019.04.10 同盟ランクが取得できなくなっていたのを対応、41鯖で同盟ポイントが取得できなくなっていたのを対応
 
 
 jQuery.noConflict();
@@ -182,11 +183,11 @@ function ally_rank(handler){
 		var td = j$('tr.mydata td', htmldoc);
 		var leaderXY = td.eq(5).text().trim();
 		appendLog("同盟盟主座標", leaderXY);
-		var rankNum = td.eq(0).text().substr(1).trim();
+		var rankNum = td.eq(0).text().replace('→', '').replace(/,/g, '').trim();
 		appendLog("同盟ランク", rankNum); g_allyRankNum = rankNum;
-		var allyMembers = td.eq(3).text().trim();
+		var allyMembers = td.eq(3).text().replace(/,/g, '').trim();
 		appendLog("同盟人数", allyMembers);
-		var allyPoint = td.eq(2).text().trim();
+		var allyPoint = td.eq(2).text().replace(/,/g, '').trim();
 		appendLog("同盟ポイント", allyPoint);
 		debug_ally_point(allyPoint);
 
@@ -210,7 +211,7 @@ function weekly_rank(handler){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 		var base = j$('.tables[summary="攻撃ランキング"]', htmldoc);
-		var rankNum = j$('.rank-self>td:first', base).text().substr(1).trim();
+		var rankNum = j$('.rank-self>td:first', base).text().replace('→', '').trim();
 		appendLog("週間ランキング", rankNum);
 		handler(rankNum);
 	});
@@ -223,8 +224,8 @@ function profile_jinko(fn){
 			htmldoc.innerHTML = x;
 		var text = j$('table.commonTables', htmldoc).text().replace(/\s+/g, '');
 		var name = text.match(/お気に入り武将カード君主(.+)個人掲示板/)[1];
-		var sumJinko = text.match(/総人口(\d+)/)[1];
-		var attScore = text.match(/撃破スコア(\d+)/)[1];
+		var sumJinko = text.match(/総人口(\d+)/)[1].replace(/,/g, '');
+		var attScore = text.match(/撃破スコア(\d+)/)[1].replace(/,/g, '');
 		appendLog("君主", name);
 		appendLog("総人口", sumJinko);
 		appendLog("撃破スコア", attScore);
