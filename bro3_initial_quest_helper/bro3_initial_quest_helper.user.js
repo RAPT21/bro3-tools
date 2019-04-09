@@ -4,23 +4,23 @@
 // @description	ブラウザ三国志 初期クエクリ補助 by RAPT
 // @include		http://*.3gokushi.jp/quest*
 // @exclude		http://*.3gokushi.jp/maintenance*
-// @require		http://ajax.googleapis.com/ajax/libs/jquery/3.0.0/jquery.min.js
+// @require		http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @author		RAPT
-// @version 	2017.03.18
+// @version 	2017.06.05
 // ==/UserScript==
-var VERSION = "2017.03.18"; 	// バージョン情報
+var VERSION = "2017.06.05"; 	// バージョン情報
 
 
 // 2016.07.25 初版作成
 // 2016.08.17 Firefox サポート
 // 2017.03.18 同盟盟主座標,同盟貢献ポイントの検出対応、同盟ポイント,同盟貢献ポイントのクエクリ情報対応
+// 2017.06.05 個人ランク、週間ランク、同盟ランクについて、TEXTBOX 自動入力対応
 
 
 jQuery.noConflict();
 j$ = jQuery;
-
 
 var HOST		= location.hostname;
 var SERVER		= HOST.split('.')[0]+'> ';
@@ -121,8 +121,8 @@ function check_ally_point(pt, qid){
 }
 
 function debug_ally_contribute(pt) {
-	var key = "　→同盟に貢献しよう"
-	var reach = ""
+	var key = "　→同盟に貢献しよう";
+	var reach = "";
 	if (pt >= 1000) reach = "其一";
 	if (pt >= 3000) reach = "其二";
 	if (pt >= 6000) reach = "其三";
@@ -138,8 +138,8 @@ function debug_ally_contribute(pt) {
 	}
 }
 function debug_ally_point(pt) {
-	var key = "　→同盟上位への道"
-	var reach = ""
+	var key = "　→同盟上位への道";
+	var reach = "";
 	if (pt >= 40000) reach = "其一";
 	if (pt >= 80000) reach = "其二";
 	if (pt >= 160000) reach = "其三";
@@ -164,17 +164,18 @@ function appendLog(key, value) {
 }
 
 // 個人ランク
-function self_rank(){
+function self_rank(handler){
 	httpGET('http://'+HOST+'/user/ranking.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 		var rankNum = j$('.mydata>.rankNum', htmldoc).text().substr(1).trim();
 		appendLog("個人ランク", rankNum);
+		handler(rankNum);
 	});
 }
 
 // 同盟ランク,同盟ポイント,同盟人数,同盟盟主座標
-function ally_rank(fn){
+function ally_rank(handler){
 	httpGET('http://'+HOST+'/alliance/list.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
@@ -182,7 +183,7 @@ function ally_rank(fn){
 		var leaderXY = td.eq(5).text().trim();
 		appendLog("同盟盟主座標", leaderXY);
 		var rankNum = td.eq(0).text().substr(1).trim();
-		appendLog("同盟ランク", rankNum);
+		appendLog("同盟ランク", rankNum); g_allyRankNum = rankNum;
 		var allyMembers = td.eq(3).text().trim();
 		appendLog("同盟人数", allyMembers);
 		var allyPoint = td.eq(2).text().trim();
@@ -190,23 +191,28 @@ function ally_rank(fn){
 		debug_ally_point(allyPoint);
 
 		var allyUrl = j$("a", td.eq(1)).attr("href");
-		if (allyUrl.indexOf("info.php?id=") == 0) {
+		if (allyUrl.indexOf("info.php?id=") === 0) {
 			allyUrl = 'http://'+HOST+'/alliance/' + allyUrl;
 		}
-		if (fn !== null) {
-			fn(allyUrl);
-		}
+		handler({
+			leaderXY: leaderXY,
+			rankNum: rankNum,
+			allyMembers: allyMembers,
+			allyPoint: allyPoint,
+			allyUrl: allyUrl
+		});
 	});
 }
 
 // 週間ランキング
-function weekly_rank(){
+function weekly_rank(handler){
 	httpGET('http://'+HOST+'/user/weekly_ranking.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 		var base = j$('.tables[summary="攻撃ランキング"]', htmldoc);
 		var rankNum = j$('.rank-self>td:first', base).text().substr(1).trim();
 		appendLog("週間ランキング", rankNum);
+		handler(rankNum);
 	});
 }
 
@@ -250,12 +256,47 @@ function ally_info(url, name){
 	});
 }
 
+function perform() {
+	if (location.pathname !== "/quest/index.php") {
+		return false;
+	}
+	var forms = j$("div.sysMes form");
+	if (!forms || forms.length === 0) {
+		return false;
+	}
+
+	var f = forms[0];
+	var disp_id = parseInt(j$("input[name='disp_id']", f).attr("value"), 10);
+	if (disp_id === ID_TOTAL_RANK) {
+		self_rank(function(value){
+			j$("input[name='tuto_p_ranking']", f).attr("value", value);
+		});
+		return true;
+	}
+	if (disp_id === ID_WEEKLY_RANK) {
+		weekly_rank(function(value){
+			j$("input[name='attack_rank']", f).attr("value", value);
+		});
+		return true;
+	}
+	if (disp_id === ID_ALLY_RANK) {
+		ally_rank(function(info){
+			j$("input[name='alliance_rank']", f).attr("value", info.rankNum);
+		});
+		return true;
+	}
+
+
+	return false;
+}
+
 ( function() {
-	self_rank();
-	weekly_rank();
+	if (perform()) {
+		return;
+	}
 	profile_jinko(function(username){
-	ally_rank(function(ally_url){
-			ally_info(ally_url, username);
+		ally_rank(function(info){
+			ally_info(info.ally_url, username);
 		});
 	});
 })();
