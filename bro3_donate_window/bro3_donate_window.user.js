@@ -14,7 +14,7 @@
 // @grant		GM_getResourceText
 // @grant		GM_addStyle
 // @author		RAPT
-// @version 	1.0
+// @version 	1.1
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
@@ -30,8 +30,9 @@ GM_addStyle(jQueryUICss);
 
 // 2017.09.17	0.1	自分用に作成
 // 2017.12.03	1.0	初版公開
+// 2019.04.19	1.1	2019.04.03以降に開始された期で寄付済額が取得できなくなっていたのを対応
 
-var VERSION = "2017.12.03";
+var VERSION = "2019.04.19";
 var HOST = location.hostname; //アクセスURLホスト
 var SERVER_NAME = HOST.match(/^(.*)\.3gokushi/)[1];
 var LOGGER	 = SERVER_NAME + '.donate> ';
@@ -339,7 +340,7 @@ GM_addStyle(`
 
 		$(`table[class='tables'] tbody tr td a:contains(${username})`).each(function(){
 			if ($(this).text() === username) {
-				var already = $(this).closest("tr").children("td").eq(3).text().replace(/[ \t\r\n]/g, "");
+				var already = $(this).closest("tr").children("td").eq(3).text().replace(/[ \t\r\n,]/g, "");
 				$("#total_already").val(already);
 				console.log(LOGGER+`[${username}] の寄付額は [${already}]`);
 				return false;
