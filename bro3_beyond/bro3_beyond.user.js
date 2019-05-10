@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.06.1
+// @version		1.06.2
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -52,6 +52,13 @@
 // 0.98.1	2018/10/12	RAPT. プルダウンメニュー項目を調整（全体地図、統計、鹵獲関係、南蛮襲来関係）
 // 1.06.1	2018/12/20	全体スクロール機能復元。0.98->0.98.1のパッチ適用。
 //						「天気バー上に天気予告を常時表示する」にチェックありのとき、現在の天候にマウスを乗せるとチラチラする運営の表示を隠すようにした。
+// 1.06.2	2019/05/11	1.06.1 での Typo 修正
+//						ロールオーバーメニューに下記項目を追加
+//						  - 都市＞プロフィール＞編集、個人掲示板、獲得武勲、表示設定
+//						  - デッキ＞自動出兵
+//						  - 統計＞個人＞破壊、遠征、寄付、破砕スコア
+//						  - ドラッグ＆ドロップでのマップ移動機能の初期値を false へ変更
+
 //
 // TODO:
 // 内政ボタンで、拠点を変更せずにセットする新方式対応
@@ -3772,7 +3779,15 @@ function execCommonPart() {
 		var menus = [
 			// 都市
 			[
-				['同盟拠点', BASE_URL + '/alliance/village.php'], ['プロフィール', BASE_URL + '/user/'],
+				['同盟拠点', BASE_URL + '/alliance/village.php'],
+				['プロフィール', BASE_URL + '/user/',
+					[
+						['編集', BASE_URL + '/user/change/change.php'],
+						['個人掲示板', BASE_URL + '/bbs/personal_topic_view.php'],
+						['獲得武勲', BASE_URL + '/user/decoration.php'],
+						['表示設定', BASE_URL + '/user/disp_config.php'],
+					],
+				],
 			],
 			// 全体地図
 			[
@@ -3803,6 +3818,7 @@ function execCommonPart() {
 				],
 				['領地管理', facurl + '/territory_status.php'],
 				['出兵', facurl + '/castle_send_troop.php'],
+				['自動出兵', BASE_URL + '/auto_send_troop/index.php'],
 				['内政設定', BASE_URL + '/card/domestic_setting.php'],
 				['デッキ', BASE_URL + '/card/deck.php',
 					[
@@ -3952,8 +3968,12 @@ function execCommonPart() {
 						['人口', BASE_URL + '/user/ranking.php?m=population'],
 						['攻撃', BASE_URL + '/user/ranking.php?m=attack'],
 						['防御', BASE_URL + '/user/ranking.php?m=defense'],
+						['破壊', BASE_URL + '/user/ranking.php?m=destroy'],
+						['遠征', BASE_URL + '/user/ranking.php?m=expedition'],
+						['寄付', BASE_URL + '/user/ranking.php?m=destroy_score'],
 						['撃破スコア', BASE_URL + '/user/ranking.php?m=attack_score'],
 						['防衛スコア', BASE_URL + '/user/ranking.php?m=defense_score'],
+						['破砕スコア', BASE_URL + '/user/ranking.php?m=destroy_score'],
 						['デュエル', BASE_URL + '/user/ranking.php?m=duel'],
 						['南蛮襲来', BASE_URL + '/user/ranking.php?m=npc_assault'],
 						['期間', BASE_URL + '/user/period_ranking.php'],
@@ -5786,7 +5806,7 @@ function draw_setting_window(append_target) {
 					</div> \
 				</div> \
 				<div id='tab-map'> \
-					<div stype='font-weight: bold'>全体地図画面</div> \
+					<div style='font-weight: bold'>全体地図画面</div> \
 					<div style='margin-left: 8px;'> \
 						<div><input type='checkbox' id='" + MAP_01 + "'><label for='" + MAP_01 + "'>ドラッグ＆ドロップでのマップ移動機能追加(51x51限定)</label></input></div> \
 					</div> \
@@ -9443,7 +9463,7 @@ function getDefaultOptions() {
 	settings[VILLAGE_02] = 24;		// 制限時間
 
 	// 全体地図
-	settings[MAP_01] = true;		// ドラッグ＆ドロップでのマップ移動機能追加
+	settings[MAP_01] = false;		// ドラッグ＆ドロップでのマップ移動機能追加
 	settings[MAP_11] = false;		// 出兵時にデッキ武将を一斉出兵する機能を追加
 	settings[MAP_12] = false;		// 出兵種別初期選択を有効にする機能を追加
 	settings[MAP_13] = '';			// 鹵獲先座標設定用ボックス
