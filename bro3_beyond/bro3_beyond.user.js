@@ -58,6 +58,7 @@
 //						  - デッキ＞自動出兵
 //						  - 統計＞個人＞破壊、遠征、寄付、破砕スコア
 //						  - ドラッグ＆ドロップでのマップ移動機能の初期値を false へ変更
+//						2019.04.03以降に開始された期で同盟員全領地座標CSV取得が動作しなくなっていたのを対応
 
 //
 // TODO:
@@ -2219,8 +2220,8 @@ function allianceTabControl() {
 									var start = 18 + (landelems.eq(18).children("th").length > 0) * 1;
 									for (var i = start; i < landelems.length; i++) {
 										var land = landelems.eq(i).children("td").eq(0).children('a').text().replace(/[ \t\r\n]/g, "");
-										var match = landelems.eq(i).children("td").eq(1).text().match(/([-]*[0-9]*),([-]*[0-9]*)/);
-										var populations = landelems.eq(i).children("td").eq(2).text().replace(/[ \t\r\n]/g, "");
+										var match = landelems.eq(i).children("td").eq(1).text().match(/([-]*[0-9]*),\s*([-]*[0-9]*)/);
+										var populations = landelems.eq(i).children("td").eq(2).text().replace(/[ \t\r\n,]/g, "");
 										var base = '';
 										if (i == start) {
 											base = '1';
