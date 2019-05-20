@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.06.2
+// @version		1.06.4
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -59,6 +59,9 @@
 //						  - 統計＞個人＞破壊、遠征、寄付、破砕スコア
 //						  - ドラッグ＆ドロップでのマップ移動機能の初期値を false へ変更
 //						2019.04.03以降に開始された期で同盟員全領地座標CSV取得が動作しなくなっていたのを対応
+// 1.06.3	2019/05/11	2019.04.03以降に開始された期で同盟員本拠座標取得が動作しなくなっていたのを暫定対応
+// 1.06.4	2019/05/20	2019.04.03以降に開始された期で同盟員本拠座標取得で取得後座標が変な位置に表示されていたのを対応
+//					今のところ、取得済のはずの座標が反映されないバグが残っている。
 
 //
 // TODO:
@@ -2217,7 +2220,17 @@ function allianceTabControl() {
 								.done(function(res){
 									var resp = q$("<div>").append(res);
 									var landelems = q$("#gray02Wrapper table[class='commonTables'] tr", resp);
+
 									var start = 18 + (landelems.eq(18).children("th").length > 0) * 1;
+									var offset2019 = 0;
+									if (landelems.length >= 21 && landelems.eq(19).text().trim() === '国情報') {
+										start = 21;
+										offset2019 = 1;
+									}
+									else if (landelems.length >= 22 && landelems.eq(20).text().trim() === '国情報') {
+										start = 22;
+										offset2019 = 1;
+									}
 									for (var i = start; i < landelems.length; i++) {
 										var land = landelems.eq(i).children("td").eq(0).children('a').text().replace(/[ \t\r\n]/g, "");
 										var match = landelems.eq(i).children("td").eq(1).text().match(/([-]*[0-9]*),\s*([-]*[0-9]*)/);
@@ -2270,14 +2283,11 @@ function allianceTabControl() {
 
 				// 本拠地列を作る
 				var elems = q$("table[class='tables'] tbody tr");
-				var myAlliance = (elems.eq(1).children('th').length == 7);
+				var coln = elems.eq(1).children('th').length;
+				var myAlliance = elems.eq(1).text().replace(/[ \t\r\n,]/g, "").indexOf('ログイン') >= 0;
 				for (var i = 1; i < elems.length; i++) {
 					if (i == 1) {
-						if (myAlliance == true) {
-							elems.eq(0).children('th').attr('colspan', '8');
-						} else {
-							elems.eq(0).children('th').attr('colspan', '7');
-						}
+						elems.eq(0).children('th').attr('colspan', `${coln + 1}`);
 						elems.eq(1).append('<th class="all">本拠地</th>');
 						continue;
 					}
@@ -2310,7 +2320,7 @@ function allianceTabControl() {
 						var users = [];
 						var usernames = [];
 						var elems = q$("table[class='tables'] tbody tr");
-						var myAlliance = (elems.eq(1).children('th').length == 8);
+						var myAlliance = elems.eq(1).text().replace(/[ \t\r\n,]/g, "").indexOf('ログイン') >= 0;
 						for (var i = 2; i < elems.length; i++) {
 							var userid = elems.eq(i).children('td').eq(1).children('a').attr('href').replace(/^.*user_id=/,'');
 							var name = elems.eq(i).children('td').eq(1).text().replace(/[ \t\r\n]/g, "");
@@ -2345,16 +2355,25 @@ function allianceTabControl() {
 									var result = "";
 									var landelems = q$("#gray02Wrapper table[class='commonTables'] tr", resp);
 									var start = 18 + (landelems.eq(18).children("th").length > 0) * 1;
-									var match = landelems.eq(start).children("td").eq(1).text().match(/([-]*[0-9]*),([-]*[0-9]*)/);
-									var pos = 6;
+									var offset2019 = 0;
+									if (landelems.length >= 21 && landelems.eq(19).text().trim() === '国情報') {
+										start = 21;
+										offset2019 = 1;
+									}
+									else if (landelems.length >= 22 && landelems.eq(20).text().trim() === '国情報') {
+										start = 22;
+										offset2019 = 1;
+									}
+									var match = landelems.eq(start).children("td").eq(1).text().match(/([-]*[0-9]*),\s*([-]*[0-9]*)/);
+									var pos = 6 + offset2019;
 									if (myAlliance == true) {
-										pos = 7;
+										pos = 7 + offset2019;
 									}
 									elems.eq(count + 1).children('td').eq(pos).html(
-										"<a href='" + BASE_URL + "/map.php?x=" + match[1] + "&y=" + match[2] + "' target='_blank'>(" + match[0] + ")</a>"
+										`<a href='${BASE_URL}/map.php?x=${match[1]}&y=${match[2]}' target='_blank'>(${match[1]},${match[2]})</a>`
 									);
 
-									userlist.push({id: users[count -1], x: match[1], y: match[2]});
+									userlist.push({id: users[count - 1], x: match[1], y: match[2]});
 									count++;
 									if (count > max) {
 										// 一回取得したデータは鯖＋同盟IDごとに保存
