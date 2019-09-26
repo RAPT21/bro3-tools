@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.06.4
+// @version		1.06.5
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -62,6 +62,7 @@
 // 1.06.3	2019/05/11	2019.04.03以降に開始された期で同盟員本拠座標取得が動作しなくなっていたのを暫定対応
 // 1.06.4	2019/05/20	2019.04.03以降に開始された期で同盟員本拠座標取得で取得後座標が変な位置に表示されていたのを対応
 //					今のところ、取得済のはずの座標が反映されないバグが残っている。
+// 1.06.5	2019/09/27	9/25の運営仕様変更に伴い、ファイルからカードIDを取得できなくなっていた問題を修正
 
 //
 // TODO:
@@ -4185,8 +4186,8 @@ function execCommonPart() {
 			var now = q$(weather_list.eq(i));
 			var weather_spans = q$(now).children("th").eq(0);
 			var weathers = q$(now).children("td").eq(0);
-			var timeline = q$(weather_spans).text().replace(/[\n \t]/g, "");
-			var weather = q$(weathers).text().replace(/[\n \t]/g, "");
+			var timeline = q$(weather_spans).text().replace(/[\n \t]/g, "");
+			var weather = q$(weathers).text().replace(/[\n \t]/g, "");
 
 			var weather_no = 0;
 			var effect = '';
@@ -4908,7 +4909,7 @@ function execUnionPart() {
 									// 水鏡指定がある場合、水鏡かどうかを判定
 									var almighty = false;
 									if (use_almighty == true) {
-										var card_name = q$("div[class='left'] div[class='illustMini__div--name']", cards[i]).eq(0).text();
+										var card_name = q$("div[class^='left'] div[class='illustMini__div--name']", cards[i]).eq(0).text();
 										card_name = card_name.replace(/[ \t]/g, "");
 										if (card_name == "水鏡" || card_name == "水鏡(自分用)") {
 											almighty = true;
@@ -5054,7 +5055,7 @@ function execUnionPart() {
 					}
 					var card_id = match[1];
 
-					q$("div[class='left']", cards[i]).eq(0).append(
+					q$("div[class^='left']", cards[i]).eq(0).append(
 						'<a href=' + BASE_URL + '/union/lvup.php?cid=' + card_id + '>' +
 							'<img style="width: 90%; cursor: pointer;" src="/20161222-01/extend_project/w945/img/union/btn_levelupskill_mini.png" alt="ベースカードをこのカードに変更" title="ベースカードをこのカードに変更">' +
 						'</a>'
@@ -5194,7 +5195,7 @@ function execUnionPart() {
 									// 水鏡指定がある場合、水鏡かどうかを判定
 									var almighty = false;
 									if (use_almighty == true) {
-										var card_name = q$("div[class='left'] div[class='illustMini__div--name']", cards[i]).eq(0).text();
+										var card_name = q$("div[class^='left'] div[class='illustMini__div--name']", cards[i]).eq(0).text();
 										card_name = card_name.replace(/[ \t]/g, "");
 										if (card_name == "水鏡" || card_name == "水鏡(自分用)") {
 											almighty = true;
@@ -5727,7 +5728,7 @@ function execTradeCardPart() {
 	// 落札価格調査ボタン追加
 	if (g_beyond_options[TRADE_33] == true) {
 		// 即時落札価格調査ボタン追加
-		var cards = q$("#cardFileList div[class='cardStatusDetail label-setting-mode'] div[class='statusDetail clearfix'] div[class='left']");
+		var cards = q$("#cardFileList div[class='cardStatusDetail label-setting-mode'] div[class='statusDetail clearfix'] div[class^='left']");
 		for (var i = 0; i < cards.length; i++) {
 			cards.eq(i).append(
 				"<div>" +
@@ -6321,7 +6322,7 @@ function deck_resttime_checker() {
 							}
 
 							// カードID
-							var match = q$("div[class='left'] a[class^='thickbox']", cards.eq(i)).attr('href').match(/cardWindow_(\d+)/);
+							var match = q$("div[class^='left'] a[class^='thickbox']", cards.eq(i)).attr('href').match(/cardWindow_(\d+)/);
 							var cid = match[1];
 
 							// スキル本文
@@ -6739,7 +6740,7 @@ function multipleLabelSet() {
 						if (cards.length > 0) {
 							for (var i = 0; i < cards.length; i++) {
 								// カードID
-								var match = q$("div[class='left'] a[class^='thickbox']", cards.eq(i)).attr('href').match(/cardWindow_(\d+)/);
+								var match = q$("div[class^='left'] a[class^='thickbox']", cards.eq(i)).attr('href').match(/cardWindow_(\d+)/);
 								if (match == null) {
 									continue;
 								}
@@ -6915,13 +6916,13 @@ function multipleDeckSet() {
 						if (cards.length > 0) {
 							for (var i = 0; i < cards.length; i++) {
 								// セットできないカードは除外
-								var isset = q$("div[class='left'] div[class='set']", cards.eq(i));
+								var isset = q$("div[class^='left'] div[class='set']", cards.eq(i));
 								if (isset.length == 0) {
 									continue;
 								}
 
 								// カードID
-								var match = q$("div[class='left'] a[class^='thickbox']", cards.eq(i)).attr('href').match(/cardWindow_(\d+)/);
+								var match = q$("div[class^='left'] a[class^='thickbox']", cards.eq(i)).attr('href').match(/cardWindow_(\d+)/);
 								if (match == null) {
 									continue;
 								}
@@ -7443,7 +7444,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 									var recover_html = q$(this).parent().children('td').html();
 
 									var elembase = q$(this).parents("div[class='cardStatusDetail label-setting-mode']");
-									var elems_l = q$("div[class='left']", elembase);
+									var elems_l = q$("div[class^='left']", elembase);
 									var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
 
 									// 現在拠点の取得
@@ -7497,7 +7498,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 									var recover_html = q$(this).parent().children('td').html();
 
 									var elembase = q$(this).parents("div[class='cardStatusDetail label-setting-mode']");
-									var elems_l = q$("div[class='left']", elembase);
+									var elems_l = q$("div[class^='left']", elembase);
 									var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
 
 									// 現在拠点の取得
@@ -7755,7 +7756,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 			var addHtml = "<div style='margin-bottom: 4px;'><select id='" + select_id + "' name='" + select_id + "' style='width: 200px;'><option value=''>指定なし</option>";
 
 			var elembase = cards.eq(i).children("div[class='statusDetail clearfix']");
-			var elems_l = q$("div[class='left']", elembase);
+			var elems_l = q$("div[class^='left']", elembase);
 			var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
 			var cid = match[1];
 
@@ -8087,7 +8088,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 	// デッキセット
 	function exec_deck_set(element) {
 		var elembase = element.parents("div[class='cardStatusDetail label-setting-mode']");
-		var elems_l = q$("div[class='left']", elembase);
+		var elems_l = q$("div[class^='left']", elembase);
 		var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
 
 		// 状態表示
@@ -8125,7 +8126,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 	// 内政設定のみ STEP1：拠点移動＆内政官設定チェック
 	function exec_domestic_step1(element) {
 		var elembase = element.parents("div[class='cardStatusDetail label-setting-mode']");
-		var elems_l = q$("div[class='left']", elembase);
+		var elems_l = q$("div[class^='left']", elembase);
 		var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
 
 		// 拠点IDの取得
@@ -8357,7 +8358,7 @@ function tableSorter(selector, offset, index, order_ascend, call_back) {
 // 小モードトレードリンク作成
 function addTradeLinkOnSmallCardDeck() {
 	// ファイル内全カード取得
-	var cards = q$("#cardFileList div[class='cardStatusDetail label-setting-mode'] div[class='statusDetail clearfix'] div[class='left']");
+	var cards = q$("#cardFileList div[class='cardStatusDetail label-setting-mode'] div[class='statusDetail clearfix'] div[class^='left']");
 	for (var i = 0; i < cards.length; i++) {
 		// カードNo.に(T)をつける
 		var base = cards.eq(i).parents("div[class='cardStatusDetail label-setting-mode']");
