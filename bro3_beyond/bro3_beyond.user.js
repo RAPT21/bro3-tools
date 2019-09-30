@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.06.5
+// @version		1.09.1
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -48,6 +48,9 @@
 // 1.04 	2018/11/21	天気情報をすべてのタブで表示されるように修正。簡易補正情報の表示を追加。設定の位置を移動。
 // 1.05 	2018/11/23	一斉出兵が新兵科マップで動かない問題を修正
 // 1.06 	2018/12/05	天気のヘルプリンクがmixi固定になっていた問題を修正。天候鯖で一斉出兵で兵士が出兵できない問題を修正。
+// 1.06.1 	2019/05/05	hot.NPC座標/NPCの隣接同盟探索が使用出来ないのを修正,　攻撃ログテキスト出力・新兵種対応, 天気予告常時表示機能を無効(運営が表示するようになりエラーが出ていたため)
+// 1.08 	2019/09/05	資源タイマーを有効にするとポイント表示がタイマーにあわせて動く問題を修正
+// 1.09 	2019/09/17	同盟員座標と本拠地座標が取れなくなっている問題を修正
 //--------------------	以下について、https://github.com/RAPT21/bro3-tools で公開しています。
 // 0.98.1	2018/10/12	RAPT. プルダウンメニュー項目を調整（全体地図、統計、鹵獲関係、南蛮襲来関係）
 // 1.06.1	2018/12/20	全体スクロール機能復元。0.98->0.98.1のパッチ適用。
@@ -63,6 +66,10 @@
 // 1.06.4	2019/05/20	2019.04.03以降に開始された期で同盟員本拠座標取得で取得後座標が変な位置に表示されていたのを対応
 //					今のところ、取得済のはずの座標が反映されないバグが残っている。
 // 1.06.5	2019/09/27	9/25の運営仕様変更に伴い、ファイルからカードIDを取得できなくなっていた問題を修正
+// 1.09.1	2019/10/01	v1.09 対応をマージ
+//						1.09の「同盟員本拠座標取得」で取得した本拠地の表示位置がバグる問題を修正
+//						1.09の「同盟員全領地座標CSV取得」でY座標が取得できていない問題を修正
+//					今のところ、取得済のはずの座標が反映されないバグが残っている。
 
 //
 // TODO:
@@ -1291,7 +1298,8 @@ function profileControl() {
 					// NPC座標探索
 					//-------------
 					if (q$("#search_event_npc").prop('checked') == false) {
-						search_pattern = new RegExp("rewrite\\('(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '', '', '', '', '1', '.*'\\); overOpe");
+						// search_pattern = new RegExp("rewrite\\('(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '', '', '', '', '1', '.*'\\); overOpe");
+						search_pattern = new RegExp("rewriteAddRemoving\\('.*','(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '', '', '', '', '1', '.*', .*\\); overOpe");
 					} else {
 						search_pattern = new RegExp("rewritePF\\(.*,'(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '', '', '', '', '1', '.*'\\); overOpe");
 					}
@@ -1399,7 +1407,8 @@ function profileControl() {
 					// NPC隣接探索
 					//-------------
 					if (q$("#search_event_npc").prop('checked') == false) {
-						search_pattern = new RegExp("rewrite\\('(.*)', '(.*)', '.*', '(.*)', '(.*)', '([★]*)', '.*', '.*', '.*', '.*', '.*', '.*', '.*'\\); overOpe");
+						// search_pattern = new RegExp("rewrite\\('(.*)', '(.*)', '.*', '(.*)', '(.*)', '([★]*)', '.*', '.*', '.*', '.*', '.*', '.*', '.*'\\); overOpe");
+						search_pattern = new RegExp("rewriteAddRemoving\\('.*','(.*)', '(.*)', '.*', '(.*)', '(.*)', '([★]*)', '.*', '.*', '.*', '.*', '.*', '.*', '.*', .*\\); overOpe");
 					} else {
 						search_pattern = new RegExp("rewritePF\\(.*,'(.*)', '(.*)', '.*', '(.*)', '(.*)', '([★]*) '.*', '.*', '.*', '.*', '.*', '.*', '.*'\\); overOpe");
 					}
@@ -2221,21 +2230,19 @@ function allianceTabControl() {
 								.done(function(res){
 									var resp = q$("<div>").append(res);
 									var landelems = q$("#gray02Wrapper table[class='commonTables'] tr", resp);
-
-									var start = 18 + (landelems.eq(18).children("th").length > 0) * 1;
-									var offset2019 = 0;
-									if (landelems.length >= 21 && landelems.eq(19).text().trim() === '国情報') {
-										start = 21;
-										offset2019 = 1;
+									var rowct = 0;
+									for (var n = 0; n < landelems.length; n++) {
+										if (landelems.eq(n).children('th').eq(0).text() == '名前') {
+											rowct ++;
+											break;
+										}
+										rowct ++;
 									}
-									else if (landelems.length >= 22 && landelems.eq(20).text().trim() === '国情報') {
-										start = 22;
-										offset2019 = 1;
-									}
+									var start = rowct + (landelems.eq(rowct).children("th").length > 0) * 1;
 									for (var i = start; i < landelems.length; i++) {
 										var land = landelems.eq(i).children("td").eq(0).children('a').text().replace(/[ \t\r\n]/g, "");
 										var match = landelems.eq(i).children("td").eq(1).text().match(/([-]*[0-9]*),\s*([-]*[0-9]*)/);
-										var populations = landelems.eq(i).children("td").eq(2).text().replace(/[ \t\r\n,]/g, "");
+										var populations = landelems.eq(i).children("td").eq(2).text().replace(/[ \t\r\n]/g, "");
 										var base = '';
 										if (i == start) {
 											base = '1';
@@ -2355,22 +2362,17 @@ function allianceTabControl() {
 									var resp = q$("<div>").append(res);
 									var result = "";
 									var landelems = q$("#gray02Wrapper table[class='commonTables'] tr", resp);
-									var start = 18 + (landelems.eq(18).children("th").length > 0) * 1;
-									var offset2019 = 0;
-									if (landelems.length >= 21 && landelems.eq(19).text().trim() === '国情報') {
-										start = 21;
-										offset2019 = 1;
+									var rowct = 0;
+									for (var n = 0; n < landelems.length; n++) {
+										if (landelems.eq(n).children('th').eq(0).text() == '名前') {
+											rowct ++;
+											break;
+										}
+										rowct ++;
 									}
-									else if (landelems.length >= 22 && landelems.eq(20).text().trim() === '国情報') {
-										start = 22;
-										offset2019 = 1;
-									}
-									var match = landelems.eq(start).children("td").eq(1).text().match(/([-]*[0-9]*),\s*([-]*[0-9]*)/);
-									var pos = 6 + offset2019;
-									if (myAlliance == true) {
-										pos = 7 + offset2019;
-									}
-									elems.eq(count + 1).children('td').eq(pos).html(
+									var start = rowct + (landelems.eq(rowct).children("th").length > 0) * 1;
+									var match = landelems.eq(start).children("td").eq(1).text().match(/([-]*[0-9]*),[ ]*([-]*[0-9]*)/);
+									elems.eq(count + 1).children('td').eq(coln).html(
 										`<a href='${BASE_URL}/map.php?x=${match[1]}&y=${match[2]}' target='_blank'>(${match[1]},${match[2]})</a>`
 									);
 
@@ -2918,6 +2920,9 @@ function getExpeditionTextReport() {
 				// 攻撃ログ以外は除外
 				if (td.eq(1).children("img").attr("src").indexOf("icon_attack") < 0) {
 					continue;
+				} else if (td.eq(2).children("a").text().indexOf('【自動出兵完了】') != -1) {
+					// 【自動出兵完了】報告書を除外
+					continue;
 				}
 
 				// アクセスURLの取得
@@ -2992,12 +2997,21 @@ function getExpeditionTextReport() {
 								// 兵士詳細
 								var alog = "";
 								var dlog = "";
-								for (var i = 0; i < 2; i++) {
+								for (var i = 0; i < 3; i++) {
 									var alist = trlist.eq(i * 3 + 2).children("td");
 									var dlist = trlist.eq(i * 3 + 3).children("td");
-									for (var j = 0; j <= 6; j++, alog += "\t", dlog += "\t") {
-										alog += alist.eq(j).text();
-										dlog += dlist.eq(j).text();
+//									for (var j = 0; j <= 7; j++, alog += "\t", dlog += "\t") {
+//										alog += alist.eq(j).text();
+//										dlog += dlist.eq(j).text();
+//									}
+									for (var j = 0; j <= 7; j++) {
+										var anum = alist.eq(j).text().replace(/[ \t\r\n]/g, "");
+										if (anum != '') {
+											alog += alist.eq(j).text();
+											dlog += dlist.eq(j).text();
+											alog += "\t"
+											dlog += "\t"
+										}
 									}
 								}
 								summary.push("兵士\t" + alog);
@@ -4279,7 +4293,7 @@ function execResourceTimer() {
 
 		// bp, tp, cp の描画エリアを移動
 		q$("#status_resources").css('height', 46);
-		q$("#status_point").css('margin-top', 24);
+		q$("#status_point").css('margin-top', 16).appendTo("#status_resources");
 
 		// タイマー描画エリアを作成
 		var li = q$("#status_resources ul[class='resorces'] li");
@@ -9610,4 +9624,3 @@ function getCookie(name) {
 	}
 	return null;
 }
-
