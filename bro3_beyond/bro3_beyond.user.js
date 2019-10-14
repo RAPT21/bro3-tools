@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.1
+// @version		1.09.2
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -69,6 +69,8 @@
 // 1.09.1	2019/10/01	v1.09 対応をマージ
 //						1.09の「同盟員本拠座標取得」で取得した本拠地の表示位置がバグる問題を修正
 //						1.09の「同盟員全領地座標CSV取得」でY座標が取得できていない問題を修正
+// 1.09.2	2019/10/15	統合鯖で、現在の天候以外が正常に取得できていない問題を修正
+//						天候の月日と時刻がくっついて表示される問題を修正
 //					今のところ、取得済のはずの座標が反映されないバグが残っている。
 
 //
@@ -4200,8 +4202,8 @@ function execCommonPart() {
 			var now = q$(weather_list.eq(i));
 			var weather_spans = q$(now).children("th").eq(0);
 			var weathers = q$(now).children("td").eq(0);
-			var timeline = q$(weather_spans).text().replace(/[\n \t]/g, "");
-			var weather = q$(weathers).text().replace(/[\n \t]/g, "");
+			var timeline = q$(weather_spans).text().replace(/[\n\t]/g, "");
+			var weather = q$(weathers).text().replace(/[\s]/g, "");
 
 			var weather_no = 0;
 			var effect = '';
