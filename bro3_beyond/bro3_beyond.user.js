@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.2
+// @version		1.09.3
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -53,24 +53,25 @@
 // 1.09 	2019/09/17	同盟員座標と本拠地座標が取れなくなっている問題を修正
 //--------------------	以下について、https://github.com/RAPT21/bro3-tools で公開しています。
 // 0.98.1	2018/10/12	RAPT. プルダウンメニュー項目を調整（全体地図、統計、鹵獲関係、南蛮襲来関係）
-// 1.06.1	2018/12/20	全体スクロール機能復元。0.98->0.98.1のパッチ適用。
+// 1.06.1	2018/12/20	RAPT. 全体スクロール機能復元。0.98->0.98.1のパッチ適用。
 //						「天気バー上に天気予告を常時表示する」にチェックありのとき、現在の天候にマウスを乗せるとチラチラする運営の表示を隠すようにした。
-// 1.06.2	2019/05/11	1.06.1 での Typo 修正
+// 1.06.2	2019/05/11	RAPT. 1.06.1 での Typo 修正
 //						ロールオーバーメニューに下記項目を追加
 //						  - 都市＞プロフィール＞編集、個人掲示板、獲得武勲、表示設定
 //						  - デッキ＞自動出兵
 //						  - 統計＞個人＞破壊、遠征、寄付、破砕スコア
 //						  - ドラッグ＆ドロップでのマップ移動機能の初期値を false へ変更
 //						2019.04.03以降に開始された期で同盟員全領地座標CSV取得が動作しなくなっていたのを対応
-// 1.06.3	2019/05/11	2019.04.03以降に開始された期で同盟員本拠座標取得が動作しなくなっていたのを暫定対応
-// 1.06.4	2019/05/20	2019.04.03以降に開始された期で同盟員本拠座標取得で取得後座標が変な位置に表示されていたのを対応
+// 1.06.3	2019/05/11	RAPT. 2019.04.03以降に開始された期で同盟員本拠座標取得が動作しなくなっていたのを暫定対応
+// 1.06.4	2019/05/20	RAPT. 2019.04.03以降に開始された期で同盟員本拠座標取得で取得後座標が変な位置に表示されていたのを対応
 //					今のところ、取得済のはずの座標が反映されないバグが残っている。
-// 1.06.5	2019/09/27	9/25の運営仕様変更に伴い、ファイルからカードIDを取得できなくなっていた問題を修正
-// 1.09.1	2019/10/01	v1.09 対応をマージ
+// 1.06.5	2019/09/27	RAPT. 9/25の運営仕様変更に伴い、ファイルからカードIDを取得できなくなっていた問題を修正
+// 1.09.1	2019/10/01	RAPT. v1.09 対応をマージ
 //						1.09の「同盟員本拠座標取得」で取得した本拠地の表示位置がバグる問題を修正
 //						1.09の「同盟員全領地座標CSV取得」でY座標が取得できていない問題を修正
-// 1.09.2	2019/10/15	統合鯖で、現在の天候以外が正常に取得できていない問題を修正
+// 1.09.2	2019/10/15	RAPT. 統合鯖で、現在の天候以外が正常に取得できていない問題を修正
 //						天候の月日と時刻がくっついて表示される問題を修正
+// 1.09.3	2019/10/20	RAPT. 副将再解放画面に「南華老仙を素材として使用する」を追加
 //					今のところ、取得済のはずの座標が反映されないバグが残っている。
 
 //
@@ -5122,6 +5123,11 @@ function execUnionPart() {
 								"<label for='use_almighty' style='margin-left: 4px; font-weight: bold; color: blue;'>水鏡を素材として使用する</label>" +
 							"</input>" +
 						"</div>" +
+						"<div>" +
+							"<input type='checkbox' id='use_almighty2'>" +
+								"<label for='use_almighty2' style='margin-left: 4px; font-weight: bold; color: blue;'>南華老仙を素材として使用する</label>" +
+							"</input>" +
+						"</div>" +
 						"<label>停止コスト</label>" +
 						"<select id='limit_cost' style='margin-right: 6px;'>"
 							+ costoption +
@@ -5155,12 +5161,14 @@ function execUnionPart() {
 
 					// 処理開始
 					q$("#multi_subup_start").val("処理実行中").prop("disabled", true);
-					sub_lvup_step1(base_card_no, base_cid, q$("#limit_cost").val(), q$("#use_almighty").prop('checked'));
+					sub_lvup_step1(base_card_no, base_cid, q$("#limit_cost").val(), q$("#use_almighty").prop('checked'), q$("#use_almighty2").prop('checked'));
 				}
 			);
 
 			// デッキからカードを検索
-			function sub_lvup_step1(base_card_no, base_cid, limit_cost, use_almighty) {
+			function sub_lvup_step1(base_card_no, base_cid, limit_cost, use_almighty1, use_almighty2) {
+				var use_almighty = use_almighty1 || use_almighty2;
+
 				// 最大ページ番号の取得
 				var max = 1;
 				if (q$("#rotate ul[class=pager]").length > 0) {
@@ -5211,9 +5219,10 @@ function execUnionPart() {
 									// 水鏡指定がある場合、水鏡かどうかを判定
 									var almighty = false;
 									if (use_almighty == true) {
-										var card_name = q$("div[class^='left'] div[class='illustMini__div--name']", cards[i]).eq(0).text();
+										var card_name = q$("div[class^='left'] div[class^='illustMini__div--name']", cards[i]).eq(0).text();
 										card_name = card_name.replace(/[ \t]/g, "");
-										if (card_name == "水鏡" || card_name == "水鏡(自分用)") {
+										if (use_almighty1 && (card_name == "水鏡" || card_name == "水鏡(自分用)") || 
+											use_almighty2 && (card_name == "南華老仙" || card_name == "南華老仙(自分用)")) {
 											almighty = true;
 										}
 									}
