@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.3
+// @version		1.09.4
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -72,6 +72,7 @@
 // 1.09.2	2019/10/15	RAPT. 統合鯖で、現在の天候以外が正常に取得できていない問題を修正
 //						天候の月日と時刻がくっついて表示される問題を修正
 // 1.09.3	2019/10/20	RAPT. 副将再解放画面に「南華老仙を素材として使用する」を追加
+// 1.09.4	2019/10/22	RAPT. 「座標を全体地図へのリンクに変換」が自分のプロフィールだけ動作していなかった問題を修正
 //					今のところ、取得済のはずの座標が反映されないバグが残っている。
 
 //
@@ -726,7 +727,7 @@ function profileControl() {
 	var startpos = 18 + (elem.eq(18).children("th").length > 0) * 1;
 	if (g_beyond_options[PROFILE_03]) {
 		for (var i = startpos; i < elem.length; i++) {
-			var match = elem.eq(i).children("td").eq(1).text().match(/([-]*[0-9]*),([-]*[0-9]*)/);
+			var match = elem.eq(i).children("td").eq(1).text().match(/([-]*[0-9]*),\s*([-]*[0-9]*)/);
 			if (!match) {
 				continue;
 			}
@@ -5221,7 +5222,7 @@ function execUnionPart() {
 									if (use_almighty == true) {
 										var card_name = q$("div[class^='left'] div[class^='illustMini__div--name']", cards[i]).eq(0).text();
 										card_name = card_name.replace(/[ \t]/g, "");
-										if (use_almighty1 && (card_name == "水鏡" || card_name == "水鏡(自分用)") || 
+										if (use_almighty1 && (card_name == "水鏡" || card_name == "水鏡(自分用)") ||
 											use_almighty2 && (card_name == "南華老仙" || card_name == "南華老仙(自分用)")) {
 											almighty = true;
 										}
