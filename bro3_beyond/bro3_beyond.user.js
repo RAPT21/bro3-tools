@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.4
+// @version		1.09.5
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -73,6 +73,7 @@
 //						天候の月日と時刻がくっついて表示される問題を修正
 // 1.09.3	2019/10/20	RAPT. 副将再解放画面に「南華老仙を素材として使用する」を追加
 // 1.09.4	2019/10/22	RAPT. 「座標を全体地図へのリンクに変換」が自分のプロフィールだけ動作していなかった問題を修正
+// 1.09.5	2019/10/25	RAPT. プルダウンメニューの「自動出兵」に「ルートを編集」と「武将を選択」のサブメニューを追加
 //					今のところ、取得済のはずの座標が反映されないバグが残っている。
 
 //
@@ -3815,6 +3816,15 @@ function execCommonPart() {
 
 		var loc = q$("li.gnavi02 a").attr('href');
 		var bigloc = loc.replace('/map.php?', '/big_map.php?');
+
+		var cur_x = 0;
+		var cur_y = 0;
+		var match = q$("#sidebar div[class='sideBox'] div[class='sideBoxInner basename'] ul li[class='on'] a[class='map-basing']").eq(0).attr('href').match(/map.php\?x=([-]*\d+)&y=([-]*\d+)/);
+		if (match) {
+			cur_x = match[1];
+			cur_y = match[2];
+		}
+
 		var menus = [
 			// 都市
 			[
@@ -3857,7 +3867,12 @@ function execCommonPart() {
 				],
 				['領地管理', facurl + '/territory_status.php'],
 				['出兵', facurl + '/castle_send_troop.php'],
-				['自動出兵', BASE_URL + '/auto_send_troop/index.php'],
+				['自動出兵', BASE_URL + '/auto_send_troop/index.php',
+					[
+						['ルートを編集', BASE_URL + `/auto_send_troop/route.php?x=${cur_x}&y=${cur_y}`],
+						['武将を選択', BASE_URL + '/auto_send_troop/card.php'],
+					],
+				],
 				['内政設定', BASE_URL + '/card/domestic_setting.php'],
 				['デッキ', BASE_URL + '/card/deck.php',
 					[
