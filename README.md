@@ -19,7 +19,7 @@
 
 | ツール名 | 機能 |
 | - | - |
-| [bro3_auto_daily_quest_2019](bro3_auto_daily_quest) | 繰り返しクエストのクエクリ補助 2019年お正月対応 Edition |
+| [bro3_auto_daily_quest_2019](bro3_auto_daily_quest) | 繰り返しクエストのクエクリ補助 2020年お正月対応 Edition |
 | [bro3_beyond](bro3_beyond) | 運営仕様変更への臨時対応用。[本家](http://silent-stage.air-nifty.com/steps/)対応時はこちらは更新しません。 |
 
 ## 動作環境
