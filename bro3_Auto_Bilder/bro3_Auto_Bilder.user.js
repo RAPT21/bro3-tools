@@ -19,7 +19,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2020.01.30
+// @version		2020.01.31
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -131,8 +131,9 @@
 // 2019.04.01 3/27のメンテ以降？、プロフィール画面の座標フォーマットが変更されたため拠点情報を正しく取得できなくなっていた問題への対応
 // 2019.05.09 3/27のメンテ以降？に開始された期でプロフィール画面の人口フォーマットが変更されたため拠点情報を正しく取得できなくなっていた問題への対応
 // 2020.01.30 1/30の運営仕様変更に伴い、資源情報を取得できなくなっていた問題を修正
+// 2020.01.31 名声分母が正常に取得できておらず、自動建設できていなかった不具合を修正
 
-var VERSION = "2020.01.30"; 	// バージョン情報
+var VERSION = "2020.01.31"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -748,9 +749,9 @@ function settleVillages(z){
 			}
 		} catch(e) {
 			// やばげ鯖用例外処理
-			var fameText = $x('id("status_resources")//li[5]').innerHTML;
+			var fameText = q$("#status_resources_point table[class='resource_tables'] tr").eq(1).children("td").eq(1).text().replace(/\s+/g, "");
 			if( fameText ) {
-			var tmp = fameText.match(/&nbsp;(\d+)&nbsp;\/&nbsp;(\d+)/);
+			var tmp = fameText.match(/(\d+)\/(\d+)/);
 			fameMAX = parseInt(tmp[2],10);
 			}
 		}
