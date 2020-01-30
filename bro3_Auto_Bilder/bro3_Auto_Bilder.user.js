@@ -133,6 +133,7 @@
 // 2020.01.30 1/30の運営仕様変更に伴い、資源情報を取得できなくなっていた問題を修正
 // 2020.01.31 名声分母が正常に取得できておらず、自動建設できていなかった不具合を修正
 //			  都市タブの施設表記の仕様変更によって、施設LVUPができなくなっていた問題を修正
+//			  都市タブの施設表記の仕様変更によって、市場情報が取得できなくなっていた問題を修正
 
 var VERSION = "2020.01.31"; 	// バージョン情報
 
@@ -2286,7 +2287,7 @@ function get_area(){
 	var results = document.evaluate('//area', document, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
 	var area = new Array();
 	for(var i=0,n=0; i<results.snapshotLength; i++){
-		if(results.snapshotItem(i).alt.match(/(.*?)\s.*?(\d+)/)){
+		if(results.snapshotItem(i).alt.match(/(.*?)\s*LV.*?(\d+)/)){
 			var strURL = results.snapshotItem(i).href;
 			area[n] = new lv_sort(RegExp.$1,RegExp.$2,getURLxy(strURL));
 			n++;
