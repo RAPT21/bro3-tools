@@ -1,4 +1,4 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name		bro3_donate_window
 // @namespace	https://gist.github.com/RAPT21/
 // @description	ブラウザ三国志 寄付ツール
@@ -14,7 +14,7 @@
 // @grant		GM_getResourceText
 // @grant		GM_addStyle
 // @author		RAPT
-// @version 	1.1
+// @version 	1.2
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
@@ -30,9 +30,10 @@ GM_addStyle(jQueryUICss);
 
 // 2017.09.17	0.1	自分用に作成
 // 2017.12.03	1.0	初版公開
-// 2019.04.19	1.1	2019.04.03以降に開始された期で寄付済額が取得できなくなっていたのを対応
+// 2019.04.19	1.1	2019.04.03以降に開始された期で一部の数値がカンマ付きになった影響で寄付済額が取得できなくなっていたのを対応
+// 2020.01.30	1.2	1/30の運営仕様変更に伴い、資源情報を取得できなくなっていた問題を修正
 
-var VERSION = "2019.04.19";
+var VERSION = "2020.01.30";
 var HOST = location.hostname; //アクセスURLホスト
 var SERVER_NAME = HOST.match(/^(.*)\.3gokushi/)[1];
 var LOGGER	 = SERVER_NAME + '.donate> ';
@@ -60,11 +61,11 @@ GM_addStyle(`
 
 
 (function($){
-	var wood = toInt($("#wood").text());
-	var stone = toInt($("#stone").text());
-	var iron = toInt($("#iron").text());
-	var rice = toInt($("#rice").text());
-	var capacity = toInt($("#rice_max").text());
+	var wood = toInt($("#wood").val());
+	var stone = toInt($("#stone").val());
+	var iron = toInt($("#iron").val());
+	var rice = toInt($("#rice").val());
+	var capacity = toInt($("#rice_max").val());
 	console.log(LOGGER+`[在庫] 木: ${wood} 石: ${stone} 鉄: ${iron} 糧: ${rice} / 倉: ${capacity}`);
 
 	// 発動リンクの作成

@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.5
+// @version		1.09.6
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -75,6 +75,7 @@
 // 1.09.4	2019/10/22	RAPT. 「座標を全体地図へのリンクに変換」が自分のプロフィールだけ動作していなかった問題を修正
 // 1.09.5	2019/10/25	RAPT. プルダウンメニューの「自動出兵」に「ルートを編集」と「武将を選択」のサブメニューを追加
 //					今のところ、取得済のはずの座標が反映されないバグが残っている。
+// 1.09.6	2020/01/30	RAPT. 1/30の運営仕様変更に伴い、資源タイマーを表示できなくなっていた問題を修正
 
 //
 // TODO:
@@ -4281,12 +4282,12 @@ function execResourceTimer() {
 		}
 
 		// 倉庫サイズ
-		var max = parseInt(q$("#wood_max").text());
+		var max = parseInt(q$("#wood_max").val());
 		var now = new Array();
-		now['木'] = parseInt(q$("#wood").text());
-		now['石'] = parseInt(q$("#stone").text());
-		now['鉄'] = parseInt(q$("#iron").text());
-		now['糧'] = parseInt(q$("#rice").text());
+		now['木'] = parseInt(q$("#wood").val());
+		now['石'] = parseInt(q$("#stone").val());
+		now['鉄'] = parseInt(q$("#iron").val());
+		now['糧'] = parseInt(q$("#rice").val());
 
 		var resources = [];
 		q$("#sidebar div[class='sideBox'] div[class='sideBoxInner'] ul li").each(
@@ -4311,20 +4312,30 @@ function execResourceTimer() {
 		);
 
 		// bp, tp, cp の描画エリアを移動
-		q$("#status_resources").css('height', 46);
-		q$("#status_point").css('margin-top', 16).appendTo("#status_resources");
+		//q$("#status_resources").css('height', 46);
+		//q$("#status_point").css('margin-top', 16).appendTo("#status_resources");
+
+		q$("#status_resources_point").css('height', 38);
+
+		// ツールチップを外す
+		q$("#stock_max").attr('onmouseover', null);
+		q$("#wood_text").attr('onmouseover', null);
+		q$("#stone_text").attr('onmouseover', null);
+		q$("#iron_text").attr('onmouseover', null);
+		q$("#rice_text").attr('onmouseover', null);
 
 		// タイマー描画エリアを作成
-		var li = q$("#status_resources ul[class='resorces'] li");
-		for (var i = 0; i < 5; i++) {
-			q$(li[i]).attr('class', null);
+		var li = q$("#status_resources_point td[class='material']");
+		for (var i = 0; i < 4; i++) {
 			var left = parseInt(q$(li[i]).offset().left - 17);
 			var id = "res_" + i;
-			var top = 13;
+			var top = 23;
 			q$(li[i]).append(
 				"<div id='" + id + "' style='position: absolute; top: " + top + "px; left: " + left + "px; font-size: 10px;'></div>"
 			);
 		}
+		q$("#status_resources_point table[class='resource_tables'] tr").eq(1).children("td").eq(1)
+		  .append("<span id='res_4' style='font-size: 10px;'></span>");
 
 		// タイマーセット
 		var timer_func = function() {
