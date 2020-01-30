@@ -134,6 +134,7 @@
 // 2020.01.31 名声分母が正常に取得できておらず、自動建設できていなかった不具合を修正
 //			  都市タブの施設表記の仕様変更によって、施設LVUPができなくなっていた問題を修正
 //			  都市タブの施設表記の仕様変更によって、市場情報が取得できなくなっていた問題を修正
+//			  運営の自動建設機能による一括レベルアップ中、一括レベルアップ準備中の検出対応
 
 var VERSION = "2020.01.31"; 	// バージョン情報
 
@@ -2038,6 +2039,9 @@ debugLog("=== Start setVillageFacility ===");
 				cnt++;
 			}
 			else if (/^全建設(準備)?中/.test(buildStatusText)) {
+				cnt++;
+			}
+			else if (/^一括レベルアップ(準備)?中/.test(buildStatusText)) {
 				cnt++;
 			}
 		}
@@ -7800,6 +7804,9 @@ function getVillageActions() {
 			} else if (/^全建設(準備)?中/.test(buildStatusText)) {
 				newAction[IDX2_DELETE] = false;
 				buildStatus = "全建設:" + trim(q$(".buildStatus span", paItem).parent().text().replace(/全建設(準備)?中/, '').trim());
+			} else if (/^一括レベルアップ(準備)?中/.test(buildStatusText)) {
+				newAction[IDX2_DELETE] = false;
+				buildStatus = "一括レベルアップ:" + trim(q$(".buildStatus span", paItem).parent().text().replace(/一括レベルアップ(準備)?中/, '').trim());
 			} else {
 /*
 				buildStatusElem = document.evaluate('./span[@class="buildStatus"]', 	paItem, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
