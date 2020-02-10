@@ -19,7 +19,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2020.01.31
+// @version		2020.02.10
 // ==/UserScript==
 
 // ※施設建設、施設LVUP、施設削除などは、運営側仕様として、拠点を指定しての処理ができません。
@@ -135,8 +135,15 @@
 //			  都市タブの施設表記の仕様変更によって、施設LVUPができなくなっていた問題を修正
 //			  都市タブの施設表記の仕様変更によって、市場情報が取得できなくなっていた問題を修正
 //			  運営の自動建設機能による一括レベルアップ中、一括レベルアップ準備中の検出対応
+// 2020/02/09 未参照変数や未参照メソッドを削除。
+//			  初期化ボタンで糧村化の倉庫数がクリアーできていなかった不具合を修正
+//			  斧兵舎、双兵舎、錘兵舎、大倉庫の自動LVUPと自動削除対応
+//			  糧村化オプションで倉庫の代わりに大倉庫を設置できるようにした
+//			  設定画面右上にも保存して閉じるボタンをつけた
+// 2020/02/10 兵士管理画面が変更され、作成済兵士数が正しく取得できなくなっていた問題を修正
+//			  （※今のところ貰った援軍の兵士数も足されているが既存かどうか誰か教えてください）
 
-var VERSION = "2020.01.31"; 	// バージョン情報
+var VERSION = "2020.02.10"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -183,9 +190,9 @@ make_no["投石機"]	= ["投石機"  ,313,	   0,			0,		  12,		0,			0,0,0];
 make_no["大剣兵"]	= ["大剣兵"  ,315,	   0,			0,		   7,		0,			0,0,0]; 		// 2014.01.30
 make_no["盾兵"] 	= ["盾兵"	 ,316,	   0,			0,		   1,		0,			0,0,0]; 		// 2014.01.30
 make_no["重盾兵"]	= ["重盾兵"  ,317,	   0,			0,		   8,		0,			0,0,0]; 		// 2014.01.30
-make_no["戦斧兵"]	= ["戦斧兵"  ,318,	   0,			0,		   8,		0,			0,0,0]; 		// 2019.01.10
-make_no["双剣兵"]	= ["双剣兵"  ,319,	   0,			0,		   8,		0,			0,0,0]; 		// 2019.01.10
-make_no["大錘兵"]	= ["大錘兵"  ,320,	   0,			0,		   8,		0,			0,0,0]; 		// 2019.01.10
+make_no["戦斧兵"]	= ["戦斧兵"  ,318,	   0,			0,		  14,		0,			0,0,0]; 		// 2019.01.10
+make_no["双剣兵"]	= ["双剣兵"  ,319,	   0,			0,		  15,		0,			0,0,0]; 		// 2019.01.10
+make_no["大錘兵"]	= ["大錘兵"  ,320,	   0,			0,		  16,		0,			0,0,0]; 		// 2019.01.10
 
 //			 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 OPT_BK_LV = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
@@ -328,19 +335,19 @@ var TYPE_FACILITY = "F"; //施設
 var TYPE_DELETE = "B"; //建設
 
 var OPT_CHKBOX_AVC = 0;
-//						拠 木 石 鉄 畑 倉 雀 武 防 練 槍 弓 騎 宿 車 市 訓 水 工 研 大 遠 見 平 斧 双 錘
-//						点			   庫	 器 具 兵 兵 兵 兵 舎 兵 場 練 車 場 究 宿 征 張 地 兵 兵 兵
-//						 1	2  3  4  5	6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
+//						拠 木 石 鉄 畑 倉 雀 武 防 練 槍 弓 騎 宿 車 市 訓 水 工 研 大 遠 見 斧 双 錘 大
+//						点			   庫	 器 具 兵 兵 兵 兵 舎 兵 場 練 車 場 究 宿 征 張 兵 兵 兵 倉
+//						 0	1  2  3  4	5  6  7  8	9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
 var OPT_CHKBOX		 = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-var OPT_CHKBOXLV	 = [ 8,15,15,15,15,20,10,10,10,10,15,15,15,15,15,10,10,10,10,10,20,20,20, 0,15,15,15];
+var OPT_CHKBOXLV	 = [ 8,15,15,15,15,20,10,10,10,10,15,15,15,15,15,10,10,10,10,10,20,20,20,15,15,15,20];
 var OPT_RM_CHKBOX	 = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; //削除する施設 2015.05.10
 var OPT_RM_CHKBOXLV  = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; //残す数 2015.05.10
 var OPT_MAX_LV = "2";
 var OPT_FUC_NAME = ["拠点","伐採所","石切り場","製鉄所","畑","倉庫",
 					"銅雀台","鍛冶場","防具工場","練兵所","兵舎","弓兵舎",
 					"厩舎","宿舎","兵器工房","市場","訓練所","水車","工場",
-					"研究所","大宿舎","遠征訓練所","見張り台","平地",
-					"斧兵舎","双兵舎","錘兵舎"];
+					"研究所","大宿舎","遠征訓練所","見張り台",
+					"斧兵舎","双兵舎","錘兵舎","大倉庫"];
 
 var OPT_FNID = new Array();
 OPT_FNID["拠点"] =		 0	 ;
@@ -353,23 +360,26 @@ OPT_FNID["銅雀台"] =	 6	 ;
 OPT_FNID["鍛冶場"] =	 7	 ;
 OPT_FNID["防具工場"] =	 8	 ;
 OPT_FNID["練兵所"] =	 9	 ;
-OPT_FNID["兵舎"] =		 10 	 ;
-OPT_FNID["弓兵舎"] =	 11 	 ;
-OPT_FNID["厩舎"] =		 12 	 ;
-OPT_FNID["宿舎"] =		 13 	 ;
-OPT_FNID["兵器工房"] =	 14 	 ;
-OPT_FNID["市場"] =		 15 	 ;
-OPT_FNID["訓練所"] =	 16 	 ;
-OPT_FNID["水車"] =		 17 	 ;
-OPT_FNID["工場"] =		 18 	 ;
-OPT_FNID["研究所"] =	 19 	 ;
-OPT_FNID["大宿舎"] =	 20 	 ;
-OPT_FNID["遠征訓練所"] = 21 	 ;
-OPT_FNID["見張り台"] =	 22 	 ;
-//OPT_FNID["修行所"] =	   23	 ;
-OPT_FNID["斧兵舎"] =	 24 	 ;
-OPT_FNID["双兵舎"] =	 25 	 ;
-OPT_FNID["錘兵舎"] =	 26 	 ;
+OPT_FNID["兵舎"] =		 10	 ;
+OPT_FNID["弓兵舎"] =	 11	 ;
+OPT_FNID["厩舎"] =		 12	 ;
+OPT_FNID["宿舎"] =		 13	 ;
+OPT_FNID["兵器工房"] =	 14	 ;
+OPT_FNID["市場"] =		 15	 ;
+OPT_FNID["訓練所"] =	 16	 ;
+OPT_FNID["水車"] =		 17	 ;
+OPT_FNID["工場"] =		 18	 ;
+OPT_FNID["研究所"] =	 19	 ;
+OPT_FNID["大宿舎"] =	 20	 ;
+OPT_FNID["遠征訓練所"] = 21	 ;
+OPT_FNID["見張り台"] =	 22	 ;
+OPT_FNID["斧兵舎"] =	 23	 ;
+OPT_FNID["双兵舎"] =	 24	 ;
+OPT_FNID["錘兵舎"] =	 25	 ;
+OPT_FNID["大倉庫"] =	 26	 ;
+
+var OPT_SOUKO_MAX		= 0;
+var OPT_SOUKO_DAISOUKO	= 0;
 
 //市場変換処理用
 var OPT_ICHIBA = 0;
@@ -401,13 +411,9 @@ var CREATELINK = "http://SITE/facility/build.php?id=fID&x=urlX&y=urlY&village_id
 var URL_fID 	= "fID"; //建物のID
 var HATAKE		= 215;
 var SOUKO		= 233;
-var SUZUME		= 216;
-var SYUKUSYA	= 242;	// 宿舎 	2013.12.26
-var RENPEIJYO	= 234;	// 練兵所	2013.12.26
-var KAZIBA		= 232;	// 鍛冶場	2013.12.26
+var DAISOUKO	= 250;
 
 var FACLINK = "http://SITE/facility/facility.php?x=urlX&y=urlY";
-var VILLAGELINK = "http://SITE/village.php#ptop";
 // 2012.04.10
 var LANDLINK = "http://SITE/land.php?x=urlX&y=urlY";
 var SETTLELINK = "http://SITE/facility/select_type.php?x=urlX&y=urlY&mode=build&type=fID";
@@ -1263,37 +1269,6 @@ function getDeletingVillage(htmldoc) {
 }
 
 // =================================================================================================
-
-function DeleteFacility(_x,_y){
-	var tid=setTimeout(function(){
-		var mURL = FACLINK;
-		mURL = mURL.replace(URL_SITE,HOST);
-		mURL = mURL.replace(URL_X,_x);
-		mURL = mURL.replace(URL_Y,_y);
-		GM_xmlhttpRequest({
-			method:"GET",
-			url: mURL,
-			headers:{"Content-type":"text/html"},
-			overrideMimeType:'text/html; charset=utf-8',
-			onload:function(x){
-				var htmldoc = document.createElement("html");
-					htmldoc.innerHTML = x.responseText;
-				var tables = document.evaluate('//*[@name="ssid"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-				var ssid=tables.snapshotItem(0).value;
-
-				var c={};
-				c['x'] = parseInt(_x,10);
-				c['y'] = parseInt(_y,10);
-				c['ssid']=tables.snapshotItem(0).value;
-				c['remove']="%E5%BB%BA%E7%89%A9%E3%82%92%E5%A3%8A%E3%81%99";
-				q$.post("http://"+HOST+"/facility/facility.php?x=" + _x + "&y=" + _y + "#ptop",c,function(){});
-				var tid=setTimeout(function(){location.reload(false);},INTERVAL);
-
-			}
-		});
-	},0);
-
-}
 
 function autoLvup() {
 
@@ -2183,11 +2158,19 @@ debugLog("=== Start setVillageFacility ===");
 					Reload_Flg = 0;
 					return;
 				};
-			} else if(souko < OPT_SOUKO_MAX){							//倉庫が建てられる平地があれば
-				if(Chek_Sigen(new lv_sort("倉庫",0,"")) != 1){			//資源チェック
-					createFacility(SOUKO, area_all);					//倉庫を建てる
-					Reload_Flg = 0;
-					return;
+			} else if(souko < OPT_SOUKO_MAX){							// 倉庫が建てられる平地があれば
+				if(OPT_SOUKO_DAISOUKO) {
+					if(Chek_Sigen(new lv_sort("大倉庫",0,"")) != 1){	// 資源チェック
+						createFacility(DAISOUKO, area_all);				// 大倉庫を建てる
+						Reload_Flg = 0;
+						return;
+					}
+				} else {
+					if(Chek_Sigen(new lv_sort("倉庫",0,"")) != 1){		// 資源チェック
+						createFacility(SOUKO, area_all);				// 倉庫を建てる
+						Reload_Flg = 0;
+						return;
+					}
 				}
 			}
 		}
@@ -2369,16 +2352,6 @@ function createFacility(f, area){
 	for(var i=0;i<area.length;i++){
 		if(area[i].name == "平地"){ //一番最初に見つかった平地に建設
 			var Temp = area[i].xy.split(",");
-/*
-			var mURL = CREATELINK;
-			mURL = mURL.replace(URL_SITE,HOST);
-			mURL = mURL.replace(URL_X,Temp[0]);
-			mURL = mURL.replace(URL_Y,Temp[1]);
-			mURL = mURL.replace(URL_viID,getVillageID(vId));
-			mURL = mURL.replace(URL_fID,f);
-			mURL = mURL.replace(URL_viSSID,getSessionId());							// 2012.04.24 ssid 追加
-			var tid=setTimeout(function(){location.href = mURL;},INTERVAL);
-*/
 			var c = {};
 			c['x']=parseInt(Temp[0],10);
 			c['y']=parseInt(Temp[1],10);
@@ -2406,7 +2379,11 @@ var Hatake		= 215, // 畑
 	Ishikiri	= 211, // 石切り場
 	Seitetsu	= 213, // 製鉄所
 	Suzume		= 216, // 銅雀台
-	Daishuku	= 244; // 大宿舎
+	Daishuku	= 244, // 大宿舎
+//	OnoHeisha	= 247, // 斧兵舎
+//	SouHeisha	= 248, // 双兵舎
+//	SuiHeisha	= 249, // 錘兵舎
+	DaiSouko	= 250; // 大倉庫	2020.02.05
 
 // 指定座標に施設LVまで新規建築＆LVUP
 function createFacilityEx(x, y, f, lv, area){
@@ -2434,6 +2411,7 @@ function createFacilityEx(x, y, f, lv, area){
 				||	(f == Seitetsu && Chek_Sigen(new lv_sort("製鉄所",0,"")) != 1)
 				||	(f == Suzume   && Chek_Sigen(new lv_sort("銅雀台",0,"")) != 1)
 				||	(f == Daishuku && Chek_Sigen(new lv_sort("大宿舎",0,"")) != 1)
+				||	(f == DaiSouko && Chek_Sigen(new lv_sort("大倉庫",0,"")) != 1)
 				){
 					create = 1;
 				}
@@ -2454,6 +2432,7 @@ function createFacilityEx(x, y, f, lv, area){
 			else if (f == Seitetsu && area[i].name.match(/^(製鉄所)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
 			else if (f == Suzume   && area[i].name.match(/^(銅雀台)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
 			else if (f == Daishuku && area[i].name.match(/^(大宿舎)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == DaiSouko && area[i].name.match(/^(大倉庫)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
 			break;
 		}
 	}
@@ -3580,6 +3559,10 @@ function clearInifacBox() {
 	var checkbox = $a('//input[@id="OPT_CHKBOX20"]');	checkbox[0].checked = false;
 	var checkbox = $a('//input[@id="OPT_CHKBOX21"]');	checkbox[0].checked = false;
 	var checkbox = $a('//input[@id="OPT_CHKBOX22"]');	checkbox[0].checked = false;
+	var checkbox = $a('//input[@id="OPT_CHKBOX23"]');	checkbox[0].checked = false;
+	var checkbox = $a('//input[@id="OPT_CHKBOX24"]');	checkbox[0].checked = false;
+	var checkbox = $a('//input[@id="OPT_CHKBOX25"]');	checkbox[0].checked = false;
+	var checkbox = $a('//input[@id="OPT_CHKBOX26"]');	checkbox[0].checked = false;
 
 	var textbox = $a('//input[@id="OPT_CHKBOXLV0"]');	textbox[0].value = 0;
 	var textbox = $a('//input[@id="OPT_CHKBOXLV1"]');	textbox[0].value = 0;
@@ -3604,6 +3587,10 @@ function clearInifacBox() {
 	var textbox = $a('//input[@id="OPT_CHKBOXLV20"]');	textbox[0].value = 0;
 	var textbox = $a('//input[@id="OPT_CHKBOXLV21"]');	textbox[0].value = 0;
 	var textbox = $a('//input[@id="OPT_CHKBOXLV22"]');	textbox[0].value = 0;
+	var textbox = $a('//input[@id="OPT_CHKBOXLV23"]');	textbox[0].value = 0;
+	var textbox = $a('//input[@id="OPT_CHKBOXLV24"]');	textbox[0].value = 0;
+	var textbox = $a('//input[@id="OPT_CHKBOXLV25"]');	textbox[0].value = 0;
+	var textbox = $a('//input[@id="OPT_CHKBOXLV26"]');	textbox[0].value = 0;
 	// 内政設定
 	var checkbox = $a('//input[@id="OPT_DOME1"]');	checkbox[0].checked = false;	// 伐採知識
 	var checkbox = $a('//input[@id="OPT_DOME2"]');	checkbox[0].checked = false;	// 伐採技術
@@ -3634,6 +3621,9 @@ function clearInifacBox() {
 	var checkbox = $a('//input[@id="OPT_DOME39"]'); checkbox[0].checked = false;	// 陳留王政
 	// 糧村オプション
 	var checkbox = $a('//input[@id="OPT_KATEMURA"]');	checkbox[0].checked = false; // 糧村化
+	var textbox  = $a('//input[@id="OPT_SOUKO_MAX"]');	textbox[0].value = 0;
+	var checkbox = $a('//input[@id="OPT_SOUKO_DAISOUKO"]');	checkbox[0].checked = false;
+	// 宿舎オプション
 	var checkbox = $a('//input[@id="OPT_SHUKUSHA"]');	checkbox[0].checked = false; // 宿舎
 	var checkbox = $a('//input[@id="OPT_DAISHUKUSHA"]');checkbox[0].checked = false; // 大宿舎
 	clearWaterwheelBox(); // 水車村オプション
@@ -3651,7 +3641,7 @@ function clearInifacBox() {
 function clearRemoveBox(){
 	var checkbox = $a('//input[@id="OPT_REMOVE"]'); 	checkbox[0].checked = false;
 
-	for(var i=0; i<=22; i++){
+	for(var i=0; i<=26; i++){
 	var checkbox = $a('//input[@id="OPT_RM_CHKBOX'+i+'"]');  if(checkbox.length != 0) checkbox[0].checked = false;
 	var textbox  = $a('//input[@id="OPT_RM_CHKBOXLV'+i+'"]'); if(textbox.length != 0) textbox[0].value = 0;
 	}
@@ -4519,7 +4509,23 @@ function addInifacHtml(vId) {
 		}
 	}
 	Load_OPT(vId);
+
+	var headerSaveBox = d.createElement("div");
+		headerSaveBox.style.float = "right";
+		headerSaveBox.style.width = "90px";
+		headerSaveBox.style.margin = "0 6px 0 0";
+
+	ccreateButton(headerSaveBox, "保存して閉じる", "設定内容を保存して閉じます(リロードなし)", function() {
+		SaveInifacBox(ABfacContainer.getAttribute('vId'));
+		closeInifacBox();
+	}, 90);
+	ABfacContainer.appendChild(headerSaveBox);
+
 	ABfacContainer.appendChild(BaseName);
+
+	var headerSaveBoxClear = d.createElement("div");
+		headerSaveBoxClear.style.clear = "both";
+	ABfacContainer.appendChild(headerSaveBoxClear);
 
 	// ===== 建設設定 =====
 	var Build_Box = d.createElement("table");
@@ -4585,6 +4591,7 @@ function addInifacHtml(vId) {
 	ccreateText(td111, "Dummy" , "　", 0);
 	ccreateCheckBoxKai2(td111, "OPT_CHKBOX",  7, " 鍛冶場 　　","自動でLv上げをする建築物にチェックをしてください。",0);
 	ccreateCheckBoxKai2(td111, "OPT_CHKBOX",  8, " 防具工場 　","自動でLv上げをする建築物にチェックをしてください。",0);
+	ccreateText(td111, "Dummy" , "　", 0);
 
 	ccreateCheckBoxKai2(td112, "OPT_CHKBOX",  9, " 練兵所 　　","自動でLv上げをする建築物にチェックをしてください。",0);
 	ccreateCheckBoxKai2(td112, "OPT_CHKBOX", 10, " 兵舎 　　　","自動でLv上げをする建築物にチェックをしてください。",0);
@@ -4596,6 +4603,8 @@ function addInifacHtml(vId) {
 	ccreateCheckBoxKai2(td112, "OPT_CHKBOX", 20, " 大宿舎 　　","自動でLv上げをする建築物にチェックをしてください。",0);
 	ccreateText(td112, "Dummy" , "　", 0);
 	ccreateCheckBoxKai2(td112, "OPT_CHKBOX", 15, " 市場 　　　","自動でLv上げをする建築物にチェックをしてください。",0);
+	ccreateText(td112, "Dummy" , "　", 0);
+	ccreateCheckBoxKai2(td112, "OPT_CHKBOX", 26, " 大倉庫 　　","自動でLv上げをする建築物にチェックをしてください。",0);
 
 	ccreateCheckBoxKai2(td113, "OPT_CHKBOX", 16, " 訓練所 　　","自動でLv上げをする建築物にチェックをしてください。",0);
 	ccreateCheckBoxKai2(td113, "OPT_CHKBOX", 21, " 遠征訓練所 ","自動でLv上げをする建築物にチェックをしてください。",0);
@@ -4605,6 +4614,10 @@ function addInifacHtml(vId) {
 	ccreateText(td113, "Dummy" , "　", 0);
 	ccreateCheckBoxKai2(td113, "OPT_CHKBOX", 19, " 研究所 　　","自動でLv上げをする建築物にチェックをしてください。",0);
 	ccreateCheckBoxKai2(td113, "OPT_CHKBOX", 22, " 見張り台 　","自動でLv上げをする建築物にチェックをしてください。",0);
+	ccreateText(td113, "Dummy" , "　", 0);
+	ccreateCheckBoxKai2(td113, "OPT_CHKBOX", 23, " 斧兵舎 　　","自動でLv上げをする建築物にチェックをしてください。",0);
+	ccreateCheckBoxKai2(td113, "OPT_CHKBOX", 24, " 双兵舎 　　","自動でLv上げをする建築物にチェックをしてください。",0);
+	ccreateCheckBoxKai2(td113, "OPT_CHKBOX", 25, " 錘兵舎 　　","自動でLv上げをする建築物にチェックをしてください。",0);
 
 	ccreateButton(td31, "衝車研究",		"衝車研究までの設定にします。",				function() {InitPreset_01();});
 	ccreateButton(td31, "訓練所",		"訓練所までの設定にします。",				function() {InitPreset_02();});
@@ -4661,6 +4674,7 @@ function addInifacHtml(vId) {
 	ccreateText(td00111, "Dummy" , "　", 0);
 	ccreateCheckBox3(td00111, "OPT_RM_CHKBOX", OPT_RM_CHKBOX,	7, " 鍛冶場 　　","自動で削除する建築物にチェックをしてください。",0,0);
 	ccreateCheckBox3(td00111, "OPT_RM_CHKBOX", OPT_RM_CHKBOX,	8, " 防具工場 　","自動で削除する建築物にチェックをしてください。",0,0);
+	ccreateText(td00111, "Dummy" , "　", 0);
 
 	ccreateCheckBox3(td00112, "OPT_RM_CHKBOX", OPT_RM_CHKBOX,	9, " 練兵所 　　","自動で削除する建築物にチェックをしてください。",0,0);
 	ccreateCheckBox3(td00112, "OPT_RM_CHKBOX", OPT_RM_CHKBOX, 10, " 兵舎 　　　","自動で削除する建築物にチェックをしてください。",0,0);
@@ -4672,6 +4686,8 @@ function addInifacHtml(vId) {
 	ccreateCheckBox3(td00112, "OPT_RM_CHKBOX", OPT_RM_CHKBOX, 20, " 大宿舎 　　","自動で削除する建築物にチェックをしてください。",0,1);
 	ccreateText(td00112, "Dummy" , "　", 0);
 	ccreateCheckBox3(td00112, "OPT_RM_CHKBOX", OPT_RM_CHKBOX, 15, " 市場 　　　","自動で削除する建築物にチェックをしてください。",0,0);
+	ccreateText(td00112, "Dummy" , "　", 0);
+	ccreateCheckBox3(td00112, "OPT_RM_CHKBOX", OPT_RM_CHKBOX, 26, " 大倉庫 　　","自動で削除する建築物にチェックをしてください。",0,1);
 
 	ccreateCheckBox3(td00113, "OPT_RM_CHKBOX", OPT_RM_CHKBOX, 16, " 訓練所 　　","自動で削除する建築物にチェックをしてください。",0,0);
 	ccreateCheckBox3(td00113, "OPT_RM_CHKBOX", OPT_RM_CHKBOX, 21, " 遠征訓練所 ","自動で削除する建築物にチェックをしてください。",0,0);
@@ -4681,6 +4697,10 @@ function addInifacHtml(vId) {
 	ccreateText(td00113, "Dummy" , "　", 0);
 	ccreateCheckBox3(td00113, "OPT_RM_CHKBOX", OPT_RM_CHKBOX, 19, " 研究所 　　","自動で削除する建築物にチェックをしてください。",0,0);
 	ccreateCheckBox3(td00113, "OPT_RM_CHKBOX", OPT_RM_CHKBOX, 22, " 見張り台 　","自動で削除する建築物にチェックをしてください。",0,0);
+	ccreateText(td00113, "Dummy" , "　", 0);
+	ccreateCheckBox3(td00113, "OPT_RM_CHKBOX", OPT_RM_CHKBOX, 23, " 斧兵舎 　　","自動で削除する建築物にチェックをしてください。",0,0);
+	ccreateCheckBox3(td00113, "OPT_RM_CHKBOX", OPT_RM_CHKBOX, 24, " 双兵舎 　　","自動で削除する建築物にチェックをしてください。",0,0);
+	ccreateCheckBox3(td00113, "OPT_RM_CHKBOX", OPT_RM_CHKBOX, 25, " 錘兵舎 　　","自動で削除する建築物にチェックをしてください。",0,0);
 
 	// ===== 内政設定 =====
 	var Domestic_Box = d.createElement("table");
@@ -4878,10 +4898,16 @@ function addInifacHtml(vId) {
 		td611.style.verticalAlign = "top";
 		ccreateTextBox(td611,"OPT_SOUKO_MAX", OPT_SOUKO_MAX,"設置する倉庫の数　","設置する倉庫の数を指定してください。",4,0);
 
+	var td612 = d.createElement("td");
+		td612.style.padding = "3px";
+		td612.style.verticalAlign = "top";
+		ccreateCheckBox(td612, "OPT_SOUKO_DAISOUKO", OPT_SOUKO_DAISOUKO, " 大倉庫にする", "チェックを入れると大倉庫を設置します。チェックを外すと倉庫を設置します。", 4);
+
 	Field_Box.appendChild(tr600);
 	tr600.appendChild(td600);
 	Field_Box.appendChild(tr611);
 	tr611.appendChild(td611);
+	tr611.appendChild(td612);
 
 	// ===== 宿舎化 ===
 
@@ -4896,7 +4922,7 @@ function addInifacHtml(vId) {
 
 	var td700 = d.createElement("td");
 		td700.colSpan = "2";
-		ccreateCaptionText(td700, "dummy", "■ 宿舎化 ■（人柱用）", 0 );
+		ccreateCaptionText(td700, "dummy", "■ 宿舎化 ■", 0 );
 
 	var tr711 = d.createElement("td");
 		tr711.style.border = "solid 1px black";
@@ -5686,6 +5712,22 @@ function SaveInifacBox(vId){
 		}
 	}
 
+	// 斧、双、錘、大倉庫
+	strSave += cgetCheckBoxValue($("OPT_SOUKO_DAISOUKO")) + DELIMIT2;
+	for(i=23; i<=26;i++){
+		var opt1 = $("OPT_CHKBOX"+i);
+		strSave += cgetCheckBoxValue(opt1) + DELIMIT2;
+
+		var opt2 = $("OPT_CHKBOXLV" + i);
+		strSave += cgetTextBoxValue(opt2) + DELIMIT2;
+
+		var opt3 = $("OPT_RM_CHKBOX"+i);
+		strSave += cgetCheckBoxValue(opt3) + DELIMIT2;
+
+		var opt4 = $("OPT_RM_CHKBOXLV" + i);
+		strSave += cgetTextBoxValue(opt4) + DELIMIT2;
+	}
+
 	// save
 	GM_setValue(HOST+PGNAME+vId, strSave);
 }
@@ -5715,15 +5757,16 @@ debugLog("=== Start Load_OPT ===");
 		OPT_0000S6MURA		= 0;
 		OPT_DORM			= 0;				// 2013.12.16
 		OPT_SOUKO_MAX		= 0;
+		OPT_SOUKO_DAISOUKO	= 0;				// @2020.02.09
 		OPT_KIFU			= 0;
 		OPT_RISE_KIFU_MAX	= 0;
 		OPT_RISE_KIFU		= 0;
 		OPT_REMOVE		= 0; // 2015.05.10
 		for(i=1; i<=40; i++){ OPT_DOME[i]	  = 0;}
-		for(i=0; i<=22; i++){ OPT_CHKBOX[i]   = 0;}
-		for(i=0; i<=22; i++){ OPT_CHKBOXLV[i] = "0";}
-		for(i=0; i<=22; i++){ OPT_RM_CHKBOX[i]	 = 0;}	 // 2015.05.10
-		for(i=0; i<=22; i++){ OPT_RM_CHKBOXLV[i] = "0";} // 2015.05.10
+		for(i=0; i<=26; i++){ OPT_CHKBOX[i]   = 0;}
+		for(i=0; i<=26; i++){ OPT_CHKBOXLV[i] = "0";}
+		for(i=0; i<=26; i++){ OPT_RM_CHKBOX[i]	 = 0;}	 // 2015.05.10
+		for(i=0; i<=26; i++){ OPT_RM_CHKBOXLV[i] = "0";} // 2015.05.10
 
 		//市場変換処理用 （本拠地情報にデータがある）
 		var villages = loadVillages(HOST+PGNAME);
@@ -5935,6 +5978,17 @@ debugLog("=== Start Load_OPT ===");
 		for (i=18;i<21;i++){
 			OPT_BG_LV[i] = forInt(Temp2[244 - 18 + 3 + i]);
 			if (isNaN(OPT_BG_LV[i])) { OPT_BG_LV[i]  = 0; };
+		}
+
+		// @2020.02.09: 斧兵舎,双兵舎,錘兵舎,大倉庫
+		if(Temp2[250] == ""){return;}
+		OPT_SOUKO_DAISOUKO = forInt(Temp2[250]);
+		for(i=23; i<=26;i++){
+			var offset = 251 + (i - 23) * 4
+			OPT_CHKBOX[i]		= forInt(Temp2[offset]);
+			OPT_CHKBOXLV[i]		= forInt(Temp2[offset + 1]);
+			OPT_RM_CHKBOX[i]	= forInt(Temp2[offset + 2]);
+			OPT_RM_CHKBOXLV[i]	= forInt(Temp2[offset + 3]);
 		}
 	}
 }
@@ -6639,6 +6693,28 @@ function getBuildResources(constructorName, level){
 	  {wood: 24412, stone: 29294, iron: 24412, food: 19529, time: 39034},
 	  {wood: 28074, stone: 33688, iron: 28074, food: 22459, time: 46841}
 	],
+	'大倉庫':[
+	  {wood: 200, stone: 240, iron: 200, food: 160, time: 83},
+	  {wood: 1076, stone: 1291, iron: 1076, food: 860, time: 1116},
+	  {wood: 1920, stone: 2304, iron: 1920, food: 1536, time: 1992},
+	  {wood: 3004, stone: 3605, iron: 3004, food: 2404, time: 3117},
+	  {wood: 4356, stone: 5227, iron: 4356, food: 3484, time: 4519},
+	  {wood: 6000, stone: 7200, iron: 6000, food: 4800, time: 6225},
+	  {wood: 7964, stone: 9557, iron: 7964, food: 6372, time: 8263},
+	  {wood: 10276, stone: 12331, iron: 10276, food: 8220, time: 10661},
+	  {wood: 12960, stone: 15552, iron: 12960, food: 10368, time: 13446},
+	  {wood: 16044, stone: 19253, iron: 16044, food: 12836, time: 16646},
+	  {wood: 19556, stone: 23467, iron: 19556, food: 15644, time: 20289},
+	  {wood: 23520, stone: 28224, iron: 23520, food: 18816, time: 24402},
+	  {wood: 27964, stone: 33557, iron: 27964, food: 22372, time: 29013},
+	  {wood: 32916, stone: 39499, iron: 32916, food: 26332, time: 34150},
+	  {wood: 38400, stone: 46080, iron: 38400, food: 30720, time: 39840},
+	  {wood: 38400, stone: 46080, iron: 38400, food: 30720, time: 39840},
+	  {wood: 38400, stone: 46080, iron: 38400, food: 30720, time: 39840},
+	  {wood: 38400, stone: 46080, iron: 38400, food: 30720, time: 39840},
+	  {wood: 38400, stone: 46080, iron: 38400, food: 30720, time: 39840},
+	  {wood: 38400, stone: 46080, iron: 38400, food: 30720, time: 39840},
+	],
 	'研究所':[
 	  {wood: 275, stone: 110, iron: 110, food: 55, time: 216},
 	  {wood: 413, stone: 165, iron: 165, food: 83, time: 432},
@@ -6853,11 +6929,18 @@ function addSoldierCount(total, add) {
 		}
 	}
 
+	if (add.snapshotLength == 21) {
+		// 2020.02.10 兵士管理画面レイアウト変更対応
+		for (var j = 0; j <= 16; j++) {
+			total[j] += parseInt(add.snapshotItem(j).innerHTML,10);
+		}
+	}
+
 	return total;
 }
 
 function make_soldier(attackerData){
-	var make_name = ["兵器工房","厩舎","兵舎","弓兵舎","練兵所"];
+	var make_name = ["兵器工房","厩舎","兵舎","弓兵舎","練兵所"];//斧兵舎,双兵舎,錘兵舎
 
 	var make_loop = function(loop) {
 		if (loop == 5) {
@@ -6875,6 +6958,7 @@ function make_soldier(attackerData){
 			sort_priority[11] = make_no["大剣兵"];
 			sort_priority[12] = make_no["盾兵"];
 			sort_priority[13] = make_no["重盾兵"];
+			//戦斧兵,双剣兵,大錘兵
 
 			sort_priority.sort( function(a, b) { if (a[6] < b[6]) return 1; if (a[6] > b[6]) return -1; return 0;});
 
