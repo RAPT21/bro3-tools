@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name		bro3_calc_defense
-// @namespace	https://gist.github.com/RAPT21/
+// @namespace	https://github.com/RAPT21/bro3-tools/
 // @description	<内蔵版>ブラ三 領地民兵計算機 by BSE with RAPT
 // @include		http://*.3gokushi.jp/land.php*
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
@@ -8,6 +8,9 @@
 // @author		BSE with RAPT
 // @version 	1.6.1.31
 // ==/UserScript==
+
+// 配布サイト
+// https://github.com/RAPT21/bro3-tools/
 
 // ----- BSE 版リリースノート -----
 //	2016.03.13 Ver1.6.1 リリース
