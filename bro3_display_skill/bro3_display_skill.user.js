@@ -8,7 +8,7 @@
 // @grant		none
 // @connect		3gokushi.jp
 // @author		5zen + RAPT
-// @version		5.4 (2018/08/05)
+// @version		5.5 (2020/02/16)
 // ==/UserScript==
 
 // 2015.08.16	1.0	beyond 3.0.74α (2015/06/28) から 5zen 氏原作のカード表示拡張機能のみ抜粋
@@ -61,6 +61,7 @@
 // 2018.02.19	5.2	新カード追加対応(CardNo.1254,1255,1256,1257,1258,1261,1262,1263,1264,1265,2255,2256,2257,2258,2259,2260,2261,2262,2263,2264,2266,2272,3238,3239,3242,3243,3244,4433,4434,4439,4440,4441,4442,4443,4444,4445,4446,4447,4448,4452,4453,4454,5057,5058,5059,5060)
 // 2018.06.25	5.3	新カード追加対応(CardNo.1266,1267,1268,1269,1270,2265,2273,2274,2275,2276,2277,2278,2279,3246,3247,3248,4455,4456,4457,4458,4459,4460,4461,4462,4463,5061,5062,5063,5064)
 // 2018.08.05	5.4	一部合成レシピを追加
+// 2020.02.16	5.5	ブショーダスのラインナップを見るに対応、表示レイアウトを調整
 
 
 //================================================
@@ -2017,6 +2018,7 @@ const isFirefox = window.navigator.userAgent.toLowerCase().indexOf('firefox') !=
 		|| location.pathname == "/card/deck.php"
 		|| location.pathname == "/card/trade_card.php"
 		|| location.pathname.match(/union/)
+		|| location.pathname == "/busyodas/busyodas_lineup.php"
 	) {
 		bro3dasuDrawSkill();
 	}
@@ -2043,6 +2045,30 @@ const isFirefox = window.navigator.userAgent.toLowerCase().indexOf('firefox') !=
 function bro3dasuDrawSkill() {
 	if (location.pathname.match(/union/) == null) {
 		// スキル枠
+		if (location.pathname == "/busyodas/busyodas_lineup.php") {
+			// ブショーダス ラインナップ画面
+			j$("[id^=lineupCardFront]").each(function(){
+				var frontId = j$(this).attr("id");
+
+				// 指南パンダの場合、元画像にスキル名が載っているので枠自体を描画しない
+				var aId = frontId.replace(/lineupCardFront/, 'lineupCardBack') + "_link_cover";
+				var alt = ""
+				j$("img.lazy", j$("#" + aId)).each(function(){
+					alt += j$(this).attr("alt");
+				});
+
+				if (alt.indexOf('指南パンダ') === -1) {
+					var frameId = "skillFrame_" + frontId;
+					j$(this).after(
+						'<span style="position:relative; top:-90px;">' +
+							'<img src="http://' + location.hostname + '/20141224-01/extend_project/w945/img/card/common/bg_card_skill.png" style="position:relative; left:0px; z-index:1; width:75%;">' +
+							'<ul id="' + frameId + '" style="position:relative; top:-62px; left:4px; font-size:10px; z-index:2; color:white;"></ul>' +
+						'</span>'
+					);
+				}
+			});
+		}
+		else
 		if (location.pathname == "/card/trade_card.php") {
 			j$("div[class*=card rarerity] span[class=status_frontback]").parent().after(
 				'<span style="position:relative; top:-297px;">' +
@@ -2095,7 +2121,7 @@ function bro3dasuDrawSkill() {
 				var skillText = "";
 				j$("ul[class=back_skill] span[class*=skillName]", this).each(
 					function(){
-						skillText = skillText + "<li style='margin-top:3px !important;'>" + j$(this).text() + "</li>";
+						skillText = skillText + "<li style='margin-top:1px !important;'>" + j$(this).text() + "</li>";
 					}
 				);
 				j$("#skillFrame", this).html(skillText);
@@ -2106,6 +2132,28 @@ function bro3dasuDrawSkill() {
 		if(location.pathname == "/union/learn.php") {
 			j$("div[class*=cardWrapper] ul[class=front_skill]").remove();
 		}
+	}
+	else if (location.pathname == "/busyodas/busyodas_lineup.php") {
+		// ブショーダス ラインナップ画面
+		j$("[id^=lineupCardFront]").each(function(){
+			var frontId = j$(this).attr("id");
+			var backId = frontId.replace(/lineupCardFront/, 'lineupCardBack');
+			var backObj = j$("#" + backId);
+			var skillText = "";
+			j$(".back_skill .skill_name", backObj).each(function(){
+				skillText += "<li>" + j$(this).text() + "</li>";
+			});
+
+			// ダイヤモンドEXラインナップ画面の表示崩れ対策でセレクターを分ける
+			if (skillText.length === 0) {
+				// SL対応
+				j$(".back_skill5 .skill_name", backObj).each(function(){
+					skillText += "<li>" + j$(this).text() + "</li>";
+				});
+			}
+
+			j$("#skillFrame_" + frontId).html(skillText);
+		});
 	}
 }
 
@@ -2190,14 +2238,14 @@ function bro3dasuDrawCompositionSkill() {
 					if (typeof gousei_skill[skill1] != 'undefined') {
 						for(var i = 0; i <=3; i++){
 							var compSkill = gousei_skill[skill1][i];
-							compositionText = compositionText + "<li style='margin-top:3px !important;'>" + gousei_skill[skill1][i] + "</li>";
+							compositionText = compositionText + "<li style='margin-top:1px !important;'>" + gousei_skill[skill1][i] + "</li>";
 						}
 					} else {
-						compositionText = "<li style='margin-top:3px !important;'>合成表なし</li><li style='margin-top:3px !important;'>　</li><li style='margin-top:3px !important;'>　</li><li style='margin-top:3px !important;'>　</li>";
+						compositionText = "<li style='margin-top:1px !important;'>合成表なし</li><li style='margin-top:3px !important;'>　</li><li style='margin-top:3px !important;'>　</li><li style='margin-top:3px !important;'>　</li>";
 					}
 
 					if (cardName.indexOf("パンダ") > 0) {
-						compositionText = "<li style='margin-top:3px !important;'>" + skill1 + "</li><li style='margin-top:3px !important;'>　</li><li style='margin-top:3px !important;'>　</li><li style='margin-top:3px !important;'>　</li>";
+						compositionText = "<li style='margin-top:1px !important;'>" + skill1 + "</li><li style='margin-top:3px !important;'>　</li><li style='margin-top:3px !important;'>　</li><li style='margin-top:3px !important;'>　</li>";
 					}
 				}
 				j$("#compositFrame", this).html(compositionText);
@@ -2244,7 +2292,7 @@ function bro3dasuDrawCompositionSkill() {
 					var result = res[0];
 					var probSuffix = res[1] ? "(!)" : "";
 					for(var i = 0; i < result.length; i++) {
-						compositionText = compositionText + "<li style='margin-top:3px !important; font-size:8pt;'>" + result[i].n + ":" + result[i].skill + "&nbsp;" + result[i].probability + "%" + probSuffix + "</li>";
+						compositionText = compositionText + "<li style='margin-top:2px !important; font-size:8pt;'>" + result[i].n + ":" + result[i].skill + "&nbsp;" + result[i].probability + "%" + probSuffix + "</li>";
 					}
 				}
 
