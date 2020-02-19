@@ -19,7 +19,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2020.02.10
+// @version		2020.02.20
 // ==/UserScript==
 
 // 配布サイト
@@ -145,8 +145,9 @@
 //			  設定画面右上にも保存して閉じるボタンをつけた
 // 2020/02/10 兵士管理画面が変更され、作成済兵士数が正しく取得できなくなっていた問題を修正
 //			  （※今のところ貰った援軍の兵士数も足されているが既存かどうか誰か教えてください）
+// 2020/02/20 造兵画面のレイアウトが変更されたことに起因して、現在作成中の兵士数が正しく表示されなくなっていた問題を修正
 
-var VERSION = "2020.02.10"; 	// バージョン情報
+var VERSION = "2020.02.20"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -8129,7 +8130,7 @@ function getTrainingSoldier(htmldoc) {
 		facilityName = trim(h2Elem.snapshotItem(0).innerHTML);
 	}
 	// 作成数の兵数と兵種
-	var mSolName = document.evaluate('//th[@class="mainTtl"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+//	var mSolName = document.evaluate('//th[@class="mainTtl"]',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 //	var mSolNum = document.evaluate('//td',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	var mSolNum = document.evaluate('//*[@class="commonTables"]//td',htmldoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 	// 作成できる兵種の種類数
@@ -8192,8 +8193,13 @@ function getTrainingSoldier(htmldoc) {
 			data[IDX_ACTIONS][idx][IDX2_STATUS] = facilityName + ":" + status;
 		} else {
 			try {
-
-				data[IDX_ACTIONS][idx][IDX2_STATUS] = facilityName + ":" + status + "(" + mSolNum.snapshotItem(8 + mSolTypeNum + (mSolTypeNum * 5) + (idx * 4) - (1 * maxLv)).innerHTML + ")";
+				var alert = q$("#gray02Wrapper table.commonTables form input[value='キャンセル']").eq(idx).attr("onclick")
+					.match(/現在作成中の兵種です。[\\n]+(.*?)[\\n]+作成数：(\d+)[\\n]+完了時間：(.*?)[\\n]+こちらを/);
+				if (alert != null) {	// 1:兵種, 2:作成数, 3:完了時間
+					data[IDX_ACTIONS][idx][IDX2_STATUS] = facilityName + ":" + status + "(" + RegExp.$2 + ")";
+				} else {
+					data[IDX_ACTIONS][idx][IDX2_STATUS] = facilityName + ":" + status + "(" + mSolNum.snapshotItem(8 + mSolTypeNum + (mSolTypeNum * 5) + (idx * 4) - (1 * maxLv)).innerHTML + ")";
+				}
 			}catch(e) {
 				data[IDX_ACTIONS][idx][IDX2_STATUS] = facilityName + ":" + status + " (error)";
 			}
