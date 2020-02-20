@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.6
+// @version		1.09.7
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -76,6 +76,7 @@
 // 1.09.5	2019/10/25	RAPT. プルダウンメニューの「自動出兵」に「ルートを編集」と「武将を選択」のサブメニューを追加
 //					今のところ、取得済のはずの座標が反映されないバグが残っている。
 // 1.09.6	2020/01/30	RAPT. 1/30の運営仕様変更に伴い、資源タイマーを表示できなくなっていた問題を修正
+// 1.09.7	2020/02/21	RAPT. 資源・NPC探索機能について、2401x2401 MAP 対応
 
 //
 // TODO:
@@ -1047,17 +1048,17 @@ function profileControl() {
 				y1 = sw;
 			}
 
-			if (x1 < -900) {
-				x1 = -900;
+			if (x1 < -1200) {
+				x1 = -1200;
 			}
-			if (x2 > 900) {
-				x2 = 900;
+			if (x2 > 1200) {
+				x2 = 1200;
 			}
-			if (y1 < -900) {
-				y1 = -900;
+			if (y1 < -1200) {
+				y1 = -1200;
 			}
-			if (y2 > 900) {
-				y2 = 900;
+			if (y2 > 1200) {
+				y2 = 1200;
 			}
 
 			var sizex = Math.abs(x2 - x1) + 1 - 10 * 2;
