@@ -34,7 +34,7 @@
 **速報**  
 2020/03/12 のヤバゲメンテ以降、一部のブラウザーにてツールが動作しないことを確認しています。  
 こちらで動作確認したところ、とりあえず User Agent を PC ではなく Android へ変更することで動作することを確認しています。  
-[ブラウザーごとの User Agent 設定方法](how_to_change_user_agent.md)
+[ブラウザーごとの User Agent 設定方法](Doc/how_to_change_user_agent.md)
 
 
 ## 免責
