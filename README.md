@@ -30,3 +30,12 @@
 - [Firefox 56.0.2 (64bit) 日本語版](https://ftp.mozilla.org/pub/firefox/releases/56.0.2/win64/ja/) + [Greasemonkey 3.17](https://addons.mozilla.org/ja/firefox/addon/greasemonkey/versions/?page=1#version-3.17)
 - Google Chrome 71 (64bit) + Tampermonkey
 - Sleipnir 4.6.3 + Tampermonkey
+
+**速報**  
+2020/03/12 のヤバゲメンテ以降、一部のブラウザーにてツールが動作しないことを確認しています。  
+こちらで動作確認したところ、とりあえず User Agent を PC ではなく Android へ変更することで動作することを確認しています。  
+[ブラウザーごとの User Agent 設定方法](how_to_change_user_agent.md)
+
+
+## 免責
+本リポジトリー内の内容によって何らかの不利益を被った場合でも一切責任は取りかねます。すべて自己責任でお願いします。
