@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2020.02.20
+// @version		2020.04.21
 // ==/UserScript==
 
 // 配布サイト
@@ -151,8 +151,11 @@
 //			  （※今のところ貰った援軍の兵士数も足されているが既存かどうか誰か教えてください）
 // 2020/02/20 造兵画面のレイアウトが変更されたことに起因して、現在作成中の兵士数が正しく表示されなくなっていた問題を修正
 // 2020/02/20 https/http のいずれでも動作するようにした（つもり）
+// 2020/04/21 大倉庫二階対応。設定画面では大倉庫LV21-25を入れると、大倉庫二階LV1-5 に相当します。※「大倉庫二階の設計図」入手が必要
+//			  1/30の運営仕様変更に伴い、大宿舎化が動作しなくなっていた問題を修正
+//			  建築時間がバグっていた時のリロード時間を 30 秒へ変更。TIMER_BUG_RELOAD_INTERVAL で定義するように。
 
-var VERSION = "2020.02.20"; 	// バージョン情報
+var VERSION = "2020.04.21"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -162,6 +165,7 @@ q$ = jQuery;
 var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本フォントスタイル
 
 var DEBUG = false;
+var TIMER_BUG_RELOAD_INTERVAL = 30000; // 30s
 
 var SERVER_SCHEME = location.protocol + "//";
 var SERVER_NAME = location.hostname.match(/^(.*)\.3gokushi/)[1];
@@ -2101,7 +2105,7 @@ debugLog("=== Start setVillageFacility ===");
 			if (cost) {
 				if (cost.time > 0 && info.time > cost.time) {
 					console.log("建築時間がバグっているのでリロードしてみる");
-					var tid=setTimeout(function(){location.reload();},5000);
+					var tid=setTimeout(function(){location.reload();},TIMER_BUG_RELOAD_INTERVAL);
 				}
 			}
 		}
@@ -2289,7 +2293,13 @@ function get_area(){
 	for(var i=0,n=0; i<results.snapshotLength; i++){
 		if(results.snapshotItem(i).alt.match(/(.*?)\s*LV.*?(\d+)/)){
 			var strURL = results.snapshotItem(i).href;
-			area[n] = new lv_sort(RegExp.$1,RegExp.$2,getURLxy(strURL));
+			var name = RegExp.$1;
+			var lv = RegExp.$2;
+			if (name === "大倉庫二階") {
+				name = "大倉庫";
+				lv = "" + (20 + parseInt(lv,10));
+			}
+			area[n] = new lv_sort(name,lv,getURLxy(strURL));
 			n++;
 		}
 	}
@@ -2459,6 +2469,8 @@ function createFacilityEx(x, y, f, lv, area){
 			c['id']=f;
 		}
 		c['ssid']=getSessionId();
+//		c['any_level_up_flg']=1;
+//		c['target_level']=13;
 		q$.post(SERVER_BASE+"/facility/build.php",c,function(){});
 		var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 		return true;
@@ -2523,7 +2535,7 @@ function buildShukusha(vId){
 	}
 }
 function maxAreaLV(info, area) {
-	if (area.name.match(new RegExp('^('+info.name+')\\s.*?(\\d+)'))) {
+	if (area.name.match(new RegExp('^('+info.name+')\\s?.*?(\\d+)'))) {
 		var area_lv = parseInt(RegExp.$2,10);
 		if (info.lv < area_lv){
 			info.lv = area_lv;
@@ -6727,6 +6739,11 @@ function getBuildResources(constructorName, level){
 	  {wood: 38400, stone: 46080, iron: 38400, food: 30720, time: 39840},
 	  {wood: 38400, stone: 46080, iron: 38400, food: 30720, time: 39840},
 	  {wood: 38400, stone: 46080, iron: 38400, food: 30720, time: 39840},
+	  {wood: 153600, stone: 184320, iron: 153600, food: 122880, time: 39840}, //2F-lv1
+	  {wood: 76800, stone: 92160, iron: 76800, food: 61440, time: 39840}, //2F-lv2
+	  {wood: 76800, stone: 92160, iron: 76800, food: 61440, time: 39840}, //2F-lv3
+	  {wood: 76800, stone: 92160, iron: 76800, food: 61440, time: 39840}, //2F-lv4
+	  {wood: 76800, stone: 92160, iron: 76800, food: 61440, time: 39840}, //2F-lv5
 	],
 	'研究所':[
 	  {wood: 275, stone: 110, iron: 110, food: 55, time: 216},
