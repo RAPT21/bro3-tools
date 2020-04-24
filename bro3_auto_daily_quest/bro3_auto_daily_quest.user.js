@@ -12,9 +12,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2018.07.18
+// @version 	2020.04.25
 // ==/UserScript==
-var VERSION = "2018.07.18"; 	// バージョン情報
+var VERSION = "2020.04.25"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -69,6 +69,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2018.02.19 環境により他のタイマーとタイミングが重なる場合があるようなので、クエスト受注タイミングを少しずらすようにした。
 // 2018.06.09 環境により設定画面が開けない場合があるようなので対処
 // 2018.07.18 出兵種別が鹵獲以外では資源獲得できなくなる仕様変更に対応。距離20以上ないと鹵獲出兵できないようなので設定を確認してください。
+// 2020.04.25 デュエル更新時刻が鯖ごとに異なるため、デュエルクエの実行時間を 5:00→6:00 へ変更
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -258,13 +259,13 @@ function duel(callback){
 	});
 }
 
-// サーバー時刻が [00:00:00 - 01:59:59] or [05:00:00 - 23:59:59] であれば自動デュエルする
+// サーバー時刻が [00:00:00 - 01:59:59] or [06:00:00 - 23:59:59] であれば自動デュエルする
 function auto_duel()
 {
 	var server = xpath('//*[@id="server_time_disp"]', document).snapshotItem(0);
 	if (server && server.textContent) {
 		var hour = parseInt(server.textContent.substr(0,2), 10);
-		if (hour < 2 || hour >= 5) {
+		if (hour < 2 || hour >= 6) {
 			duel(function(worked){
 				if (worked) {
 					auto_duel();
@@ -542,7 +543,7 @@ function callSendTroop()
 					joryoku();
 				}
 
-				// サーバー時刻が [00:00:00 - 01:59:59] or [05:00:00 - 23:59:59] であれば自動デュエルする
+				// サーバー時刻が [00:00:00 - 01:59:59] or [06:00:00 - 23:59:59] であれば自動デュエルする
 				if (OPT_AUTO_DUEL) {
 					auto_duel();
 				}
@@ -768,7 +769,7 @@ function openSettingBox() {
 		ccreateCheckBox(td200, "OPT_RECEIVE_RESOURCES"	, OPT_RECEIVE_RESOURCES	, " クエスト報酬が資源でも自動で受け取る", "クエスト報酬が資源だったときも自動で受け取ります。",0);
 		ccreateCheckBox(td200, "OPT_MOVE_FROM_INBOX"	, OPT_MOVE_FROM_INBOX	, " アイテム受信箱から便利アイテムへ移動", "受信箱内のアイテムを自動で便利アイテムへ移動します。",0);
 			ccreateText(td200, "dummy", "　", 0 );
-		ccreateCheckBox(td200, "OPT_AUTO_DUEL"			, OPT_AUTO_DUEL			, " [02:00:00 - 04:59:59] 以外に自動デュエル", "[00:00:00 - 01:59:59], [05:00:00 - 23:59:59] の時間帯のみ自動デュエルを行ないます。",0);
+		ccreateCheckBox(td200, "OPT_AUTO_DUEL"			, OPT_AUTO_DUEL			, " [02:00:00 - 05:59:59] 以外に自動デュエル", "[00:00:00 - 01:59:59], [06:00:00 - 23:59:59] の時間帯のみ自動デュエルを行ないます。",0);
 		ccreateCheckBox(td200, "OPT_AUTO_JORYOKU"		, OPT_AUTO_JORYOKU		, " 自動助力", "同盟施設に祈祷所がある場合、自動で助力を行ないます。",0);
 			ccreateText(td200, "dummy", "　", 0 );
 
@@ -813,7 +814,7 @@ function saveSettingBox() {
 	strSave += cgetCheckBoxValue($("OPT_AUTO_YOROZUDAS"))	+ DELIMIT2; // 自動でヨロズダスをひく
 	strSave += cgetCheckBoxValue($("OPT_RECEIVE_RESOURCES"))+ DELIMIT2; // クエスト報酬が資源でも自動で受け取る
 	strSave += cgetCheckBoxValue($("OPT_MOVE_FROM_INBOX"))	+ DELIMIT2; // アイテム受信箱から便利アイテムへ移動
-	strSave += cgetCheckBoxValue($("OPT_AUTO_DUEL"))		+ DELIMIT2; // [02:00:00 - 04:59:59] 以外に自動デュエル
+	strSave += cgetCheckBoxValue($("OPT_AUTO_DUEL"))		+ DELIMIT2; // [02:00:00 - 05:59:59] 以外に自動デュエル
 	strSave += cgetCheckBoxValue($("OPT_AUTO_JORYOKU"))		+ DELIMIT2; // 自動助力
 	strSave += DELIMIT1;
 	strSave += OPT_TROOPS_CARD_ID	+ DELIMIT2; // 出兵武将カードID
@@ -848,7 +849,7 @@ function loadSettingBox() {
 		OPT_AUTO_YOROZUDAS		= 1; // 自動でヨロズダスをひく
 		OPT_RECEIVE_RESOURCES	= 1; // クエスト報酬が資源でも自動で受け取る
 		OPT_MOVE_FROM_INBOX		= 1; // アイテム受信箱から便利アイテムへ移動
-		OPT_AUTO_DUEL			= 1; // [02:00:00 - 04:59:59] 以外に自動デュエル
+		OPT_AUTO_DUEL			= 1; // [02:00:00 - 05:59:59] 以外に自動デュエル
 		OPT_AUTO_JORYOKU		= 1; // 自動助力
 		OPT_TROOPS_CARD_ID		= 0; // 出兵武将カードID
 		OPT_TROOPS_X			= 0; // 出兵先座標x
@@ -862,7 +863,7 @@ function loadSettingBox() {
 		OPT_AUTO_YOROZUDAS		= forInt(Temp[3]); // 自動でヨロズダスをひく
 		OPT_RECEIVE_RESOURCES	= forInt(Temp[4]); // クエスト報酬が資源でも自動で受け取る
 		OPT_MOVE_FROM_INBOX		= forInt(Temp[5]); // アイテム受信箱から便利アイテムへ移動
-		OPT_AUTO_DUEL			= forInt(Temp[6]); // [02:00:00 - 04:59:59] 以外に自動デュエル
+		OPT_AUTO_DUEL			= forInt(Temp[6]); // [02:00:00 - 05:59:59] 以外に自動デュエル
 		OPT_AUTO_JORYOKU		= forInt(Temp[7]); // 自動助力
 
 		if (Temp1.length >= 2) {
