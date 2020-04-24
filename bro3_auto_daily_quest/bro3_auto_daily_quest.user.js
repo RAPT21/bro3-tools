@@ -5,7 +5,9 @@
 // @include		http://*.3gokushi.jp/village.php*
 // @include		https://*.3gokushi.jp/village.php*
 // @include		http://*.3gokushi.jp/facility/castle_send_troop.php*
+// @include		https://*.3gokushi.jp/facility/castle_send_troop.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
+// @exclude		https://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
@@ -73,6 +75,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2020.04.25 デュエル更新時刻が鯖ごとに異なるため、デュエルクエの実行時間を 5:00→6:00 へ変更
 //			  デュエルクエ未達でも、アイテム受領や自動助力が動作するよう修正
 //			  全ての報告書を既読にするオプションを追加
+//			  https/http のいずれでも動作するようにした（つもり）
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -80,6 +83,9 @@ q$ = jQuery;
 
 var HOST		= location.hostname;
 var SERVER		= HOST.split('.')[0]+'> ';
+var SERVER_SCHEME = location.protocol + "//";
+var SERVER_BASE = SERVER_SCHEME + location.hostname;
+
 var INTERVAL	= 500;
 var PGNAME		= "_bro3_auto_daily_quest_20150607_"; //グリモン領域への保存時のPGの名前
 
@@ -154,7 +160,7 @@ function joryoku_once(x){
 			}
 			if (gaugeRest) {
 				// 助力実行
-				httpGET('http://'+HOST+'/alliance/village.php?assist=1',joryoku_once);
+				httpGET(SERVER_BASE+'/alliance/village.php?assist=1',joryoku_once);
 			} else {
 				console.log(SERVER+'助力MAXです。解放待ち...orz');
 			}
@@ -163,12 +169,12 @@ function joryoku_once(x){
 	}
 }
 function joryoku() {
-	httpGET('http://'+HOST+'/alliance/village.php',joryoku_once);
+	httpGET(SERVER_BASE+'/alliance/village.php',joryoku_once);
 }
 
 // 受信箱にあるアイテムを便利アイテムへ移す
 function moveFromInbox(reloadIfNeed){
-	httpGET('http://'+HOST+'/item/inbox.php#ptop',function(x){
+	httpGET(SERVER_BASE+'/item/inbox.php#ptop',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 
@@ -188,7 +194,7 @@ function moveFromInbox(reloadIfNeed){
 				'item_id_list': item_id_list,
 				'ssid': ssid.value
 			};
-			httpPOST('http://'+HOST+'/item/inbox.php',c,function(x){moveFromInbox(true);});
+			httpPOST(SERVER_BASE+'/item/inbox.php',c,function(x){moveFromInbox(true);});
 		} else if (reloadIfNeed) {
 			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 		}
@@ -201,7 +207,7 @@ function openAllReports(callback) {
 		'p': 1,
 		'all_open': '全てを既読にする'
 	};
-	httpPOST('http://'+HOST+'/report/list.php',c,function(x){
+	httpPOST(SERVER_BASE+'/report/list.php',c,function(x){
 		if (callback) {
 			callback();
 		}
@@ -218,7 +224,7 @@ function postDonate(callback) {
 		'rice': 500,
 		'contribution': 1
 	};
-	httpPOST('http://'+HOST+'/alliance/level.php',c,function(x){
+	httpPOST(SERVER_BASE+'/alliance/level.php',c,function(x){
 		if (callback) {
 			callback();
 		}
@@ -228,7 +234,7 @@ function postDonate(callback) {
 
 // デュエル
 function duel(callback){
-	httpGET("http://"+HOST+"/card/duel_set.php",function(y){
+	httpGET(SERVER_BASE+"/card/duel_set.php",function(y){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
@@ -241,7 +247,7 @@ function duel(callback){
 			return;
 		}
 
-		httpGET("http://"+HOST+"/pvp_duel/select_enemy.php?deck=1",function(z){
+		httpGET(SERVER_BASE+"/pvp_duel/select_enemy.php?deck=1",function(z){
 			var htmldoc2 = document.createElement("html");
 				htmldoc2.innerHTML = z;
 
@@ -258,7 +264,7 @@ function duel(callback){
 					};
 
 					// デュエルの開始
-					httpGET("http://" + HOST + "/pvp_duel/process_json.php?deck=1&euid=" + c.euid + "&edeck=0", c , function(x) {
+					httpGET(SERVER_BASE + "/pvp_duel/process_json.php?deck=1&euid=" + c.euid + "&edeck=0", c , function(x) {
 						//location.reload();
 						if (callback) {
 							callback(true);
@@ -293,7 +299,7 @@ function auto_duel()
 
 // ヨロズダスを引く
 function yorozudas(callback){
-	httpGET('http://'+HOST+'/reward_vendor/reward_vendor.php',function(x){
+	httpGET(SERVER_BASE+'/reward_vendor/reward_vendor.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 
@@ -303,7 +309,7 @@ function yorozudas(callback){
 				'send': 'send',
 				'got_type': 0
 			};
-			httpPOST('http://'+HOST+'/reward_vendor/reward_vendor.php',c,function(das){
+			httpPOST(SERVER_BASE+'/reward_vendor/reward_vendor.php',c,function(das){
 				var div = document.createElement('div');
 					div.innerHTML = das.responseText;
 				var reward_result = xpath('*//table[@class="getBushodas"]/tbody/tr/td/p/strong', div);
@@ -337,7 +343,7 @@ function receiveRewards()
 			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 		}
 	};
-	httpGET('http://'+HOST+'/quest/index.php?list=1&p=1&mode=0&selected_tab=7',function(y){
+	httpGET(SERVER_BASE+'/quest/index.php?list=1&p=1&mode=0&selected_tab=7',function(y){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
@@ -356,7 +362,7 @@ function receiveRewards()
 
 			if (receive_it){
 				console.log(SERVER+reward_content+' -> 受領');
-				httpGET('http://'+HOST+'/quest/index.php?c=1',function(x){
+				httpGET(SERVER_BASE+'/quest/index.php?c=1',function(x){
 					// 報酬がヨロズダス回数ならそのままヨロズダスを引く
 					if (reward_text == 'ヨロズダス回数') {
 						yorozudas(callback);
@@ -398,7 +404,7 @@ function checkAttentionQuest(htmldoc, callback){
 
 // 繰り返しクエストを受注
 function acceptAttentionQuest(callback) {
-	httpGET('http://'+HOST+'/quest/index.php?list=1&p=1&mode=0&selected_tab=7',function(y){
+	httpGET(SERVER_BASE+'/quest/index.php?list=1&p=1&mode=0&selected_tab=7',function(y){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
@@ -426,7 +432,7 @@ function acceptAttentionQuest(callback) {
 		var count = 0;
 		for (var i = 0; i < quest_list.length; i++){
 			var query = 'action=take_quest&id=' + quest_list[i];
-			httpGET('http://'+HOST+'/quest/index.php?'+query,function(x){
+			httpGET(SERVER_BASE+'/quest/index.php?'+query,function(x){
 				count++;
 
 				// すべての通信が完了した後の処理
@@ -441,7 +447,7 @@ function acceptAttentionQuest(callback) {
 // 自動出兵
 function sendTroop(vID, cardID, cardGage, targetX, targetY, callback) {
 	// 指定の武将を指定の拠点から指定座標に向ける
-	httpGET('http://'+HOST+'/village_change.php?village_id='+vID+'&from=menu&page=%2Fvillage.php#ptop',function(x){
+	httpGET(SERVER_BASE+'/village_change.php?village_id='+vID+'&from=menu&page=%2Fvillage.php#ptop',function(x){
 		var c = {
 			'village_x_value': targetX, // 出兵先座標x
 			'village_y_value': targetY, // 出兵先座標y
@@ -454,7 +460,7 @@ function sendTroop(vID, cardID, cardGage, targetX, targetY, callback) {
 		};
 
 		console.log(SERVER+"拠点 "+vID+" から ("+targetX+","+targetY+") へ "+cardID+" [討伐:"+cardGage+"] で出兵します。");
-		httpPOST('http://'+HOST+'/facility/castle_send_troop.php',c,function(x){
+		httpPOST(SERVER_BASE+'/facility/castle_send_troop.php',c,function(x){
 			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 		});
 	});
@@ -473,7 +479,7 @@ function callSendTroop()
 
 	// 討伐ゲージを取得
 	var cardGage = 0;
-	httpGET('http://'+HOST+'/card/deck.php',function(x){
+	httpGET(SERVER_BASE+'/card/deck.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 
