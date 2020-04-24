@@ -70,6 +70,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2018.06.09 環境により設定画面が開けない場合があるようなので対処
 // 2018.07.18 出兵種別が鹵獲以外では資源獲得できなくなる仕様変更に対応。距離20以上ないと鹵獲出兵できないようなので設定を確認してください。
 // 2020.04.25 デュエル更新時刻が鯖ごとに異なるため、デュエルクエの実行時間を 5:00→6:00 へ変更
+//			  デュエルクエ未達でも、アイテム受領や自動助力が動作するよう修正
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -510,6 +511,17 @@ function callSendTroop()
 
 		// クエスト受注
 		setTimeout(function(){
+
+			// 受信箱から移す
+			if (OPT_MOVE_FROM_INBOX) {
+				moveFromInbox(false);
+			}
+
+			// 自動助力
+			if (OPT_AUTO_JORYOKU) {
+				joryoku();
+			}
+
 			acceptAttentionQuest(function(quest_list){
 
 				// 未クリアの繰り返しクエストマッチング
@@ -531,16 +543,6 @@ function callSendTroop()
 							return;
 						}
 					}
-				}
-
-				// 受信箱から移す
-				if (OPT_MOVE_FROM_INBOX) {
-					moveFromInbox(false);
-				}
-
-				// 自動助力
-				if (OPT_AUTO_JORYOKU) {
-					joryoku();
 				}
 
 				// サーバー時刻が [00:00:00 - 01:59:59] or [06:00:00 - 23:59:59] であれば自動デュエルする
