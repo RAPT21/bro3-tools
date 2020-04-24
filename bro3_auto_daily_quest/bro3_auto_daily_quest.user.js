@@ -27,6 +27,7 @@ var OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬 '資源' も自動で受け
 var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
 var OPT_AUTO_DUEL			= 0; // 自動デュエル
 var OPT_AUTO_JORYOKU		= 0; // 自動助力
+var OPT_AUTO_OPEN_ALL_REPORTS = 0; // 全ての報告書を既読にする
 
 var OPT_TROOPS_CARD_ID		= 0;// 出兵武将カードID
 var OPT_TROOPS_X			= 0;// 出兵先座標x
@@ -71,6 +72,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2018.07.18 出兵種別が鹵獲以外では資源獲得できなくなる仕様変更に対応。距離20以上ないと鹵獲出兵できないようなので設定を確認してください。
 // 2020.04.25 デュエル更新時刻が鯖ごとに異なるため、デュエルクエの実行時間を 5:00→6:00 へ変更
 //			  デュエルクエ未達でも、アイテム受領や自動助力が動作するよう修正
+//			  全ての報告書を既読にするオプションを追加
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -189,6 +191,19 @@ function moveFromInbox(reloadIfNeed){
 			httpPOST('http://'+HOST+'/item/inbox.php',c,function(x){moveFromInbox(true);});
 		} else if (reloadIfNeed) {
 			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
+		}
+	});
+}
+
+// 全ての報告書を既読にする
+function openAllReports(callback) {
+	var c = {
+		'p': 1,
+		'all_open': '全てを既読にする'
+	};
+	httpPOST('http://'+HOST+'/report/list.php',c,function(x){
+		if (callback) {
+			callback();
 		}
 	});
 }
@@ -522,6 +537,11 @@ function callSendTroop()
 				joryoku();
 			}
 
+			// 全ての報告書を既読にする
+			if (OPT_AUTO_OPEN_ALL_REPORTS) {
+				openAllReports();
+			}
+
 			acceptAttentionQuest(function(quest_list){
 
 				// 未クリアの繰り返しクエストマッチング
@@ -773,6 +793,7 @@ function openSettingBox() {
 			ccreateText(td200, "dummy", "　", 0 );
 		ccreateCheckBox(td200, "OPT_AUTO_DUEL"			, OPT_AUTO_DUEL			, " [02:00:00 - 05:59:59] 以外に自動デュエル", "[00:00:00 - 01:59:59], [06:00:00 - 23:59:59] の時間帯のみ自動デュエルを行ないます。",0);
 		ccreateCheckBox(td200, "OPT_AUTO_JORYOKU"		, OPT_AUTO_JORYOKU		, " 自動助力", "同盟施設に祈祷所がある場合、自動で助力を行ないます。",0);
+		ccreateCheckBox(td200, "OPT_AUTO_OPEN_ALL_REPORTS", OPT_AUTO_OPEN_ALL_REPORTS, " 全ての報告書を既読にする", "報告書タブにあるボタンを自動で押します。",0);
 			ccreateText(td200, "dummy", "　", 0 );
 
 	Setting_Box.appendChild(tr100);
@@ -818,6 +839,7 @@ function saveSettingBox() {
 	strSave += cgetCheckBoxValue($("OPT_MOVE_FROM_INBOX"))	+ DELIMIT2; // アイテム受信箱から便利アイテムへ移動
 	strSave += cgetCheckBoxValue($("OPT_AUTO_DUEL"))		+ DELIMIT2; // [02:00:00 - 05:59:59] 以外に自動デュエル
 	strSave += cgetCheckBoxValue($("OPT_AUTO_JORYOKU"))		+ DELIMIT2; // 自動助力
+	strSave += cgetCheckBoxValue($("OPT_AUTO_OPEN_ALL_REPORTS"))+ DELIMIT2; // 全ての報告書を既読にする
 	strSave += DELIMIT1;
 	strSave += OPT_TROOPS_CARD_ID	+ DELIMIT2; // 出兵武将カードID
 	strSave += OPT_TROOPS_X			+ DELIMIT2; // 出兵先座標x
@@ -853,6 +875,7 @@ function loadSettingBox() {
 		OPT_MOVE_FROM_INBOX		= 1; // アイテム受信箱から便利アイテムへ移動
 		OPT_AUTO_DUEL			= 1; // [02:00:00 - 05:59:59] 以外に自動デュエル
 		OPT_AUTO_JORYOKU		= 1; // 自動助力
+		OPT_AUTO_OPEN_ALL_REPORTS = 1; // 全ての報告書を既読にする
 		OPT_TROOPS_CARD_ID		= 0; // 出兵武将カードID
 		OPT_TROOPS_X			= 0; // 出兵先座標x
 		OPT_TROOPS_Y			= 0; // 出兵先座標y
@@ -867,6 +890,11 @@ function loadSettingBox() {
 		OPT_MOVE_FROM_INBOX		= forInt(Temp[5]); // アイテム受信箱から便利アイテムへ移動
 		OPT_AUTO_DUEL			= forInt(Temp[6]); // [02:00:00 - 05:59:59] 以外に自動デュエル
 		OPT_AUTO_JORYOKU		= forInt(Temp[7]); // 自動助力
+		if (Temp.length > 8) {
+			OPT_AUTO_OPEN_ALL_REPORTS = forInt(Temp[8]); // 全ての報告書を既読にする
+		} else {
+			OPT_AUTO_OPEN_ALL_REPORTS = 1;
+		}
 
 		if (Temp1.length >= 2) {
 			Temp = Temp1[1].split(DELIMIT2);
