@@ -104,11 +104,11 @@ function xpath(query,targetDoc) {
 
 
 // ラッパー
-function httpGET(url, callback) {
-//	q$.get(SERVER_BASE+url, callback);
+function httpGET_(url, callback) {
+//	q$.get(url, callback);
 	GM_xmlhttpRequest({
 		method:"GET",
-		url:SERVER_BASE+url,
+		url:url,
 		headers:{"Content-type":"text/html"},
 		overrideMimeType:'text/html; charset=utf-8',
 		onload:function(x){
@@ -117,6 +117,9 @@ function httpGET(url, callback) {
 			}
 		}
 	});
+}
+function httpGET(url, callback) {
+	httpGET_(SERVER_BASE+url, callback);
 }
 function httpPOST(url, params, callback) {
 	q$.post(SERVER_BASE+url, params, callback);
@@ -254,7 +257,7 @@ function duel(callback){
 
 			try {
 				var rival_list = xpath('//ul[@class="rival_list"]/li/a[@class="thickbox btn_battle"]', htmldoc2);
-				httpGET( rival_list.snapshotItem(0).href, function(x){
+				httpGET_( rival_list.snapshotItem(0).href, function(x){
 
 					x.match(/battleStart\((\d+),\s(\d+),\s(\d+)\)/);
 
