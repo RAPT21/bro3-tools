@@ -3,13 +3,16 @@
 // @namespace	https://gist.github.com/RAPT21/
 // @description	ブラウザ三国志 マップ画面遠征ツール(51x51)
 // @include 	http://*.3gokushi.jp/big_map.php*
+// @include 	https://*.3gokushi.jp/big_map.php*
 // @include		http://*.3gokushi.jp/facility/unit_status.php*
+// @include		https://*.3gokushi.jp/facility/unit_status.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
+// @exclude		https://*.3gokushi.jp/maintenance*
 // @require		http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.3
+// @version 	1.4
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -40,13 +43,15 @@ jQuery.noConflict();
 // 2017.07.13	1.1	新MAP画面対応
 // 2017.08.14	1.2	12期～のカラーリング追加、出兵後の兵士管理画面が「全て表示」に自動的に切り替わるようにした
 // 2018.07.02	1.3	10期～のカラーリング追加、★4～6 の領地もカラーリングするかのオプション(デフォルトfalse)を追加
+// 2020.06.07	1.4	https対応、NPC領地もカラーリング対象、未取得領地をカラーリングするかのオプション(デフォルトfalse)を追加
 
 //==========[オプション]==========
 var OPT_COLORING_RESOURCES = true;		// 資源地カラーリングを行うか。falseだと何も行いません。
 var OPT_TROOP_OPEN_NEW_WINDOW = true;	// 出兵画面を新規ウィンドウで開くか。falseだと同一画面で遷移します。
 var OPT_REFRESH_AFTER_EDITNAME = false;	// 領地名変更後に画面更新するか。falseだと処理成功時マス目が点滅します。
-var OPT_UNIT_STATUS_SWITCH_SORTIE_TO_ALL = true;	// 出兵管理画面で出撃タブ表示時、全て表示に切り替える
+var OPT_UNIT_STATUS_SWITCH_SORTIE_TO_ALL = false;	// 出兵管理画面で出撃タブ表示時、全て表示に切り替える
 var OPT_SUPPORT_MIDDLE_RANGE_LAND = false;	// ★4～6 の領地もカラーリングするか
+var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングするか
 
 //==========[本体]==========
 (function($) {
@@ -161,6 +166,8 @@ var OPT_SUPPORT_MIDDLE_RANGE_LAND = false;	// ★4～6 の領地もカラーリ�
 		obj.x = x;
 		obj.y = y;
 		obj.blank = false;
+		obj.virgin = false;
+		obj.npc = false;
 		obj.areaname = "";
 		obj.wood = 0;
 		obj.stone = 0;
@@ -169,6 +176,15 @@ var OPT_SUPPORT_MIDDLE_RANGE_LAND = false;	// ★4～6 の領地もカラーリ�
 		var mtext = $(element).attr('onmouseover');
 		if (mtext.match(/空き地/)) {
 			obj.blank = true;
+			if (mtext.match(/空き地\(未取得\)/)) {
+				obj.virgin = true;
+			}
+		}
+		if (mtext.match(/<dt>君主名<\/dt><dd>NPC<\/dd>/)) {
+			obj.npc = true;
+			if (mtext.match(/新領地\d+,\d+\(未取得\)/)) {
+				obj.virgin = true;
+			}
 		}
 		if (mtext.match(/bigmap-caption[^>]*>([^<]+)/)) {
 			obj.areaname = RegExp.$1;
@@ -332,7 +348,8 @@ var OPT_SUPPORT_MIDDLE_RANGE_LAND = false;	// ★4～6 の領地もカラーリ�
 		}
 
 		var mxy = mx + "," + my;
-		var message = "新しい領地名を入力してください。\n(" + mxy + ")";
+		var message_pre = "新しい領地名を入力してください。";
+		var message = "\n(" + mxy + ")";
 		if (obj.stars) {
 			message += " ★" + obj.stars + "(" + obj.wood + "-" + obj.stone + "-" + obj.iron + "-" + obj.food + ")";
 			if (obj.wood > 0 && obj.stone === 0 && obj.iron === 0 && obj.food === 0) {
@@ -349,9 +366,15 @@ var OPT_SUPPORT_MIDDLE_RANGE_LAND = false;	// ★4～6 の領地もカラーリ�
 				message += "\n★" + obj.stars + "拠" + mxy;
 			}
 		} else {
-			message = message.replace(/領地名/,"拠点名");
+			message_pre = message_pre.replace(/領地名/,"拠点名");
 		}
-		var newname = $.trim(prompt(message, obj.areaname));
+
+		if (obj.npc) {
+			prompt("NPC領地情報（ここの名称は変更されません）" + message, obj.areaname);
+			return;
+		}
+
+		var newname = $.trim(prompt(message_pre + message, obj.areaname));
 		if (newname && newname.length && obj.areaname !== newname) {
 			// 領地名が変更されていた場合、変更処理を実行
 			editname(obj, newname);
@@ -371,7 +394,7 @@ var OPT_SUPPORT_MIDDLE_RANGE_LAND = false;	// ★4～6 の領地もカラーリ�
 				wait = true;
 
 				$.ajax({
-					url: "http://" + location.hostname + "/territory_proc.php",
+					url: location.origin + "/territory_proc.php",
 					type: 'GET',
 					datatype: 'html',
 					cache: false,
@@ -403,7 +426,7 @@ var OPT_SUPPORT_MIDDLE_RANGE_LAND = false;	// ★4～6 の領地もカラーリ�
 				var keyx = "x" + obj.x;
 				var keyy = "y" + obj.y;
 				$.ajax({
-					url: "http://" + location.hostname + '/land.php',
+					url: location.origin + '/land.php',
 					type: 'GET',
 					datatype: 'html',
 					cache: false,
@@ -479,8 +502,13 @@ var OPT_SUPPORT_MIDDLE_RANGE_LAND = false;	// ★4～6 の領地もカラーリ�
 		}
 
 		// 空き地以外は無視
-		if (!obj.blank) {
+		if (!obj.blank && !obj.npc) {
 			return;
+		}
+
+		var border = "none";
+		if (OPT_COLORING_VIRGIN && obj.virgin) {
+			border = "1px solid green";
 		}
 
 		const cWood = "springgreen";
@@ -518,6 +546,7 @@ var OPT_SUPPORT_MIDDLE_RANGE_LAND = false;	// ★4～6 の領地もカラーリ�
 			}
 		} else if (obj.stars < 7) {
 			// ★7未満は無視
+			at.css({"border": border});
 			return;
 		}
 
@@ -560,7 +589,9 @@ var OPT_SUPPORT_MIDDLE_RANGE_LAND = false;	// ★4～6 の領地もカラーリ�
 		}
 		if (col.length) {
 			// 数字をカラーリングし、黒い縁取りをつけて見やすくする
-			at.css({"color": col, "text-shadow": "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000"});
+			at.css({"color": col, "text-shadow": "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000", "border": border});
+		} else {
+			at.css({"border": border});
 		}
 	}
 
