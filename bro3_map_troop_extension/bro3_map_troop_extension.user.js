@@ -12,7 +12,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.4
+// @version 	1.5
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -44,6 +44,7 @@ jQuery.noConflict();
 // 2017.08.14	1.2	12期～のカラーリング追加、出兵後の兵士管理画面が「全て表示」に自動的に切り替わるようにした
 // 2018.07.02	1.3	10期～のカラーリング追加、★4～6 の領地もカラーリングするかのオプション(デフォルトfalse)を追加
 // 2020.06.07	1.4	https対応、NPC領地もカラーリング対象、未取得領地をカラーリングするかのオプション(デフォルトfalse)を追加
+// 2020.07.12	1.5	未攻略のNPC拠点名が取得できなくなっていた不具合を修正
 
 //==========[オプション]==========
 var OPT_COLORING_RESOURCES = true;		// 資源地カラーリングを行うか。falseだと何も行いません。
@@ -199,7 +200,7 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 			// 資源地カラーリング適用
 			draw_resources(obj, $(element));
 		}
-		if (obj.areaname.match(/^[南北][東西]砦\d{1,3}$/) && mtext.match(/戦力.*>([★]+)</)) {
+		if (mtext.match(/戦力<.*npc-red-star.*>([★]+)</)) {
 			obj.npcname = obj.areaname + "(" + x + "," + y + ") ★" + RegExp.$1.length;
 		}
 
@@ -360,9 +361,11 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 				message += "\n★" + obj.stars + "鉄" + mxy;
 			} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food > 0) {
 				message += "\n★" + obj.stars + "糧" + mxy;
-			} else if (obj.wood === 4 && obj.stone === 4 && obj.iron === 4 && obj.food === 4) {
+			} else if (obj.wood === 4 && obj.stone === 4 && obj.iron === 4 && obj.food >= 4) {
 				message += "\n★" + obj.stars + "資" + mxy;
 			} else if (obj.wood === 1 && obj.stone === 1 && obj.iron === 1 && obj.food === 2) {
+				message += "\n★" + obj.stars + "拠" + mxy;
+			} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food === 0) {
 				message += "\n★" + obj.stars + "拠" + mxy;
 			}
 		} else {
