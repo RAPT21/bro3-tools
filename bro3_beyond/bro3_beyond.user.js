@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.7
+// @version		1.09.8
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -77,7 +77,12 @@
 //					今のところ、取得済のはずの座標が反映されないバグが残っている。
 // 1.09.6	2020/01/30	RAPT. 1/30の運営仕様変更に伴い、資源タイマーを表示できなくなっていた問題を修正
 // 1.09.7	2020/02/21	RAPT. 資源・NPC探索機能について、2401x2401 MAP 対応
+// 1.09.8	2020/10/23	RAPT. 「ランキングへのリンクを追加」で同盟、DPのリンクが利いていなかった問題を修正
+//							「ランキングへのリンクを追加」で寄付、破壊、破砕スコア、南蛮撃退も対象とするように
+//							メニューの「統計＞全体」を、「統計＞状況」へ変更（運営の項目名に合わせるよう修正）
+//							メニューへ「統計＞資源」を追加
 
+//	トレード画面の修行効率表示にSLを追加
 //
 // TODO:
 // 内政ボタンで、拠点を変更せずにセットする新方式対応
@@ -704,15 +709,19 @@ function profileControl() {
 			['同盟', '/alliance/list.php'],
 			['総合', '/user/ranking.php'],
 			['総人口', '/user/ranking.php?m=population'],
+			['寄付', '/user/ranking.php?m=contribution'],
 			['攻撃', '/user/ranking.php?m=attack'],
 			['防御', '/user/ranking.php?m=defense'],
+			['破壊', '/user/ranking.php?m=destroy'],
 			['撃破スコア', '/user/ranking.php?m=attack_score'],
 			['防衛スコア','/user/ranking.php?m=defense_score'],
+			['破砕スコア', '/user/ranking.php?m=destroy_score'],
+			['南蛮撃退', '/user/ranking.php?m=npc_assault'],
 			['DP', '/user/ranking.php?m=duel']
 		];
 
 		elem.each(function(i) {
-			if (i <= 3 || i >= 9) return;
+			if (i <= 2 || i >= 12) return;
 			var items = q$(this).children("td");
 			items.each(function() {
 				var text = q$(this).html().trim();
@@ -4004,7 +4013,7 @@ function execCommonPart() {
 			],
 			// 統計
 			[
-				['全体', BASE_URL + '/conditions/top.php',
+				['状況', BASE_URL + '/conditions/top.php',
 					[
 						['自城・拠点表示', BASE_URL + '/conditions/top.php#mode-my'],
 						['NPC砦・城表示', BASE_URL + '/conditions/top.php#mode-npc'],
@@ -4036,6 +4045,7 @@ function execCommonPart() {
 						['週間', BASE_URL + '/user/weekly_ranking.php'],
 					],
 				],
+				['資源', BASE_URL + '/material/auto_capture_material/result.php'],
 			],
 			// 報告書
 			[
@@ -4536,6 +4546,7 @@ function execTradePart() {
 		q$("#filtering input[class='all_rarity_display']").after(
 			"<span>" +
 				"<input type='button' id='change_rarity_all' value='全て' style='" + style + "'></input>" +
+//				"<input type='button' id='change_rarity_sl' value='SLのみ' style='" + style + "'></input>" +	// SLカードが出品可能になったら対応
 				"<input type='button' id='change_rarity_l' value='Lのみ' style='" + style + "'></input>" +
 				"<input type='button' id='change_rarity_ur' value='URのみ' style='" + style + "'></input>" +
 				"<input type='button' id='change_rarity_sr' value='SRのみ' style='" + style + "'></input>" +
@@ -4594,7 +4605,7 @@ function execTradePart() {
 		}
 		q$("#effect-rarity").append("<span>｜</span>");
 
-		label = ['L', 'UR', 'SR', 'R', 'UC', 'C'];
+		label = ['SL', 'L', 'UR', 'SR', 'R', 'UC', 'C'];
 		for (var i = 0; i < label.length; i++) {
 			q$("#effect-rarity").append(
 				"<input type='radio' id='e-rarity" + i + "' name='e-rarity' value='" + i + "' class='m4l'>" +
@@ -4645,7 +4656,7 @@ function execTradePart() {
 					}
 
 					// 修行効率表示
-					var rarebase = {l: [45000, 50, 0], ur: [15000, 40, 1], sr: [6000, 30, 2], r: [1000, 20, 3], uc: [25, 10, 4], c: [10, 5, 5]};
+					var rarebase = {sl: [95000, 55, 0], l: [45000, 50, 1], ur: [15000, 40, 2], sr: [6000, 30, 3], r: [1000, 20, 4], uc: [25, 10, 5], c: [10, 5, 6]};
 					var skillsbase = [0, 0, 4, 10, 12];
 					var grouplist = {gi: 0, go: 1, shoku: 2, hoka: 3, ha: 4};
 					var tradelist = q$("table[class='tradeTables'] tbody tr:not(tr[class='tradeTop'])");
