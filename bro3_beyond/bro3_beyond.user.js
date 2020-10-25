@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.8
+// @version		1.09.9
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -81,6 +81,7 @@
 //							「ランキングへのリンクを追加」で寄付、破壊、破砕スコア、南蛮撃退も対象とするように
 //							メニューの「統計＞全体」を、「統計＞状況」へ変更（運営の項目名に合わせるよう修正）
 //							メニューへ「統計＞資源」を追加
+// 1.09.9	2020/10/26	RAPT. メニューへ「デッキ＞デッキ一括UP設定」を追加
 
 //	トレード画面の修行効率表示にSLを追加
 //
@@ -4005,6 +4006,7 @@ function execCommonPart() {
 				['トレード獲得履歴', BASE_URL + '/card/trade_history.php?mode=buy'],
 				['トレード放出履歴', BASE_URL + '/card/trade_history.php?mode=sell'],
 				['自動鹵獲出兵設定', BASE_URL + '/auto_capture_material/setting.php'],
+				['デッキ一括UP設定', BASE_URL + '/card/deck_priority_index.php'],
 			],
 			// アイテム
 			[
