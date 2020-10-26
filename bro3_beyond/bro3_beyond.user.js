@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.9
+// @version		1.09.10
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -82,6 +82,9 @@
 //							メニューの「統計＞全体」を、「統計＞状況」へ変更（運営の項目名に合わせるよう修正）
 //							メニューへ「統計＞資源」を追加
 // 1.09.9	2020/10/26	RAPT. メニューへ「デッキ＞デッキ一括UP設定」を追加
+// 1.09.10	2020/10/27	RAPT. 「ランキングへのリンクを追加」で君主官位も対象とするように
+//							「デッキ：現在の所持枚数をファイルの上部へ移動する」オプションを追加
+//							これを有効にすることで、一括ラベルセットボタンも元の位置に表示されます。
 
 //	トレード画面の修行効率表示にSLを追加
 //
@@ -239,6 +242,7 @@ var DECK_18 = 'de18';		// デッキ：一括デッキセット機能を追加
 var DECK_19 = 'de19';		// デッキ：内政官解除後にデッキを更新する
 var DECK_1A = 'de1a';		// デッキ：内政スキル使用後画面を強制更新する
 var DECK_1B = 'de1b';		// デッキ：一括ラベルセット機能を追加
+var DECK_1C = 'de1c';		// デッキ：現在の所持枚数をファイルの上部へ移動する
 var DECK_21 = 'de21';		// 領地一覧：領地一覧のソートに取得順を追加
 var DECK_22 = 'de22';		// 領地一覧：「新領地」で始まる領地を全て破棄
 var DECK_31 = 'de31';		// 修行合成でレベルが上がった時に、レベルアップボタンを追加
@@ -718,11 +722,12 @@ function profileControl() {
 			['防衛スコア','/user/ranking.php?m=defense_score'],
 			['破砕スコア', '/user/ranking.php?m=destroy_score'],
 			['南蛮撃退', '/user/ranking.php?m=npc_assault'],
-			['DP', '/user/ranking.php?m=duel']
+			['DP', '/user/ranking.php?m=duel'],
+			['君主官位', '/user/deck_power_grade']
 		];
 
 		elem.each(function(i) {
-			if (i <= 2 || i >= 12) return;
+			if (i <= 2 || i >= 13) return;
 			var items = q$(this).children("td");
 			items.each(function() {
 				var text = q$(this).html().trim();
@@ -3637,7 +3642,7 @@ function deckControl() {
 
 	// 一括ラベルセット
 	if (g_beyond_options[DECK_1B] == true) {
-		multipleLabelSet();
+		multipleLabelSet(g_beyond_options[DECK_1C]);
 	}
 
 	if (g_beyond_options[DECK_11] == true) {
@@ -5972,6 +5977,7 @@ function draw_setting_window(append_target) {
 						<div><input type='checkbox' id='" + DECK_17 + "'><label for='" + DECK_17 + "'>デッキ：内政官以外を1クリックで全てファイルに下げるボタンを追加</label></input></div> \
 						<div><input type='checkbox' id='" + DECK_18 + "'><label for='" + DECK_18 + "'>デッキ：一括デッキセット機能を追加</label></input></div> \
 						<div><input type='checkbox' id='" + DECK_1B + "'><label for='" + DECK_1B + "'>デッキ：一括ラベルセット機能を追加</label></input></div> \
+						<div><input type='checkbox' id='" + DECK_1C + "'><label for='" + DECK_1C + "'>デッキ：現在の所持枚数をファイルの上部へ移動する</label></input></div> \
 						<div class='red'>以下の機能はカード表示モード（小）でのみ有効です</div> \
 						<div><input type='checkbox' id='" + DECK_11 + "'><label for='" + DECK_11 + "'>ファイル内スキル検索機能を追加</label></input></div> \
 						<div><input type='checkbox' id='" + DECK_12 + "'><label for='" + DECK_12 + "'>スキル補正効果表示機能を追加</label></input></div> \
@@ -6706,7 +6712,7 @@ function addAllDropDeckButton() {
 //------------------------//
 // デッキ：一括ラベル設定 //
 //------------------------//
-function multipleLabelSet() {
+function multipleLabelSet(is_move_top_card_count) {
 	// 簡易ラベルセット用選択肢
 	var label_texts = [];
 	q$("#tab-labels li a").each(
@@ -6739,6 +6745,16 @@ function multipleLabelSet() {
 			"</div>" +
 		"</fieldset>"
 	);
+
+	// デッキ：現在の所持枚数をファイルの上部へ移動する
+	if (is_move_top_card_count) {
+		// 2020.10.22のメンテで一括デッキセット実装で枠がファイルの下部へ変更されてしまった
+		// それに伴い、一括ラベルセットボタンも下部に移動してしまう対策
+		var group = q$("#rotate div.deck_priority_group_button_container");
+		if (group.length > 0) {
+			q$("#rotate div[class='number card_count clearfix']").eq(0).insertAfter(group.eq(0));
+		}
+	}
 
 	// 一括デッキセットボタン
 	q$("#multi_label_set").on('click',
@@ -9583,6 +9599,7 @@ function getDefaultOptions() {
 	settings[DECK_19] = false;		// デッキ：内政官解除後にデッキを更新する
 	settings[DECK_1A] = true;		// デッキ：内政スキル使用後画面を強制更新する
 	settings[DECK_1B] = true;		// デッキ：一括ラベルセット機能を追加
+	settings[DECK_1C] = true;		// デッキ：現在の所持枚数をファイルの上部へ移動する
 	settings[DECK_21] = true;		// 領地一覧：領地一覧の並び方を初期状態に戻す
 	settings[DECK_22] = true;		// 領地一覧：「新領地」で始まる領地を全て破棄
 	settings[DECK_31] = true;		// 修行合成でレベルが上がった時に、レベルアップボタンを追加
