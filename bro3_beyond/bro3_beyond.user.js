@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.10
+// @version		1.09.11
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -78,13 +78,15 @@
 // 1.09.6	2020/01/30	RAPT. 1/30の運営仕様変更に伴い、資源タイマーを表示できなくなっていた問題を修正
 // 1.09.7	2020/02/21	RAPT. 資源・NPC探索機能について、2401x2401 MAP 対応
 // 1.09.8	2020/10/23	RAPT. 「ランキングへのリンクを追加」で同盟、DPのリンクが利いていなかった問題を修正
-//							「ランキングへのリンクを追加」で寄付、破壊、破砕スコア、南蛮撃退も対象とするように
-//							メニューの「統計＞全体」を、「統計＞状況」へ変更（運営の項目名に合わせるよう修正）
-//							メニューへ「統計＞資源」を追加
+//						「ランキングへのリンクを追加」で寄付、破壊、破砕スコア、南蛮撃退も対象とするように
+//						メニューの「統計＞全体」を、「統計＞状況」へ変更（運営の項目名に合わせるよう修正）
+//						メニューへ「統計＞資源」を追加
 // 1.09.9	2020/10/26	RAPT. メニューへ「デッキ＞デッキ一括UP設定」を追加
 // 1.09.10	2020/10/27	RAPT. 「ランキングへのリンクを追加」で君主官位も対象とするように
-//							「デッキ：現在の所持枚数をファイルの上部へ移動する」オプションを追加
-//							これを有効にすることで、一括ラベルセットボタンも元の位置に表示されます。
+//						「デッキ：現在の所持枚数をファイルの上部へ移動する」オプションを追加
+//						これを有効にすることで、一括ラベルセットボタンも元の位置に表示されます。
+// 1.09.11	2020/10/29	RAPT. 「報告書＞討伐・攻撃ログのTSV出力機能の追加」のチェックを外してもボタンが消えないバグを修正
+//						「報告書＞自動鹵獲結果のリンクを消す」オプションを追加（統計＞資源と同じため）
 
 //	トレード画面の修行効率表示にSLを追加
 //
@@ -257,6 +259,7 @@ var DECK_61 = 'de61';		// スキル3つ以上、レベル50、スコア100万の
 var REPORT_01 = 're01';		// 自動整形機能の追加
 var REPORT_02 = 're02';		// 損害率表示列の追加
 var REPORT_11 = 're11';		// 討伐・攻撃ログのTSV出力機能の追加
+var REPORT_21 = 're21';		// 自動鹵獲結果のリンクを消す
 
 // 書簡タブ
 var NOTE_01 = 'no01';		// 開封補助機能の追加
@@ -2890,8 +2893,13 @@ function reportTabControl() {
 
 	if (location.pathname === "/report/list.php") {
 		// 討伐ログの収集
-		if (1) {
+		if (g_beyond_options[REPORT_11]) {
 			getExpeditionTextReport();
+		}
+
+		// 自動鹵獲結果のリンクを消す
+		if (g_beyond_options[REPORT_21]) {
+			q$("a[class^='button_capture_material']").eq(0).hide();
 		}
 	}
 }
@@ -6016,6 +6024,7 @@ function draw_setting_window(append_target) {
 						<div><input type='checkbox' id='" + REPORT_02 + "'><label for='" + REPORT_02 + "'>損害率表示列を追加</label></input></div> \
 					</div> \
 					<div><input type='checkbox' id='" + REPORT_11 + "'><label for='" + REPORT_11 + "'>討伐・攻撃ログのTSV出力機能の追加</label></input></div> \
+					<div><input type='checkbox' id='" + REPORT_21 + "'><label for='" + REPORT_21 + "'>自動鹵獲結果のリンクを消す</label></input></div> \
 					<br> \
 				</div> \
 				<div id='tab-note'> \
@@ -9614,6 +9623,7 @@ function getDefaultOptions() {
 	settings[REPORT_01] = true;		// 自動整形機能の追加
 	settings[REPORT_02] = true;		// 損害率表示列の追加
 	settings[REPORT_11] = true;		// 討伐・攻撃ログのTSV出力機能の追加
+	settings[REPORT_21] = false;	// 自動鹵獲結果のリンクを消す
 
 	// 書簡
 	settings[NOTE_01] = true;		// 開封補助機能の追加
