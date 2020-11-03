@@ -8,9 +8,9 @@
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @author		RAPT
-// @version 	2019.04.10
+// @version 	2020.11.03
 // ==/UserScript==
-var VERSION = "2019.04.10"; 	// バージョン情報
+var VERSION = "2020.11.03"; 	// バージョン情報
 
 
 // 2016.07.25 初版作成
@@ -18,6 +18,7 @@ var VERSION = "2019.04.10"; 	// バージョン情報
 // 2017.03.18 同盟盟主座標,同盟貢献ポイントの検出対応、同盟ポイント,同盟貢献ポイントのクエクリ情報対応
 // 2017.06.05 個人ランク、週間ランク、同盟ランクについて、TEXTBOX 自動入力対応
 // 2019.04.10 同盟ランクが取得できなくなっていたのを対応、41鯖で同盟ポイントが取得できなくなっていたのを対応
+// 2020.11.03 他の君主を探そう、天下統一への第一歩のクエクリ対応
 //			  Chrome のときクエストタブ内の操作がおかしくなる対策(j$→q$)
 
 
@@ -76,6 +77,8 @@ var ID_ALLY_RECRUIT	= 249; // 同盟募集機能を使ってみよう
 var ID_TOTAL_RANK	= 123; // 統計の総合ランキングの順位を確認する
 var ID_ALLY_RANK	= 106; // 現在の同盟ランクを報告する
 var ID_WEEKLY_RANK	= 166; // 週間ランキングを確認しよう
+var ID_USER_CASTLE	= 402; // 他の君主を探そう
+var ID_NPC_CASTLE	= 111; // 天下統一への第一歩
 
 // 同盟
 var ID_ALLY_CONTR_1	= 210; // 同盟貢献ポイントを1000以上にする
@@ -287,7 +290,18 @@ function perform() {
 		});
 		return true;
 	}
+	if (disp_id === ID_NPC_CASTLE) {
+		q$("input[name='x']").attr("value", "0");
+		q$("input[name='y']").attr("value", "0");
+		return true;
+	}
 
+	//if (disp_id === ID_USER_CASTLE) {
+	if (isNaN(disp_id) && isExist(q$("input[name='tuto_x']")) && isExist(q$("input[name='tuto_y']"))) {
+		q$("input[name='tuto_x']").attr("value", "10000");
+		q$("input[name='tuto_y']").attr("value", "10000");
+		return true;
+	}
 
 	return false;
 }
@@ -302,3 +316,14 @@ function perform() {
 		});
 	});
 })();
+
+//========================================
+//	jQuery を使用しない共通関数定義
+//========================================
+
+function isNullOrEmpty(obj) {
+	return obj === null || typeof obj === 'undefined' || obj.length === 0;
+}
+function isExist(obj) {
+	return !isNullOrEmpty(obj) && obj.length > 0;
+}
