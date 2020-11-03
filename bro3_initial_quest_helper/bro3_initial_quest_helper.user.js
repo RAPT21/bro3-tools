@@ -18,10 +18,11 @@ var VERSION = "2019.04.10"; 	// バージョン情報
 // 2017.03.18 同盟盟主座標,同盟貢献ポイントの検出対応、同盟ポイント,同盟貢献ポイントのクエクリ情報対応
 // 2017.06.05 個人ランク、週間ランク、同盟ランクについて、TEXTBOX 自動入力対応
 // 2019.04.10 同盟ランクが取得できなくなっていたのを対応、41鯖で同盟ポイントが取得できなくなっていたのを対応
+//			  Chrome のときクエストタブ内の操作がおかしくなる対策(j$→q$)
 
 
 jQuery.noConflict();
-j$ = jQuery;
+q$ = jQuery; // Tampermonkey の場合、j$ だと競合してしまうので避ける
 
 var HOST		= location.hostname;
 var SERVER		= HOST.split('.')[0]+'> ';
@@ -37,7 +38,7 @@ function xpath(query,targetDoc) {
 
 // ラッパー
 function httpGET(url, callback) {
-//	j$.get(url, callback);
+//	q$.get(url, callback);
 	GM_xmlhttpRequest({
 		method:"GET",
 		url:url,
@@ -51,7 +52,7 @@ function httpGET(url, callback) {
 	});
 }
 function httpPOST(url, params, callback) {
-	j$.post(url, params, callback);
+	q$.post(url, params, callback);
 }
 
 
@@ -169,7 +170,7 @@ function self_rank(handler){
 	httpGET('http://'+HOST+'/user/ranking.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
-		var rankNum = j$('.mydata>.rankNum', htmldoc).text().substr(1).trim();
+		var rankNum = q$('.mydata>.rankNum', htmldoc).text().substr(1).trim();
 		appendLog("個人ランク", rankNum);
 		handler(rankNum);
 	});
@@ -180,7 +181,7 @@ function ally_rank(handler){
 	httpGET('http://'+HOST+'/alliance/list.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
-		var td = j$('tr.mydata td', htmldoc);
+		var td = q$('tr.mydata td', htmldoc);
 		var leaderXY = td.eq(5).text().trim();
 		appendLog("同盟盟主座標", leaderXY);
 		var rankNum = td.eq(0).text().replace('→', '').replace(/,/g, '').trim();
@@ -191,7 +192,7 @@ function ally_rank(handler){
 		appendLog("同盟ポイント", allyPoint);
 		debug_ally_point(allyPoint);
 
-		var allyUrl = j$("a", td.eq(1)).attr("href");
+		var allyUrl = q$("a", td.eq(1)).attr("href");
 		if (allyUrl.indexOf("info.php?id=") === 0) {
 			allyUrl = 'http://'+HOST+'/alliance/' + allyUrl;
 		}
@@ -210,8 +211,8 @@ function weekly_rank(handler){
 	httpGET('http://'+HOST+'/user/weekly_ranking.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
-		var base = j$('.tables[summary="攻撃ランキング"]', htmldoc);
-		var rankNum = j$('.rank-self>td:first', base).text().replace('→', '').trim();
+		var base = q$('.tables[summary="攻撃ランキング"]', htmldoc);
+		var rankNum = q$('.rank-self>td:first', base).text().replace('→', '').trim();
 		appendLog("週間ランキング", rankNum);
 		handler(rankNum);
 	});
@@ -222,7 +223,7 @@ function profile_jinko(fn){
 	httpGET('http://'+HOST+'/user/',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
-		var text = j$('table.commonTables', htmldoc).text().replace(/\s+/g, '');
+		var text = q$('table.commonTables', htmldoc).text().replace(/\s+/g, '');
 		var name = text.match(/お気に入り武将カード君主(.+)個人掲示板/)[1];
 		var sumJinko = text.match(/総人口(\d+)/)[1].replace(/,/g, '');
 		var attScore = text.match(/撃破スコア(\d+)/)[1].replace(/,/g, '');
@@ -241,9 +242,9 @@ function ally_info(url, name){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 
-		var tr = j$("table[class='tables'] tbody tr", htmldoc);
+		var tr = q$("table[class='tables'] tbody tr", htmldoc);
 		for (var i = 0; i < tr.length; ++i) {
-			var td = j$("td", tr.eq(i));
+			var td = q$("td", tr.eq(i));
 			if (td.length > 0) {
 				var aName = td.eq(1).text().replace(/\s+/g, '');
 				var aScore = td.eq(2).text().replace(/\s+/g, '');
@@ -261,28 +262,28 @@ function perform() {
 	if (location.pathname !== "/quest/index.php") {
 		return false;
 	}
-	var forms = j$("div.sysMes form");
+	var forms = q$("div.sysMes form");
 	if (!forms || forms.length === 0) {
 		return false;
 	}
 
 	var f = forms[0];
-	var disp_id = parseInt(j$("input[name='disp_id']", f).attr("value"), 10);
+	var disp_id = parseInt(q$("input[name='disp_id']", f).attr("value"), 10);
 	if (disp_id === ID_TOTAL_RANK) {
 		self_rank(function(value){
-			j$("input[name='tuto_p_ranking']", f).attr("value", value);
+			q$("input[name='tuto_p_ranking']", f).attr("value", value);
 		});
 		return true;
 	}
 	if (disp_id === ID_WEEKLY_RANK) {
 		weekly_rank(function(value){
-			j$("input[name='attack_rank']", f).attr("value", value);
+			q$("input[name='attack_rank']", f).attr("value", value);
 		});
 		return true;
 	}
 	if (disp_id === ID_ALLY_RANK) {
 		ally_rank(function(info){
-			j$("input[name='alliance_rank']", f).attr("value", info.rankNum);
+			q$("input[name='alliance_rank']", f).attr("value", info.rankNum);
 		});
 		return true;
 	}
