@@ -14,9 +14,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2020.04.25
+// @version 	2020.12.06
 // ==/UserScript==
-var VERSION = "2020.04.25"; 	// バージョン情報
+var VERSION = "2020.12.06"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -77,6 +77,9 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 //			  全ての報告書を既読にするオプションを追加
 //			  https/http のいずれでも動作するようにした（つもり）
 //			  URL 記述フォーマットを統一
+// 2020.05.20 運営書簡を既読にするオプションを追加
+// 2020.12.06 ログインボーナス書簡が廃止されたので、運営書簡を既読にするオプションを廃止
+//			  12/4 のメンテ以降、自動デュエルが動作しなくなっていた問題を修正（デュエルのURLが変更されていた）
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -238,7 +241,7 @@ function postDonate(callback) {
 
 // デュエル
 function duel(callback){
-	httpGET('/card/duel_set.php',function(y){
+	httpGET('/pvp_duel/duel.php',function(y){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
