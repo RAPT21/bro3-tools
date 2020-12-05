@@ -14,9 +14,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2020.05.20
+// @version 	2020.12.06
 // ==/UserScript==
-var VERSION = "2020.05.20"; 	// バージョン情報
+var VERSION = "2020.12.06"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -30,7 +30,6 @@ var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
 var OPT_AUTO_DUEL			= 0; // 自動デュエル
 var OPT_AUTO_JORYOKU		= 0; // 自動助力
 var OPT_AUTO_OPEN_ALL_REPORTS = 0; // 全ての報告書を既読にする
-var OPT_AUTO_OPEN_GAME_MAILS = 0; // 運営書簡を既読にする
 
 var OPT_TROOPS_CARD_ID		= 0;// 出兵武将カードID
 var OPT_TROOPS_X			= 0;// 出兵先座標x
@@ -79,6 +78,8 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 //			  https/http のいずれでも動作するようにした（つもり）
 //			  URL 記述フォーマットを統一
 // 2020.05.20 運営書簡を既読にするオプションを追加
+// 2020.12.06 ログインボーナス書簡が廃止されたので、運営書簡を既読にするオプションを廃止
+//			  12/4 のメンテ以降、自動デュエルが動作しなくなっていた問題を修正（デュエルのURLが変更されていた）
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -207,57 +208,8 @@ function moveFromInbox(reloadIfNeed){
 	});
 }
 
-// 運営書簡を既読にする
-function openGameMails(callback) {
-	var newMark = q$('#gNav li.gnavi06new');
-	if (newMark.length === 0) {
-		if (callback) {
-			callback();
-		}
-		return ;
-	}
-
-	httpGET('/message/inbox.php', function(x){
-		var htmldoc = document.createElement("html");
-			htmldoc.innerHTML = x;
-
-		var urls = [];
-		q$('#gray02Wrapper table.commonTables tr.unread', htmldoc).each(function(){
-			var url = q$('td:eq(1) a', this).attr('href');
-			var notice = q$('td:eq(2) .notice', this);
-			if (notice !== null && url !== null && url.length > 0) {
-				urls.push(`/message/${url}`);
-			}
-		});
-		sendUrls(urls, callback);
-	});
-}
-function sendUrls(urls, callback, index = 0) {
-	if (urls.length <= index) {
-		if (callback) {
-			callback();
-		}
-		return;
-	}
-
-	var url = urls[index];
-	httpGET(url, function(x){
-		setTimeout(function(){
-			sendUrls(urls, callback, 1 + index);
-		}, 1000);
-	});
-}
-
 // 全ての報告書を既読にする
 function openAllReports(callback) {
-	var newMark = q$('#gNav li.gnavi05new');
-	if (newMark.length === 0) {
-		if (callback) {
-			callback();
-		}
-		return;
-	}
-
 	var c = {
 		'p': 1,
 		'all_open': '全てを既読にする'
@@ -289,7 +241,7 @@ function postDonate(callback) {
 
 // デュエル
 function duel(callback){
-	httpGET('/card/duel_set.php',function(y){
+	httpGET('/pvp_duel/duel.php',function(y){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
@@ -633,11 +585,6 @@ function callSendTroop()
 
 				// ツールに連動しない報酬受領
 				receiveRewards();
-
-				// 運営書簡を既読にする
-				if (OPT_AUTO_OPEN_GAME_MAILS) {
-					openGameMails();
-				}
 			});
 		}, OPT_QUEST_TIMEINTERVAL);
 	}
@@ -860,7 +807,6 @@ function openSettingBox() {
 		ccreateCheckBox(td200, "OPT_AUTO_DUEL"			, OPT_AUTO_DUEL			, " [02:00:00 - 05:59:59] 以外に自動デュエル", "[00:00:00 - 01:59:59], [06:00:00 - 23:59:59] の時間帯のみ自動デュエルを行ないます。",0);
 		ccreateCheckBox(td200, "OPT_AUTO_JORYOKU"		, OPT_AUTO_JORYOKU		, " 自動助力", "同盟施設に祈祷所がある場合、自動で助力を行ないます。",0);
 		ccreateCheckBox(td200, "OPT_AUTO_OPEN_ALL_REPORTS", OPT_AUTO_OPEN_ALL_REPORTS, " 全ての報告書を既読にする", "報告書タブにあるボタンを自動で押します。",0);
-		ccreateCheckBox(td200, "OPT_AUTO_OPEN_GAME_MAILS", OPT_AUTO_OPEN_GAME_MAILS, " 運営書簡を既読にする", "書簡のうち、運営からの書簡を自動で開封します。",0);
 			ccreateText(td200, "dummy", "　", 0 );
 
 	Setting_Box.appendChild(tr100);
@@ -907,7 +853,6 @@ function saveSettingBox() {
 	strSave += cgetCheckBoxValue($("OPT_AUTO_DUEL"))		+ DELIMIT2; // [02:00:00 - 05:59:59] 以外に自動デュエル
 	strSave += cgetCheckBoxValue($("OPT_AUTO_JORYOKU"))		+ DELIMIT2; // 自動助力
 	strSave += cgetCheckBoxValue($("OPT_AUTO_OPEN_ALL_REPORTS"))+ DELIMIT2; // 全ての報告書を既読にする
-	strSave += cgetCheckBoxValue($("OPT_AUTO_OPEN_GAME_MAILS"))+ DELIMIT2; // 運営書簡を既読にする
 	strSave += DELIMIT1;
 	strSave += OPT_TROOPS_CARD_ID	+ DELIMIT2; // 出兵武将カードID
 	strSave += OPT_TROOPS_X			+ DELIMIT2; // 出兵先座標x
@@ -944,7 +889,6 @@ function loadSettingBox() {
 		OPT_AUTO_DUEL			= 1; // [02:00:00 - 05:59:59] 以外に自動デュエル
 		OPT_AUTO_JORYOKU		= 1; // 自動助力
 		OPT_AUTO_OPEN_ALL_REPORTS = 1; // 全ての報告書を既読にする
-		OPT_AUTO_OPEN_GAME_MAILS = 1; // 運営書簡を既読にする
 		OPT_TROOPS_CARD_ID		= 0; // 出兵武将カードID
 		OPT_TROOPS_X			= 0; // 出兵先座標x
 		OPT_TROOPS_Y			= 0; // 出兵先座標y
@@ -963,11 +907,6 @@ function loadSettingBox() {
 			OPT_AUTO_OPEN_ALL_REPORTS = forInt(Temp[8]); // 全ての報告書を既読にする
 		} else {
 			OPT_AUTO_OPEN_ALL_REPORTS = 1;
-		}
-		if (Temp.length > 9) {
-			OPT_AUTO_OPEN_GAME_MAILS = forInt(Temp[9]); // 運営書簡を既読にする
-		} else {
-			OPT_AUTO_OPEN_GAME_MAILS = 1;
 		}
 
 		if (Temp1.length >= 2) {
