@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.11
+// @version		1.09.12
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -87,6 +87,7 @@
 //						これを有効にすることで、一括ラベルセットボタンも元の位置に表示されます。
 // 1.09.11	2020/10/29	RAPT. 「報告書＞討伐・攻撃ログのTSV出力機能の追加」のチェックを外してもボタンが消えないバグを修正
 //						「報告書＞自動鹵獲結果のリンクを消す」オプションを追加（統計＞資源と同じため）
+// 1.09.12	2020/11/30	RAPT. メニューへ「都市＞プロフィール＞君主官位」、「都市＞洛陽への路」、「都市＞交換所」を追加
 
 //	トレード画面の修行効率表示にSLを追加
 //
@@ -3860,6 +3861,20 @@ function execCommonPart() {
 						['個人掲示板', BASE_URL + '/bbs/personal_topic_view.php'],
 						['獲得武勲', BASE_URL + '/user/decoration.php'],
 						['表示設定', BASE_URL + '/user/disp_config.php'],
+						['君主官位', BASE_URL + '/user/deck_power_grade'],
+					],
+				],
+				['洛陽への路', BASE_URL + '/reward/login_bonus',
+					[
+						['通算報酬確認', BASE_URL + '/reward/login_bonus/reward/total_login_bonus.php'],
+						['ルート報酬確認', BASE_URL + '/reward/login_bonus/reward/login_bonus.php'],
+						['通算受取履歴', BASE_URL + '/reward/login_bonus/history.php?mode=total'],
+						['ルート受取履歴', BASE_URL + '/reward/login_bonus/history.php?mode='],
+					],
+				],
+				['交換所', BASE_URL + '/item/point_exchange.php',
+					[
+						['KP交換所', BASE_URL + '/item/point_exchange.php?selected_shop_type=kp'],
 					],
 				],
 			],
