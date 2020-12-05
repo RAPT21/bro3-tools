@@ -12,7 +12,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.5
+// @version 	1.6
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -45,6 +45,7 @@ jQuery.noConflict();
 // 2018.07.02	1.3	10期～のカラーリング追加、★4～6 の領地もカラーリングするかのオプション(デフォルトfalse)を追加
 // 2020.06.07	1.4	https対応、NPC領地もカラーリング対象、未取得領地をカラーリングするかのオプション(デフォルトfalse)を追加
 // 2020.07.12	1.5	未攻略のNPC拠点名が取得できなくなっていた不具合を修正
+// 2020.11.06	1.6	左クリックで座標を連続コピーするモードを追加、UI 表示位置調整
 
 //==========[オプション]==========
 var OPT_COLORING_RESOURCES = true;		// 資源地カラーリングを行うか。falseだと何も行いません。
@@ -138,7 +139,11 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 		marginStyle = "margin-top:76px;";
 	} else {
 		parentElement = $("#enemyView2");
-		marginStyle = "margin-top:58px; margin-left:110px;";
+		if (isExist($("#toAutoSendTroop"))) {
+			marginStyle = "margin-top:58px; margin-left:190px;";
+		} else {
+			marginStyle = "margin-top:58px; margin-left:110px;";
+		}
 	}
 	parentElement.after(
 		"<div style='" + marginStyle + " width:45%;'>" +
@@ -147,11 +152,14 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 		"</div>"
 	);
 	$("#map51-navi").after(
+		"<div style='margin-top:10px;'>" +
 		"<div style='float:left; position:absolute; margin-left:418px; width:45%; color:blue; font-weight:bold;'>&nbsp;&nbsp;" +
 			"<label id='mode_troop'  style='display:none;'><input type='radio' name='leftclickmode' value='troop' checked='checked'>左クリックで出兵</input>&nbsp;</label>&nbsp;&nbsp;" +
-			"<label id='mode_rename' style='display:none;'><input type='radio' name='leftclickmode' value='rename'>左クリックで領地名編集</input>&nbsp;</label>&nbsp;&nbsp;" +
+			"<label id='mode_rename' style='display:none;'><input type='radio' name='leftclickmode' value='rename'>領地名編集</input>&nbsp;</label>&nbsp;&nbsp;" +
+			"<label id='mode_axis' style='display:none;'><input type='radio' name='leftclickmode' value='axis'>座標コピー</input>&nbsp;</label>&nbsp;&nbsp;" +
 		"</div>" +
-		"<div id='custom_description' style='display:none; color:blue; font-weight:bold; float:left; position:absolute; font-size:13px; left:18px; margin-top:20px; margin-left:420px;'>右クリックで領地破棄</div>"
+		"<div id='custom_description' style='display:none; color:blue; font-weight:bold; float:left; position:absolute; font-size:13px; left:18px; margin-top:18px; margin-left:420px;'>右クリックで領地破棄</div>" +
+		"</div>"
 	);
 
 	//--------------------
@@ -222,6 +230,7 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 			$("#exit_custom").css({'display':'none'});
 			$("#mode_troop").css({'display':'none'});
 			$("#mode_rename").css({'display':'none'});
+			$("#mode_axis").css({'display':'none'});
 			$("#map51-content").css({'border':''});
 			$("#custom_description").css({'display':'none'});
 
@@ -253,6 +262,7 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 			$("#exit_custom").css({'display':''});
 			$("#mode_troop").css({'display':''});
 			$("#mode_rename").css({'display':''});
+			$("#mode_axis").css({'display':''});
 			$("#custom_description").css({'display':''});
 			$("#map51-content").css({'border':'3px solid red'});
 			var map = $("#map51-content a[href*='/land.php']");
@@ -285,8 +295,10 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 						//---------------------------------
 						if ($('input[name=leftclickmode]:eq(0)').is(':checked')) {
 							actionTroop(at, mx, my);
-						} else {
+						} else if ($('input[name=leftclickmode]:eq(1)').is(':checked')) {
 							actionEditName(at, mx, my);
+						} else {
+							actionCopyAxis(at, mx, my);
 						}
 
 						return false;
@@ -382,6 +394,18 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 			// 領地名が変更されていた場合、変更処理を実行
 			editname(obj, newname);
 		}
+	}
+
+	//-------------------
+	// 座標コピーモード
+	//-------------------
+	var totalAxis = [];
+	function actionCopyAxis(at, mx, my) {
+		at.css({"background-color":"purple"});
+
+		var axis = `(${mx},${my})`;
+		totalAxis.push(axis);
+		copyClipboard(totalAxis.join('\n') + '\n');
 	}
 
 	//--------------------------------------------------
@@ -598,4 +622,29 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 		}
 	}
 
+	// クリップボードへコピー
+	function copyClipboard(text) {
+		// ダイレクトにコピーできないので textarea オブジェクト経由でコピー
+		$("#copy_area").remove();
+		$("body").after(
+			`<textarea id='copy_area'>${text}</textarea>`
+		);
+		$("#copy_area").select();
+		document.execCommand('copy');
+		$("#copy_area").remove();
+		console.log(LOGTIME()+`copyClipboard: '${text}'`);
+	}
+
 })(jQuery);
+
+
+//========================================
+//	jQuery を使用しない共通関数定義
+//========================================
+
+function isNullOrEmpty(obj) {
+	return obj === null || typeof obj === 'undefined' || obj.length === 0;
+}
+function isExist(obj) {
+	return !isNullOrEmpty(obj) && obj.length > 0;
+}
