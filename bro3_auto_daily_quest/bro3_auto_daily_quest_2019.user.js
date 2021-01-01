@@ -5,16 +5,18 @@
 // @include		http://*.3gokushi.jp/village.php*
 // @include		https://*.3gokushi.jp/village.php*
 // @include		http://*.3gokushi.jp/facility/castle_send_troop.php*
+// @include		https://*.3gokushi.jp/facility/castle_send_troop.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
-// @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
+// @exclude		https://*.3gokushi.jp/maintenance*
+// @require		http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2020.01.01
+// @version 	2021.01.01
 // ==/UserScript==
-const VERSION = "2020.01.01"; 	// バージョン情報
+var VERSION = "2021.01.01"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -71,12 +73,23 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2018.07.18 出兵種別が鹵獲以外では資源獲得できなくなる仕様変更に対応。距離20以上ないと鹵獲出兵できないようなので設定を確認してください。
 // 2019.01.02 2019年お正月クエクリ暫定対応。通常版と置き換えて使うことを想定
 // 2020.01.01 2020年お正月クエクリ暫定対応。通常版と置き換えて使うことを想定
+// 2020.04.25 デュエル更新時刻が鯖ごとに異なるため、デュエルクエの実行時間を 5:00→6:00 へ変更
+//			  デュエルクエ未達でも、アイテム受領や自動助力が動作するよう修正
+//			  全ての報告書を既読にするオプションを追加
+//			  https/http のいずれでも動作するようにした（つもり）
+//			  URL 記述フォーマットを統一
+// 2020.12.06 12/4 のメンテ以降、自動デュエルが動作しなくなっていた問題を修正（デュエルのURLが変更されていた）
+// 2021.01.01 2021年お正月クエクリ暫定対応。通常版と置き換えて使うことを想定
 
+jQuery.noConflict();
 q$ = jQuery;
 
 
 var HOST		= location.hostname;
 var SERVER		= HOST.split('.')[0]+'> ';
+var SERVER_SCHEME = location.protocol + "//";
+var SERVER_BASE = SERVER_SCHEME + location.hostname;
+
 var INTERVAL	= 500;
 var PGNAME		= "_bro3_auto_daily_quest_20150607_"; //グリモン領域への保存時のPGの名前
 
@@ -86,7 +99,7 @@ var ID_DONATE	= 254; // 同盟に合計500以上寄付する
 var ID_TROOPS	= 256; // 武将を出兵し、資源を獲得する
 var ID_DUEL		= 255; // ブショーデュエルで1回対戦する
 var ID_2019 = 2114;
-var DONATE_RICE = 2020;
+var DONATE_RICE = 2021;
 
 
 // ヘルパー関数
@@ -96,7 +109,7 @@ function xpath(query,targetDoc) {
 
 
 // ラッパー
-function httpGET(url, callback) {
+function httpGET_(url, callback) {
 //	q$.get(url, callback);
 	GM_xmlhttpRequest({
 		method:"GET",
@@ -110,8 +123,11 @@ function httpGET(url, callback) {
 		}
 	});
 }
+function httpGET(url, callback) {
+	httpGET_(SERVER_BASE+url, callback);
+}
 function httpPOST(url, params, callback) {
-	q$.post(url, params).done(callback).fail(function(){callback(null);});
+	q$.post(SERVER_BASE+url, params, callback);
 }
 function getVALUE(key, defaultValue) {
 	return GM_getValue(HOST+PGNAME+key , defaultValue );
@@ -153,7 +169,7 @@ function joryoku_once(x){
 			}
 			if (gaugeRest) {
 				// 助力実行
-				httpGET('http://'+HOST+'/alliance/village.php?assist=1',joryoku_once);
+				httpGET('/alliance/village.php?assist=1',joryoku_once);
 			} else {
 				console.log(SERVER+'助力MAXです。解放待ち...orz');
 			}
@@ -162,16 +178,16 @@ function joryoku_once(x){
 	}
 }
 function joryoku() {
-	httpGET('http://'+HOST+'/alliance/village.php',joryoku_once);
+	httpGET('/alliance/village.php',joryoku_once);
 }
 
 // 受信箱にあるアイテムを便利アイテムへ移す
 function moveFromInbox(reloadIfNeed){
-	httpGET('http://'+HOST+'/item/inbox.php#ptop',function(x){
+	httpGET('/item/inbox.php#ptop',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 
-		let item_id_list = "";
+		var item_id_list = "";
 		var count = 0;
 		var script_list = xpath('//div[@id="whiteWrapper"]/script',htmldoc);
 		if (script_list.snapshotLength) {
@@ -188,7 +204,7 @@ function moveFromInbox(reloadIfNeed){
 				'item_id_list': item_id_list,
 				'ssid': ssid.value
 			};
-			httpPOST('http://'+HOST+'/item/inbox.php',c,function(x){moveFromInbox(true);});
+			httpPOST('/item/inbox.php',c,function(x){moveFromInbox(true);});
 		} else if (reloadIfNeed) {
 			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 		}
@@ -205,7 +221,7 @@ function postDonate(callback) {
 		'rice': DONATE_RICE,
 		'contribution': 1
 	};
-	httpPOST('http://'+HOST+'/alliance/level.php',c,function(x){
+	httpPOST('/alliance/level.php',c,function(x){
 		if (callback) {
 			callback();
 		}
@@ -215,7 +231,7 @@ function postDonate(callback) {
 
 // デュエル
 function duel(callback){
-	httpGET("http://"+HOST+"/card/duel_set.php",function(y){
+	httpGET('/pvp_duel/duel.php',function(y){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
@@ -228,13 +244,13 @@ function duel(callback){
 			return;
 		}
 
-		httpGET("http://"+HOST+"/pvp_duel/select_enemy.php?deck=1",function(z){
+		httpGET('/pvp_duel/select_enemy.php?deck=1',function(z){
 			var htmldoc2 = document.createElement("html");
 				htmldoc2.innerHTML = z;
 
 			try {
 				var rival_list = xpath('//ul[@class="rival_list"]/li/a[@class="thickbox btn_battle"]', htmldoc2);
-				httpGET( rival_list.snapshotItem(0).href, function(x){
+				httpGET_( rival_list.snapshotItem(0).href, function(x){
 
 					x.match(/battleStart\((\d+),\s(\d+),\s(\d+)\)/);
 
@@ -245,7 +261,7 @@ function duel(callback){
 					};
 
 					// デュエルの開始
-					httpGET("http://" + HOST + "/pvp_duel/process_json.php?deck=1&euid=" + c.euid + "&edeck=0", c , function(x) {
+					httpGET(`/pvp_duel/process_json.php?deck=1&euid=${c.euid}&edeck=0`, c , function(x) {
 						//location.reload();
 						if (callback) {
 							callback(true);
@@ -262,13 +278,13 @@ function duel(callback){
 	});
 }
 
-// サーバー時刻が [00:00:00 - 01:59:59] or [05:00:00 - 23:59:59] であれば自動デュエルする
+// サーバー時刻が [00:00:00 - 01:59:59] or [06:00:00 - 23:59:59] であれば自動デュエルする
 function auto_duel()
 {
 	var server = xpath('//*[@id="server_time_disp"]', document).snapshotItem(0);
 	if (server && server.textContent) {
 		var hour = parseInt(server.textContent.substr(0,2), 10);
-		if (hour < 2 || hour >= 5) {
+		if (hour < 2 || hour >= 6) {
 			duel(function(worked){
 				if (worked) {
 					auto_duel();
@@ -280,7 +296,7 @@ function auto_duel()
 
 // ヨロズダスを引く
 function yorozudas(callback){
-	httpGET('http://'+HOST+'/reward_vendor/reward_vendor.php',function(x){
+	httpGET('/reward_vendor/reward_vendor.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 
@@ -290,7 +306,7 @@ function yorozudas(callback){
 				'send': 'send',
 				'got_type': 0
 			};
-			httpPOST('http://'+HOST+'/reward_vendor/reward_vendor.php',c,function(das){
+			httpPOST('/reward_vendor/reward_vendor.php',c,function(das){
 				var div = document.createElement('div');
 					div.innerHTML = das.responseText;
 				var reward_result = xpath('*//table[@class="getBushodas"]/tbody/tr/td/p/strong', div);
@@ -324,7 +340,7 @@ function receiveRewards()
 			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 		}
 	};
-	httpGET('http://'+HOST+'/quest/index.php?list=1&p=1&mode=0&selected_tab=7',function(y){
+	httpGET('/quest/index.php?list=1&p=1&mode=0&selected_tab=7',function(y){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
@@ -343,7 +359,7 @@ function receiveRewards()
 
 			if (receive_it){
 				console.log(SERVER+reward_content+' -> 受領');
-				httpGET('http://'+HOST+'/quest/index.php?c=1',function(x){
+				httpGET('/quest/index.php?c=1',function(x){
 					// 報酬がヨロズダス回数ならそのままヨロズダスを引く
 					if (reward_text == 'ヨロズダス回数') {
 						yorozudas(callback);
@@ -385,7 +401,7 @@ function checkAttentionQuest(htmldoc, callback){
 
 // 繰り返しクエストを受注
 function acceptAttentionQuestImpl(tabIndex, callback) {
-	httpGET('http://'+HOST+'/quest/index.php?list=1&p=1&mode=0&selected_tab='+tabIndex,function(y){
+	httpGET('/quest/index.php?list=1&p=1&mode=0&selected_tab='+tabIndex,function(y){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
@@ -395,7 +411,7 @@ function acceptAttentionQuestImpl(tabIndex, callback) {
 		var regexp = /takeQuest\((\d+),\s*\d+,\s*\d+\)/;
 
 		var quest_list = [];
-		for (let i = 0; i < attention_quest.snapshotLength; i++){
+		for (var i = 0; i < attention_quest.snapshotLength; i++){
 			if (xpath('td/a[contains(text(), "繰り返し")]', attention_quest.snapshotItem(i)).snapshotLength){
 				var quest_id = attention_quest.snapshotItem(i).innerHTML.match(regexp);
 				if (quest_id){
@@ -411,9 +427,9 @@ function acceptAttentionQuestImpl(tabIndex, callback) {
 
 		// クエスト受注
 		var count = 0;
-		for (let i = 0; i < quest_list.length; i++){
+		for (var i = 0; i < quest_list.length; i++){
 			var query = 'action=take_quest&id=' + quest_list[i];
-			httpGET('http://'+HOST+'/quest/index.php?'+query,function(x){
+			httpGET('/quest/index.php?'+query,function(x){
 				count++;
 
 				// すべての通信が完了した後の処理
@@ -436,7 +452,7 @@ function acceptAttentionQuest(callback) {
 // 自動出兵
 function sendTroop(vID, cardID, cardGage, targetX, targetY, callback) {
 	// 指定の武将を指定の拠点から指定座標に向ける
-	httpGET('http://'+HOST+'/village_change.php?village_id='+vID+'&from=menu&page=%2Fvillage.php#ptop',function(x){
+	httpGET(`/village_change.php?village_id=${vID}&from=menu&page=%2Fvillage.php#ptop`,function(x){
 		var c = {
 			'village_x_value': targetX, // 出兵先座標x
 			'village_y_value': targetY, // 出兵先座標y
@@ -449,7 +465,7 @@ function sendTroop(vID, cardID, cardGage, targetX, targetY, callback) {
 		};
 
 		console.log(SERVER+"拠点 "+vID+" から ("+targetX+","+targetY+") へ "+cardID+" [討伐:"+cardGage+"] で出兵します。");
-		httpPOST('http://'+HOST+'/facility/castle_send_troop.php',c,function(x){
+		httpPOST('/facility/castle_send_troop.php',c,function(x){
 			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 		});
 	});
@@ -468,7 +484,7 @@ function callSendTroop()
 
 	// 討伐ゲージを取得
 	var cardGage = 0;
-	httpGET('http://'+HOST+'/card/deck.php',function(x){
+	httpGET('/card/deck.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 
@@ -559,7 +575,7 @@ function callSendTroop()
 					joryoku();
 				}
 
-				// サーバー時刻が [00:00:00 - 01:59:59] or [05:00:00 - 23:59:59] であれば自動デュエルする
+				// サーバー時刻が [00:00:00 - 01:59:59] or [06:00:00 - 23:59:59] であれば自動デュエルする
 				if (OPT_AUTO_DUEL) {
 					auto_duel();
 				}
@@ -785,7 +801,7 @@ function openSettingBox() {
 		ccreateCheckBox(td200, "OPT_RECEIVE_RESOURCES"	, OPT_RECEIVE_RESOURCES	, " クエスト報酬が資源でも自動で受け取る", "クエスト報酬が資源だったときも自動で受け取ります。",0);
 		ccreateCheckBox(td200, "OPT_MOVE_FROM_INBOX"	, OPT_MOVE_FROM_INBOX	, " アイテム受信箱から便利アイテムへ移動", "受信箱内のアイテムを自動で便利アイテムへ移動します。",0);
 			ccreateText(td200, "dummy", "　", 0 );
-		ccreateCheckBox(td200, "OPT_AUTO_DUEL"			, OPT_AUTO_DUEL			, " [02:00:00 - 04:59:59] 以外に自動デュエル", "[00:00:00 - 01:59:59], [05:00:00 - 23:59:59] の時間帯のみ自動デュエルを行ないます。",0);
+		ccreateCheckBox(td200, "OPT_AUTO_DUEL"			, OPT_AUTO_DUEL			, " [02:00:00 - 05:59:59] 以外に自動デュエル", "[00:00:00 - 01:59:59], [06:00:00 - 23:59:59] の時間帯のみ自動デュエルを行ないます。",0);
 		ccreateCheckBox(td200, "OPT_AUTO_JORYOKU"		, OPT_AUTO_JORYOKU		, " 自動助力", "同盟施設に祈祷所がある場合、自動で助力を行ないます。",0);
 			ccreateText(td200, "dummy", "　", 0 );
 
@@ -830,7 +846,7 @@ function saveSettingBox() {
 	strSave += cgetCheckBoxValue($("OPT_AUTO_YOROZUDAS"))	+ DELIMIT2; // 自動でヨロズダスをひく
 	strSave += cgetCheckBoxValue($("OPT_RECEIVE_RESOURCES"))+ DELIMIT2; // クエスト報酬が資源でも自動で受け取る
 	strSave += cgetCheckBoxValue($("OPT_MOVE_FROM_INBOX"))	+ DELIMIT2; // アイテム受信箱から便利アイテムへ移動
-	strSave += cgetCheckBoxValue($("OPT_AUTO_DUEL"))		+ DELIMIT2; // [02:00:00 - 04:59:59] 以外に自動デュエル
+	strSave += cgetCheckBoxValue($("OPT_AUTO_DUEL"))		+ DELIMIT2; // [02:00:00 - 05:59:59] 以外に自動デュエル
 	strSave += cgetCheckBoxValue($("OPT_AUTO_JORYOKU"))		+ DELIMIT2; // 自動助力
 	strSave += DELIMIT1;
 	strSave += OPT_TROOPS_CARD_ID	+ DELIMIT2; // 出兵武将カードID
@@ -865,7 +881,7 @@ function loadSettingBox() {
 		OPT_AUTO_YOROZUDAS		= 1; // 自動でヨロズダスをひく
 		OPT_RECEIVE_RESOURCES	= 1; // クエスト報酬が資源でも自動で受け取る
 		OPT_MOVE_FROM_INBOX		= 1; // アイテム受信箱から便利アイテムへ移動
-		OPT_AUTO_DUEL			= 1; // [02:00:00 - 04:59:59] 以外に自動デュエル
+		OPT_AUTO_DUEL			= 1; // [02:00:00 - 05:59:59] 以外に自動デュエル
 		OPT_AUTO_JORYOKU		= 1; // 自動助力
 		OPT_TROOPS_CARD_ID		= 0; // 出兵武将カードID
 		OPT_TROOPS_X			= 0; // 出兵先座標x
@@ -879,7 +895,7 @@ function loadSettingBox() {
 		OPT_AUTO_YOROZUDAS		= forInt(Temp[3]); // 自動でヨロズダスをひく
 		OPT_RECEIVE_RESOURCES	= forInt(Temp[4]); // クエスト報酬が資源でも自動で受け取る
 		OPT_MOVE_FROM_INBOX		= forInt(Temp[5]); // アイテム受信箱から便利アイテムへ移動
-		OPT_AUTO_DUEL			= forInt(Temp[6]); // [02:00:00 - 04:59:59] 以外に自動デュエル
+		OPT_AUTO_DUEL			= forInt(Temp[6]); // [02:00:00 - 05:59:59] 以外に自動デュエル
 		OPT_AUTO_JORYOKU		= forInt(Temp[7]); // 自動助力
 
 		if (Temp1.length >= 2) {
