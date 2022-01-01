@@ -5,7 +5,7 @@
 | - | - |
 | [bro3_Auto_Bilder](bro3_Auto_Bilder) | 通称ビルダー。自動内政（建築/削除）、武器防具強化、造兵、糧変換など |
 | [bro3_auto_daily_quest](bro3_auto_daily_quest) | 繰り返しクエストのクエクリ補助 |
-| [bro3_busyodas](bro3_busyodas) | ブショーダスライト補助 |
+| [bro3_busyodas](bro3_busyodas) | ブショーダス補助 |
 | [bro3_calc_defense](bro3_calc_defense) | 出兵時に民兵出現予測を表示 |
 | [bro3_display_skill](bro3_display_skill) | デッキ画面で武将のスキルを表示。ブショーダス画面、トレード画面、合成画面、カード削除画面に対応。合成画面ではスキル付与確率表示にも対応。 |
 | [bro3_donate_window](bro3_donate_window) | 同盟タブで寄付をしやすくする。残す量や寄付後の合計値を確認しながら寄付したり、一括寄付に対応。 |
@@ -20,7 +20,7 @@
 
 | ツール名 | 機能 |
 | - | - |
-| [bro3_auto_daily_quest_2019](bro3_auto_daily_quest) | 繰り返しクエストのクエクリ補助 2021年お正月対応 Edition |
+| [bro3_auto_daily_quest_2019](bro3_auto_daily_quest) | 繰り返しクエストのクエクリ補助 2022年お正月対応 Edition |
 | [bro3_beyond](bro3_beyond) | 運営仕様変更への臨時対応用。[本家](http://silent-stage.air-nifty.com/steps/)対応時はこちらは更新しません。 |
 
 ## 動作環境
@@ -32,9 +32,9 @@
 - Google Chrome 71 (64bit) + Tampermonkey
 - Sleipnir 4.6.3 + Tampermonkey
 
-**速報**  
-2020/03/12 のヤバゲメンテ以降、一部のブラウザーにてツールが動作しないことを確認しています。  
-こちらで動作確認したところ、とりあえず User Agent を PC ではなく Android へ変更することで動作することを確認しています。  
+**速報**
+2020/03/12 のヤバゲメンテ以降、一部のブラウザーにてツールが動作しないことを確認しています。
+こちらで動作確認したところ、とりあえず User Agent を PC ではなく Android へ変更することで動作することを確認しています。
 [ブラウザーごとの User Agent 設定方法](Doc/how_to_change_user_agent.md)
 
 
