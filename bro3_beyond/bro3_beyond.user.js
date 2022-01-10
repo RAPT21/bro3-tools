@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.12
+// @version		1.09.13
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -88,6 +88,10 @@
 // 1.09.11	2020/10/29	RAPT. 「報告書＞討伐・攻撃ログのTSV出力機能の追加」のチェックを外してもボタンが消えないバグを修正
 //						「報告書＞自動鹵獲結果のリンクを消す」オプションを追加（統計＞資源と同じため）
 // 1.09.12	2020/11/30	RAPT. メニューへ「都市＞プロフィール＞君主官位」、「都市＞洛陽への路」、「都市＞交換所」を追加
+// 1.09.13	2022/01/10	RAPT. メニューへ「都市＞プロフィール＞改武将カードカスタマイズ」を追加
+//						12/23の運営仕様変更に伴い、下記機能が使えなくなっていた問題を修正
+//						- デッキ：ファイルに下げるボタンを1クリックで使用に変更
+//						- デッキ：内政官を1クリックでファイルに下げるボタンを追加
 
 //	トレード画面の修行効率表示にSLを追加
 //
@@ -3862,6 +3866,7 @@ function execCommonPart() {
 						['獲得武勲', BASE_URL + '/user/decoration.php'],
 						['表示設定', BASE_URL + '/user/disp_config.php'],
 						['君主官位', BASE_URL + '/user/deck_power_grade'],
+						['改武将カードカスタマイズ', BASE_URL + '/card_customize/make_select.php'],
 					],
 				],
 				['洛陽への路', BASE_URL + '/reward/login_bonus',
@@ -7219,7 +7224,7 @@ function addDropDeckCard() {
 	}
 
 	// ファイルに戻すボタンのイベントを書き換える
-	var deckcards = q$("#cardListDeck div[class='cardColmn']");
+	var deckcards = q$("#deck_tab div[class^='cardColmn']");
 	for (var i = 0; i < deckcards.length; i++) {
 		var base = q$("div[class='clearfix']", deckcards.eq(i));
 		var inner_a = base.children('a');
@@ -7293,8 +7298,8 @@ function addDropDomesticDeckCard() {
 	var village_id = q$("#deck_add_selected_village").val();
 
 	// ファイルに戻すボタンのイベントを書き換える
-	var deckbase = q$("#cardListDeck form[class='clearfix']");
-	var deckcards = deckbase.children("div[class='cardColmn']");
+	var deckbase = q$("#deck_tab form[class='clearfix']");
+	var deckcards = deckbase.children("div[class^='cardColmn']");
 	for (var i = 0; i < deckcards.length; i++) {
 		var base = q$("div[class='clearfix']", deckcards.eq(i));
 		var html = base.html();
