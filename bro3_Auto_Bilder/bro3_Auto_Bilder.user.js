@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2020.04.21
+// @version		2022.01.11
 // ==/UserScript==
 
 // 配布サイト
@@ -154,8 +154,9 @@
 // 2020/04/21 大倉庫二階対応。設定画面では大倉庫LV21-25を入れると、大倉庫二階LV1-5 に相当します。※「大倉庫二階の設計図」入手が必要
 //			  1/30の運営仕様変更に伴い、大宿舎化が動作しなくなっていた問題を修正
 //			  建築時間がバグっていた時のリロード時間を 30 秒へ変更。TIMER_BUG_RELOAD_INTERVAL で定義するように。
+// 2022.01.11 自動造兵できなくなっていた不具合を修正 issue#29
 
-var VERSION = "2020.04.21"; 	// バージョン情報
+var VERSION = "2022.01.11"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -7033,8 +7034,8 @@ function make_soldier(attackerData){
 
 			MakeSoldierFlg = false; // 兵士作成フラグ
 
-			var tables = document.evaluate('//*[@class="status village-bottom"]',document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-			var Temp = tables.snapshotItem(0).innerHTML.substring(tables.snapshotItem(0).innerHTML.lastIndexOf(" ")+1);
+			var tables = document.evaluate('//*[@class="status village-bottom"]//table//td[4]',document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+			var Temp = tables.snapshotItem(0).innerHTML;
 			temp0 = Temp.split("/");
 			var now_Soldier = temp0[0];
 			var max_Soldier = temp0[1];
