@@ -6612,10 +6612,15 @@ function getBuildResources(constructorName, level){
 	  {wood: 18956, stone: 11735, iron: 18956, food: 40620, time: 27300},
 	  {wood: 25817, stone: 16429, iron: 25817, food: 49286, time: 35999},
 	  {wood: 32271, stone: 22003, iron: 32271, food: 60141, time: 39311},
-	  {wood: 42172, stone: 29337, iron: 42172, food: 69675, time: 47174},
-	  {wood: 52715, stone: 38963, iron: 52715, food: 84803, time: 56607},
-	  {wood: 66009, stone: 49506, iron: 66009, food: 93512, time: 67929},
-	  {wood: 79211, stone: 62708, iron: 79211, food: 108914, time: 81515}
+	  {wood: 42172, stone: 29337, iron: 42172, food: 69675, time: 47174},  // 1339
+	  {wood: 52715, stone: 38963, iron: 52715, food: 84803, time: 56607},  // 1508...+169
+	  {wood: 66009, stone: 49506, iron: 66009, food: 93512, time: 67929},  // 1690...+182
+	  {wood: 79211, stone: 62708, iron: 79211, food: 108914, time: 81515}, // 1885...+195
+	  {wood: 88716, stone: 70233, iron: 88716, food: 121984, time: 97818}, 		//2F-lv1,2017...+132
+	  {wood: 99362, stone: 78661, iron: 99362, food: 136622, time: 117381}, 	//2F-lv2,2158...+141
+	  {wood: 111285, stone: 88101, iron: 111285, food: 153017, time: 140856}, 	//2F-lv3,2309...+151
+	  {wood: 124639, stone: 98673, iron: 124639, food: 171380, time: 169026}, 	//2F-lv4,2471...+162
+	  {wood: 139596, stone: 110514, iron: 139596, food: 191944, time: 202829} 	//2F-lv5,2644...+173
 	],
 	'訓練所':[
 	  {wood: 1500, stone: 1600, iron: 2500, food: 3300, time: 900},
@@ -6827,6 +6832,16 @@ function getBuildResources(constructorName, level){
 	  {wood: 839130, stone: 839130, iron: 915414, food: 457707, time: 95857}, 	// LV17->18
 	  {wood: 1307581, stone: 1307581, iron: 1354280, food: 700491, time: 107360}, 	// LV18->19
 	  {wood: 1901938, stone: 1901938, iron: 1969864, food: 1018896, time: 120243}, 	// LV18->20
+	  {wood: 3851425, stone: 3851425, iron: 3988976, food: 2063262, time: 133126}, 		// LV20->21 大城塞
+	  {wood: 5199423, stone: 5199423, iron: 5385117, food: 2785406, time: 146009}, 		// LV21->22
+	  {wood: 7019221, stone: 7019221, iron: 7269908, food: 3760298, time: 158892}, 		// LV22->23
+	  {wood: 9475949, stone: 9475949, iron: 9814375, food: 5076401, time: 171775}, 		// LV23->24
+	  {wood: 12792531, stone: 12792531, iron: 13249407, food: 6853141, time: 184658}, 	// LV24->25
+	  {wood: 17269917, stone: 17269917, iron: 17886699, food: 9251741, time: 197541}, 	// LV25->26
+	  {wood: 23314388, stone: 23314388, iron: 24147044, food: 12489850, time: 210424}, 	// LV26->27
+	  {wood: 31474423, stone: 31474423, iron: 32598510, food: 16861299, time: 223307}, 	// LV27->28
+	  {wood: 42490472, stone: 42490472, iron: 44007988, food: 22762752, time: 236190}, 	// LV28->29
+	  {wood: 57362136, stone: 57362136, iron: 59410784, food: 30729717, time: 249073} 	// LV29->30
 	],
 	'砦':[
 	  {wood: 104, stone: 400, iron: 136, food: 160, time: 0},
@@ -6861,6 +6876,23 @@ function getBuildResources(constructorName, level){
 	  {wood: 340166, stone: 272133, iron: 213820, food: 145786, time: 79716},
 	  {wood: 505021, stone: 456148, iron: 423566, food: 244365, time: 95659},
 	  {wood: 844765, stone: 763014, iron: 708513, food: 408756, time: 114791}
+	],
+	'要塞':[ // name="form_251"
+	  {wood: 41600, stone: 49600, iron: 44800, food: 24000, time: 0},
+	  {wood: 22880, stone: 27280, iron: 24640, food: 13200, time: 1620},
+	  {wood: 99944, stone: 119164, iron: 107632, food: 57660, time: 2430},
+	  {wood: 154913, stone: 184704, iron: 166830, food: 89373, time: 3645},
+	  {wood: 240115, stone: 286292, iron: 258586, food: 138528, time: 5468},
+	  {wood: 372179, stone: 443752, iron: 400808, food: 214719, time: 8202},
+	  {wood: 576877, stone: 687815, iron: 621253, food: 332814, time: 12302},
+	  {wood: 894160, stone: 1066114, iron: 962941, food: 515862, time: 18453},
+	  {wood: 1385948, stone: 1652476, iron: 1492559, food: 799586, time: 27680},
+	  {wood: 2148219, stone: 2561338, iron: 2313467, food: 1239358, time: 41519},
+	  {wood: 3329740, stone: 3970075, iron: 3585874, food: 1921003, time: 49822},
+	  {wood: 5161097, stone: 6153615, iron: 5558104, food: 2977557, time: 59787},
+	  {wood: 7999700, stone: 9538104, iron: 8615062, food: 4615211, time: 71744},
+	  {wood: 12399535, stone: 14784061, iron: 13353346, food: 7153578, time: 86093},
+	  {wood: 19219280, stone: 22915295, iron: 20697686, food: 11088045, time: 103312}
 	]
   };
 
