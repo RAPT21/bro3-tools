@@ -6744,7 +6744,7 @@ function getBuildResources(constructorName, level){
 	  {wood: 76800, stone: 92160, iron: 76800, food: 61440, time: 39840}, //2F-lv2
 	  {wood: 76800, stone: 92160, iron: 76800, food: 61440, time: 39840}, //2F-lv3
 	  {wood: 76800, stone: 92160, iron: 76800, food: 61440, time: 39840}, //2F-lv4
-	  {wood: 76800, stone: 92160, iron: 76800, food: 61440, time: 39840}, //2F-lv5
+	  {wood: 76800, stone: 92160, iron: 76800, food: 61440, time: 39840} //2F-lv5
 	],
 	'研究所':[
 	  {wood: 275, stone: 110, iron: 110, food: 55, time: 216},
@@ -6814,19 +6814,19 @@ function getBuildResources(constructorName, level){
 	  {wood: 7102, stone: 3552, iron: 3552, food: 3552, time: 8991}, 	// LV4->5
 	  {wood: 9056, stone: 9056, iron: 6037, food: 6037, time: 12587}, 	// LV5->6
 	  {wood: 14384, stone: 14384, iron: 9589, food: 9589, time: 16364},   // LV6->7
-	  {wood: 22773, stone: 22773, iron: 15183, food: 15183, time: 29782}, // *LV7->8
+	  {wood: 22773, stone: 22773, iron: 15183, food: 15183, time: 22910}, // LV7->8
 	  {wood: 33562, stone: 33562, iron: 22374, food: 22374, time: 29782}, // LV8->9
 	  {wood: 44402, stone: 57559, iron: 32890, food: 29602, time: 38716}, // LV9->10
 	  {wood: 65122, stone: 84418, iron: 48239, food: 43415, time: 43361}, // LV10->11
-	  {wood: 95317, stone: 123558, iron: 70605, food: 63544, time: 0}, 	  // LV11->12
-	  {wood: 113458, stone: 154716, iron: 154716, food: 92830, time: 0},  // LV12->13
-	  {wood: 150418, stone: 150418, iron: 315878, food: 135375, time: 0}, // LV13->14
-	  {wood: 219008, stone: 219008, iron: 492770, food: 164258, time: 0}, // LV14->15
-	  {wood: 294820, stone: 294820, iron: 663345, food: 221115, time: 0}, // LV15->16
-	  {wood: 488220, stone: 488220, iron: 827854, food: 318406, time: 0}, // LV16->17
-	  {wood: 839130, stone: 839130, iron: 915414, food: 457707, time: 0}, // LV17->18
-	  {wood: 1307581, stone: 1307581, iron: 1354280, food: 700491, time: 0}, // LV18->19
-	  {wood: 1901938, stone: 1901938, iron: 1969864, food: 1018896, time: 0} // LV19->20
+	  {wood: 95317, stone: 123558, iron: 70605, food: 63544, time: 48564}, 		// LV11->12
+	  {wood: 113458, stone: 150418, iron: 154716, food: 92830, time: 54392}, 	// LV12->13
+	  {wood: 150418, stone: 154716, iron: 315878, food: 135375, time: 60919}, 	// LV13->14
+	  {wood: 219008, stone: 219008, iron: 492770, food: 164258, time: 68229}, 	// LV14->15
+	  {wood: 294820, stone: 294820, iron: 663345, food: 221115, time: 76417}, 	// LV15->16
+	  {wood: 488220, stone: 488220, iron: 827854, food: 318406, time: 85587}, 	// LV16->17
+	  {wood: 839130, stone: 839130, iron: 915414, food: 457707, time: 95857}, 	// LV17->18
+	  {wood: 1307581, stone: 1307581, iron: 1354280, food: 700491, time: 107360}, 	// LV18->19
+	  {wood: 1901938, stone: 1901938, iron: 1969864, food: 1018896, time: 120243}, 	// LV18->20
 	],
 	'砦':[
 	  {wood: 104, stone: 400, iron: 136, food: 160, time: 0},
