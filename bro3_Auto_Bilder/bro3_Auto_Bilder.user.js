@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2022.01.11
+// @version		2022.02.24
 // ==/UserScript==
 
 // 配布サイト
@@ -155,8 +155,10 @@
 //			  1/30の運営仕様変更に伴い、大宿舎化が動作しなくなっていた問題を修正
 //			  建築時間がバグっていた時のリロード時間を 30 秒へ変更。TIMER_BUG_RELOAD_INTERVAL で定義するように。
 // 2022.01.11 自動造兵できなくなっていた不具合を修正 issue#29
+// 2020.02.24 大宿舎二階対応。設定画面では大宿舎LV21-25を入れると、大宿舎二階LV1-5 に相当します。※「大宿舎二階の設計図」入手が必要
+//			  既存の施設LVUP資源情報の誤り修正。斧兵舎、双兵舎、錘兵舎の施設LVUP資源量を追加。大宿舎二階、大城塞、要塞の施設LVUP資源情報を追加
 
-var VERSION = "2022.01.11"; 	// バージョン情報
+var VERSION = "2022.02.24"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -2298,6 +2300,10 @@ function get_area(){
 			var lv = RegExp.$2;
 			if (name === "大倉庫二階") {
 				name = "大倉庫";
+				lv = "" + (20 + parseInt(lv,10));
+			}
+			if (name === "大宿舎二階") {
+				name = "大宿舎";
 				lv = "" + (20 + parseInt(lv,10));
 			}
 			area[n] = new lv_sort(name,lv,getURLxy(strURL));
