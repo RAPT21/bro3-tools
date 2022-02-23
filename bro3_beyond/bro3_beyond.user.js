@@ -92,6 +92,9 @@
 //						12/23の運営仕様変更に伴い、下記機能が使えなくなっていた問題を修正
 //						- デッキ：ファイルに下げるボタンを1クリックで使用に変更
 //						- デッキ：内政官を1クリックでファイルに下げるボタンを追加
+// 1.09.14	2022/02/24	RAPT. メニューへ「同盟＞友軍状況」を追加
+//						メニューへ「デッキ＞警護デッキ」を追加
+//						メニューへ「デッキ＞軍議所」を追加
 
 //	トレード画面の修行効率表示にSLを追加
 //
@@ -3889,6 +3892,7 @@ function execCommonPart() {
 			],
 			// 同盟
 			[
+				['友軍状況', alurl + '/friendly_army.php'],
 				['同盟ログ', BASE_URL + '/alliance/alliance_log.php',
 					[
 						['全て', alogurl], ['攻撃', alogurl + '?m=attack'], ['防御', alogurl + '?m=defense'], ['偵察', alogurl + '?m=scout'],
@@ -3921,6 +3925,7 @@ function execCommonPart() {
 				['内政設定', BASE_URL + '/card/domestic_setting.php'],
 				['デッキ', BASE_URL + '/card/deck.php',
 					[
+						['警護デッキ', BASE_URL + '/card/deck.php?deck_mode=2'],
 						['カード入手履歴', BASE_URL + '/busyodas/busyodas_history.php'],
 						['カード一括破棄', BASE_URL + '/card/allcard_delete.php'],
 					],
@@ -4040,6 +4045,41 @@ function execCommonPart() {
 				['トレード放出履歴', BASE_URL + '/card/trade_history.php?mode=sell'],
 				['自動鹵獲出兵設定', BASE_URL + '/auto_capture_material/setting.php'],
 				['デッキ一括UP設定', BASE_URL + '/card/deck_priority_index.php'],
+				['軍議所', BASE_URL + '/council/',
+					[
+						['軍費貯蓄', BASE_URL + '/council/council_point.php',
+							[
+								['上限UP', BASE_URL + '/council/arms.php?council_function_id=206'],
+							],
+						],
+						['号令', BASE_URL + '/council/?tab=1',
+							[
+								['発動中', BASE_URL + '/council/order.php?order_type=0'],
+								['攻撃', BASE_URL + '/council/order.php?order_type=1'],
+								['防御', BASE_URL + '/council/order.php?order_type=2'],
+								['鹵獲', BASE_URL + '/council/order.php?order_type=3'],
+								['援軍', BASE_URL + '/council/order.php?order_type=4'],
+								['友軍', BASE_URL + '/council/order.php?order_type=5'],
+								['南蛮', BASE_URL + '/council/order.php?order_type=6'],
+								['回復', BASE_URL + '/council/order.php?order_type=7'],
+							],
+						],
+						['軍備', BASE_URL + '/council/?tab=2',
+							[
+								['施設建設技術', BASE_URL + '/council/arms.php?council_function_id=201'],
+								['訓練技術', BASE_URL + '/council/arms.php?council_function_id=202'],
+								['再訓練技術', BASE_URL + '/council/arms.php?council_function_id=203'],
+								['忠誠心上限アップ', BASE_URL + '/council/arms.php?council_function_id=204'],
+								['強化忠誠心攻撃', BASE_URL + '/council/arms.php?council_function_id=205'],
+								['軍費貯蓄拡大', BASE_URL + '/council/arms.php?council_function_id=206'],
+								['名声獲得', BASE_URL + '/council/arms.php?council_function_id=207'],
+							],
+						],
+						['農村', BASE_URL + '/council/?tab=3'],
+						['設計', BASE_URL + '/council/?tab=4'],
+						['南蛮', BASE_URL + '/council/?tab=5'],
+					],
+				],
 			],
 			// アイテム
 			[
