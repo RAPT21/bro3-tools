@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2022.02.24
+// @version		2022.02.25
 // ==/UserScript==
 
 // 配布サイト
@@ -155,10 +155,11 @@
 //			  1/30の運営仕様変更に伴い、大宿舎化が動作しなくなっていた問題を修正
 //			  建築時間がバグっていた時のリロード時間を 30 秒へ変更。TIMER_BUG_RELOAD_INTERVAL で定義するように。
 // 2022.01.11 自動造兵できなくなっていた不具合を修正 issue#29
-// 2020.02.24 大宿舎二階対応。設定画面では大宿舎LV21-25を入れると、大宿舎二階LV1-5 に相当します。※「大宿舎二階の設計図」入手が必要
+// 2022.02.24 大宿舎二階対応。設定画面では大宿舎LV21-25を入れると、大宿舎二階LV1-5 に相当します。※「大宿舎二階の設計図」入手が必要
 //			  既存の施設LVUP資源情報の誤り修正。斧兵舎、双兵舎、錘兵舎の施設LVUP資源量を追加。大宿舎二階、大城塞、要塞の施設LVUP資源情報を追加
+// 2022.02.25 自動寄付を廃止し、軍費貯蓄機能へ差し替え
 
-var VERSION = "2022.02.24"; 	// バージョン情報
+var VERSION = "2022.02.25"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -4879,7 +4880,7 @@ function addInifacHtml(vId) {
 
 	var td401 = d.createElement("td");
 //		td401.style.padding = "2px";
-		ccreateCheckBox(td401, "OPT_KIFU", OPT_KIFU, " 自動寄付", "この都市に来たら、自動的に寄付します。", 0);
+		ccreateCheckBox(td401, "OPT_KIFU", OPT_KIFU, " 軍費貯蓄", "この都市に来たら、自動的に軍費貯蓄します。", 0);
 
 	var tr411 = d.createElement("tr");
 		tr411.style.border = "solid 1px black";
@@ -4888,8 +4889,8 @@ function addInifacHtml(vId) {
 	var td411 = d.createElement("td");
 		td411.style.padding = "3px";
 		td411.style.verticalAlign = "top";
-		ccreateTextBox(td411, "OPT_RISE_KIFU_MAX", OPT_RISE_KIFU_MAX, "糧が右の数量になったら寄付する　","自動で糧を寄付し始める量指定します。", 10, 5);
-		ccreateTextBox(td411, "OPT_RISE_KIFU", OPT_RISE_KIFU,		  "自動で糧を寄付する量　　　　　　","自動で糧を寄付する量指定します。", 10, 5);
+		ccreateTextBox(td411, "OPT_RISE_KIFU_MAX", OPT_RISE_KIFU_MAX, "各資源が右の数量を超過したら軍費貯蓄する　","資源量が指定値を超過したら軍費貯蓄します。", 10, 5);
+		ccreateTextBox(td411, "OPT_RISE_KIFU", OPT_RISE_KIFU,		"軍費1あたりの資源量 　　　　　　　　　　　","軍費貯蓄画面で軍費1あたりの資源量を確認してください。", 10, 5);
 
 	Contribution_Box.appendChild(tr400);
 	tr400.appendChild(td401);
@@ -7719,56 +7720,48 @@ function changeResorceToResorce(from, tc, to, percent, stock_wood, stock_stone, 
 	changeResorceToResorceEx(from, tc, to, percent, stock_wood, stock_stone, stock_iron, stock_rice, x, y, true);
 }
 
-//自動寄付処理
+//自動軍費貯蓄処理
 function autoDonate() {
 
 debugLog("=== Start autoDonate ===");
 
 	if(OPT_KIFU != 1) {
-		//alert("自動寄付未指定");
 		return;
 	}
 
-	//糧が指定量より多いかチェック
-	if($("rice").innerHTML < OPT_RISE_KIFU_MAX) {
+	//各資源が指定量より多いかチェック
+	var wood = parseInt( q$("#wood").val(), 10 );
+	var stone = parseInt( q$("#stone").val(), 10 );
+	var iron = parseInt( q$("#iron").val(), 10 );
+	var rice = parseInt( q$("#rice").val(), 10 );
+	var max = parseInt( OPT_RISE_KIFU_MAX, 10 );
+	var uni = parseInt( OPT_RISE_KIFU, 10 );
+
+	if(wood <= max && stone <= max && iron <= max && rice <= max) {
+		//すべてしきい値未満なのでスキップ
 		return;
 	}
 
 	//指定値がおかしいときはスキップ
-	if(OPT_RISE_KIFU < 1) {
+	if(uni < 2000) {
+		return;
+	}
+	var pay_wood = Math.max(0, Math.floor((wood - max) / uni)) * uni;
+	var pay_stone = Math.max(0, Math.floor((stone - max) / uni)) * uni;
+	var pay_iron = Math.max(0, Math.floor((iron - max) / uni)) * uni;
+	var pay_rice = Math.max(0, Math.floor((rice - max) / uni)) * uni;
+
+	//納入なしのときはスキップ
+	if(pay_wood + pay_stone + pay_iron + pay_rice < uni) {
 		return;
 	}
 
-
-	sendDonate(OPT_RISE_KIFU);
-//@@@
-//	var tid=setTimeout(function(){location.reload(false);},INTERVAL);
-
-}
-
-//寄付処理通信部
-function sendDonate(rice) {
-/*
-	var data = "contributionForm=&wood=0&stone=0&iron=0&rice=" + rice + "&contribution=1";
-	var tid=setTimeout(function(){
-		GM_xmlhttpRequest({
-			method:"POST",
-			url:SERVER_BASE + "/alliance/level.php",
-			headers:{"Content-type":"application/x-www-form-urlencoded"},
-			data: data,
-//			onload:function(x){console.log(x.responseText);}
-			onload:function(x){;}
-		});
-	},INTERVAL);
-*/
 	var c={};
-	c['contributionForm'] = "";
-	c['wood'] = 0;
-	c['stone'] = 0;
-	c['iron'] = 0;
-	c['rice'] = parseInt(rice,10);
-	c['contribution'] = 1;
-	q$.post(SERVER_BASE+"/alliance/level.php",c,function(){});
+	c['wood'] = pay_wood;
+	c['stone'] = pay_stone;
+	c['iron'] = pay_iron;
+	c['rice'] = pay_rice;
+	q$.post(SERVER_BASE+"/council/council_point.php",c,function(){});
 	var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 }
 
