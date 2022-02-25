@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2022.02.25
+// @version		2022.02.26
 // ==/UserScript==
 
 // 配布サイト
@@ -158,8 +158,9 @@
 // 2022.02.24 大宿舎二階対応。設定画面では大宿舎LV21-25を入れると、大宿舎二階LV1-5 に相当します。※「大宿舎二階の設計図」入手が必要
 //			  既存の施設LVUP資源情報の誤り修正。斧兵舎、双兵舎、錘兵舎の施設LVUP資源量を追加。大宿舎二階、大城塞、要塞の施設LVUP資源情報を追加
 // 2022.02.25 自動寄付を廃止し、軍費貯蓄機能へ差し替え
+// 2022.02.26 軍費貯蓄機能がw32以外で動作しなかったバグを修正、貯蓄量の上限をチェックするよう修正。w32/w4で動作確認済
 
-var VERSION = "2022.02.25"; 	// バージョン情報
+var VERSION = "2022.02.26"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -7734,8 +7735,8 @@ debugLog("=== Start autoDonate ===");
 	var stone = parseInt( q$("#stone").val(), 10 );
 	var iron = parseInt( q$("#iron").val(), 10 );
 	var rice = parseInt( q$("#rice").val(), 10 );
-	var max = parseInt( OPT_RISE_KIFU_MAX, 10 );
 	var uni = parseInt( OPT_RISE_KIFU, 10 );
+	var max = parseInt( OPT_RISE_KIFU_MAX, 10 );
 
 	if(wood <= max && stone <= max && iron <= max && rice <= max) {
 		//すべてしきい値未満なのでスキップ
@@ -7746,23 +7747,75 @@ debugLog("=== Start autoDonate ===");
 	if(uni < 2000) {
 		return;
 	}
-	var pay_wood = Math.max(0, Math.floor((wood - max) / uni)) * uni;
-	var pay_stone = Math.max(0, Math.floor((stone - max) / uni)) * uni;
-	var pay_iron = Math.max(0, Math.floor((iron - max) / uni)) * uni;
-	var pay_rice = Math.max(0, Math.floor((rice - max) / uni)) * uni;
 
+	//軍費1あたりの資源量が1万未満はその値、1万以上は万単位
+	var pw = (uni < 10000) ? uni : 1;
+	var border = max - 1;
+	var pay_wood = Math.max(0, Math.floor((wood - border) / uni)) * pw;
+	var pay_stone = Math.max(0, Math.floor((stone - border) / uni)) * pw;
+	var pay_iron = Math.max(0, Math.floor((iron - border) / uni)) * pw;
+	var pay_rice = Math.max(0, Math.floor((rice - border) / uni)) * pw;
+
+	addCouncilPoint(pay_wood, pay_stone, pay_iron, pay_rice);
+}
+
+//軍費貯蓄量を取得
+function addCouncilPoint(wood, stone, iron, rice) {
 	//納入なしのときはスキップ
-	if(pay_wood + pay_stone + pay_iron + pay_rice < uni) {
+	var total = wood + stone + iron + rice;
+	if(total === 0) {
 		return;
 	}
+	setTimeout(function(){
+		GM_xmlhttpRequest({
+			method:"GET",
+			url:SERVER_BASE + "/council/council_point.php",
+			headers:{"Content-type":"text/html"},
+			overrideMimeType:'text/html; charset=utf-8',
+			onload:function(x){
+				var htmldoc = document.createElement("html");
+					htmldoc.innerHTML = x.responseText;
+				var point = parseInt(q$('#council_point_num', htmldoc).data('value'), 10);
+				var maxPoint = parseInt(q$('#max_council_point_num', htmldoc).data('value'), 10);
+				var vacant = maxPoint - point;
+				console.log(`現在軍費貯蓄量：${point}/${maxPoint}`);
 
-	var c={};
-	c['wood'] = pay_wood;
-	c['stone'] = pay_stone;
-	c['iron'] = pay_iron;
-	c['rice'] = pay_rice;
-	q$.post(SERVER_BASE+"/council/council_point.php",c,function(){});
-	var tid=setTimeout(function(){location.reload(false);},INTERVAL);
+				//満タンのときはスキップ
+				if(vacant === 0) {
+					console.log("軍費が満タンです。");
+					return;
+				}
+
+				//全額貯蓄できない場合の減算処理
+				var counter = 0;
+				while(total > vacant) {
+					var decent = Math.ceil(vacant / 4);
+					wood = Math.max(0, wood - decent);
+					stone = Math.max(0, stone - decent);
+					iron = Math.max(0, iron - decent);
+					rice = Math.max(0, rice - decent);
+					total = wood + stone + iron + rice;
+					counter += 1;
+					if(counter >= 100) {
+						break;
+					}
+				}
+				if(counter >= 100){
+					console.log('軍費貯蓄量を計算できません。');
+					return;
+				}
+
+				//貯蓄実行
+				var c={};
+				c['wood'] = wood;
+				c['stone'] = stone;
+				c['iron'] = iron;
+				c['rice'] = rice;
+				q$.post(SERVER_BASE+"/council/council_point.php",c,function(){});
+				var tid=setTimeout(function(){location.reload(false);},INTERVAL);
+			}
+		});
+	}, INTERVAL);
 }
 
 //内政スキルの使用
