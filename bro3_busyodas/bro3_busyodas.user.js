@@ -8,21 +8,34 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	0.2
+// @version 	0.3
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
 
-var VERSION = "2021.01.09.dev";
+// ブショーダスライト等の画面でスキル名にマッチしないカードに削除チェックを入れる＆自動で引くツール。
+// スキル名は前方一致。
+// デフォルトでロックされているR以上のカードや特殊カードは変更しない。
+// 該当スキルをカスタムしたい場合、スクリプト内カスタム設定で変更可能。
+
 
 // 2020.11.11  0.1	初版。ブショーダスライトのみ対応
 // 2021.01.09  0.2	小麗もサポート。スキル名を部分一致から前方一致へ変更
+// 2022.03.24  0.3	自動ダス（自動でブショーダスを引く）機能を追加
+//					自動ダスを無効にしたい場合、スクリプト内カスタム設定で変更可能
+//					「あなたが持てる武将カード」が残り0枚になるか、現在のBP/チケットが規定に満たない場合は停止
 
-// ブショーダスライト画面で下記スキル名にマッチしないカードに削除チェックを入れるツール。
-// スキル名は前方一致。
-// デフォルトでロックされているR以上のカードや特殊カードは変更しない。
+var VERSION = "2022.03.24.dev";
 
-// 部分一致
+//=====[ カスタム設定 ]=====
+// 自動ダスを有効にするか
+var isSupportAutoDas = true;
+
+// 自動ダスのウェイト（ミリ秒）
+// サーバー負荷対策のため1000（1秒）以上を推奨
+var waitInterval = 3000;
+
+// 前方一致
 var wantSkillNames = [
 	"仁君",
 	"呉の治世",
@@ -31,13 +44,32 @@ var wantSkillNames = [
 //	"兵舎修練",
 //	"英雄",
 //	"兵器の猛撃",
-//	"修練",
 //	"急速援護",
 //	"火神の攻勢",
 	"全軍の",
+	"覇道",
+	"烈速",
+//以下、練兵修練素材
+//	'練兵修練',
+//	'剣兵突覇',
+//	'剣兵の聖域',
+//	'剣兵の極撃',
+//	'豊潤祈祷',
+//	'剣兵の極攻',
+//	'大剣兵移送',
+//	'剣兵突攻',
+//	'食糧革命',
+//	'隣地猛襲',
+//覇
 	"初期スキルなし"
 ];
 
+//=====[ 内部用 ]=====
+// 自動ダスを継続するか
+var canContinueAutoDas = true;
+
+
+// スキル名をチェックして残すカードはtrueを返す
 function isWantSkill(skillName) {
 	var result = false;
 	q$.each(wantSkillNames, function(index, name){
@@ -50,6 +82,7 @@ function isWantSkill(skillName) {
 	return result;
 }
 
+// 不要カードのセルにチェックを入れる
 var proc = function(){
 	var cols = q$("td", this);
 	if (cols.length === 4) {
@@ -59,8 +92,65 @@ var proc = function(){
 	}
 };
 
-// ライト
-q$("#busyodasDraw_18110500000 .commonTables tr").each(proc);
+// 指定ミリ秒のウェイトを入れる
+function wait(msec) {
+	var d = new q$.Deferred;
+	setTimeout(function() {
+		d.resolve();
+	}, msec);
+	return d.promise();
+}
 
-// 小麗
-q$("#busyodasDraw_20061507000 .commonTables tr").each(proc);
+// 処理を注入
+function inject(id, checkRepeat) {
+	if (isSupportAutoDas) {
+		// 自動ダスを停止できるように
+		q$('<button>', { id: 'stopNextTicket', text: '自動ダスを停止' }).insertAfter(`#${id}`);
+		q$('#stopNextTicket').on('click', function(){
+			canContinueAutoDas = false;
+			q$(this).text('自動ダスを停止しました');
+		});
+	}
+
+	// 不要カードへチェックを入れる
+	q$(`#${id} .commonTables tr`).each(proc);
+
+	if (!isSupportAutoDas) {
+		// 自動ダス無効ならここで処理終了
+		return;
+	}
+
+	// 以下、自動ダス機能
+
+	// 残存チケット確認
+	var mes = q$('div[class="sysMes2"]').text().trim().replace(/\s+/g, ' ');
+	var ticket = parseInt(mes.replace(/.*?現在の.+?:(\d+).*/, "$1"), 10);
+
+	// ファイルの空きを確認
+	var vacant = parseInt(mes.replace(/.*?残り(\d+)枚.*/, "$1"), 10);
+
+	// 「もういちど引く」の実行判定
+	var check1 = checkRepeat && checkRepeat(ticket); // checkRepeat が指定されていればそちらで判定
+	var check2 = !checkRepeat && ticket > 0; // checkRepeat 省略時は残存チケットが1以上なら継続
+	var isContinue = vacant > 0 && (check1 || check2);
+
+	if (isContinue) {
+		// 指定時間経過後に「もういちど引く」を実行
+		wait(waitInterval).done(function() {
+			if (canContinueAutoDas) {
+				console.log("「もういちど引く」を実行");
+				q$(`#${id}`).attr('action', 'busyodas.php').submit();
+			} else {
+				console.log("「もういちど引く」は停止");
+			}
+		});
+	}
+}
+
+// ブショーダスライト
+inject('busyodasDraw_18110500000', function(bp) {
+	return bp >= 100;
+});
+
+// 小麗チケット
+inject('busyodasDraw_20061507000');
