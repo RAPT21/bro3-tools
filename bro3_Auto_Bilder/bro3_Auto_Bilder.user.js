@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2022.04.13
+// @version		2022.04.17
 // ==/UserScript==
 
 // 配布サイト
@@ -160,8 +160,9 @@
 // 2022.02.25 自動寄付を廃止し、軍費貯蓄機能へ差し替え
 // 2022.02.26 軍費貯蓄機能がw32以外で動作しなかったバグを修正、貯蓄量の上限をチェックするよう修正。w32/w4で動作確認済
 // 2022.04.13 市場変換が動作しない場合がある不具合を修正
+// 2022.04.17 施設削除中に自動建築できない不具合を修正（2022.04.13版でのデグレ）
 
-var VERSION = "2022.04.13"; 	// バージョン情報
+var VERSION = "2022.04.17"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -2103,7 +2104,7 @@ debugLog("=== Start setVillageFacility ===");
 	// 建設予約があるとき(cnt >= 2)は、タイマーバグは無視してよい
 	if (cnt >= 2) {
 		return;
-	} else if (cnt == 1) {
+	} else if ((cnt - del) > 0) {
 		// 運営のタイマーバグ対策。最大時間を異常に超えている場合、リロードする。
 		var info = getBuildingInfo();
 		if (info && info.x != -1 && info.y != -1) {
