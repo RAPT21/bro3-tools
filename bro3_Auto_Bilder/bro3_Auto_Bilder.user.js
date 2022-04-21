@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2022.04.17
+// @version		2022.04.21
 // ==/UserScript==
 
 // 配布サイト
@@ -161,8 +161,9 @@
 // 2022.02.26 軍費貯蓄機能がw32以外で動作しなかったバグを修正、貯蓄量の上限をチェックするよう修正。w32/w4で動作確認済
 // 2022.04.13 市場変換が動作しない場合がある不具合を修正
 // 2022.04.17 施設削除中に自動建築できない不具合を修正（2022.04.13版でのデグレ）
+// 2022.04.21 軍費1あたりの資源が10000未満の鯖で軍費貯蓄できない場合がある不具合を修正
 
-var VERSION = "2022.04.17"; 	// バージョン情報
+var VERSION = "2022.04.21"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -7740,7 +7741,7 @@ debugLog("=== Start autoDonate ===");
 	var stone = parseInt( q$("#stone").val(), 10 );
 	var iron = parseInt( q$("#iron").val(), 10 );
 	var rice = parseInt( q$("#rice").val(), 10 );
-	var uni = parseInt( OPT_RISE_KIFU, 10 );
+	var unit = parseInt( OPT_RISE_KIFU, 10 );
 	var max = parseInt( OPT_RISE_KIFU_MAX, 10 );
 
 	if(wood <= max && stone <= max && iron <= max && rice <= max) {
@@ -7749,23 +7750,24 @@ debugLog("=== Start autoDonate ===");
 	}
 
 	//指定値がおかしいときはスキップ
-	if(uni < 2000) {
+	if(unit < 2000) {
 		return;
 	}
 
-	//軍費1あたりの資源量が1万未満はその値、1万以上は万単位
-	var pw = (uni < 10000) ? uni : 1;
 	var border = max - 1;
-	var pay_wood = Math.max(0, Math.floor((wood - border) / uni)) * pw;
-	var pay_stone = Math.max(0, Math.floor((stone - border) / uni)) * pw;
-	var pay_iron = Math.max(0, Math.floor((iron - border) / uni)) * pw;
-	var pay_rice = Math.max(0, Math.floor((rice - border) / uni)) * pw;
+	var pay_wood = Math.max(0, Math.floor((wood - border) / unit));
+	var pay_stone = Math.max(0, Math.floor((stone - border) / unit));
+	var pay_iron = Math.max(0, Math.floor((iron - border) / unit));
+	var pay_rice = Math.max(0, Math.floor((rice - border) / unit));
 
-	addCouncilPoint(pay_wood, pay_stone, pay_iron, pay_rice);
+	addCouncilPoint(pay_wood, pay_stone, pay_iron, pay_rice, unit);
 }
 
 //軍費貯蓄量を取得
-function addCouncilPoint(wood, stone, iron, rice) {
+function addCouncilPoint(wood, stone, iron, rice, unit) {
+	//軍費1あたりの資源量が1万未満はその値、1万以上は万単位
+	var power = (unit < 10000) ? unit : 1;
+
 	//納入なしのときはスキップ
 	var total = wood + stone + iron + rice;
 	if(total === 0) {
@@ -7812,10 +7814,10 @@ function addCouncilPoint(wood, stone, iron, rice) {
 
 				//貯蓄実行
 				var c={};
-				c['wood'] = wood;
-				c['stone'] = stone;
-				c['iron'] = iron;
-				c['rice'] = rice;
+				c['wood'] = wood * power;
+				c['stone'] = stone * power;
+				c['iron'] = iron * power;
+				c['rice'] = rice * power;
 				q$.post(SERVER_BASE+"/council/council_point.php",c,function(){});
 				var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 			}
