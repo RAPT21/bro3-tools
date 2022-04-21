@@ -175,6 +175,8 @@ var fontstyle = "bold 10px 'ＭＳ ゴシック'";	// ダイアログの基本�
 var DEBUG = false;
 var TIMER_BUG_RELOAD_INTERVAL = 30000; // 30s
 
+var OPT_BUILD_WHILE_REMOVING_VILLAGE = false; // 拠点削除中も建築するか
+
 var SERVER_SCHEME = location.protocol + "//";
 var SERVER_NAME = location.hostname.match(/^(.*)\.3gokushi/)[1];
 var SERVER_BASE = SERVER_SCHEME + location.hostname;
@@ -2216,8 +2218,8 @@ debugLog("=== Start setVillageFacility ===");
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 		var rmtime = htmldoc.innerHTML.match(/(村を削除中です。|砦を削除中です。)[^\d]*(\d+-\d+-\d+ \d+:\d+:\d+)に完了します。/);
-		if (rmtime) {
-			// 削除中のため何もしない
+		if (rmtime && !OPT_BUILD_WHILE_REMOVING_VILLAGE) {
+			// 拠点削除中のため何もしない
 			return;
 		}
 
