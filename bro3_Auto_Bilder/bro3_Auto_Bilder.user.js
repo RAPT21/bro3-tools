@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2022.04.21
+// @version		2022.04.29
 // ==/UserScript==
 
 // 配布サイト
@@ -162,8 +162,9 @@
 // 2022.04.13 市場変換が動作しない場合がある不具合を修正
 // 2022.04.17 施設削除中に自動建築できない不具合を修正（2022.04.13版でのデグレ）
 // 2022.04.21 軍費1あたりの資源が10000未満の鯖で軍費貯蓄できない場合がある不具合を修正
+// 2022.04.29 4/28のメンテ以降で拠点名が取得できなくなり、ビルダー設定画面が壊れる問題を修正
 
-var VERSION = "2022.04.21"; 	// バージョン情報
+var VERSION = "2022.04.29"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -8025,7 +8026,7 @@ function sortAction(actions) {
 function getVillageActions() {
 	var data = new Array();
 	//拠点名を取得
-	data[IDX_BASE_NAME] = q$("#basepoint span[class=basename]").text().trim();
+	data[IDX_BASE_NAME] = q$("#basepoint span[class^=basename]").text().trim();
 
 	//座標を取得
 	q$("#basepoint span[class=xy]").text().match(/(\([-]*\d+,[-]*\d+\))/);
