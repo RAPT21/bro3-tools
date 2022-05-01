@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2022.04.29
+// @version		2022.05.01
 // ==/UserScript==
 
 // 配布サイト
@@ -163,8 +163,9 @@
 // 2022.04.17 施設削除中に自動建築できない不具合を修正（2022.04.13版でのデグレ）
 // 2022.04.21 軍費1あたりの資源が10000未満の鯖で軍費貯蓄できない場合がある不具合を修正
 // 2022.04.29 4/28のメンテ以降で拠点名が取得できなくなり、ビルダー設定画面が壊れる問題を修正
+// 2022.05.01 武器/防具LVUP中のレベル表記を追加
 
-var VERSION = "2022.04.29"; 	// バージョン情報
+var VERSION = "2022.05.01"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -8357,12 +8358,20 @@ function getTrainingSoldier(htmldoc) {
 		var status = trim(mainTtlElem.innerHTML);
 		if (status == "") break;
 
+		var tolv = "";
+		var mlv = document.evaluate('../../../tr/td[@class="contents"]/b[@class="f14"]', clockElem, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+		if (mlv.snapshotLength >= 1) {
+			tolv = mlv.snapshotItem(0).innerHTML.replace(/&nbsp;/g, " ").split(" ")[0];
+		}
+
 		var actionType = TYPE_FACILITY + facilityName;
 
 		data[IDX_ACTIONS][idx] = new Array();
 
-		if (facilityName == "鍛冶場" || facilityName == "防具工場" || facilityName == "研究所") {
-			data[IDX_ACTIONS][idx][IDX2_STATUS] = facilityName + ":" + status;
+		if (facilityName == "鍛冶場" || facilityName == "防具工場") {
+			data[IDX_ACTIONS][idx][IDX2_STATUS] = `${facilityName}:${status}(${tolv})`;
+		} else if (facilityName == "研究所") {
+			data[IDX_ACTIONS][idx][IDX2_STATUS] = `${facilityName}:${status}`;
 		} else {
 			try {
 				var alert = q$("#gray02Wrapper table.commonTables form input[value='キャンセル']").eq(idx).attr("onclick")
