@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.14
+// @version		1.09.15
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -95,6 +95,9 @@
 // 1.09.14	2022/02/24	RAPT. メニューへ「同盟＞友軍状況」を追加
 //						メニューへ「デッキ＞警護デッキ」を追加
 //						メニューへ「デッキ＞軍議所」を追加
+// 1.09.15	2022/06/19	RAPT. 簡易デッキセット機能で、警護デッキ対応
+//						- メニューへ「同盟＞同盟ログ＞友軍」を追加
+//						- メニューへ「報告書＞友軍」を追加
 
 //	トレード画面の修行効率表示にSLを追加
 //
@@ -3896,7 +3899,7 @@ function execCommonPart() {
 				['同盟ログ', BASE_URL + '/alliance/alliance_log.php',
 					[
 						['全て', alogurl], ['攻撃', alogurl + '?m=attack'], ['防御', alogurl + '?m=defense'], ['偵察', alogurl + '?m=scout'],
-						['破壊', alogurl + '?m=fall'], ['援軍', alogurl + '?m=reinforcement'], ['同盟', alogurl + '?m=alliance'],
+						['破壊', alogurl + '?m=fall'], ['援軍', alogurl + '?m=reinforcement'], ['友軍', alogurl + '?m=friendly_army'], ['同盟', alogurl + '?m=alliance'],
 					],
 				],
 				['ランキング', alurl + '/ranking.php'], ['勢力リスト', alurl + '/dependency.php'], ['同盟掲示板', BASE_URL + '/bbs/topic_view.php'],
@@ -4131,6 +4134,7 @@ function execCommonPart() {
 				['偵察', BASE_URL + '/report/list.php?m=scout&u='],
 				['破壊', BASE_URL + '/report/list.php?m=fall&u='],
 				['援軍', BASE_URL + '/report/list.php?m=reinforcement&u='],
+				['友軍', BASE_URL + '/report/list.php?m=friendly_army&u='],
 				['同盟', BASE_URL + '/report/list.php?m=alliance&u='],
 				['南蛮襲来', BASE_URL + '/report/list.php?m=npc_assault&u='],
 			],
@@ -7702,6 +7706,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 						"<div>" +
 							"<input type='button' id='deck_domestic_" + i + "' style='font-size: 10px;' value='内政'></input>" +
 							"<input type='button' id='deck_set_" + i + "' style='font-size: 10px;' value='配置'></input>" +
+							"<input type='button' id='deck_defense_" + i + "' style='font-size: 10px;' value='警護'></input>" +
 							"<span style='margin-left: 1px; font-size: 12px;'>" +
 								selects.prop('outerHTML') +
 							"</span>" +
@@ -7712,6 +7717,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 						"<div>" +
 							"<input type='button' style='font-size: 10px;' value='内政' disabled></input>" +
 							"<input type='button' style='font-size: 10px;' value='配置' disabled></input>" +
+							"<input type='button' style='font-size: 10px;' value='警護' disabled></input>" +
 							"<span style='margin-left: 1px; font-size: 12px;'>" +
 								selects.prop('outerHTML') +
 							"</span>" +
@@ -7726,7 +7732,18 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 						q$(this).parent().children('input[type="button"]').prop("disabled", true);
 
 						// デッキセット処理
-						exec_deck_set(q$(this));
+						exec_deck_set(q$(this), false);
+					}
+				);
+
+				// イベント定義(警護)
+				q$("input[id='deck_defense_" + i + "']").on('click',
+					function() {
+						// 状態変更
+						q$(this).parent().children('input[type="button"]').prop("disabled", true);
+
+						// デッキセット処理
+						exec_deck_set(q$(this), true);
 					}
 				);
 
@@ -8237,13 +8254,20 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 	// 各種デッキ制御用メソッド //
 	//--------------------------//
 	// デッキセット
-	function exec_deck_set(element) {
+	function exec_deck_set(element, isDefense) {
 		var elembase = element.parents("div[class='cardStatusDetail label-setting-mode']");
 		var elems_l = q$("div[class^='left']", elembase);
 		var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
 
+		var deckMode = '';
+		var deckTo = 'デッキ';
+		if (isDefense) {
+			deckMode = '?deck_mode=2';
+			deckTo = '警護デッキ';
+		}
+
 		// 状態表示
-		element.parents("div[class='cardStatusDetail label-setting-mode']").find("div[class*=set]").eq(0).attr('class','set dis_set_mini').css('background-color', 'pink').html("デッキセット中");
+		element.parents("div[class='cardStatusDetail label-setting-mode']").find("div[class*=set]").eq(0).attr('class','set dis_set_mini').css('background-color', 'pink').html(deckTo + "セット中");
 
 		// 拠点IDの取得
 		var village_id = element.parent().find('select').val();
@@ -8256,9 +8280,9 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 
 		// 送信データ作成
 		var ssid = getSessionId();
-		var target_url = BASE_URL + '/card/deck.php';
+		var target_url = BASE_URL + '/card/deck.php' + deckMode;
 		var param = {'ssid':ssid, 'target_card':card_id, 'mode':'set'};
-		param["selected_village[" + card_id + "]"] = village_id;
+		param[`selected_village[${card_id}]`] = village_id;
 
 		// 通信処理
 		q$.ajax({
@@ -8270,7 +8294,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 		})
 		.done(function(res) {
 			// 状態変更
-			element.parents("div[class='cardStatusDetail label-setting-mode']").find("div[class='set dis_set_mini']").eq(0).css('background-color', 'pink').html("デッキセット済");
+			element.parents("div[class='cardStatusDetail label-setting-mode']").find("div[class='set dis_set_mini']").eq(0).css('background-color', 'pink').html(deckTo + "セット済");
 		});
 	}
 
