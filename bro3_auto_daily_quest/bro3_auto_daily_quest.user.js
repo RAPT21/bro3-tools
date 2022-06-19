@@ -8,15 +8,15 @@
 // @include		https://*.3gokushi.jp/facility/castle_send_troop.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @exclude		https://*.3gokushi.jp/maintenance*
-// @require		http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
+// @require		http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2020.12.06
+// @version 	2022.06.19
 // ==/UserScript==
-var VERSION = "2020.12.06"; 	// バージョン情報
+var VERSION = "2022.06.19"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -30,6 +30,7 @@ var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
 var OPT_AUTO_DUEL			= 0; // 自動デュエル
 var OPT_AUTO_JORYOKU		= 0; // 自動助力
 var OPT_AUTO_OPEN_ALL_REPORTS = 0; // 全ての報告書を既読にする
+var OPT_AUTO_RECEIVE_LOGIN_BONUS = 0; // 洛陽への路 通算ログイン報酬を受取る
 
 var OPT_TROOPS_CARD_ID		= 0;// 出兵武将カードID
 var OPT_TROOPS_X			= 0;// 出兵先座標x
@@ -80,6 +81,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2020.05.20 運営書簡を既読にするオプションを追加
 // 2020.12.06 ログインボーナス書簡が廃止されたので、運営書簡を既読にするオプションを廃止
 //			  12/4 のメンテ以降、自動デュエルが動作しなくなっていた問題を修正（デュエルのURLが変更されていた）
+// 2022.06.19 洛陽への路 通算ログイン報酬を受取る
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -185,6 +187,7 @@ function moveFromInbox(reloadIfNeed){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 
+		var item_id_list = "";
 		var count = 0;
 		var script_list = xpath('//div[@id="whiteWrapper"]/script',htmldoc);
 		if (script_list.snapshotLength) {
@@ -331,6 +334,30 @@ function yorozudas(callback){
 			if (callback) {
 				callback();
 			}
+		}
+	});
+}
+
+// 洛陽への路 通算ログイン報酬を受取る
+function receiveLoginBonus()
+{
+	httpGET('/reward/login_bonus/',function(y){
+		var htmldoc = document.createElement("html");
+			htmldoc.innerHTML = y;
+
+		var days = q$("#header_4 div[class*=total-login-days] > p > span.num", htmldoc).eq(0).text().trim();
+		console.log(`通算ログイン日数: ${days}`);
+
+		var button = q$("#header_4 div[class*=total-login-days] div[class^=btn-receive-reward]", htmldoc).eq(0);
+		var isEnabled = button.attr("class").indexOf("disabled") < 0;
+		if (isEnabled && q$("div", button).length > 0) {
+			var c = {
+				'type': 'receive_total_login_bonus'
+			};
+			httpPOST('/reward/login_bonus/', c, function(x){
+				console.log("通算ログイン報酬: 受領");
+				//var tid=setTimeout(function(){location.reload(false);},INTERVAL);
+			});
 		}
 	});
 }
@@ -585,6 +612,11 @@ function callSendTroop()
 
 				// ツールに連動しない報酬受領
 				receiveRewards();
+
+				// 洛陽への路 通算ログイン報酬を受取る
+				if (OPT_AUTO_RECEIVE_LOGIN_BONUS) {
+					receiveLoginBonus();
+				}
 			});
 		}, OPT_QUEST_TIMEINTERVAL);
 	}
@@ -807,6 +839,7 @@ function openSettingBox() {
 		ccreateCheckBox(td200, "OPT_AUTO_DUEL"			, OPT_AUTO_DUEL			, " [02:00:00 - 05:59:59] 以外に自動デュエル", "[00:00:00 - 01:59:59], [06:00:00 - 23:59:59] の時間帯のみ自動デュエルを行ないます。",0);
 		ccreateCheckBox(td200, "OPT_AUTO_JORYOKU"		, OPT_AUTO_JORYOKU		, " 自動助力", "同盟施設に祈祷所がある場合、自動で助力を行ないます。",0);
 		ccreateCheckBox(td200, "OPT_AUTO_OPEN_ALL_REPORTS", OPT_AUTO_OPEN_ALL_REPORTS, " 全ての報告書を既読にする", "報告書タブにあるボタンを自動で押します。",0);
+		ccreateCheckBox(td200, "OPT_AUTO_RECEIVE_LOGIN_BONUS", OPT_AUTO_RECEIVE_LOGIN_BONUS, " 洛陽への路 通算ログイン報酬を受取る", "洛陽への路の通算ログイン報酬を自動で受け取ります。",0);
 			ccreateText(td200, "dummy", "　", 0 );
 
 	Setting_Box.appendChild(tr100);
@@ -853,6 +886,7 @@ function saveSettingBox() {
 	strSave += cgetCheckBoxValue($("OPT_AUTO_DUEL"))		+ DELIMIT2; // [02:00:00 - 05:59:59] 以外に自動デュエル
 	strSave += cgetCheckBoxValue($("OPT_AUTO_JORYOKU"))		+ DELIMIT2; // 自動助力
 	strSave += cgetCheckBoxValue($("OPT_AUTO_OPEN_ALL_REPORTS"))+ DELIMIT2; // 全ての報告書を既読にする
+	strSave += cgetCheckBoxValue($("OPT_AUTO_RECEIVE_LOGIN_BONUS"))+ DELIMIT2; // 洛陽への路 通算ログイン報酬を受取る
 	strSave += DELIMIT1;
 	strSave += OPT_TROOPS_CARD_ID	+ DELIMIT2; // 出兵武将カードID
 	strSave += OPT_TROOPS_X			+ DELIMIT2; // 出兵先座標x
@@ -889,6 +923,7 @@ function loadSettingBox() {
 		OPT_AUTO_DUEL			= 1; // [02:00:00 - 05:59:59] 以外に自動デュエル
 		OPT_AUTO_JORYOKU		= 1; // 自動助力
 		OPT_AUTO_OPEN_ALL_REPORTS = 1; // 全ての報告書を既読にする
+		OPT_AUTO_RECEIVE_LOGIN_BONUS = 1; // 洛陽への路 通算ログイン報酬を受取る
 		OPT_TROOPS_CARD_ID		= 0; // 出兵武将カードID
 		OPT_TROOPS_X			= 0; // 出兵先座標x
 		OPT_TROOPS_Y			= 0; // 出兵先座標y
@@ -907,6 +942,11 @@ function loadSettingBox() {
 			OPT_AUTO_OPEN_ALL_REPORTS = forInt(Temp[8]); // 全ての報告書を既読にする
 		} else {
 			OPT_AUTO_OPEN_ALL_REPORTS = 1;
+		}
+		if (Temp.length > 9) {
+			OPT_AUTO_RECEIVE_LOGIN_BONUS = forInt(Temp[9]); // 洛陽への路 通算ログイン報酬を受取る
+		} else {
+			OPT_AUTO_RECEIVE_LOGIN_BONUS = 1;
 		}
 
 		if (Temp1.length >= 2) {
