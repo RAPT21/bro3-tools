@@ -8,7 +8,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	0.3
+// @version 	0.4
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
@@ -24,8 +24,9 @@ q$ = jQuery;
 // 2022.03.24  0.3	自動ダス（自動でブショーダスを引く）機能を追加
 //					自動ダスを無効にしたい場合、スクリプト内カスタム設定で変更可能
 //					「あなたが持てる武将カード」が残り0枚になるか、現在のBP/チケットが規定に満たない場合は停止
+// 2022.06.21  0.4	カードNoで残すカードを指定できるように。残すカードNoになく、スキル名もマッチしないカードを削除対象にします。
 
-var VERSION = "2022.03.24.dev";
+var VERSION = "2022.06.21.dev";
 
 //=====[ カスタム設定 ]=====
 // 自動ダスを有効にするか
@@ -34,6 +35,11 @@ var isSupportAutoDas = true;
 // 自動ダスのウェイト（ミリ秒）
 // サーバー負荷対策のため1000（1秒）以上を推奨
 var waitInterval = 3000;
+
+// 残すカードNo
+var wantCardNos = [
+	1007
+];
 
 // 前方一致
 var wantSkillNames = [
@@ -49,7 +55,7 @@ var wantSkillNames = [
 	"全軍の",
 	"覇道",
 	"烈速",
-//以下、練兵修練素材
+//以下、練兵修練素材,
 //	'練兵修練',
 //	'剣兵突覇',
 //	'剣兵の聖域',
@@ -82,11 +88,30 @@ function isWantSkill(skillName) {
 	return result;
 }
 
+// カード情報をチェックして残すカードはtrueを返す
+function isWantCard(cols) {
+	var info = q$('div.omote_4sk', cols.eq(1));
+
+	// カードNoで探す
+	var cardno = parseInt(q$('span.cardno', info).text().trim(), 10);
+	var isWant = wantCardNos.length > 0 && wantCardNos.indexOf(cardno) >= 0;
+	if (isWant) {
+		return true;
+	}
+
+	// コストで探す: TBD
+	//var cost = parseFloat(q$('span[class="cost-for-sub"]', info).text().trim());
+
+	// スキル名で探す
+	var skillName = cols.eq(2).text().trim();
+	return isWantSkill(skillName);
+}
+
 // 不要カードのセルにチェックを入れる
 var proc = function(){
 	var cols = q$("td", this);
 	if (cols.length === 4) {
-		if (!isWantSkill(cols.eq(2).text().trim())) {
+		if (!isWantCard(cols)) {
 			q$("input.delete", cols.eq(0)).prop('checked', true);
 		}
 	}
