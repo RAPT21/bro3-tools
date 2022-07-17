@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.15
+// @version		1.09.16
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -98,6 +98,7 @@
 // 1.09.15	2022/06/19	RAPT. 簡易デッキセット機能で、警護デッキ対応
 //						- メニューへ「同盟＞同盟ログ＞友軍」を追加
 //						- メニューへ「報告書＞友軍」を追加
+// 1.09.16	2022/07/18	RAPT. メニュー「クエスト」に通常クエスト、育成クエストを追加
 
 //	トレード画面の修行効率表示にSLを追加
 //
@@ -4147,14 +4148,8 @@ function execCommonPart() {
 			],
 			// クエスト
 			[
-				['すべて', BASE_URL + '/quest/index.php?list=1&p=1&action=apply_condition&disp_mode=0&scroll_pos=0&selected_tab=1'],
-				['基本', BASE_URL + '/quest/index.php?list=1&p=1&action=apply_condition&disp_mode=0&scroll_pos=0&selected_tab=2'],
-				['内政', BASE_URL + '/quest/index.php?list=1&p=1&action=apply_condition&disp_mode=0&scroll_pos=0&selected_tab=3'],
-				['戦闘', BASE_URL + '/quest/index.php?list=1&p=1&action=apply_condition&disp_mode=0&scroll_pos=0&selected_tab=4'],
-				['同盟', BASE_URL + '/quest/index.php?list=1&p=1&action=apply_condition&disp_mode=0&scroll_pos=0&selected_tab=5'],
-				['武将', BASE_URL + '/quest/index.php?list=1&p=1&action=apply_condition&disp_mode=0&scroll_pos=0&selected_tab=6'],
-				['繰り返し', BASE_URL + '/quest/index.php?list=1&p=1&action=apply_condition&disp_mode=0&scroll_pos=0&selected_tab=7'],
-				['期間限定', BASE_URL + '/quest/index.php?list=1&p=1&action=apply_condition&disp_mode=0&scroll_pos=0&selected_tab=8'],
+				['通常クエスト', BASE_URL + '/quest/index.php'],
+				['育成クエスト', BASE_URL + '/quest/index.php?quest_type=2'],
 				['デイリー受領', 'id:receipt_quest'],
 			],
 		];
