@@ -99,6 +99,8 @@
 //						- メニューへ「同盟＞同盟ログ＞友軍」を追加
 //						- メニューへ「報告書＞友軍」を追加
 // 1.09.16	2022/07/18	RAPT. メニュー「クエスト」に通常クエスト、育成クエストを追加
+//						- メニューへ「プロフィール＞歴史書」を追加
+//						- メニューへ「統計＞資源＞個別、集計、武将、自動軍費チャージ」を追加
 
 //	トレード画面の修行効率表示にSLを追加
 //
@@ -106,6 +108,8 @@
 // 内政ボタンで、拠点を変更せずにセットする新方式対応
 // 回復系スキルは、空いている拠点で実行するオプション
 // 内政ボタン/内政スキルで、すでにその拠点に内政官がいる場合、置き換えるかの確認。「呉の治世」スキル発動中です。内政官を置き換えますか？　はい「いいえ」
+// 自動ラベル変更の変更先をファイル上部へ戻す
+// 超覇合成したカードで自動SLVUPできない
 
 // ローカル開発なので、uploadする前に正規バージョンにすること
 //----------------------------------------------------------------------
@@ -3873,6 +3877,7 @@ function execCommonPart() {
 						['獲得武勲', BASE_URL + '/user/decoration.php'],
 						['表示設定', BASE_URL + '/user/disp_config.php'],
 						['君主官位', BASE_URL + '/user/deck_power_grade'],
+						['歴史書', BASE_URL + '/historybook/game_result.php'],
 						['改武将カードカスタマイズ', BASE_URL + '/card_customize/make_select.php'],
 					],
 				],
@@ -4124,7 +4129,14 @@ function execCommonPart() {
 						['週間', BASE_URL + '/user/weekly_ranking.php'],
 					],
 				],
-				['資源', BASE_URL + '/material/auto_capture_material/result.php'],
+				['資源', BASE_URL + '/material/auto_capture_material/result.php',
+					[
+						['個別', BASE_URL + '/material/auto_capture_material/result.php'],
+						['集計', BASE_URL + '/material/auto_capture_material/result.php?m=summary'],
+						['武将', BASE_URL + '/material/auto_capture_material/result.php?m=summary_card'],
+						['自動軍費チャージ', BASE_URL + '/material/auto_capture_material/result.php?m=council_point'],
+					],
+				],
 			],
 			// 報告書
 			[
