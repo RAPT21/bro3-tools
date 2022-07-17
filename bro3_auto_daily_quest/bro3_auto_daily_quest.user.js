@@ -14,9 +14,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2022.06.19
+// @version 	2022.07.18
 // ==/UserScript==
-var VERSION = "2022.06.19"; 	// バージョン情報
+var VERSION = "2022.07.18"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -82,6 +82,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2020.12.06 ログインボーナス書簡が廃止されたので、運営書簡を既読にするオプションを廃止
 //			  12/4 のメンテ以降、自動デュエルが動作しなくなっていた問題を修正（デュエルのURLが変更されていた）
 // 2022.06.19 洛陽への路 通算ログイン報酬を受取る
+// 2022.07.18 育成クエストのクエクリ報酬も自動受領するようにした
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -363,21 +364,10 @@ function receiveLoginBonus()
 }
 
 // クリアしたクエスト報酬を受け取る
-function receiveRewards()
+function receiveRewardsImpl(check, path, callback)
 {
 	var receive_it = false;
-	var callback = function(){
-		if (OPT_MOVE_FROM_INBOX) {
-			if (receive_it) {
-				clearLastTime();
-			}
-			moveFromInbox(receive_it);
-		} else if (receive_it) {
-			clearLastTime();
-			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
-		}
-	};
-	httpGET('/quest/index.php?list=1&p=1&mode=0&selected_tab=7',function(y){
+	httpGET(check,function(y){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
@@ -396,25 +386,63 @@ function receiveRewards()
 
 			if (receive_it){
 				console.log(SERVER+reward_content+' -> 受領');
-				httpGET('/quest/index.php?c=1',function(x){
+				httpGET(path,function(x){
 					// 報酬がヨロズダス回数ならそのままヨロズダスを引く
 					if (reward_text == 'ヨロズダス回数') {
-						yorozudas(callback);
+						if (callback) {
+							callback(true, receive_it);
+						}
 					} else {
 						if (callback) {
-							callback();
+							callback(false, receive_it);
 						}
 					}
 				});
 			} else {
 				console.log(SERVER+reward_content+' -> 受領保留');
 				if (callback) {
-					callback();
+					callback(false, receive_it);
 				}
 			}
 		} else {
-			yorozudas(callback);
+			if (callback) {
+				callback(true, receive_it);
+			}
 		}
+	});
+}
+function receiveRewards() {
+	var receive_it = false;
+	var receive = function(){
+		if (OPT_MOVE_FROM_INBOX) {
+			if (receive_it) {
+				clearLastTime();
+			}
+			moveFromInbox(receive_it);
+		} else if (receive_it) {
+			clearLastTime();
+			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
+		}
+	};
+
+	// 通常クエスト
+	var check1 = '/quest/index.php?list=1&p=1&mode=0&selected_tab=7';
+	var path1 = '/quest/index.php?c=1';
+
+	// 育成クエスト
+	var check2 = '/quest/index.php?quest_type=2';
+	var path2 = '/quest/index.php?c=1&quest_type=2';
+
+	receiveRewardsImpl(check1, path1, function(y1, it1) {
+		receiveRewardsImpl(check2, path2, function(y2, it2) {
+			var yorozu = y1 || y2;
+			receive_it = it1 || it2;
+			if (yorozu) {
+				yorozudas(receive);
+			} else if (receive_it) {
+				receive();
+			}
+		});
 	});
 }
 
