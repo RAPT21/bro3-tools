@@ -4935,7 +4935,7 @@ function execUnionPart() {
 			);
 
 			// レベルアップ選択ラジオボタンの描画
-			var skills = q$("#gray02Wrapper div[class*='right'] ul[class='back_skill'] li:not([class='subgeneral']) span");
+			var skills = q$("#gray02Wrapper div[class*='right'] ul[class='back_skill'] li:not([class='subgeneral']) span:not([class^='skillComment'])");
 			var stats = q$("#gray02Wrapper div[class*='right'] ul[class='back_skill'] li a[class*=btn_detail_s]");
 			for (var i = 0; i < skills.length && i < stats.length; i++) {
 				var skillText = skills.eq(i).text().replace(/[ \t\r\n]/g, "");
