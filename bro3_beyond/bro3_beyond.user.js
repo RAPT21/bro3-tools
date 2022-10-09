@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.18
+// @version		1.09.19
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -104,6 +104,7 @@
 // 1.09.17	2022/07/23	moonlit-g. 超覇合成したカードで自動SLVUPできない問題を修正
 // 1.09.18	2022/10/09	RAPT. メニュー「デッキ＞兵士管理＞友軍」を追加
 //						- メニューへ「デッキ＞デッキ＞デッキコスト上限増加」を追加
+// 1.09.19	2022/10/09	RAPT. 資源タイマーが動作しなくなっていたのを修正
 
 //	トレード画面の修行効率表示にSLを追加
 //
@@ -4390,18 +4391,26 @@ function execResourceTimer() {
 		now['鉄'] = parseInt(q$("#iron").val());
 		now['糧'] = parseInt(q$("#rice").val());
 
+		var accountings = new Array();
+		q$("#outputResourceTable table table tbody tr").each(function(index, tr){
+			var type = q$("th:eq(0)", tr).text();
+			var item = q$("td:eq(2)", tr).text();
+			if (type.match(/(木|石|鉄|糧)/) !== null && item !== null) {
+				accountings[type] = parseInt(item.replace(",", ""), 10) > 0;
+			}
+		});
+
 		var resources = [];
 		q$("#sidebar div[class='sideBox'] div[class='sideBoxInner'] ul li").each(
 			 function() {
 				var text = q$(this).text();
-				var accounting = (q$("span[class='increase']", q$(this)).length == 0);
-				var match = text.match(/(木|石|鉄|糧) *([-]*\d+) *[+](\d+)/);
+				var match = text.match(/(木|石|鉄|糧) *([-]*\d+)/);
 				if (match != null) {
 					var obj = new Object;
 					obj.type = match[1];
-					obj.per = (parseInt(match[2]) + parseInt(match[3]));
+					obj.per = parseInt(match[2]);
 					obj.rate = obj.per / 3600;
-					obj.accounting = accounting;
+					obj.accounting = accountings[obj.type];
 					if (obj.rate > 0) {
 						obj.remaining = parseInt((max - now[obj.type]) / obj.rate);
 					} else {
