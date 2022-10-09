@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.17
+// @version		1.09.18
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -102,6 +102,8 @@
 //						- メニューへ「プロフィール＞歴史書」を追加
 //						- メニューへ「統計＞資源＞個別、集計、武将、自動軍費チャージ」を追加
 // 1.09.17	2022/07/23	moonlit-g. 超覇合成したカードで自動SLVUPできない問題を修正
+// 1.09.18	2022/10/09	RAPT. メニュー「デッキ＞兵士管理＞友軍」を追加
+//						- メニューへ「デッキ＞デッキ＞デッキコスト上限増加」を追加
 
 //	トレード画面の修行効率表示にSLを追加
 //
@@ -3920,7 +3922,8 @@ function execCommonPart() {
 					[
 						['全て', facsturl + '?type=all'], ['待機', facsturl + '?type=wait'], ['援軍先待機', facsturl + '?type=help_wait'],
 						['出撃', facsturl + '?type=sortie'], ['予約', facsturl + '?type=reserve'], ['帰還', facsturl + '?type=return'],
-						['援軍', facsturl + '?type=help'], ['敵襲', facsturl + '?type=enemy'], ['偵察', facsturl + '?type=scout'],
+						['援軍', facsturl + '?type=help'], ['友軍', facsturl + '?type=friendly_army'],
+						['敵襲', facsturl + '?type=enemy'], ['偵察', facsturl + '?type=scout'],
 					],
 				],
 				['領地管理', facurl + '/territory_status.php'],
@@ -3935,6 +3938,7 @@ function execCommonPart() {
 				['デッキ', BASE_URL + '/card/deck.php',
 					[
 						['警護デッキ', BASE_URL + '/card/deck.php?deck_mode=2'],
+						['デッキコスト上限増加', BASE_URL + '/card/deckcost.php'],
 						['カード入手履歴', BASE_URL + '/busyodas/busyodas_history.php'],
 						['カード一括破棄', BASE_URL + '/card/allcard_delete.php'],
 					],
