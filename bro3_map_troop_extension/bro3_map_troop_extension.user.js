@@ -12,7 +12,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.6
+// @version 	1.7
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -46,13 +46,16 @@ jQuery.noConflict();
 // 2020.06.07	1.4	https対応、NPC領地もカラーリング対象、未取得領地をカラーリングするかのオプション(デフォルトfalse)を追加
 // 2020.07.12	1.5	未攻略のNPC拠点名が取得できなくなっていた不具合を修正
 // 2020.11.06	1.6	左クリックで座標を連続コピーするモードを追加、UI 表示位置調整
+// 2022.07.24	1.7	★7～9 の領地をカラーリングするかのオプション(デフォルトtrue)を追加
+//					保護地の領地名編集時、従来であれば「★9拠」となる場合について「保護地」を代わりに使うようにした
 
 //==========[オプション]==========
 var OPT_COLORING_RESOURCES = true;		// 資源地カラーリングを行うか。falseだと何も行いません。
 var OPT_TROOP_OPEN_NEW_WINDOW = true;	// 出兵画面を新規ウィンドウで開くか。falseだと同一画面で遷移します。
 var OPT_REFRESH_AFTER_EDITNAME = false;	// 領地名変更後に画面更新するか。falseだと処理成功時マス目が点滅します。
 var OPT_UNIT_STATUS_SWITCH_SORTIE_TO_ALL = false;	// 出兵管理画面で出撃タブ表示時、全て表示に切り替える
-var OPT_SUPPORT_MIDDLE_RANGE_LAND = false;	// ★4～6 の領地もカラーリングするか
+var OPT_SUPPORT_MIDDLE_RANGE_LAND = false;	// ★4～6 の領地をカラーリングするか
+var OPT_SUPPORT_HIGH_RANGE_LAND = true;	// ★7～9 の領地をカラーリングするか
 var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングするか
 
 //==========[本体]==========
@@ -177,6 +180,7 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 		obj.blank = false;
 		obj.virgin = false;
 		obj.npc = false;
+		obj.protected = false;
 		obj.areaname = "";
 		obj.wood = 0;
 		obj.stone = 0;
@@ -194,6 +198,9 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 			if (mtext.match(/新領地\d+,\d+\(未取得\)/)) {
 				obj.virgin = true;
 			}
+		}
+		if (mtext.match(/protected\-area\-flg[^>]*>保護地<\/span>/)) {
+			obj.protected = true;
 		}
 		if (mtext.match(/bigmap-caption[^>]*>([^<]+)/)) {
 			obj.areaname = RegExp.$1;
@@ -376,9 +383,17 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 			} else if (obj.wood === 4 && obj.stone === 4 && obj.iron === 4 && obj.food >= 4) {
 				message += "\n★" + obj.stars + "資" + mxy;
 			} else if (obj.wood === 1 && obj.stone === 1 && obj.iron === 1 && obj.food === 2) {
-				message += "\n★" + obj.stars + "拠" + mxy;
+				if (obj.protected && obj.stars == 9) {
+					message += "\n保護地" + mxy;
+				} else {
+					message += "\n★" + obj.stars + "拠" + mxy;
+				}
 			} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food === 0) {
-				message += "\n★" + obj.stars + "拠" + mxy;
+				if (obj.protected && obj.stars == 9) {
+					message += "\n保護地" + mxy;
+				} else {
+					message += "\n★" + obj.stars + "拠" + mxy;
+				}
 			}
 		} else {
 			message_pre = message_pre.replace(/領地名/,"拠点名");
@@ -577,43 +592,47 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 			return;
 		}
 
-		if (obj.wood >= 14 && obj.stone === 0 && obj.iron === 0 && obj.food === 0) {
-			col = cWood;
-		} else if (obj.wood === 0 && obj.stone >= 14 && obj.iron === 0 && obj.food === 0) {
-			col = cStone;
-		} else if (obj.wood === 0 && obj.stone === 0 && obj.iron >= 14 && obj.food === 0) {
-			col = cIron;
-		} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food >= 12) {
-			col = cRice;
-		} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food === 1) { // ★7:平地32
-			col = cRiceField;
-		} else if (obj.stars === 8) {	// ★8特化
-			if (obj.wood >= 5 && obj.stone === 4 && obj.iron === 4 && obj.food === 2) { // 12期～
+		if (OPT_SUPPORT_HIGH_RANGE_LAND) {
+			// ★7～9 をサポート
+			if (obj.wood >= 14 && obj.stone === 0 && obj.iron === 0 && obj.food === 0) {
 				col = cWood;
-			} else if (obj.wood === 4 && obj.stone >= 5 && obj.iron === 4 && obj.food === 2) { // 12期～
+			} else if (obj.wood === 0 && obj.stone >= 14 && obj.iron === 0 && obj.food === 0) {
 				col = cStone;
-			} else if (obj.wood === 4 && obj.stone === 4 && obj.iron >= 5 && obj.food === 2) { // 12期～
+			} else if (obj.wood === 0 && obj.stone === 0 && obj.iron >= 14 && obj.food === 0) {
 				col = cIron;
-			} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food === 0) { // 10期～:平地37
-				col = cFacility;
-			}
-		} else if (obj.stars === 9) {	// ★9特化
-			if (obj.wood === 1 && obj.stone === 1 && obj.iron === 1 && obj.food === 2) { // 2～11期:平地39
-				col = cFacility;
-			} else if (obj.wood === 3 && obj.stone === 3 && obj.iron === 3 && obj.food === 3) { // (3-3-3-3) 資源地
-				col = cResource;
-			} else if (obj.wood === 4 && obj.stone === 4 && obj.iron === 4 && obj.food === 4) { // (4-4-4-4) 資源地
-				col = cResource;
-			} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food === 0) { // 12期～:平地40
-				col = cFacility;
-			} else if (obj.wood === 7 && obj.stone === 0 && obj.iron === 0 && obj.food === 4) { // 12期～:平地37,工場村
-				col = cWood;
-			} else if (obj.wood === 0 && obj.stone >= 7 && obj.iron === 0 && obj.food === 4) { // 12期～:平地37,工場村
-				col = cStone;
-			} else if (obj.wood === 0 && obj.stone === 0 && obj.iron >= 7 && obj.food === 4) { // 12期～:平地37,工場村
-				col = cIron;
+			} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food >= 12) {
+				col = cRice;
+			} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food === 1) { // ★7:平地32
+				col = cRiceField;
+			} else if (obj.stars === 8) {	// ★8特化
+				if (obj.wood >= 5 && obj.stone === 4 && obj.iron === 4 && obj.food === 2) { // 12期～
+					col = cWood;
+				} else if (obj.wood === 4 && obj.stone >= 5 && obj.iron === 4 && obj.food === 2) { // 12期～
+					col = cStone;
+				} else if (obj.wood === 4 && obj.stone === 4 && obj.iron >= 5 && obj.food === 2) { // 12期～
+					col = cIron;
+				} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food === 0) { // 10期～:平地37
+					col = cFacility;
+				}
+			} else if (obj.stars === 9) {	// ★9特化
+				if (obj.wood === 1 && obj.stone === 1 && obj.iron === 1 && obj.food === 2) { // 2～11期:平地39
+					col = cFacility;
+				} else if (obj.wood === 3 && obj.stone === 3 && obj.iron === 3 && obj.food === 3) { // (3-3-3-3) 資源地
+					col = cResource;
+				} else if (obj.wood === 4 && obj.stone === 4 && obj.iron === 4 && obj.food === 4) { // (4-4-4-4) 資源地
+					col = cResource;
+				} else if (obj.wood === 0 && obj.stone === 0 && obj.iron === 0 && obj.food === 0) { // 12期～:平地40
+					col = cFacility;
+				} else if (obj.wood === 7 && obj.stone === 0 && obj.iron === 0 && obj.food === 4) { // 12期～:平地37,工場村
+					col = cWood;
+				} else if (obj.wood === 0 && obj.stone >= 7 && obj.iron === 0 && obj.food === 4) { // 12期～:平地37,工場村
+					col = cStone;
+				} else if (obj.wood === 0 && obj.stone === 0 && obj.iron >= 7 && obj.food === 4) { // 12期～:平地37,工場村
+					col = cIron;
+				}
 			}
 		}
+
 		if (col.length) {
 			// 数字をカラーリングし、黒い縁取りをつけて見やすくする
 			at.css({"color": col, "text-shadow": "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000", "border": border});
