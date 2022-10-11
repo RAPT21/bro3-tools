@@ -10,7 +10,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.0
+// @version 	1.1
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
@@ -36,6 +36,7 @@ q$ = jQuery;
 
 
 // 2022.10.09	1.0	初版
+// 2022.10.12	1.1	初版	友軍状況画面を開いたとき、自要塞を選択拠点とするように
 
 
 var SERVER_SCHEME = location.protocol + "//";
@@ -110,6 +111,33 @@ function requestAxis(vId, count) {
 	}, 'html');
 }
 
+function changeToMyFortressIfNeeded(vId) {
+	// 自拠点リストを取得
+	var list = new Array();
+	q$("#sidebar div.basename ul li a[href*='village_change.php?village_id']").each(function(){
+		var m = q$(this).attr("href").match(/village_id=(\d+)/);
+		if (m !== null && m.length === 2) {
+			list.push(m[1]);
+		}
+	});
+
+	// 自要塞IDが自拠点リストリンクに含まれない場合は、要塞選択済
+	if (!list.includes(vId)) {
+		return;
+	}
+
+	// 自要塞へ移動（応答を待たない）
+	q$.ajax({
+		url: `${SERVER_BASE}/village_change.php`,
+		type: 'GET',
+		datatype: 'html',
+		cache: false,
+		data: {
+			village_id: vId
+		}
+	});
+}
+
 // 派遣兵種
 addArmyType();
 
@@ -126,23 +154,34 @@ q$("#gray02Wrapper table[class*='tables'] tbody tr").each(function(index, row){
 	var target = q$("td:eq(2)", row); // 友軍
 	var moving = q$("td:eq(3)", row); // 直近到着
 	var sender = q$("td:eq(4)", row); // 派遣君主
-	if (sender === null || (sender.text() !== myName && sender.text() !== '-') || name.text() === myName) {
-		// 派遣君主が自分or未派遣の君主宛てのみ派遣可能
+	if (sender === null || target.text() === '-') {
+		// 相手君主に要塞がない場合はスキップ
 		return true;
 	}
+
 	var link = dest.attr("href");
-	if (link === null || target.text() === '-') {
+	if (link === null) {
 		// 要塞リンクが取得できない場合はスキップ
-		return true;
-	}
-	if (moving.text() !== '-') {
-		// 移動中友軍がある場合はスキップ; 派遣君主が自分かつ、空き＞移動中なら、差分は追加できるが一旦なしにする
 		return true;
 	}
 
 	// 要塞の拠点ID
 	var vId = link.match(/village_id=(\d+)/);
 	if (vId === null || vId.length !== 2) {
+		return true;
+	}
+
+	if (name.text() === myName) {
+		// 自要塞の拠点IDの場合、選択拠点が要塞でなければ切り替えておく
+		changeToMyFortressIfNeeded(vId[1]);
+		return true;
+	}
+	if (sender.text() !== myName && sender.text() !== '-') {
+		// 派遣君主が自分or未派遣の君主宛てのみ派遣可能
+		return true;
+	}
+	if (moving.text() !== '-') {
+		// 移動中友軍がある場合はスキップ; 派遣君主が自分かつ、空き＞移動中なら、差分は追加できるが一旦なしにする
 		return true;
 	}
 
@@ -163,7 +202,7 @@ q$("#gray02Wrapper table[class*='tables'] tbody tr").each(function(index, row){
 	target.eq(0).on('click', function(){
 		// クリックできなくする
 		q$(this).off('click');
-		target.html(`<span style="text-decoration: line-through;">${vacancy}</span>`);
+		target.html(`<span id="a-status-${vId[1]}">派兵中</span>`);
 		// 派遣先要塞の座標を取得してから送る
 		requestAxis(vId[1], vacancy);
 	});
