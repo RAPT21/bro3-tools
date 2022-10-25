@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2022.05.01
+// @version		2022.10.25
 // ==/UserScript==
 
 // 配布サイト
@@ -164,8 +164,10 @@
 // 2022.04.21 軍費1あたりの資源が10000未満の鯖で軍費貯蓄できない場合がある不具合を修正
 // 2022.04.29 4/28のメンテ以降で拠点名が取得できなくなり、ビルダー設定画面が壊れる問題を修正
 // 2022.05.01 武器/防具LVUP中のレベル表記を追加
+// 2022.10.25 6/30のメンテ以降で軍費貯蓄仕様変更に伴い、自動軍費貯蓄が動作しなくなっていたのを修正 #31
+//			  (Chrome+)Tampermonkey 4.18 で使えなくなった対策(thx>@kisara-icy #33
 
-var VERSION = "2022.05.01"; 	// バージョン情報
+var VERSION = "2022.10.25"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -964,7 +966,8 @@ function cloadData(key, value, local, ev)
 	if( local ) key = location.hostname + key  + PGNAME;
 	var ret = GM_getValue(key, value);
 
-	if (window.chrome) { // 2015.05.23
+	var agent = window.navigator.userAgent.toLowerCase();
+	if (window.chrome || agent.indexOf("chrome") != -1 || agent.indexOf("android") != -1) {
 		return ev ? eval(eval('ret='+ret)) : ret;
 	} else {
 		return ev ? eval('ret='+ret) : ret;
@@ -7769,9 +7772,6 @@ debugLog("=== Start autoDonate ===");
 
 //軍費貯蓄量を取得
 function addCouncilPoint(wood, stone, iron, rice, unit) {
-	//軍費1あたりの資源量が1万未満はその値、1万以上は万単位
-	var power = (unit < 10000) ? unit : 1;
-
 	//納入なしのときはスキップ
 	var total = wood + stone + iron + rice;
 	if(total === 0) {
@@ -7817,11 +7817,13 @@ function addCouncilPoint(wood, stone, iron, rice, unit) {
 				}
 
 				//貯蓄実行
-				var c={};
-				c['wood'] = wood * power;
-				c['stone'] = stone * power;
-				c['iron'] = iron * power;
-				c['rice'] = rice * power;
+				var c = {
+					resource_show_last_digits: 0
+				};
+				c['wood'] = wood * unit;
+				c['stone'] = stone * unit;
+				c['iron'] = iron * unit;
+				c['rice'] = rice * unit;
 				q$.post(SERVER_BASE+"/council/council_point.php",c,function(){});
 				var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 			}
