@@ -14,9 +14,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2022.07.18
+// @version 	2022.11.01
 // ==/UserScript==
-var VERSION = "2022.07.18"; 	// バージョン情報
+var VERSION = "2022.11.01"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -31,6 +31,7 @@ var OPT_AUTO_DUEL			= 0; // 自動デュエル
 var OPT_AUTO_JORYOKU		= 0; // 自動助力
 var OPT_AUTO_OPEN_ALL_REPORTS = 0; // 全ての報告書を既読にする
 var OPT_AUTO_RECEIVE_LOGIN_BONUS = 0; // 洛陽への路 通算ログイン報酬を受取る
+var OPT_TRAINING_QUEST		= 0; // 育成クエスト（勝戦の計、攻戦の計）自動受注
 
 var OPT_TROOPS_CARD_ID		= 0;// 出兵武将カードID
 var OPT_TROOPS_X			= 0;// 出兵先座標x
@@ -83,6 +84,8 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 //			  12/4 のメンテ以降、自動デュエルが動作しなくなっていた問題を修正（デュエルのURLが変更されていた）
 // 2022.06.19 洛陽への路 通算ログイン報酬を受取る
 // 2022.07.18 育成クエストのクエクリ報酬も自動受領するようにした
+// 2022.11.01 育成クエスト（勝戦の計、攻戦の計）の自動受注機能を追加
+//			  洛陽への路の処理優先度を上げた
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -101,6 +104,22 @@ var PGNAME		= "_bro3_auto_daily_quest_20150607_"; //グリモン領域への保�
 var ID_DONATE	= 254; // 同盟に合計500以上寄付する
 var ID_TROOPS	= 256; // 武将を出兵し、資源を獲得する
 var ID_DUEL		= 255; // ブショーデュエルで1回対戦する
+
+// 育成クエ 勝戦の計
+var ID_TRAINING_TICKET			= 11101; // チケットブショーダスを3回引こう
+var ID_TRAINING_COMPOSE			= 11201; // 合成を3回おこなおう
+var ID_TRAINING_LAN				= 11301; // ★5以上の領地を取得しよう
+var ID_TRAINING_CAPTURE			= 11401; // 距離100以上の★1領地に鹵獲出兵で資源を獲得しよう
+var ID_TRAINING_BARBARIANS_1ST	= 11501; // 南蛮襲来（進行編）を撃退しよう
+var ID_TRAINING_DUEL			= 11601; // ブショーデュエルで5勝しよう
+
+// 育成クエ 攻戦の計
+var ID_TRAINING_SKILL1			= 13111; // スキル「xx」を習得しよう(R水鏡)
+var ID_TRAINING_SKILL2			= 13211; // スキル「xx」を習得しよう(SR水鏡)
+var ID_TRAINING_FRENDLY			= 13301; // 3人以上の同盟員に友軍を派兵しよう
+var ID_TRAINING_EXTERM			= 13401; // 敵君主の領地に友軍を引率して殲滅戦を行おう
+var ID_TRAINING_BARBARIANS_2ND	= 13501; // 3人以上の君主から援軍を集めて第二章以上の南蛮襲来(強攻編)を撃退しよう
+var ID_TRAINING_VICEROY			= 13601; // 南蛮太守を2人以上任命して第二章以上の南蛮襲来(強攻編)を撃退しよう
 
 
 // ヘルパー関数
@@ -576,6 +595,80 @@ function callSendTroop()
 	});
 }
 
+// 育成クエ一覧を取得
+function getTrainingList(url, callback) {
+	httpGET(url, function(y){
+		var htmldoc = document.createElement("html");
+			htmldoc.innerHTML = y;
+
+		var stay = [];
+		var in_accept = [];
+		q$('#questB3_table table tbody tr.quest-tr', htmldoc).each(function(){
+			var item = q$(this).html();
+			if (q$(this).hasClass('in_accept')) {
+				var m = item.match(/cancelQuest\((\d+),\s*\d+,\s*\d+\)/);
+				if (m !== null && m.length >= 2) {
+					// 受注済ID
+					in_accept.push(m[1]);
+				}
+			} else if (q$(this).hasClass('finished') === false) {
+				var m = item.match(/takeQuest\((\d+),\s*\d+,\s*\d+\)/);
+				if (m !== null && m.length >= 2) {
+					// 未受注ID
+					stay.push(m[1]);
+				}
+			}
+		});
+		if (callback) {
+			callback(stay, in_accept);
+		}
+	});
+}
+
+// 育成クエストを受注
+function acceptTrainingQuest(callback) {
+	// 育成クエスト全体で最大10個まで受注可能のため、受注済件数をカウントするにはすべてをチェックする
+	var url1 = '/quest/index.php?list=1&mode=2&action=apply_condition&disp_mode=0&scroll_pos=0&quest_type=2&selected_tab=2&sort_1st_item=&sort_1st_order=asc&filter_category=-1&p=1';
+	var url2 = '/quest/index.php?list=1&mode=2&action=apply_condition&disp_mode=0&scroll_pos=0&quest_type=2&selected_tab=3&sort_1st_item=&sort_1st_order=asc&filter_category=-1&p=1';
+	var url3 = '/quest/index.php?list=1&mode=2&action=apply_condition&disp_mode=0&scroll_pos=0&quest_type=2&selected_tab=4&sort_1st_item=&sort_1st_order=asc&filter_category=-1&p=1';
+	getTrainingList(url1, function(s1, a1) {
+		getTrainingList(url2, function(s2, a2) {
+			getTrainingList(url3, function(s3, a3) {
+				// 結果を合成
+				var stay = s1.concat(s3.reverse()); // 攻戦の計は友軍クエを優先するため、逆順ソートして合成する
+				var in_accept = a1.concat(a2).concat(a3);
+				// 受注最大数は10
+				var canAcceptCount = 10 - in_accept.length;
+				if (canAcceptCount <= 0) {
+					// 最大件数受注済
+					if (callback) {
+						callback();
+					}
+					return;
+				}
+
+				// 最大数まで受注する
+				var quest_list = stay.slice(0, canAcceptCount);
+
+				// クエスト受注
+				var count = 0;
+				for (var i = 0; i < quest_list.length; i++){
+					httpGET(`/quest/index.php?action=take_quest&id=${quest_list[i]}`,function(x){
+						count++;
+
+						// すべての通信が完了した後の処理
+						if (count == quest_list.length) {
+							if (callback) {
+								callback();
+							}
+						}
+					});
+				}
+			});
+		});
+	});
+}
+
 
 ( function() {
 	loadSettingBox();
@@ -594,6 +687,16 @@ function callSendTroop()
 
 		// クエスト受注
 		setTimeout(function(){
+
+			// 洛陽への路 通算ログイン報酬を受取る
+			if (OPT_AUTO_RECEIVE_LOGIN_BONUS) {
+				receiveLoginBonus();
+			}
+
+			// 育成クエ受注
+			if (OPT_TRAINING_QUEST) {
+				acceptTrainingQuest();
+			}
 
 			// 受信箱から移す
 			if (OPT_MOVE_FROM_INBOX) {
@@ -640,11 +743,6 @@ function callSendTroop()
 
 				// ツールに連動しない報酬受領
 				receiveRewards();
-
-				// 洛陽への路 通算ログイン報酬を受取る
-				if (OPT_AUTO_RECEIVE_LOGIN_BONUS) {
-					receiveLoginBonus();
-				}
 			});
 		}, OPT_QUEST_TIMEINTERVAL);
 	}
@@ -868,6 +966,7 @@ function openSettingBox() {
 		ccreateCheckBox(td200, "OPT_AUTO_JORYOKU"		, OPT_AUTO_JORYOKU		, " 自動助力", "同盟施設に祈祷所がある場合、自動で助力を行ないます。",0);
 		ccreateCheckBox(td200, "OPT_AUTO_OPEN_ALL_REPORTS", OPT_AUTO_OPEN_ALL_REPORTS, " 全ての報告書を既読にする", "報告書タブにあるボタンを自動で押します。",0);
 		ccreateCheckBox(td200, "OPT_AUTO_RECEIVE_LOGIN_BONUS", OPT_AUTO_RECEIVE_LOGIN_BONUS, " 洛陽への路 通算ログイン報酬を受取る", "洛陽への路の通算ログイン報酬を自動で受け取ります。",0);
+		ccreateCheckBox(td200, "OPT_TRAINING_QUEST", OPT_TRAINING_QUEST, " 育成クエスト自動受注", "育成クエスト（勝戦の計、攻戦の計）を自動で受注します。",0);
 			ccreateText(td200, "dummy", "　", 0 );
 
 	Setting_Box.appendChild(tr100);
@@ -915,6 +1014,7 @@ function saveSettingBox() {
 	strSave += cgetCheckBoxValue($("OPT_AUTO_JORYOKU"))		+ DELIMIT2; // 自動助力
 	strSave += cgetCheckBoxValue($("OPT_AUTO_OPEN_ALL_REPORTS"))+ DELIMIT2; // 全ての報告書を既読にする
 	strSave += cgetCheckBoxValue($("OPT_AUTO_RECEIVE_LOGIN_BONUS"))+ DELIMIT2; // 洛陽への路 通算ログイン報酬を受取る
+	strSave += cgetCheckBoxValue($("OPT_TRAINING_QUEST"))+ DELIMIT2; // 育成クエスト（勝戦の計、攻戦の計）自動受注
 	strSave += DELIMIT1;
 	strSave += OPT_TROOPS_CARD_ID	+ DELIMIT2; // 出兵武将カードID
 	strSave += OPT_TROOPS_X			+ DELIMIT2; // 出兵先座標x
@@ -952,6 +1052,7 @@ function loadSettingBox() {
 		OPT_AUTO_JORYOKU		= 1; // 自動助力
 		OPT_AUTO_OPEN_ALL_REPORTS = 1; // 全ての報告書を既読にする
 		OPT_AUTO_RECEIVE_LOGIN_BONUS = 1; // 洛陽への路 通算ログイン報酬を受取る
+		OPT_TRAINING_QUEST		= 1; // 育成クエスト（勝戦の計、攻戦の計）自動受注
 		OPT_TROOPS_CARD_ID		= 0; // 出兵武将カードID
 		OPT_TROOPS_X			= 0; // 出兵先座標x
 		OPT_TROOPS_Y			= 0; // 出兵先座標y
@@ -975,6 +1076,11 @@ function loadSettingBox() {
 			OPT_AUTO_RECEIVE_LOGIN_BONUS = forInt(Temp[9]); // 洛陽への路 通算ログイン報酬を受取る
 		} else {
 			OPT_AUTO_RECEIVE_LOGIN_BONUS = 1;
+		}
+		if (Temp.length > 10) {
+			OPT_TRAINING_QUEST = forInt(Temp[10]); // 育成クエスト（勝戦の計、攻戦の計）自動受注
+		} else {
+			OPT_TRAINING_QUEST = 1;
 		}
 
 		if (Temp1.length >= 2) {
