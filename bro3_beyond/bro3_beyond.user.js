@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.19
+// @version		1.09.20
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -23,7 +23,7 @@
 // version	date
 // 0.01		2016/05/**	試験的に着手
 // 0.91		2017/07/13	Craford 氏	http://silent-stage.air-nifty.com/steps/2017/07/beyond091.html
-//--------------------	以下について、https://gist.github.com/RAPT21?direction=desc&sort=updated で公開しています。
+//--------------------	RAPT. [gistにて公開]
 // 0.91.1	2017/07/14	RAPT. 2017/07/12 の大型アップデートに伴い、ツールが動作しなくなっていたのを一部修正
 //								デッキ表示小判定の修正、スキル系判定の修正、ついでに内政スキルをホバー時太字にするようにした。
 // 0.91.2	2017/07/14	RAPT. 内政スキルが使えていなかったのを修正
@@ -51,7 +51,7 @@
 // 1.06.1 	2019/05/05	hot.NPC座標/NPCの隣接同盟探索が使用出来ないのを修正,　攻撃ログテキスト出力・新兵種対応, 天気予告常時表示機能を無効(運営が表示するようになりエラーが出ていたため)
 // 1.08 	2019/09/05	資源タイマーを有効にするとポイント表示がタイマーにあわせて動く問題を修正
 // 1.09 	2019/09/17	同盟員座標と本拠地座標が取れなくなっている問題を修正
-//--------------------	以下について、https://github.com/RAPT21/bro3-tools で公開しています。
+//--------------------	RAPT. https://github.com/RAPT21/bro3-tools にて公開
 // 0.98.1	2018/10/12	RAPT. プルダウンメニュー項目を調整（全体地図、統計、鹵獲関係、南蛮襲来関係）
 // 1.06.1	2018/12/20	RAPT. 全体スクロール機能復元。0.98->0.98.1のパッチ適用。
 //						「天気バー上に天気予告を常時表示する」にチェックありのとき、現在の天候にマウスを乗せるとチラチラする運営の表示を隠すようにした。
@@ -105,6 +105,11 @@
 // 1.09.18	2022/10/09	RAPT. メニュー「デッキ＞兵士管理＞友軍」を追加
 //						- メニューへ「デッキ＞デッキ＞デッキコスト上限増加」を追加
 // 1.09.19	2022/10/09	RAPT. 資源タイマーが動作しなくなっていたのを修正
+// 1.09.20	2022/11/08	RAPT. 丞相の軍興系が回復系スキル判定になるよう調整
+//						- 「デッキ：援軍武将を1クリックで撤退させるボタンを追加」オプションを追加
+//						- 2021/12/23のメンテでラベル数(14→20)、デッキ一括UPのグループ枠(4→12)増加に伴って
+//							レイアウトが変更された影響で「デッキ：現在の所持枚数をファイルの上部へ移動する」が動作しなくなっていたのを修正
+//						- スキルレベルアップ合成時、「合成対象数」を上部へ移設。「一覧の更新」ボタンをその横に配置
 
 //	トレード画面の修行効率表示にSLを追加
 //
@@ -112,7 +117,6 @@
 // 内政ボタンで、拠点を変更せずにセットする新方式対応
 // 回復系スキルは、空いている拠点で実行するオプション
 // 内政ボタン/内政スキルで、すでにその拠点に内政官がいる場合、置き換えるかの確認。「呉の治世」スキル発動中です。内政官を置き換えますか？　はい「いいえ」
-// 自動ラベル変更の変更先をファイル上部へ戻す
 
 // ローカル開発なので、uploadする前に正規バージョンにすること
 //----------------------------------------------------------------------
@@ -264,6 +268,7 @@ var DECK_19 = 'de19';		// デッキ：内政官解除後にデッキを更新す
 var DECK_1A = 'de1a';		// デッキ：内政スキル使用後画面を強制更新する
 var DECK_1B = 'de1b';		// デッキ：一括ラベルセット機能を追加
 var DECK_1C = 'de1c';		// デッキ：現在の所持枚数をファイルの上部へ移動する
+var DECK_1D = 'de1d';		// デッキ：援軍武将を1クリックで撤退させるボタンを追加
 var DECK_21 = 'de21';		// 領地一覧：領地一覧のソートに取得順を追加
 var DECK_22 = 'de22';		// 領地一覧：「新領地」で始まる領地を全て破棄
 var DECK_31 = 'de31';		// 修行合成でレベルが上がった時に、レベルアップボタンを追加
@@ -3657,6 +3662,11 @@ function deckControl() {
 		addDropDomesticDeckCard();
 	}
 
+	// 援軍武将撤退
+	if (g_beyond_options[DECK_1D]) {
+		addReturnDeckCard();
+	}
+
 	// デッキモード取得
 	if (getDeckModeSmall() == false) {
 		return;
@@ -4898,8 +4908,11 @@ function execUnionPart() {
 	// 連続スキルレベルアップ
 	if (location.pathname == "/union/lvup.php") {
 		if (g_beyond_options[DECK_32] == true && q$("#gray02Wrapper div[class='number union clearfix']").length > 0) {
+			// 合成対象数を上部へ移動
+			q$("#gray02Wrapper div[class='number union clearfix']").eq(0).insertBefore(q$('#cardFileList'));
+
 			// 更新ボタンを追加
-			q$("#gray02Wrapper div[class='number union clearfix']").eq(0).before(
+			q$("#gray02Wrapper div[class='number union clearfix']").eq(0).append(
 				"<div sytle='font-size: 14px;'>" +
 					"<input id='reload_file' type='button' value='一覧の更新'></input>" +
 				"</div>"
@@ -6067,6 +6080,7 @@ function draw_setting_window(append_target) {
 							<div><input type='checkbox' id='" + DECK_19 + "'><label for='" + DECK_19 + "'>内政官解除後にデッキ表示を更新する（チェックがない場合は更新ボタンが出ます）</label></input></div> \
 						</div> \
 						<div><input type='checkbox' id='" + DECK_17 + "'><label for='" + DECK_17 + "'>デッキ：内政官以外を1クリックで全てファイルに下げるボタンを追加</label></input></div> \
+						<div><input type='checkbox' id='" + DECK_1D + "'><label for='" + DECK_1D + "'>デッキ：援軍武将を1クリックで撤退させるボタンを追加</label></input></div> \
 						<div><input type='checkbox' id='" + DECK_18 + "'><label for='" + DECK_18 + "'>デッキ：一括デッキセット機能を追加</label></input></div> \
 						<div><input type='checkbox' id='" + DECK_1B + "'><label for='" + DECK_1B + "'>デッキ：一括ラベルセット機能を追加</label></input></div> \
 						<div><input type='checkbox' id='" + DECK_1C + "'><label for='" + DECK_1C + "'>デッキ：現在の所持枚数をファイルの上部へ移動する</label></input></div> \
@@ -6841,11 +6855,9 @@ function multipleLabelSet(is_move_top_card_count) {
 
 	// デッキ：現在の所持枚数をファイルの上部へ移動する
 	if (is_move_top_card_count) {
-		// 2020.10.22のメンテで一括デッキセット実装で枠がファイルの下部へ変更されてしまった
-		// それに伴い、一括ラベルセットボタンも下部に移動してしまう対策
-		var group = q$("#rotate div.deck_priority_group_button_container");
+		var group = q$('#rotate div[class="rotateInfo clearfix"]');
 		if (group.length > 0) {
-			q$("#rotate div[class='number card_count clearfix']").eq(0).insertAfter(group.eq(0));
+			q$("#rotate div[class='number card_count clearfix']").eq(0).insertBefore(group.eq(0));
 		}
 	}
 
@@ -7546,6 +7558,140 @@ function addDropDomesticDeckCard() {
 			}, AJAX_REQUEST_INTERVAL
 		);
 	}
+}
+
+//----------------------------------------------------------------------
+// デッキ：援軍武将を1クリックで撤退させるボタンを追加
+//----------------------------------------------------------------------
+function addReturnDeckCard() {
+	// デッキにカードがない場合は何もしない
+	if (q$("#cardListDeck").length === 0) {
+		return;
+	}
+
+	// ファイルに戻すボタンのイベントを書き換える
+	var deckbase = q$("#deck_tab form[class='clearfix']");
+	var deckcards = deckbase.children("div[class^='cardColmn']");
+	for (var i = 0; i < deckcards.length; i++) {
+		var base = q$("div[class='clearfix']", deckcards.eq(i));
+		var html = base.html();
+
+		var cb = q$('div input.deck-operation-checkbox', base);
+
+		// 援軍中武将ID
+		var cardId = cb.attr('value');
+
+		// 援軍中武将の所属拠点ID
+		var vId = cb.attr('data-village-id');
+
+		// 援軍中武将のみ
+		if (html.indexOf("援軍中") < 0) {
+			continue;
+		} else {
+			q$("dd[class='btm_none']", base).css('color', 'green');
+		}
+
+		// 通常デッキ用
+		q$("img.btn_deck_set_s", base).replaceWith(
+			`<span class='btn_deck_set_s' id='return_cardid_${cardId}' style='font-weight: bold; vertical-align: middle; height: 33px;' data-cardid='${cardId}' data-vid='${vId}'>` +
+				"<input value='援軍を撤退' type='button'></input>" +
+			"</span>"
+		);
+		// 警護デッキ用
+		q$("img.btn_deck_set", base).replaceWith(
+			`<span class='btn_deck_set' id='return_cardid_${cardId}' style='font-weight: bold; vertical-align: middle; height: 33px;' data-cardid='${cardId}' data-vid='${vId}'>` +
+				"<input value='援軍を撤退' type='button'></input>" +
+			"</span>"
+		);
+
+		q$("#return_cardid_" + cardId).on('click',
+			function() {
+				if (g_event_process === true) {
+					alert("他の拠点操作中です");
+					return;
+				}
+				g_event_process = true;
+
+				// イベント停止
+				q$(this).off();
+
+				// 撤退処理実行
+				returnCard(q$(this), function(result){
+					g_event_process = false;
+				});
+			}
+		);
+	}
+}
+
+// 撤退処理
+function returnCard(element, callback){
+	var cardId = q$(element).attr('data-cardid');
+	var vId = q$(element).attr('data-vid');
+
+	element.css('background-color', 'pink').html("拠点変更中");
+	q$.ajax({
+		url: `${BASE_URL}/village_change.php?village_id=${vId}&from=menu&page=${BASE_URL}/facility/unit_status.php?type=help_wait`,
+		type: 'GET',
+		datatype: 'html',
+		cache: false
+	})
+	.done(function(res){
+		var resp = q$("<div>").append(res);
+
+		var link = null;
+
+		var list = q$('#rotate_gui2 table.commonTables[summary="援軍先待機"] tbody:first tr', resp);
+		for (var i = 0; i < list.length - 3; i += 3) {
+			var wait = list.eq(i * 3 + 1);
+			var card = list.eq(i * 3 + 2);
+
+			var button = q$('th input[value="撤退させる"]', wait);
+			if (!button) {
+				continue;
+			}
+			var action = button.attr('onclick');
+			if (!action) {
+				continue;
+			}
+
+			// 探している武将カードID以外はスキップ
+			var m = q$('td a', card).attr('href').match(/cardWindow_(\d+)/);
+			if (!m || m.length <= 1 || m[1] != cardId) {
+				continue;
+			}
+
+			// 撤退リンクを取得
+			if (action.match(/unit_status.php/) && action.match(/back=\d+/)) {
+				link = action.replace("loadPage('", "").replace("')", "");
+				if (!link) {
+					break;
+				}
+			}
+		}
+		if (!link) {
+			callback(false);
+			return;
+		}
+
+		element.css('background-color', 'pink').html("撤退処理中");
+
+		// 撤退発動
+		q$.ajax({
+			url: `${BASE_URL}${link}`,
+			type: 'GET',
+			datatype: 'html',
+			cache: false
+		})
+		.done(function(){
+			element.css('background-color', 'pink').html("処理完了");
+			callback(true);
+		})
+		.fail(function(){
+			element.css('background-color', 'pink').html("エラー");
+			callback(false);
+		});
+	});
 }
 
 //--------------------------//
@@ -9641,6 +9787,10 @@ function is_healing_skill(skill_text) {
 		}
 	}
 	if (isFound == false) {
+		// 丞相の軍興系は回復系スキル
+		isFound = /軍費を\d+獲得/.test(skill_text.match);
+	}
+	if (isFound == false) {
 		return false;
 	}
 
@@ -9713,6 +9863,7 @@ function getDefaultOptions() {
 	settings[DECK_1A] = true;		// デッキ：内政スキル使用後画面を強制更新する
 	settings[DECK_1B] = true;		// デッキ：一括ラベルセット機能を追加
 	settings[DECK_1C] = true;		// デッキ：現在の所持枚数をファイルの上部へ移動する
+	settings[DECK_1D] = false;		// デッキ：援軍武将を1クリックで撤退させるボタンを追加
 	settings[DECK_21] = true;		// 領地一覧：領地一覧の並び方を初期状態に戻す
 	settings[DECK_22] = true;		// 領地一覧：「新領地」で始まる領地を全て破棄
 	settings[DECK_31] = true;		// 修行合成でレベルが上がった時に、レベルアップボタンを追加
