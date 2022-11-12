@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2022.10.25
+// @version		2022.11.13
 // ==/UserScript==
 
 // 配布サイト
@@ -166,8 +166,9 @@
 // 2022.05.01 武器/防具LVUP中のレベル表記を追加
 // 2022.10.25 6/30のメンテ以降で軍費貯蓄仕様変更に伴い、自動軍費貯蓄が動作しなくなっていたのを修正 #31
 //			  (Chrome+)Tampermonkey 4.18 で使えなくなった対策(thx>@kisara-icy #33
+// 2022.11.13 自動施設LVUP対象に大城塞(拠点LV21-30)と要塞(拠点LV1-15)を追加
 
-var VERSION = "2022.10.25"; 	// バージョン情報
+var VERSION = "2022.11.13"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -2234,6 +2235,7 @@ debugLog("=== Start setVillageFacility ===");
 				case "村":
 				case "城":
 				case "砦":
+				case "要塞":
 					tmpName1  = "拠点"; 			 //
 					chkFlg = 1;
 					break;
@@ -2243,13 +2245,13 @@ debugLog("=== Start setVillageFacility ===");
 				continue;
 			} //指定Lv以上ならメインに戻る
 			//建築物名分回す
-			OPT_FUC_NAME.push("村","城","砦");
+			OPT_FUC_NAME.push("村","城","砦","要塞");
 			if(OPT_CHKBOX[0] == 1) {
-				OPT_CHKBOX.push(1,1,1);
-				OPT_CHKBOXLV.push(OPT_CHKBOXLV[0],OPT_CHKBOXLV[0],OPT_CHKBOXLV[0]);
+				OPT_CHKBOX.push(1,1,1,1);
+				OPT_CHKBOXLV.push(OPT_CHKBOXLV[0],OPT_CHKBOXLV[0],OPT_CHKBOXLV[0],OPT_CHKBOXLV[0]);
 			} else {
-				OPT_CHKBOX.push(0,0,0);
-				OPT_CHKBOXLV.push(0,0,0);
+				OPT_CHKBOX.push(0,0,0,0);
+				OPT_CHKBOXLV.push(0,0,0,0);
 			}
 			OPT_CHKBOX.push;
 			for(var ii=0;ii<OPT_FUC_NAME.length;ii++){
@@ -2319,6 +2321,10 @@ function get_area(){
 			}
 			if (name === "大宿舎二階") {
 				name = "大宿舎";
+				lv = "" + (20 + parseInt(lv,10));
+			}
+			if (name === "大城塞") {
+				name = "城";
 				lv = "" + (20 + parseInt(lv,10));
 			}
 			area[n] = new lv_sort(name,lv,getURLxy(strURL));
