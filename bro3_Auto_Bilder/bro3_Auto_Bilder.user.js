@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2022.11.13
+// @version		2022.11.17
 // ==/UserScript==
 
 // 配布サイト
@@ -167,8 +167,9 @@
 // 2022.10.25 6/30のメンテ以降で軍費貯蓄仕様変更に伴い、自動軍費貯蓄が動作しなくなっていたのを修正 #31
 //			  (Chrome+)Tampermonkey 4.18 で使えなくなった対策(thx>@kisara-icy #33
 // 2022.11.13 自動施設LVUP対象に大城塞(拠点LV21-30)と要塞(拠点LV1-15)を追加
+// 2022.11.17 市場自動変換で変換パターンが「スマート変換」または「余剰分を変換」のとき、変換先資源が1億以上あると動作できていなかった不具合を修正
 
-var VERSION = "2022.11.13"; 	// バージョン情報
+var VERSION = "2022.11.17"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -7541,7 +7542,7 @@ debugLog("=== Start ichibaChange ===");
 			console.log("市場変換率:" + percent*100.0 + "%");
 
 			var use_foods = 0;
-			var hope_amount = 99999999;
+			var hope_amount = 9999999999;
 
 			// 一部の資源が特出している場合除外する
 			for (var index = 4; index > 0; --index) {
@@ -7610,7 +7611,7 @@ debugLog("=== Start ichibaChange ===");
 			console.log("市場変換率:" + percent*100.0 + "%");
 
 			var use_foods = RES_NOW["rice"] - OPT_RISE_MAX;
-			var hope_amount = 99999999;
+			var hope_amount = 9999999999;
 
 			// 一部の資源が特出している場合除外する
 			for (var index = 4; index > 0; --index) {
