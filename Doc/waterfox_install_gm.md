@@ -98,3 +98,9 @@ Greasemonkeyの.xpiファイルをWaterfox画面へドラッグ＆ドロップ�
 
 「マルチプロセス Waterfox を有効にする」 とのトレードオフのようで、「有効にして再起動」を選択すると、「マルチプロセス Waterfox を有効にする」 のチェックが外れるようです。
 ![Accessibility or Multiprocess](assets/waterfox_setup_14-accessibility-or-multiprocess.png)
+
+## 資料
+[野良署名した検証用 Greasemonkey 3.17](../Sample/my-greasemonkey-317.xpi)
+
+# 免責
+本リポジトリー内の内容によって何らかの不利益を被った場合でも一切責任は取りかねます。すべて自己責任でお願いします。
