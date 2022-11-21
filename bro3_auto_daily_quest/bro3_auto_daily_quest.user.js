@@ -14,9 +14,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2022.11.01
+// @version 	2022.11.21
 // ==/UserScript==
-var VERSION = "2022.11.01"; 	// バージョン情報
+var VERSION = "2022.11.21"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -86,6 +86,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2022.07.18 育成クエストのクエクリ報酬も自動受領するようにした
 // 2022.11.01 育成クエスト（勝戦の計、攻戦の計）の自動受注機能を追加
 //			  洛陽への路の処理優先度を上げた
+// 2022.11.21 洛陽への路 通算ログイン報酬を受取る処理が海路以外でも動作するよう修正
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -365,10 +366,17 @@ function receiveLoginBonus()
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
-		var days = q$("#header_4 div[class*=total-login-days] > p > span.num", htmldoc).eq(0).text().trim();
+		var header = q$("#header_1", htmldoc)[0];
+		if (!header) header = q$("#header_2", htmldoc)[0];
+		if (!header) header = q$("#header_3", htmldoc)[0];
+		if (!header) header = q$("#header_4", htmldoc)[0];
+		if (!header) header = q$("#header_5", htmldoc)[0];
+		if (!header) return;
+
+		var days = q$("div[class*=total-login-days] > p > span.num", header).eq(0).text().trim();
 		console.log(`通算ログイン日数: ${days}`);
 
-		var button = q$("#header_4 div[class*=total-login-days] div[class^=btn-receive-reward]", htmldoc).eq(0);
+		var button = q$("div[class*=total-login-days] div[class^=btn-receive-reward]", header).eq(0);
 		var isEnabled = button.attr("class").indexOf("disabled") < 0;
 		if (isEnabled && q$("div", button).length > 0) {
 			var c = {
