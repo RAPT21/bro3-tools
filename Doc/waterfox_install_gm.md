@@ -91,6 +91,12 @@ Greasemonkeyの.xpiファイルをWaterfox画面へドラッグ＆ドロップ�
 1. アドレスバーの鍵アイコンをブックマークツールバーへドラッグ＆ドロップします。
 ![Add to Bookmark](assets/waterfox_setup_13-add2bookmark.png)
 
+## プロファイルを指定して起動
+アプリ起動ショートカットに ` -no-remote -P "プロファイル名"` を追加します。
+
+元のショートカットが `"C:\Program Files\Waterfox Classic\waterfox.exe"` で、プロファイル `default` を使う場合、
+`"C:\Program Files\Waterfox Classic\waterfox.exe" -no-remote -P "default"` を設定します。
+
 # 備考
 下記のアラートが出る場合がありますが、基本的には「OK」で閉じることを推奨します。
 
