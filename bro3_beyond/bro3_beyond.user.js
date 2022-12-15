@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.20
+// @version		1.09.21
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -110,6 +110,7 @@
 //						- 2021/12/23のメンテでラベル数(14→20)、デッキ一括UPのグループ枠(4→12)増加に伴って
 //							レイアウトが変更された影響で「デッキ：現在の所持枚数をファイルの上部へ移動する」が動作しなくなっていたのを修正
 //						- スキルレベルアップ合成時、「合成対象数」を上部へ移設。「一覧の更新」ボタンをその横に配置
+// 1.09.21	2022/12/16	RAPT. NPC座標・NPC隣接同盟探索が動作しなくなっていたのを修正 ※資源パネル探索はまだ動作しません
 
 //	トレード画面の修行効率表示にSLを追加
 //
@@ -1348,7 +1349,7 @@ function profileControl() {
 					//-------------
 					if (q$("#search_event_npc").prop('checked') == false) {
 						// search_pattern = new RegExp("rewrite\\('(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '', '', '', '', '1', '.*'\\); overOpe");
-						search_pattern = new RegExp("rewriteAddRemoving\\('.*','(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '', '', '', '', '1', '.*', .*\\); overOpe");
+						search_pattern = new RegExp("rewriteAddRemoving\\('.*','(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '.*', '.*', '.*', '.*', '1', '.*', .*\\); overOpe");
 					} else {
 						search_pattern = new RegExp("rewritePF\\(.*,'(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '', '', '', '', '1', '.*'\\); overOpe");
 					}
