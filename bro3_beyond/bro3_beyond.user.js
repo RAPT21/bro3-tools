@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.21
+// @version		1.09.22
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -111,6 +111,8 @@
 //							レイアウトが変更された影響で「デッキ：現在の所持枚数をファイルの上部へ移動する」が動作しなくなっていたのを修正
 //						- スキルレベルアップ合成時、「合成対象数」を上部へ移設。「一覧の更新」ボタンをその横に配置
 // 1.09.21	2022/12/16	RAPT. NPC座標・NPC隣接同盟探索が動作しなくなっていたのを修正 ※資源パネル探索はまだ動作しません
+// 1.09.22	2022/12/24	RAPT. メニューへ「都市＞プロフィール＞武将カード自動保護設定」を追加
+
 
 //	トレード画面の修行効率表示にSLを追加
 //
@@ -3893,6 +3895,7 @@ function execCommonPart() {
 						['君主官位', BASE_URL + '/user/deck_power_grade'],
 						['歴史書', BASE_URL + '/historybook/game_result.php'],
 						['改武将カードカスタマイズ', BASE_URL + '/card_customize/make_select.php'],
+						['武将カード自動保護設定', BASE_URL + '/user/card_protection_setting.php'],
 					],
 				],
 				['洛陽への路', BASE_URL + '/reward/login_bonus',
