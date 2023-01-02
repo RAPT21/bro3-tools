@@ -14,9 +14,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2022.11.21
+// @version 	2023.01.01
 // ==/UserScript==
-var VERSION = "2022.11.21"; 	// バージョン情報
+var VERSION = "2023.01.01"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -87,6 +87,8 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2022.11.01 育成クエスト（勝戦の計、攻戦の計）の自動受注機能を追加
 //			  洛陽への路の処理優先度を上げた
 // 2022.11.21 洛陽への路 通算ログイン報酬を受取る処理が海路以外でも動作するよう修正
+// 2023.01.01 お正月期間限定クエも同一スクリプトで手動切り替えできるように
+//			  DONATE_SHOGATSU_RICE に寄付額をセットで有効化。0 をセットで無効化
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -105,6 +107,8 @@ var PGNAME		= "_bro3_auto_daily_quest_20150607_"; //グリモン領域への保�
 var ID_DONATE	= 254; // 同盟に合計500以上寄付する
 var ID_TROOPS	= 256; // 武将を出兵し、資源を獲得する
 var ID_DUEL		= 255; // ブショーデュエルで1回対戦する
+var ID_SHOGATSU = 2114; // お正月用期間限定寄付クエ
+var DONATE_SHOGATSU_RICE = 0; // お正月用寄付クエを有効にする場合は寄付額をセットする
 
 // 育成クエ 勝戦の計
 var ID_TRAINING_TICKET			= 11101; // チケットブショーダスを3回引こう
@@ -246,13 +250,13 @@ function openAllReports(callback) {
 }
 
 // 寄付
-function postDonate(callback) {
+function postDonate(rice, callback) {
 	var c = {
 		'contributionForm': "",
 		'wood': 0,
 		'stone': 0,
 		'iron': 0,
-		'rice': 500,
+		'rice': rice,
 		'contribution': 1
 	};
 	httpPOST('/alliance/level.php',c,function(x){
@@ -492,8 +496,8 @@ function checkAttentionQuest(htmldoc, callback){
 }
 
 // 繰り返しクエストを受注
-function acceptAttentionQuest(callback) {
-	httpGET('/quest/index.php?list=1&p=1&mode=0&selected_tab=7',function(y){
+function acceptAttentionQuestImpl(tabIndex, callback) {
+	httpGET(`/quest/index.php?list=1&p=1&mode=0&selected_tab=${tabIndex}`,function(y){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = y;
 
@@ -530,6 +534,21 @@ function acceptAttentionQuest(callback) {
 				}
 			});
 		}
+	});
+}
+function acceptAttentionQuest(callback) {
+	if (DONATE_SHOGATSU_RICE <= 0) {
+		// 通常
+		acceptAttentionQuestImpl(7, callback);
+		return;
+	}
+
+	// お正月期間限定クエ対応
+	acceptAttentionQuestImpl(7, function(x){
+		acceptAttentionQuestImpl(8, function(y){
+			array_merge(x, y);
+			callback(x);
+		});
 	});
 }
 
@@ -726,9 +745,14 @@ function acceptTrainingQuest(callback) {
 				// 未クリアの繰り返しクエストマッチング
 				for (var i = 0; i < quest_list.length; i++){
 					var quest_id = parseInt(quest_list[i],10);
+					if (quest_id == ID_SHOGATSU && DONATE_SHOGATSU_RICE > 0) {
+						// お正月寄付クエ
+						postDonate(DONATE_SHOGATSU_RICE, receiveRewards);
+						return;
+					}
 					if (quest_id == ID_DONATE && OPT_QUEST_DONATE){
-						// 寄付クエ
-						postDonate(receiveRewards);
+						// 通常寄付クエ
+						postDonate(500, receiveRewards);
 						return;
 					}
 					if (quest_id == ID_DUEL && OPT_QUEST_DUEL){
@@ -1190,4 +1214,8 @@ function forInt(num,def){
 	} else {
 		return parseInt(num,10);
 	}
+}
+
+function array_merge(dest, src) {
+	Array.prototype.push.apply(dest, src);
 }
