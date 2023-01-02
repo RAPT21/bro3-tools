@@ -10,7 +10,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.1
+// @version 	1.2
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
@@ -37,11 +37,14 @@ q$ = jQuery;
 
 
 // 2022.10.09	1.0	初版
-// 2022.10.12	1.1	初版	友軍状況画面を開いたとき、自要塞を選択拠点とするように
+// 2022.10.12	1.1	友軍状況画面を開いたとき、自要塞を選択拠点とするように
+// 2023.01.01	1.2	育成クエ用に兵士1x3 を送信できるように
 
 
 var SERVER_SCHEME = location.protocol + "//";
 var SERVER_BASE = SERVER_SCHEME + location.hostname;
+
+var canSendMonthlyQuest = true; // 育成クエの「3人以上の同盟員に友軍を派兵しよう」用に兵士1x3 を送信できるようにするか
 
 // 兵種対応表
 var armyType = [
@@ -76,7 +79,7 @@ function addArmyType() {
 }
 
 // 友軍を確認なしで発射
-function sendFriendlyArmy(x, y, count) {
+function sendFriendlyArmy(x, y, count, callback) {
 	var armyType = q$("#armyType input[name=a-type]:checked").val();
 	var c = {
 		village_x_value: x,
@@ -90,11 +93,15 @@ function sendFriendlyArmy(x, y, count) {
 		btn_send: '出兵'
 	};
 	c[armyType] = count;
-	q$.post(`${SERVER_BASE}/facility/castle_send_troop.php`, c);
+	q$.post(`${SERVER_BASE}/facility/castle_send_troop.php`, c, function(){
+		if (callback) {
+			callback();
+		}
+	});
 }
 
 // リンク先拠点の座標を取得して友軍を送る
-function requestAxis(vId, count) {
+function requestAxis(vId, aStatusId, count) {
 	q$.ajax({
 		url: `${SERVER_BASE}/village_change.php`,
 		type: 'GET',
@@ -107,7 +114,42 @@ function requestAxis(vId, count) {
 		var resp = q$("<div>").append(res);
 		var m = q$("#basepoint .xy", resp).text().match(/\((-?\d+),(-?\d+)\)/);
 		if (m !== null && m.length === 3) {
-			sendFriendlyArmy(m[1], m[2], count);
+			sendFriendlyArmy(m[1], m[2], count, function(){
+				q$(`#${aStatusId}`).text("済");
+			});
+		} else {
+				q$(`#${aStatusId}`).text("座標取得エラー");
+		}
+	}, 'html');
+}
+function requestAxis3(vId, aStatusId) {
+	q$.ajax({
+		url: `${SERVER_BASE}/village_change.php`,
+		type: 'GET',
+		datatype: 'html',
+		cache: false,
+		data: {
+			village_id: vId
+		}
+	}).done(function(res) {
+		var resp = q$("<div>").append(res);
+		var m = q$("#basepoint .xy", resp).text().match(/\((-?\d+),(-?\d+)\)/);
+		if (m !== null && m.length === 3) {
+			// 1秒置きに兵士1を3回送る
+			q$(`#${aStatusId}`).text("[1/3]");
+			sendFriendlyArmy(m[1], m[2], 1, function(){
+				setTimeout(function(){
+					q$(`#${aStatusId}`).text("[2/3]");
+					sendFriendlyArmy(m[1], m[2], 1, function(){
+						setTimeout(function(){
+							q$(`#${aStatusId}`).text("[3/3]");
+							sendFriendlyArmy(m[1], m[2], 1,function(){
+								q$(`#${aStatusId}`).text("[完了]");
+							});
+						}, 1000);
+					});
+				}, 1000);
+			});
 		}
 	}, 'html');
 }
@@ -177,6 +219,28 @@ q$("#gray02Wrapper table[class*='tables'] tbody tr").each(function(index, row){
 		changeToMyFortressIfNeeded(vId[1]);
 		return true;
 	}
+	if (canSendMonthlyQuest) {
+		// 育成クエ用
+		var aLinkId = `b-tag-${vId[1]}`;
+		var aStatusId = `b-status-${vId[1]}`;
+		var quest = q$('<a />', {
+			id: aLinkId,
+			style: "color: blue; text-decoration: underline;",
+			onmouseover: "this.style.cursor='pointer'",
+			onmouseout: "this.style.cursor='default'",
+			on: {
+				click: function(){
+					// クリックできなくする
+					q$(this).off('click');
+					q$(`#${aLinkId}`).parent().append(q$("<span />", {id: aStatusId}).append("派兵中"));
+					q$(`#${aLinkId}`).hide();
+					// 派遣先要塞の座標を取得してから送る
+					requestAxis3(vId[1], aStatusId);
+				}
+			}
+		}).append('[兵1x3]');
+		name.append(quest);
+	}
 	if (sender.text() !== myName && sender.text() !== '-') {
 		// 派遣君主が自分or未派遣の君主宛てのみ派遣可能
 		return true;
@@ -199,12 +263,23 @@ q$("#gray02Wrapper table[class*='tables'] tbody tr").each(function(index, row){
 	}
 
 	// 空きありなら友軍セルをクリック可能にする
-	target.html(`<span style="color: blue; text-decoration: underline;" onmouseover="this.style.cursor='pointer'" onmouseout="this.style.cursor='default'">${vacancy}</span>`);
-	target.eq(0).on('click', function(){
-		// クリックできなくする
-		q$(this).off('click');
-		target.html(`<span id="a-status-${vId[1]}">派兵中</span>`);
-		// 派遣先要塞の座標を取得してから送る
-		requestAxis(vId[1], vacancy);
-	});
+	var aLinkId = `a-tag-${vId[1]}`;
+	var aStatusId = `a-status-${vId[1]}`;
+	var aLink = q$('<span />', {
+		id: aLinkId,
+		style: "color: blue; text-decoration: underline;",
+		onmouseover: "this.style.cursor='pointer'",
+		onmouseout: "this.style.cursor='default'",
+		on: {
+			click: function(){
+				// クリックできなくする
+				q$(this).off('click');
+				q$(`#${aLinkId}`).parent().append(q$("<span />", {id: aStatusId}).append("派兵中"));
+				q$(`#${aLinkId}`).hide();
+				// 派遣先要塞の座標を取得してから送る
+				requestAxis(vId[1], aStatusId, vacancy);
+			}
+		}
+	}).append(`${vacancy}`);
+	target.html(aLink);
 });
