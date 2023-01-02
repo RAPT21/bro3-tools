@@ -14,9 +14,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2023.01.01
+// @version 	2023.01.03
 // ==/UserScript==
-var VERSION = "2023.01.01"; 	// バージョン情報
+var VERSION = "2023.01.03"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -89,6 +89,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2022.11.21 洛陽への路 通算ログイン報酬を受取る処理が海路以外でも動作するよう修正
 // 2023.01.01 お正月期間限定クエも同一スクリプトで手動切り替えできるように
 //			  DONATE_SHOGATSU_RICE に寄付額をセットで有効化。0 をセットで無効化
+// 2023.01.03 DONATE_SHOGATSU_RICE に 1 以上設定時、期間限定クエストを先に処理するように
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -544,8 +545,8 @@ function acceptAttentionQuest(callback) {
 	}
 
 	// お正月期間限定クエ対応
-	acceptAttentionQuestImpl(7, function(x){
-		acceptAttentionQuestImpl(8, function(y){
+	acceptAttentionQuestImpl(8, function(x){
+		acceptAttentionQuestImpl(7, function(y){
 			array_merge(x, y);
 			callback(x);
 		});
