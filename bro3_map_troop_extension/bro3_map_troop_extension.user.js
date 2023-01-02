@@ -4,6 +4,8 @@
 // @description	ブラウザ三国志 マップ画面遠征ツール(51x51)
 // @include 	http://*.3gokushi.jp/big_map.php*
 // @include 	https://*.3gokushi.jp/big_map.php*
+// @include 	http://*.3gokushi.jp/land.php*
+// @include 	https://*.3gokushi.jp/land.php*
 // @include		http://*.3gokushi.jp/facility/unit_status.php*
 // @include		https://*.3gokushi.jp/facility/unit_status.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
@@ -12,7 +14,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.8
+// @version 	1.9
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -49,6 +51,8 @@ jQuery.noConflict();
 // 2022.07.24	1.7	★7～9 の領地をカラーリングするかのオプション(デフォルトtrue)を追加
 //					保護地の領地名編集時、従来であれば「★9拠」となる場合について「保護地」を代わりに使うようにした
 // 2022.11.08	1.8	★9(4-4-4-7) を資源地として検出できるように
+// 2022.11.13	1.9	領地(空き地)画面にマップ種別を指定して中央に表示するリンクを追加できるように
+//					レイアウト微妙なので変更するかも
 
 //==========[オプション]==========
 var OPT_COLORING_RESOURCES = true;		// 資源地カラーリングを行うか。falseだと何も行いません。
@@ -58,10 +62,14 @@ var OPT_UNIT_STATUS_SWITCH_SORTIE_TO_ALL = false;	// 出兵管理画面で出撃
 var OPT_SUPPORT_MIDDLE_RANGE_LAND = false;	// ★4～6 の領地をカラーリングするか
 var OPT_SUPPORT_HIGH_RANGE_LAND = true;	// ★7～9 の領地をカラーリングするか
 var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングするか
+var OPT_LAND_MAPLINK = true;		// 領地(空き地)画面にマップ種別を指定して中央に表示するリンクを追加するか
+
+// グローバル変数
+var SERVER_SCHEME = location.protocol + "//";
+var BASE_URL = SERVER_SCHEME + location.hostname;
 
 //==========[本体]==========
 (function($) {
-
 	// 広告iframe内で呼び出された場合は無視
 	if (!$("#container").length) {
 		return;
@@ -69,6 +77,12 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 
 	// 歴史書モードの場合は無視
 	if ($("#sidebar img[title=歴史書]").length){
+		return;
+	}
+
+	// 領地(空き地)画面
+	if (location.pathname === "/land.php") {
+		landOperation();
 		return;
 	}
 
@@ -653,6 +667,56 @@ var OPT_COLORING_VIRGIN = false;		// 未取得領地をカラーリングする�
 		document.execCommand('copy');
 		$("#copy_area").remove();
 		console.log(LOGTIME()+`copyClipboard: '${text}'`);
+	}
+
+	//--------------------
+	// 全体地図：マップ種別を指定して「中心に表示」するリンクを追加する
+	//--------------------
+	function landOperation() {
+		if (!OPT_LAND_MAPLINK) {
+			return;
+		}
+		$("#tMenu_btnif ul.upper li a.show").attr("href").match(/x=([-]*\d+).*y=([-]*\d+)/);
+		var xy = `x=${RegExp.$1}&y=${RegExp.$2}`;
+
+		$("#tMenu_btnif").prepend(
+			// "<div style='display: inline-block;' onclick='location.reload()'>reload", // for Debug
+			"<ul id='z-map-links' style='background-color: pink;'>"
+		);
+		$("#z-map-links").append(
+			"<li data-type='1'>11x11",
+			"<li data-type='5'>21x21",
+			"<li data-type='4'>51x51",
+			"<li data-type='6' data-ssize='21'>s21x21",
+			"<li data-type='6' data-ssize='51'>s51x51"
+		);
+		$("#z-map-links li").each(function(){
+			// 横並びにする
+			$(this).attr("style", "display: inline-block;");
+
+			// リンクを生成
+			var link;
+			var type = $(this).attr("data-type");
+			if (type === "6") {
+				// スクロールマップ
+				var ssize = $(this).attr("data-ssize");
+				link = `/big_map.php?${xy}&type=${type}&ssize=${ssize}#ptop`;
+			} else {
+				link = `/map.php?${xy}&type=${type}#ptop`;
+			}
+
+			$(this).css({'color': '#0000dd', 'cursor': 'pointer'}).on({
+				'mouseenter': function() {
+					$(this).css({'text-decoration': 'underline'});
+				},
+				'mouseleave': function() {
+					$(this).css({'text-decoration': 'none'});
+				},
+				'click': function() {
+					location.href = BASE_URL + link;
+				}
+			});
+		});
 	}
 
 })(jQuery);
