@@ -10,7 +10,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	0.1
+// @version 	0.2
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -134,7 +134,7 @@ var canContinueAutoRepeat = true;
 					// 繰り返し実行
 					q$('#nyanDeleteStatus').text('継続...');
 					wait(waitInterval).done(function() {
-						startRoutine(ssid, cardId, cardCount, callback);
+						startRoutine(ssid, cardId, cardCount, dt, callback);
 					});
 				} else {
 					q$('#nyanDeleteStatus').text('完了');
