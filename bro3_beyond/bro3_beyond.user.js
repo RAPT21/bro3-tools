@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.22
+// @version		1.09.24
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -113,6 +113,7 @@
 // 1.09.21	2022/12/16	RAPT. NPC座標・NPC隣接同盟探索が動作しなくなっていたのを修正 ※資源パネル探索はまだ動作しません
 // 1.09.22	2022/12/24	RAPT. メニューへ「都市＞プロフィール＞武将カード自動保護設定」を追加
 // 1.09.23	2022/12/28	RAPT. 丞相の軍興系が回復系スキル判定になるよう再調整
+// 1.09.24	2023/01/04	RAPT. 2022/12/13の臨時メンテナンス以降において、デッキ画面の内部デザイン変更に伴い、内政スキル発動が低速化したのを修正（フォールバックにより、高速対応前の挙動で動作していた）
 
 
 //	トレード画面の修行効率表示にSLを追加
@@ -9335,7 +9336,7 @@ function exec_domestic_skill_step2_ex(element, village_id, card_id, use_skill, i
 	var skill_id = '';
 	var skills = element.closest(".cardStatusDetail").find(".card_back_extra .back_skill li span[class*='skill_name']");
 	skills.each(function(){
-		if (q$(this).text().substr(2).trim() === use_skill) {
+		if (q$(this).text().trim().substr(2).trim() === use_skill) {
 			var match = q$(this).next().children('a[class="btn_detail_s"]').attr("onclick").match(/openSkillInfoThick\('([a-z0-9]+)'/);
 			if (match !== null) {
 				skill_id = match[1];
