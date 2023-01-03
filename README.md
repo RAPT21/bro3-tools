@@ -14,6 +14,7 @@
 | [bro3_initial_quest_helper](bro3_initial_quest_helper) | 初期クエクリ補助。他の君主座標、NPC拠点座標、ランキングの自動入力 |
 | [bro3_make_scouts_cavalrymans_checker](bro3_make_scouts_cavalrymans_checker) | 斥候騎兵作成予防 |
 | [bro3_map_troop_extension](bro3_map_troop_extension) | ★人気★　51x51 MAP での遠征補助。出兵補助のほかに、高領地カラーリングやワンクリックで領地を削除したり領地名や拠点名などをコピーや変更できる |
+| [bro3_nyannyan](bro3_nyannyan) | C水鏡娘を自動で修行合成するツール、UC水鏡娘,R水鏡娘にも対応 |
 | [bro3_send_friendly_army](bro3_send_friendly_army) | ★人気★　友軍状況画面でリンクをクリックで友軍を派遣 |
 | [bro3_territory_info](bro3_territory_info) | 全領地情報収集 |
 
