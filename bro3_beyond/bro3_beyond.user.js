@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.24
+// @version		1.09.25
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -114,13 +114,13 @@
 // 1.09.22	2022/12/24	RAPT. メニューへ「都市＞プロフィール＞武将カード自動保護設定」を追加
 // 1.09.23	2022/12/28	RAPT. 丞相の軍興系が回復系スキル判定になるよう再調整
 // 1.09.24	2023/01/04	RAPT. 2022/12/13の臨時メンテナンス以降において、デッキ画面の内部デザイン変更に伴い、内政スキル発動が低速化したのを修正（フォールバックにより、高速対応前の挙動で動作していた）
+// 1.09.25	2023/01/04	RAPT. 回復系スキルは、拠点を変更せずに空いている拠点で実行するように
 
 
 //	トレード画面の修行効率表示にSLを追加
 //
 // TODO:
 // 内政ボタンで、拠点を変更せずにセットする新方式対応
-// 回復系スキルは、空いている拠点で実行するオプション
 // 内政ボタン/内政スキルで、すでにその拠点に内政官がいる場合、置き換えるかの確認。「呉の治世」スキル発動中です。内政官を置き換えますか？　はい「いいえ」
 
 // ローカル開発なので、uploadする前に正規バージョンにすること
@@ -7713,6 +7713,72 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 	var deckcards = q$("#cardListDeck form[class='clearfix']").children("div[class='cardColmn']");
 	var cards = q$("#cardFileList div[class='cardStatusDetail label-setting-mode']");
 
+	if (is_draw_use_link) {
+		// 拠点リスト
+		eval(`var villages = ${q$("#villages").text()};`);
+
+		var deckCostVacantNormal = [0, 0];	// 通常デッキの空きコスト
+		var deckCostVacantDefense = [0, 0]; // 警護デッキの空きコスト
+		if (q$('#deck_tab')) {
+			q$('#deck_tab .state span.volume').each(function(){
+				var kind = q$(this).data('deck-kind');
+				var m = q$(this).text().match(/([\.\d]+)\s*\/\s*([\.\d]+)/);
+				if ((kind === 1 || kind === 2) && m.length === 3) {
+					q$('#deck-head .btn_deck_link').each(function(){
+						if (q$(this).hasClass('selected')) {
+							if (q$(this).hasClass('normal')) {
+								deckCostVacantNormal[kind - 1] = parseFloat(m[2]) - parseFloat(m[1]);
+							}
+							if (q$(this).hasClass('defense')) {
+								deckCostVacantDefense[kind - 1] = parseFloat(m[2]) - parseFloat(m[1]);
+							}
+						}
+					});
+				}
+			});
+		}
+
+		// 回復スキルは最初に見つかった通常拠点で発動させればよい。空きコスト大きいほうでよい
+		var mainVacantId = 0;
+		var subVacantId = 0;
+		q$(villages).each(function(index) {
+			if (this.isset_domestic === false) { // 内政官不在
+				if (index === 0) {
+					mainVacantId = this.village_id;
+				} else {
+					subVacantId = this.village_id;
+					return false;
+				}
+			}
+		});
+
+		var canMain = (mainVacantId > 0 && deckCostVacantNormal[0] > 0);
+		var canSub = (subVacantId > 0 && deckCostVacantNormal[1] > 0);
+		if (canMain && canSub && deckCostVacantNormal[0] < deckCostVacantNormal[1]) {
+			// 本拠・拠点とも内政できる拠点がある場合、空きコストが大きいほうを使う
+			canMain = false;
+		}
+
+		var useSkillVillageId = 0;
+		var useSkillVacantCost = 0;
+		if (canMain) {
+			useSkillVillageId = mainVacantId;
+			useSkillVacantCost = deckCostVacantNormal[0];
+		} else if (canSub) {
+			useSkillVillageId = subVacantId;
+			useSkillVacantCost = deckCostVacantNormal[1];
+		}
+
+		if(useSkillVillageId) {
+			console.log(`回復系スキルを使う拠点: ${useSkillVillageId} / cost: ${useSkillVacantCost}`);
+		} else {
+			console.log(`回復系スキルを使える拠点がない`);
+		}
+		//console.log(deckCostVacantNormal);
+		//console.log(deckCostVacantDefense);
+		//console.warn(JSON.stringify(villages));
+	}
+
 	// パッシブスキル描画＋内政スキル発動リンク作成
 	if (is_draw_passive == true || is_draw_use_link == true || is_easy_deck_set == true) {
 		// ファイル制御
@@ -7780,6 +7846,72 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 									// カードID、使用スキルの取得
 									var card_id = match[1];
 									var use_skill = q$(this).parent().children('td').text().replace(/[ \t\r\n]/g, "").replace(/\(T\)/, '');
+
+									//-----スキル発動時に拠点移動しない新方式を使う
+									// TODO: コスト不足時エラー表示
+									// TODO: 内政スキルも高速化対応
+									// TODO: デッキセットも高速化対応する？
+									var skill_id = (function(element){
+										// スキル名とスキルIDは下記オブジェクトから一覧を取得できる。こちらの方がデザイン仕様変更に耐えれそう
+										// div.cardStatusDetail:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > a:nth-child(1)
+										var skill_id_ = "";
+										var skills = element.closest(".cardStatusDetail").find(".card_back_extra .back_skill li span[class*='skill_name']");
+										skills.each(function(){
+											if (q$(this).text().trim().substr(2).trim() === use_skill) {
+												var match = q$(this).next().children('a[class="btn_detail_s"]').attr("onclick").match(/openSkillInfoThick\('([a-z0-9]+)'/);
+												if (match !== null) {
+													skill_id_ = match[1];
+												}
+											}
+										});
+										return skill_id_;
+									})(q$(this).parent().children('td'));
+
+									// スキルIDと、スキル発動拠点の選定ができた場合に実施
+									if (skill_id.length > 0 && useSkillVillageId > 0) {
+										// ステータス表示変更
+										q$(this).parent().children('td').html(
+											"<span style='color: blue;'>スキルEXEX発動中</span>"
+										);
+
+										var ssid = getSessionId();
+										var params = {
+											ssid: ssid,
+											target_card: card_id,
+											mode: "domestic_set",
+											deck_mode: 1,
+											action_type: 2, //"set":0, 内政:1, 使用:2
+											choose_attr1_skill: skill_id
+										};
+										params[`selected_village[${card_id}]`] = useSkillVillageId;
+
+										var _this = q$(this);
+										q$.ajax('/card/deck.php', {
+											type: 'post',
+											data: params,
+											success: function(){
+												// 成功時挙動
+												if (g_beyond_options[DECK_1A] == true) {	// リロード設定で挙動をかえる
+													location.reload();
+												} else {
+													_this.off();
+													_this.parent().children('td').html(recover_html).css('background-color', '#d3d3d3');
+													_this.html("<span style='color: red; background-color: #ffffe0; cursor: pointer;'>[更新]</span>").off().on('click',
+														function() {
+															location.reload();
+														}
+													);
+												}
+											},
+											error: function(){
+												// 失敗時挙動
+												_this.parent().children('td').html(recover_html);
+												_this.html("<span class='skr'>[使用]</span>");
+											}
+										});
+										return;
+									}
+									//-----
 
 									// スキル発動後、デッキから落とすまで実行（＝回復）
 									var _this = q$(this);
