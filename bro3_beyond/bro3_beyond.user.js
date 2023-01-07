@@ -7838,8 +7838,14 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 
 									var elembase = q$(this).parents("div[class='cardStatusDetail label-setting-mode']");
 
-									// 現在拠点の取得
-									var village_id = q$("#deck_add_selected_village").val();
+									// コストチェック
+									var card_cost = parseFloat(q$('div.right table.statusParameter1 tr:eq(3) td:eq(0)', elembase).text());
+									if (card_cost > useSkillVacantCost) {
+										alert("スキル発動できる拠点がありません");
+										q$(this).parent().children('td').html(recover_html);
+										q$(this).html("<span class='skr'>[使用]</span>");
+										return;
+									}
 
 									// 使用スキルの取得
 									var use_skill = q$(this).parent().children('td').text().replace(/[ \t\r\n]/g, "").replace(/\(T\)/, '');
