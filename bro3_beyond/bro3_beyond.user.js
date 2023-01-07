@@ -7809,7 +7809,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 					elems.eq(j+2).children("td").css('background-color', '#ffd0db');
 				}
 
-				// ここに、同一武将はセットできない、コストが足りないなどの対応がいる
+				// ここに、同一武将はセットできないなどの対応がいる
 
 				// 通常スキルかつ、内政スキル使用リンクが有効化ならスキルのセルに「使用」リンクをつける
 				if (g_history_mode == false && is_draw_use_link == true && is_passive == false && is_active == true) {
@@ -7848,24 +7848,10 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 									var use_skill = q$(this).parent().children('td').text().replace(/[ \t\r\n]/g, "").replace(/\(T\)/, '');
 
 									//-----スキル発動時に拠点移動しない新方式を使う
-									// TODO: コスト不足時エラー表示
 									// TODO: 内政スキルも高速化対応
 									// TODO: デッキセットも高速化対応する？
-									var skill_id = (function(element){
-										// スキル名とスキルIDは下記オブジェクトから一覧を取得できる。こちらの方がデザイン仕様変更に耐えれそう
-										// div.cardStatusDetail:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > a:nth-child(1)
-										var skill_id_ = "";
-										var skills = element.closest(".cardStatusDetail").find(".card_back_extra .back_skill li span[class*='skill_name']");
-										skills.each(function(){
-											if (q$(this).text().trim().substr(2).trim() === use_skill) {
-												var match = q$(this).next().children('a[class="btn_detail_s"]').attr("onclick").match(/openSkillInfoThick\('([a-z0-9]+)'/);
-												if (match !== null) {
-													skill_id_ = match[1];
-												}
-											}
-										});
-										return skill_id_;
-									})(q$(this).parent().children('td'));
+									var skill_info = getSkillInfo(use_skill, q$('div.set a.control__button--deck-set-small', elembase).attr('href'));
+									var skill_id = skill_info.skill_id;
 
 									// スキルIDと、スキル発動拠点の選定ができた場合に実施
 									if (skill_id.length > 0 && useSkillVillageId > 0) {
@@ -9743,6 +9729,60 @@ function exec_domestic_skill_step_final(element, card_id, success_func, fail_fun
 			});
 		}, AJAX_REQUEST_INTERVAL
 	);
+}
+
+// スキルリンクを渡すと、indexから始まるスキル情報のリストを返す
+function parseSkillListQuery(queryString) {
+	var entries = new URLSearchParams(queryString).entries();
+
+	var list = [];
+	var obj = null;
+	while(true) { // for (var pair of entries) が動作しなかったので自前で iterator を操作
+		var result = entries.next();
+		if (result.done) {
+			break;
+		}
+		var pair = result.value; // ここまで for (var pair of entries) の代わり
+
+		// 'index' が区切りで、次の 'index' の直前 or 末尾まで、を 1 オブジェクトとして扱う
+		if (pair[0] === 'index') {
+			if (obj !== null) {
+				list.push(obj);
+			}
+			obj = new Object;
+		}
+		// 'index' が現れるまでのパラメーターは無視
+		if (obj !== null) {
+			obj[pair[0]] = pair[1];
+		}
+	}
+	if (obj !== null) {
+		list.push(obj);
+	}
+	return list;
+}
+
+// スキルリンクとスキル名から対応するスキル情報のオブジェクトを取得
+// index: 0
+// card_id: 811273
+// skill_id: sd0037
+// skill_name: 神医の術式LV8
+// effective_time: 0
+// freeze_flg: 0
+// recovery_time: 0
+// card_name: 華佗
+function getSkillInfo(skillName, queryString) {
+	var cardSkillList = parseSkillListQuery(queryString);
+	var info = null;
+	q$.each(cardSkillList, function(){
+		// this.freeze_flg === 0 then 使用可能 else 使用不可
+		// this.effective_time === 0 then 回復系スキル else 内政スキル
+			info = this;
+		if (this.skill_name === skillName) {
+			return false;
+		}
+	});
+	return info;
 }
 
 //---------------------------
