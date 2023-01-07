@@ -7837,14 +7837,11 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 									var recover_html = q$(this).parent().children('td').html();
 
 									var elembase = q$(this).parents("div[class='cardStatusDetail label-setting-mode']");
-									var elems_l = q$("div[class^='left']", elembase);
-									var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
 
 									// 現在拠点の取得
 									var village_id = q$("#deck_add_selected_village").val();
 
-									// カードID、使用スキルの取得
-									var card_id = match[1];
+									// 使用スキルの取得
 									var use_skill = q$(this).parent().children('td').text().replace(/[ \t\r\n]/g, "").replace(/\(T\)/, '');
 
 									//-----スキル発動時に拠点移動しない新方式を使う
@@ -7852,6 +7849,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 									// TODO: デッキセットも高速化対応する？
 									var skill_info = getSkillInfo(use_skill, q$('div.set a.control__button--deck-set-small', elembase).attr('href'));
 									var skill_id = skill_info.skill_id;
+									var card_id = skill_info.card_id;
 
 									// スキルIDと、スキル発動拠点の選定ができた場合に実施
 									if (skill_id.length > 0 && useSkillVillageId > 0) {
@@ -9777,8 +9775,8 @@ function getSkillInfo(skillName, queryString) {
 	q$.each(cardSkillList, function(){
 		// this.freeze_flg === 0 then 使用可能 else 使用不可
 		// this.effective_time === 0 then 回復系スキル else 内政スキル
-			info = this;
 		if (this.skill_name === skillName) {
+			info = Object.assign({}, this);
 			return false;
 		}
 	});
