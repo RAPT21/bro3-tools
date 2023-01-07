@@ -7893,38 +7893,11 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 												_this.html("<span class='skr'>[使用]</span>");
 											}
 										});
-										return;
+									} else {
+										// 失敗時挙動
+										q$(this).parent().children('td').html(recover_html);
+										q$(this).html("<span class='skr'>[使用]</span>");
 									}
-									//-----
-
-									// スキル発動後、デッキから落とすまで実行（＝回復）
-									var _this = q$(this);
-									exec_domestic_skill_step1(
-										q$(this).parent().children('td'),	// 状態表示用エレメント
-										true,			// 実施後デッキから落とす
-										village_id,
-										card_id,
-										use_skill,
-										function() {
-											// 成功時挙動
-											if (g_beyond_options[DECK_1A] == true) {	// リロード設定で挙動をかえる
-												location.reload();
-											} else {
-												_this.off();
-												_this.parent().children('td').html(recover_html).css('background-color', '#d3d3d3');
-												_this.html("<span style='color: red; background-color: #ffffe0; cursor: pointer;'>[更新]</span>").off().on('click',
-													function() {
-														location.reload();
-													}
-												);
-											}
-										},
-										function() {
-											// 失敗時挙動
-											_this.parent().children('td').html(recover_html);
-											_this.html("<span class='skr'>[使用]</span>");
-										}
-									);
 								}
 							}
 						);
