@@ -114,7 +114,8 @@
 // 1.09.22	2022/12/24	RAPT. メニューへ「都市＞プロフィール＞武将カード自動保護設定」を追加
 // 1.09.23	2022/12/28	RAPT. 丞相の軍興系が回復系スキル判定になるよう再調整
 // 1.09.24	2023/01/04	RAPT. 2022/12/13の臨時メンテナンス以降において、デッキ画面の内部デザイン変更に伴い、内政スキル発動が低速化したのを修正（フォールバックにより、高速対応前の挙動で動作していた）
-// 1.09.25	2023/01/04	RAPT. 回復系スキルは、拠点を変更せずに空いている拠点で実行するように
+// 1.09.25	2023/01/09	RAPT. 「デッキ：内政スキル使用リンクの追加」内政スキル発動を高速化
+//						- 回復系スキルは、拠点を変更せずに空いている拠点で実行するように
 
 
 //	トレード画面の修行効率表示にSLを追加
@@ -7716,6 +7717,8 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 	var villages = [];
 	var domesticMainVacantCost = 0;	// 内政用本拠空きコスト
 	var domesticSubVacantCost = 0;	// 内政用拠点空きコスト
+	var useSkillVillageId = 0;		// 回復系スキル発動拠点ID
+	var useSkillVacantCost = 0;		// 回復系スキル用空きコスト
 	if (is_draw_use_link) {
 		var info = basicDeckInfo();
 		villages = info.villages;
@@ -7726,9 +7729,9 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 		// 回復スキルは最初に見つかった通常拠点で発動させればよい。空きコスト大きいほうでよい
 		var mainVacantId = 0;
 		var subVacantId = 0;
-		q$(villages).each(function(index) {
+		q$.each(villages, function() {
 			if (this.isset_domestic === false) { // 内政官不在
-				if (index === 0) {
+				if (villages[0] === this) {
 					mainVacantId = this.village_id;
 				} else {
 					subVacantId = this.village_id;
@@ -7744,8 +7747,6 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 			canMain = false;
 		}
 
-		var useSkillVillageId = 0;
-		var useSkillVacantCost = 0;
 		if (canMain) {
 			useSkillVillageId = mainVacantId;
 			useSkillVacantCost = info.cost.vacant.normal.main;
@@ -7909,7 +7910,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 									var village_id = q$("#deck_add_selected_village").val();
 									var village_info = (function(){
 										var info = null;
-										q$(villages).each(function(index) {
+										q$.each(villages, function() {
 											if (this.village_id === parseInt(village_id, 10)) {
 												info = Object.assign({}, this);
 												return false;
