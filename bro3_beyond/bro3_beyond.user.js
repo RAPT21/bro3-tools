@@ -7713,9 +7713,12 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 	var deckcards = q$("#cardListDeck form[class='clearfix']").children("div[class='cardColmn']");
 	var cards = q$("#cardFileList div[class='cardStatusDetail label-setting-mode']");
 
+	var villages = [];
+	var domesticMainVacantCost = 0;	// 内政用本拠空きコスト
+	var domesticSubVacantCost = 0;	// 内政用拠点空きコスト
 	if (is_draw_use_link) {
 		// 拠点リスト
-		eval(`var villages = ${q$("#villages").text()};`);
+		eval(`villages = ${q$("#villages").text()};`);
 
 		var deckCostVacantNormal = [0, 0];	// 通常デッキの空きコスト
 		var deckCostVacantDefense = [0, 0]; // 警護デッキの空きコスト
@@ -7737,6 +7740,8 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 				}
 			});
 		}
+		domesticMainVacantCost = deckCostVacantNormal[0];
+		domesticSubVacantCost = deckCostVacantNormal[1];
 
 		// 回復スキルは最初に見つかった通常拠点で発動させればよい。空きコスト大きいほうでよい
 		var mainVacantId = 0;
@@ -7920,15 +7925,41 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 									var recover_html = q$(this).parent().children('td').html();
 
 									var elembase = q$(this).parents("div[class='cardStatusDetail label-setting-mode']");
-									var elems_l = q$("div[class^='left']", elembase);
-									var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
+
+									var card_cost = parseFloat(q$('div.right table.statusParameter1 tr:eq(3) td:eq(0)', elembase).text());
 
 									// 現在拠点の取得
 									var village_id = q$("#deck_add_selected_village").val();
+									var village_info = (function(){
+										var info = null;
+										q$(villages).each(function(index) {
+											if (this.village_id === parseInt(village_id, 10)) {
+												info = Object.assign({}, this);
+												return false;
+											}
+										});
+										return info;
+									})();
+									if (village_info.isset_domestic) {
+										alert(`${village_info.village_name}に内政設定済みの武将がいるため使用できません`);
+										q$(this).parent().children('td').html(recover_html);
+										q$(this).html("<span class='skb'>[使用]</span>");
+										return;
+									}
+									var vacant_cost = (villages[0].village_id === parseInt(village_id, 10)) ? domesticMainVacantCost : domesticSubVacantCost;
+									if (card_cost > vacant_cost) {
+										alert(`${village_info.village_name}の空きコストが不足しています`);
+										q$(this).parent().children('td').html(recover_html);
+										q$(this).html("<span class='skb'>[使用]</span>");
+										return;
+									}
 
-									// カードID、使用スキルの取得
-									var card_id = match[1];
+									// 使用スキルの取得
 									var use_skill = q$(this).parent().children('td').text().replace(/[ \t\r\n]/g, "").replace(/\(T\)/, '');
+
+									var skill_info = getSkillInfo(use_skill, q$('div.set a.control__button--deck-set-small', elembase).attr('href'));
+									var skill_id = skill_info.skill_id;
+									var card_id = skill_info.card_id;
 
 									// スキル発動で終了（＝内政）
 									var _this = q$(this);
