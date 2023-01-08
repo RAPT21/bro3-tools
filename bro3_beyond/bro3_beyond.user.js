@@ -7856,7 +7856,6 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 									var use_skill = q$(this).parent().children('td').text().replace(/[ \t\r\n]/g, "").replace(/\(T\)/, '');
 
 									//-----スキル発動時に拠点移動しない新方式を使う
-									// TODO: 内政スキルも高速化対応
 									// TODO: デッキセットも高速化対応する？
 									var skill_info = getSkillInfo(use_skill, q$('div.set a.control__button--deck-set-small', elembase).attr('href'));
 									var skill_id = skill_info.skill_id;
@@ -7962,14 +7961,28 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 									var card_id = skill_info.card_id;
 
 									// スキル発動で終了（＝内政）
+
+									// ステータス表示変更
+									q$(this).parent().children('td').html(
+										"<span style='color: blue;'>スキルEXEX発動中</span>"
+									);
+
+									var ssid = getSessionId();
+									var params = {
+										ssid: ssid,
+										target_card: card_id,
+										mode: "domestic_set",
+										deck_mode: 1,
+										action_type: 1, //"set":0, 内政:1, 使用:2
+										choose_attr1_skill: skill_id
+									};
+									params[`selected_village[${card_id}]`] = village_id;
+
 									var _this = q$(this);
-									exec_domestic_skill_step1(
-										q$(this).parent().children('td'),	// 状態表示用エレメント
-										false,
-										village_id,
-										card_id,
-										use_skill,
-										function() {
+									q$.ajax('/card/deck.php', {
+										type: 'post',
+										data: params,
+										success: function(){
 											// 成功時挙動
 											if (g_beyond_options[DECK_1A] == true) {	// リロード設定で挙動をかえる
 												location.reload();
@@ -7983,12 +7996,12 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 												);
 											}
 										},
-										function() {
+										error: function(){
 											// 失敗時挙動
 											_this.parent().children('td').html(recover_html);
 											_this.html("<span class='skb'>[使用]</span>");
 										}
-									);
+									});
 								}
 							}
 						);
