@@ -8590,17 +8590,13 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 	// 内政設定のみ STEP1：拠点移動＆内政官設定チェック
 	function exec_domestic_step1(element) {
 		var elembase = element.parents("div[class='cardStatusDetail label-setting-mode']");
-		var elems_l = q$("div[class^='left']", elembase);
-		var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
+		var card_id = q$(elembase).data('card-id');
 
 		// 拠点IDの取得
 		var village_id = element.parent().find('select').val();
 
-		// カードID、使用スキルの取得
-		var card_id = match[1];
-
 		// ステータス表示変更
-		element.parents("div[class='cardStatusDetail label-setting-mode']").find("div[class*='set']").eq(0).attr('class','set dis_set_mini').css('background-color', 'pink').html("拠点変更中");
+		elembase.find("div[class*='set']").eq(0).attr('class','set dis_set_mini').css('background-color', 'pink').html("拠点変更中");
 
 		// 拠点移動・内政確認実行
 		setTimeout(
@@ -8628,7 +8624,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 
 							// 状態を戻す
 							element.parents().children('input[type="button"]').prop("disabled", false);
-							element.parents("div[class='cardStatusDetail label-setting-mode']").find("div[class='set dis_set_mini']").eq(0).css('background-color', 'pink').html("処理完了");
+							elembase.find("div[class='set dis_set_mini']").eq(0).css('background-color', 'pink').html("処理完了");
 							return;
 						}
 					}
