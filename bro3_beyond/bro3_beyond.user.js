@@ -7717,31 +7717,11 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 	var domesticMainVacantCost = 0;	// 内政用本拠空きコスト
 	var domesticSubVacantCost = 0;	// 内政用拠点空きコスト
 	if (is_draw_use_link) {
-		// 拠点リスト
-		eval(`villages = ${q$("#villages").text()};`);
+		var info = basicDeckInfo();
+		villages = info.villages;
 
-		var deckCostVacantNormal = [0, 0];	// 通常デッキの空きコスト
-		var deckCostVacantDefense = [0, 0]; // 警護デッキの空きコスト
-		if (q$('#deck_tab')) {
-			q$('#deck_tab .state span.volume').each(function(){
-				var kind = q$(this).data('deck-kind');
-				var m = q$(this).text().match(/([\.\d]+)\s*\/\s*([\.\d]+)/);
-				if ((kind === 1 || kind === 2) && m.length === 3) {
-					q$('#deck-head .btn_deck_link').each(function(){
-						if (q$(this).hasClass('selected')) {
-							if (q$(this).hasClass('normal')) {
-								deckCostVacantNormal[kind - 1] = parseFloat(m[2]) - parseFloat(m[1]);
-							}
-							if (q$(this).hasClass('defense')) {
-								deckCostVacantDefense[kind - 1] = parseFloat(m[2]) - parseFloat(m[1]);
-							}
-						}
-					});
-				}
-			});
-		}
-		domesticMainVacantCost = deckCostVacantNormal[0];
-		domesticSubVacantCost = deckCostVacantNormal[1];
+		domesticMainVacantCost = info.cost.vacant.normal.main;
+		domesticSubVacantCost = info.cost.vacant.normal.sub;
 
 		// 回復スキルは最初に見つかった通常拠点で発動させればよい。空きコスト大きいほうでよい
 		var mainVacantId = 0;
@@ -7757,9 +7737,9 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 			}
 		});
 
-		var canMain = (mainVacantId > 0 && deckCostVacantNormal[0] > 0);
-		var canSub = (subVacantId > 0 && deckCostVacantNormal[1] > 0);
-		if (canMain && canSub && deckCostVacantNormal[0] < deckCostVacantNormal[1]) {
+		var canMain = (mainVacantId > 0 && info.cost.vacant.normal.main > 0);
+		var canSub = (subVacantId > 0 && info.cost.vacant.normal.sub > 0);
+		if (canMain && canSub && info.cost.vacant.normal.main < info.cost.vacant.normal.sub) {
 			// 本拠・拠点とも内政できる拠点がある場合、空きコストが大きいほうを使う
 			canMain = false;
 		}
@@ -7768,10 +7748,10 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 		var useSkillVacantCost = 0;
 		if (canMain) {
 			useSkillVillageId = mainVacantId;
-			useSkillVacantCost = deckCostVacantNormal[0];
+			useSkillVacantCost = info.cost.vacant.normal.main;
 		} else if (canSub) {
 			useSkillVillageId = subVacantId;
-			useSkillVacantCost = deckCostVacantNormal[1];
+			useSkillVacantCost = info.cost.vacant.normal.sub;
 		}
 
 		if(useSkillVillageId) {
@@ -7779,8 +7759,6 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 		} else {
 			console.log(`回復系スキルを使える拠点がない`);
 		}
-		//console.log(deckCostVacantNormal);
-		//console.log(deckCostVacantDefense);
 		//console.warn(JSON.stringify(villages));
 	}
 
@@ -9804,6 +9782,52 @@ function getSkillInfo(skillName, queryString) {
 		}
 	});
 	return info;
+}
+
+// 基本となるデッキ情報
+function basicDeckInfo() {
+	// 拠点リスト
+	eval(`var villages = ${q$("#villages").text()};`);
+
+	var deckCostVacantNormal = [0, 0];	// 通常デッキの空きコスト
+	var deckCostVacantDefense = [0, 0]; // 警護デッキの空きコスト
+	var maxCost = 0; // 最大コスト
+	if (q$('#deck_tab')) {
+		q$('#deck_tab .state span.volume').each(function(){
+			var kind = q$(this).data('deck-kind');
+			var m = q$(this).text().match(/([\.\d]+)\s*\/\s*([\.\d]+)/);
+			if ((kind === 1 || kind === 2) && m.length === 3) {
+				q$('#deck-head .btn_deck_link').each(function(){
+					if (q$(this).hasClass('selected')) {
+						maxCost = parseFloat(m[2]);
+						if (q$(this).hasClass('normal')) {
+							deckCostVacantNormal[kind - 1] = parseFloat(m[2]) - parseFloat(m[1]);
+						}
+						if (q$(this).hasClass('defense')) {
+							deckCostVacantDefense[kind - 1] = parseFloat(m[2]) - parseFloat(m[1]);
+						}
+					}
+				});
+			}
+		});
+	}
+
+	return {
+		villages: Object.assign({}, villages),
+		cost: {
+			max: maxCost,
+			vacant: {	// 空きコスト
+				normal: {	// 通常デッキ
+					main: deckCostVacantNormal[0],	// 本拠
+					sub: deckCostVacantNormal[1]	// 拠点
+				},
+				defense: {	// 警護デッキ
+					main: deckCostVacantDefense[0],
+					sub: deckCostVacantDefense[1]
+				}
+			}
+		}
+	};
 }
 
 //---------------------------
