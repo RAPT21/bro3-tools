@@ -116,6 +116,7 @@
 // 1.09.24	2023/01/04	RAPT. 2022/12/13の臨時メンテナンス以降において、デッキ画面の内部デザイン変更に伴い、内政スキル発動が低速化したのを修正（フォールバックにより、高速対応前の挙動で動作していた）
 // 1.09.25	2023/01/09	RAPT. 「デッキ：内政スキル使用リンクの追加」内政スキル発動を高速化
 //						- 回復系スキルは、拠点を変更せずに空いている拠点で実行するように(緑色)
+//						- 自動スキルLVUP、カード検索、内政スキル使用など、スキル系の機能について、SLカードやL覇など5スキル対応カードでも動作するように
 
 
 // TODO:
@@ -3487,7 +3488,7 @@ function cardbookControl() {
 			var select_id = id_name + '_select';
 			var addHtml = "<div style='margin-bottom: 4px;'><select id='" + select_id + "' name='" + select_id + "' style='width: 220px;'><option value=''>指定なし</option>";
 
-			var skills = q$("ul[class='back_skill'] li");
+			var skills = q$("ul[class^='back_skill'] li");
 			for (var j = 0; j < skills.length; j++) {
 				var skill = skills.eq(j).children("span[class*=skillName]").text().replace(/[ \t\r\n]/g, "");
 				var skill_text = skills.eq(j).children("div[class*=skill]").text().replace(/[ \t\r\n]/g, "");
@@ -3527,7 +3528,7 @@ function cardbookControl() {
 					}
 
 					// スキル説明文への直接アクセス導線を作る
-					q$("ul[class='back_skill'] li div[class*='skill']", q$(this).parents("div[class='busyo-search-result_card-detail clearfix']")).each(
+					q$("ul[class^='back_skill'] li div[class*='skill']", q$(this).parents("div[class='busyo-search-result_card-detail clearfix']")).each(
 						function(index) {
 							q$(this).attr('id', 'skill_text_' + index);
 						}
@@ -4973,8 +4974,8 @@ function execUnionPart() {
 			);
 
 			// レベルアップ選択ラジオボタンの描画
-			var skills = q$("#gray02Wrapper div[class*='right'] ul[class='back_skill'] li:not([class='subgeneral']) span:not([class^='skillComment'])");
-			var stats = q$("#gray02Wrapper div[class*='right'] ul[class='back_skill'] li a[class*=btn_detail_s]");
+			var skills = q$("#gray02Wrapper div[class*='right'] ul[class^='back_skill'] li:not([class='subgeneral']) span:not([class^='skillComment'])");
+			var stats = q$("#gray02Wrapper div[class*='right'] ul[class^='back_skill'] li a[class*=btn_detail_s]");
 			for (var i = 0; i < skills.length && i < stats.length; i++) {
 				var skillText = skills.eq(i).text().replace(/[ \t\r\n]/g, "");
 				if (skillText == "") {
@@ -6538,7 +6539,7 @@ function deck_resttime_checker() {
 
 							// スキル説明文
 							var texts = [];
-							var ss = q$("ul[class='back_skill'] li div[class*='skill']", skillTexts);
+							var ss = q$("ul[class^='back_skill'] li div[class*='skill']", skillTexts);
 							for (var j = 0; j < ss.length; j++) {
 								texts[j] = ss.eq(j).text().replace(/\n/g, "");
 							}
@@ -6549,7 +6550,7 @@ function deck_resttime_checker() {
 							// 内政スキルとして使用可能なスキルか判定、パッシブスキル判定
 							var is_domskills = [];
 							var passives = [];
-							ss = q$("ul[class='back_skill'] li span[class*='skillName']", skillTexts);
+							ss = q$("ul[class^='back_skill'] li span[class*='skillName']", skillTexts);
 							for (var j = 0; j < ss.length; j++) {
 								passives[j] = ss.eq(j).hasClass("red");
 								is_domskills[j] = (ss.eq(j).text().match(/防:/) != null) && (!passives[j]);
@@ -7777,8 +7778,8 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 			var elems = q$("div[class*='right'] table[class^='statusParameter2'] tbody tr", elembase);
 			var elems_l = q$("div[class*='left']", elembase);
 			var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
-			var skills = q$("div[id='cardWindow_" + match[1] + "'] ul[class='back_skill'] li", cards.eq(i));
-			var skillTexts = q$("div[id='cardWindow_" + match[1] + "'] ul[class='back_skill'] div", cards.eq(i));
+			var skills = q$("div[id='cardWindow_" + match[1] + "'] ul[class^='back_skill'] li", cards.eq(i));
+			var skillTexts = q$("div[id='cardWindow_" + match[1] + "'] ul[class^='back_skill'] div", cards.eq(i));
 
 			// デッキにセットできるかチェック
 			var is_active = false;
@@ -8137,7 +8138,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 			var select_id = id_name + '_select';
 			var addHtml = "<div style='margin-bottom: 4px;'><select id='" + select_id + "' style='width: 200px;'><option value=''>指定なし</option>";
 
-			var skills = q$("ul[class='back_skill'] li", deckcards.eq(i).children("div[id*='card_frontback']").eq(0));
+			var skills = q$("ul[class^='back_skill'] li", deckcards.eq(i).children("div[id*='card_frontback']").eq(0));
 			for (var j = 0; j < skills.length; j++) {
 				var skill = skills.eq(j).children("span[class*=skillName]").text().replace(/[ \t\r\n]/g, "");
 				if (skill != "") {
@@ -8204,7 +8205,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 					}
 
 					// スキル説明文への直接アクセス導線を作る
-					q$("ul[class='back_skill'] li div[class*='skill']", q$(this).parents("div[id*='card_frontback']")).each(
+					q$("ul[class^='back_skill'] li div[class*='skill']", q$(this).parents("div[id*='card_frontback']")).each(
 						function(index) {
 							q$(this).attr('id', 'skill_text_' + index);
 						}
@@ -8227,7 +8228,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 			var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
 			var cid = match[1];
 
-			var skills = q$("div[id='cardWindow_" + cid + "'] ul[class='back_skill'] li", cards.eq(i));
+			var skills = q$("div[id='cardWindow_" + cid + "'] ul[class^='back_skill'] li", cards.eq(i));
 			for (var j = 0; j < skills.length; j++) {
 				var skill = skills.eq(j).children("span").text().replace(/[ \t\r\n]/g, "");
 				if (skill != "" && skill.match(/^副/) == null) {
@@ -8291,7 +8292,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 			}
 
 			// スキル説明文への直接アクセス導線を作る
-			q$("div[id='cardWindow_" + cid + "'] ul[class='back_skill'] li div[class*='skill']", cards.eq(i)).each(
+			q$("div[id='cardWindow_" + cid + "'] ul[class^='back_skill'] li div[class*='skill']", cards.eq(i)).each(
 				function(index) {
 					q$(this).attr('id', 'skill_text_' + index);
 				}
@@ -9457,7 +9458,7 @@ function exec_domestic_skill_step2_ex(element, village_id, card_id, use_skill, i
 
 	// 使用するスキルのIDを調べる
 	var skill_id = '';
-	var skills = element.closest(".cardStatusDetail").find(".card_back_extra .back_skill li span[class*='skill_name']");
+	var skills = element.closest(".cardStatusDetail").find(".card_back_extra div[class^=back_skill] li span[class*='skill_name']");
 	skills.each(function(){
 		if (q$(this).text().trim().substr(2).trim() === use_skill) {
 			var match = q$(this).next().children('a[class="btn_detail_s"]').attr("onclick").match(/openSkillInfoThick\('([a-z0-9]+)'/);
