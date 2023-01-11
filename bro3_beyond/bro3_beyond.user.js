@@ -7761,7 +7761,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 			useSkillVacantCost = info.cost.vacant.normal.sub;
 		}
 
-		if(useSkillVillageId) {
+		if (useSkillVillageId) {
 			console.log(`回復系スキルを使う拠点: ${useSkillVillageId} / cost: ${useSkillVacantCost}`);
 		} else {
 			console.log(`回復系スキルを使える拠点がない`);
@@ -7840,7 +7840,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 								if (q$(this).children('span').length > 0) {
 									q$(this).html("[使用中]");
 
-									// 現在のスキルhtml取
+									// 現在のスキルhtml取得
 									var recover_html = q$(this).parent().children('td').html();
 
 									var elembase = q$(this).parents("div[class='cardStatusDetail label-setting-mode']");
