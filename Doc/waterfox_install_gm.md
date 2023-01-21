@@ -108,5 +108,51 @@ Greasemonkeyの.xpiファイルをWaterfox画面へドラッグ＆ドロップ�
 ## 資料
 [野良署名した検証用 Greasemonkey 3.17](../Sample/my-greasemonkey-317.xpi)
 
+# 技術メモ
+
+## 「マルチプロセス Waterfox を有効にする」 のチェックがで外され、チェックできなくなる場合の対処
+`about:config`にて下記設定を行い、Waterfox を再起動することで解消する模様。
+何度も設定が復活する場合があるが、繰り返し再設定することでそのうち設定できる模様。
+
+- `accessibility.loadedInLastSession` → デフォルト`false`にする
+- `accessibility.lastLoadDate` → 値を右クリックして「リセット」を選択
+
+## Waterfoxの自動アップデートを管理者で禁止する設定
+`Waterfox.exe` のインストール場所が `C:\Program Files\Waterfox Classic\Waterfox.exe` だった場合の例。
+
+編集権限がなくファイルを直接編集できない場合は、権限があるディレクトリーで編集して、エクスプローラーでドラッグ＆ドロップでコピーすればよい。
+
+### 1. policies.json
+`C:\Program Files\Waterfox Classic\distribution\policies.json`
+
+※`distribution`ディレクトリーがない場合は作成する。
+
+```json
+{
+  "policies": {
+    "DisableAppUpdate": true,
+    "ExtensionUpdate": false,
+    "DisableSystemAddonUpdate": true
+  }
+}
+```
+
+### 2. `about:config`のデフォルト値をoverride?
+`C:\Program Files\Waterfox Classic\defaults\pref\autoconfig.js`
+
+```js
+pref("general.config.filename", "autoconfig.cfg");
+pref("general.config.vendor", "autoconfig");
+pref("general.config.obscure_value", 0);
+
+pref("general.config.sandbox_enabled", false);
+```
+
+`C:\Program Files\Waterfox Classic\autoconfig.cfg`
+
+```js
+lockPref("app.update.enabled", false);
+```
+
 # 免責
 本リポジトリー内の内容によって何らかの不利益を被った場合でも一切責任は取りかねます。すべて自己責任でお願いします。
