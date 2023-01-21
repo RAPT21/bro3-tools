@@ -132,17 +132,19 @@ Greasemonkeyの.xpiファイルをWaterfox画面へドラッグ＆ドロップ�
 ```json
 {
   "policies": {
-    // Waterfox の自動更新を禁止する
     "DisableAppUpdate": true,
-
-    // アドオンの自動更新を禁止する
     "ExtensionUpdate": false,
-
-    // システムアドオンの更新を禁止する
     "DisableSystemAddonUpdate": true
   }
 }
 ```
+
+設定値 | 意味
+--|--
+DisableAppUpdate | Waterfox の自動更新を禁止する
+ExtensionUpdate | アドオンの自動更新を禁止する（任意）
+DisableSystemAddonUpdate | システムアドオンの更新を禁止する（任意）
+
 
 ### 2. `about:config`のデフォルト値をoverride
 `C:\Program Files\Waterfox Classic\defaults\pref\autoconfig.js`
