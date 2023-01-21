@@ -117,7 +117,9 @@ Greasemonkeyの.xpiファイルをWaterfox画面へドラッグ＆ドロップ�
 - `accessibility.loadedInLastSession` → デフォルト`false`にする
 - `accessibility.lastLoadDate` → 値を右クリックして「リセット」を選択
 
-## Waterfoxの自動アップデートを管理者で禁止する設定
+## Waterfox の自動アップデートを管理者で禁止する設定
+参考文献: [設定の管理#設定を管理者が管理したい](https://www.mozilla.jp/business/faq/tech/setting-management/)
+
 `Waterfox.exe` のインストール場所が `C:\Program Files\Waterfox Classic\Waterfox.exe` だった場合の例。
 
 編集権限がなくファイルを直接編集できない場合は、権限があるディレクトリーで編集して、エクスプローラーでドラッグ＆ドロップでコピーすればよい。
@@ -130,14 +132,19 @@ Greasemonkeyの.xpiファイルをWaterfox画面へドラッグ＆ドロップ�
 ```json
 {
   "policies": {
+    // Waterfox の自動更新を禁止する
     "DisableAppUpdate": true,
+
+    // アドオンの自動更新を禁止する
     "ExtensionUpdate": false,
+
+    // システムアドオンの更新を禁止する
     "DisableSystemAddonUpdate": true
   }
 }
 ```
 
-### 2. `about:config`のデフォルト値をoverride?
+### 2. `about:config`のデフォルト値をoverride
 `C:\Program Files\Waterfox Classic\defaults\pref\autoconfig.js`
 
 ```js
@@ -145,14 +152,27 @@ pref("general.config.filename", "autoconfig.cfg");
 pref("general.config.vendor", "autoconfig");
 pref("general.config.obscure_value", 0);
 
+// 「globalChrome.css 読み込み用スクリプト」を使用する場合は以下の行も必要です。
 pref("general.config.sandbox_enabled", false);
 ```
 
 `C:\Program Files\Waterfox Classic\autoconfig.cfg`
 
 ```js
+// 1 行目は必ずコメントとしてください。
 lockPref("app.update.enabled", false);
 ```
+
+#### 確認方法
+Waterfox を起動してオプション (設定画面) を開き、詳細 → 更新 と辿って、自動更新に関する設定が `更新の確認は行わない` で固定されグレイアウトされていることを確認する。
+
+#### 詳細情報
+ディレクティブ | 概要 | ユーザーによる変更 | ユーザーによる変更が次回起動時に維持されるか
+--|--|--|--
+defaultPref("設定名", 値) | 初期値 | 〇 | 〇
+pref("設定名", 値) | 初期値 | 〇 | ×（次回起動時には、ここで指定した値に戻る）
+lockPref("設定名", 値) | 設定を固定 | × | ─
+
 
 # 免責
 本リポジトリー内の内容によって何らかの不利益を被った場合でも一切責任は取りかねます。すべて自己責任でお願いします。
