@@ -105,6 +105,13 @@ function addArmyType() {
 
 // 造兵する
 function makeSoldier(count, callback) {
+	var isChecked = q$("#armyType input[name=a-make]").is(':checked');
+	if (!isChecked) {
+		if (callback) {
+			callback("済");
+		}
+		return;
+	}
 	if (callback) {
 		callback("造兵中");
 	}
