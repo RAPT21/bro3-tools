@@ -97,7 +97,7 @@ function addArmyType() {
 		code += `<input type='radio' id='a-type${i}' name='a-type' value='${element[1]}'><label for='a-type${i}'>${element[0]}</label></input>\n`
 	}
 	if (canMakeSoldierAfterSent) {
-		code += `<input type='checkbox' id='a-make' name='a-make' disabled><label for='a-make' title='友軍送付後に自動で造兵します。資源枯渇はチェックしません。'>補充</label></input>\n`
+		code += `<input type='checkbox' id='a-make' name='a-make' disabled><label for='a-make' title='友軍送付後に自動で造兵します。資源枯渇はチェックしません。即完兵種がない場合は使用できません。'>補充</label></input>\n`
 	}
 	q$("#gray02Wrapper table[class*='tables']").before(`<div id="armyType">${code}</div>`);
 	q$("#a-type1").prop('checked', true); // デフォルトは重盾兵
@@ -126,7 +126,7 @@ function makeSoldier(count, callback) {
 	};
 	q$.post(`${SERVER_BASE}/facility/facility.php?x=${info[IDX_X]}&y=${info[IDX_Y]}`, c, function(){
 		if (callback) {
-			callback("済");
+			callback("造兵完了");
 		}
 	});
 }
@@ -224,7 +224,7 @@ function changeToMyFortressIfNeeded(vId, callback) {
 	// 自要塞IDが自拠点リストリンクに含まれない場合は、要塞選択済
 	if (!list.includes(vId) && !canMakeSoldierAfterSent) { // 自動造兵有効時は造兵情報が必要
 		if (callback) {
-			callback(false);
+			callback([]);
 		}
 		return;
 	}
@@ -275,7 +275,7 @@ function getMakeSoldierInfo(res, callback) {
 	var timer = null;
 	var wait = false;
 	var i = 0;
-	var hasAny = false;
+	var facilities = [];
 	var func = function() {
 		if (wait) {
 			return;
@@ -300,7 +300,7 @@ function getMakeSoldierInfo(res, callback) {
 					armyTable[sol_name][IDX_CAN] = /00:00:0[01]/.test(time); // 即完のみ作成可能とする
 					armyTable[sol_name][IDX_X] = x;
 					armyTable[sol_name][IDX_Y] = y;
-					hasAny = true;
+					facilities.push(sol_name);
 				}
 			});
 
@@ -310,7 +310,7 @@ function getMakeSoldierInfo(res, callback) {
 				clearInterval(timer);
 				timer = null;
 				if (callback) {
-					callback(hasAny);
+					callback(facilities);
 				}
 			}
 			wait = false;
@@ -354,10 +354,24 @@ q$("#gray02Wrapper table[class*='tables'] tbody tr").each(function(index, row){
 
 	if (name.text() === myName) {
 		// 自要塞の拠点IDの場合、選択拠点が要塞でなければ切り替えておく
-		changeToMyFortressIfNeeded(vId[1], function(hasAny){
-			if (canMakeSoldierAfterSent && hasAny) {
+		changeToMyFortressIfNeeded(vId[1], function(sol_names){
+			if (canMakeSoldierAfterSent && sol_names.length) {
 				// 造兵情報取得完了かつ造兵施設あり
-				q$('#a-make').attr('disabled', false).next().css('color', 'blue');
+				var hasAny = false;
+				for (var i = 0; i < sol_names.length; i++) {
+					// 造兵可能兵種があればその兵種を太字にする
+					var element = armyTable[sol_names[i]];
+					var label = q$(`input[name=a-type][value=${element[IDX_TYPE]}]`).next().css('font-weight', 'bold');
+					if (element[IDX_CAN]) {
+						// 即完可能兵種のみさらに青字にする
+						label.css('color', 'blue');
+						hasAny = true;
+					}
+				}
+				// 即完可能兵種があればチェックできるようにする
+				if (hasAny) {
+					q$('#a-make').attr('disabled', false).next().css('color', 'blue');
+				}
 				// console.log(JSON.stringify(armyTable, null, 2));
 			}
 		});
