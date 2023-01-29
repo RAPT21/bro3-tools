@@ -14,9 +14,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2023.01.03
+// @version 	2023.01.29
 // ==/UserScript==
-var VERSION = "2023.01.03"; 	// バージョン情報
+var VERSION = "2023.01.29"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -40,6 +40,7 @@ var OPT_TROOPS_Y			= 0;// 出兵先座標y
 // 内部設定
 var OPT_VALUE_IGNORE_SECONDS = -1; // 負荷を下げる為、指定秒数以内のリロード時は処理を行なわない(0以下指定で無効化)
 var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
+var OPT_SELECT_LOGIN_BONUS_ROUTE = true; // 洛陽への路のルートを自動で切り替えるか（テスト中の機能）
 
 
 // 2015.05.17 初版作成。繰り返しクエスト受注、寄付クエ実施、クエクリ、ヨロズダス引き、受信箱からアイテムを移す
@@ -90,6 +91,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2023.01.01 お正月期間限定クエも同一スクリプトで手動切り替えできるように
 //			  DONATE_SHOGATSU_RICE に寄付額をセットで有効化。0 をセットで無効化
 // 2023.01.03 DONATE_SHOGATSU_RICE に 1 以上設定時、期間限定クエストを先に処理するように
+// 2023.01.29 洛陽への路のルートを自動で切り替える（テスト中の機能）
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -364,6 +366,62 @@ function yorozudas(callback){
 	});
 }
 
+// 洛陽への路 ルートログイン報酬のルートを切り替える
+function selectLoginBonus(htmldoc, header) {
+	var routeName = ['', '徒路', '街路', '山路', '海路', '隘路'];
+
+	var currentNo = parseInt(q$(header).prop("id").match(/(\d)/)[1], 10);
+	console.log(`現在のルート: ${currentNo}:${routeName[currentNo]}`);
+
+	// 選択可能なルート
+	var routeList = [];
+	var nextNo = 0;
+	q$("div[id^=route_]", htmldoc).filter(function(index){
+		if (q$(this).prop("id").match(/route_(\d)/) === null) {
+			return false;
+		}
+		return q$(".route-info-disabled-overlay", this).length === 0;
+	}).each(function(index){
+		var no = parseInt(q$(this).prop("id").match(/(\d)/)[1], 10);
+		var nextItem = q$("li.route-item.next .bonus-item-name", this).text();
+		routeList.push({no: no, item: nextItem});
+
+		// 1.自動建設アイテム, 2.南蛮防御アイテム, 3.なるべく最下位のルート、の順番で選択する
+		if (nextItem.indexOf('自動建設機能') >= 0) {
+			nextNo = no;
+		}
+		if (nextNo === 0 && nextItem.indexOf('南蛮襲来防御力') >= 0) {
+			nextNo = no;
+		}
+	});
+	console.log(JSON.stringify(routeList));
+
+	if (nextNo === 0) {
+		// 隘路→海路→山路→街路の順で選択
+		nextNo = routeList.reverse()[0].no;
+	}
+	if (nextNo === 5) {
+		// 隘路のチケット宝箱はハズレ度が高いため、可能であれば海路へ切り替える
+		var item = routeList.reverse()[0].item;
+		if (item.indexOf('チケット宝箱（序）') >= 0 || item.indexOf('チケット宝箱（中）') >= 0) {
+			if (Object.keys(routeList).contains(4)) {
+				nextNo = 4;
+			}
+		}
+	}
+	console.log(`current: ${currentNo}:${routeName[currentNo]}, next: ${nextNo}:${routeName[nextNo]}`);
+
+	if (currentNo != nextNo) {
+		var c = {
+			type: 'change_route',
+			id: nextNo
+		};
+		httpPOST('/reward/login_bonus/', c, function(){
+			console.log("ルートログイン報酬を切り替えました: ${currentNo}:${routeName[currentNo]} -> ${nextNo}:${routeName[nextNo]}");
+		});
+	}
+}
+
 // 洛陽への路 通算ログイン報酬を受取る
 function receiveLoginBonus()
 {
@@ -378,8 +436,11 @@ function receiveLoginBonus()
 		if (!header) header = q$("#header_5", htmldoc)[0];
 		if (!header) return;
 
-		var days = q$("div[class*=total-login-days] > p > span.num", header).eq(0).text().trim();
-		console.log(`通算ログイン日数: ${days}`);
+		var totalDays = q$(".total-login-days > p > .num", header).eq(0).text().trim();
+		console.log(`通算ログイン日数: ${totalDays}`);
+
+		var routeDays = q$(".current-login-days > p > .num", header).eq(0).text().trim();
+		console.log(`ルートログイン日数: ${routeDays}`);
 
 		var button = q$("div[class*=total-login-days] div[class^=btn-receive-reward]", header).eq(0);
 		var isEnabled = button.attr("class").indexOf("disabled") < 0;
@@ -391,6 +452,10 @@ function receiveLoginBonus()
 				console.log("通算ログイン報酬: 受領");
 				//var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 			});
+		}
+
+		if (OPT_SELECT_LOGIN_BONUS_ROUTE) {
+			selectLoginBonus(htmldoc, header);
 		}
 	});
 }
