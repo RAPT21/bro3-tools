@@ -338,6 +338,18 @@ function auto_duel()
 // ヨロズダスを引く
 function yorozudas(callback){
 	httpGET('/reward_vendor/reward_vendor.php',function(x){
+		// ヨロズダスの残り回数を天候エリアに表示
+		var yz = q$('#yorozu-msg');
+		if (yz.length === 0) {
+			q$("#weather-ui").append(q$('<p />', {
+				id: 'yorozu-msg',
+				style: 'color: white; text-align: right;'
+			}).append(''));
+		  yz = q$('#yorozu-msg');
+		}
+		yz.text(q$("#gray02Wrapper .sysMes", x).text().match(/現在引ける(ヨロズダス.+)/)[1]);
+		//
+
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 
