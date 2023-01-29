@@ -41,6 +41,7 @@ var OPT_TROOPS_Y			= 0;// 出兵先座標y
 var OPT_VALUE_IGNORE_SECONDS = -1; // 負荷を下げる為、指定秒数以内のリロード時は処理を行なわない(0以下指定で無効化)
 var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 var OPT_SELECT_LOGIN_BONUS_ROUTE = true; // 洛陽への路のルートを自動で切り替えるか（テスト中の機能）
+var OPT_SHOW_YOROZU_COUNT_AT_WEATHER = true; // ヨロズダスの残り回数を天候エリアに表示
 
 
 // 2015.05.17 初版作成。繰り返しクエスト受注、寄付クエ実施、クエクリ、ヨロズダス引き、受信箱からアイテムを移す
@@ -339,16 +340,17 @@ function auto_duel()
 function yorozudas(callback){
 	httpGET('/reward_vendor/reward_vendor.php',function(x){
 		// ヨロズダスの残り回数を天候エリアに表示
-		var yz = q$('#yorozu-msg');
-		if (yz.length === 0) {
-			q$("#weather-ui").append(q$('<p />', {
-				id: 'yorozu-msg',
-				style: 'color: white; text-align: right;'
-			}).append(''));
-		  yz = q$('#yorozu-msg');
+		if (OPT_SHOW_YOROZU_COUNT_AT_WEATHER) {
+			var yz = q$('#yorozu-msg');
+			if (yz.length === 0) {
+				q$("#weather-ui").append(q$('<p />', {
+					id: 'yorozu-msg',
+					style: 'color: white; text-align: right;'
+				}).append(''));
+			  yz = q$('#yorozu-msg');
+			}
+			yz.text(q$("#gray02Wrapper .sysMes", x).text().match(/現在引ける(ヨロズダス.+)/)[1]);
 		}
-		yz.text(q$("#gray02Wrapper .sysMes", x).text().match(/現在引ける(ヨロズダス.+)/)[1]);
-		//
 
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
