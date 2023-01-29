@@ -410,15 +410,16 @@ function selectLoginBonus(htmldoc, header) {
 	});
 	console.log(JSON.stringify(routeList));
 
+	var revRouteList = array_reversed(routeList);
 	if (nextNo === 0) {
 		// 隘路→海路→山路→街路の順で選択
-		nextNo = routeList.reverse()[0].no;
+		nextNo = revRouteList[0].no;
 	}
-	if (nextNo === 5) {
+	if (currentNo === 5 || nextNo === 5) {
 		// 隘路のチケット宝箱はハズレ度が高いため、可能であれば海路へ切り替える
-		var item = routeList.reverse()[0].item;
+		var item = revRouteList[0].item;
 		if (item.indexOf('チケット宝箱（序）') >= 0 || item.indexOf('チケット宝箱（中）') >= 0) {
-			if (Object.keys(routeList).contains(4)) {
+			if (Object.keys(routeList).indexOf('4') >= 0) {
 				nextNo = 4;
 			}
 		}
@@ -431,7 +432,7 @@ function selectLoginBonus(htmldoc, header) {
 			id: nextNo
 		};
 		httpPOST('/reward/login_bonus/', c, function(){
-			console.log("ルートログイン報酬を切り替えました: ${currentNo}:${routeName[currentNo]} -> ${nextNo}:${routeName[nextNo]}");
+			console.log(`ルートログイン報酬を切り替えました: ${currentNo}:${routeName[currentNo]} -> ${nextNo}:${routeName[nextNo]}`);
 		});
 	}
 }
@@ -1298,4 +1299,10 @@ function forInt(num,def){
 
 function array_merge(dest, src) {
 	Array.prototype.push.apply(dest, src);
+}
+
+function array_reversed(object) {
+	var newObject = JSON.parse(JSON.stringify(object));
+	newObject.reverse();
+	return newObject;
 }
