@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.25
+// @version		1.09.26
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -117,6 +117,7 @@
 // 1.09.25	2023/01/09	RAPT. 「デッキ：内政スキル使用リンクの追加」内政スキル発動を高速化
 //						- 回復系スキルは、拠点を変更せずに空いている拠点で実行するように(緑色)
 //						- 自動スキルLVUP、カード検索、内政スキル使用など、スキル系の機能について、SLカードやL覇など5スキル対応カードでも動作するように
+// 1.09.26	2023/04/29	RAPT. 2023/04/27のメンテナンス以降において、デッキ画面の仕様変更により、デッキ系の機能が動作しなくなっていたのを修正
 
 
 // TODO:
@@ -7313,7 +7314,7 @@ function addDropDeckCard() {
 	}
 
 	// ファイルに戻すボタンのイベントを書き換える
-	var deckcards = q$("#deck_tab div[class^='cardColmn']");
+	var deckcards = q$(".deck_tab:eq(0) div[class^='cardColmn']");
 	for (var i = 0; i < deckcards.length; i++) {
 		var base = q$("div[class='clearfix']", deckcards.eq(i));
 		var inner_a = base.children('a');
@@ -7387,7 +7388,7 @@ function addDropDomesticDeckCard() {
 	var village_id = q$("#deck_add_selected_village").val();
 
 	// ファイルに戻すボタンのイベントを書き換える
-	var deckbase = q$("#deck_tab form[class='clearfix']");
+	var deckbase = q$(".deck_tab:eq(0) form[class='clearfix']");
 	var deckcards = deckbase.children("div[class^='cardColmn']");
 	for (var i = 0; i < deckcards.length; i++) {
 		var base = q$("div[class='clearfix']", deckcards.eq(i));
@@ -7583,7 +7584,7 @@ function addReturnDeckCard() {
 	}
 
 	// ファイルに戻すボタンのイベントを書き換える
-	var deckbase = q$("#deck_tab form[class='clearfix']");
+	var deckbase = q$(".deck_tab:eq(0) form[class='clearfix']");
 	var deckcards = deckbase.children("div[class^='cardColmn']");
 	for (var i = 0; i < deckcards.length; i++) {
 		var base = q$("div[class='clearfix']", deckcards.eq(i));
@@ -9799,8 +9800,8 @@ function basicDeckInfo() {
 	var deckCostVacantNormal = [0, 0];	// 通常デッキの空きコスト
 	var deckCostVacantDefense = [0, 0]; // 警護デッキの空きコスト
 	var maxCost = 0; // 最大コスト
-	if (q$('#deck_tab')) {
-		q$('#deck_tab .state span.volume').each(function(){
+	if (q$('#cardListDeck .deck_tab:eq(0)').length) {
+		q$('#cardListDeck .deck_tab:eq(0) .state span.volume').each(function(){
 			var kind = q$(this).data('deck-kind');
 			var m = q$(this).text().match(/([\.\d]+)\s*\/\s*([\.\d]+)/);
 			if ((kind === 1 || kind === 2) && m.length === 3) {
