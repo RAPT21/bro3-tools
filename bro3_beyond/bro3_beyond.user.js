@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.26
+// @version		1.09.27
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -118,6 +118,7 @@
 //						- 回復系スキルは、拠点を変更せずに空いている拠点で実行するように(緑色)
 //						- 自動スキルLVUP、カード検索、内政スキル使用など、スキル系の機能について、SLカードやL覇など5スキル対応カードでも動作するように
 // 1.09.26	2023/04/29	RAPT. 2023/04/27のメンテナンス以降において、デッキ画面の仕様変更により、デッキ系の機能が動作しなくなっていたのを修正
+// 1.09.27	2023/04/29	RAPT. メニューに北伐関係の項目を追加
 
 
 // TODO:
@@ -4001,6 +4002,7 @@ function execCommonPart() {
 						['農村', BASE_URL + '/council/?tab=3'],
 						['設計', BASE_URL + '/council/?tab=4'],
 						['南蛮', BASE_URL + '/council/?tab=5'],
+						['北伐', BASE_URL + '/council/?tab=6'],
 					],
 				],
 				['合成', BASE_URL + '/union/index.php',
@@ -4138,6 +4140,7 @@ function execCommonPart() {
 						['制圧', BASE_URL + '/alliance/npc_mastery_ranking.php'],
 						['総合', BASE_URL + '/alliance/list.php'],
 						['週間', BASE_URL + '/alliance/weekly_ranking.php'],
+						['北伐出陣', BASE_URL + '/alliance/npc_expedition.php'],
 					],
 				],
 				['個人', BASE_URL + '/user/ranking.php',
@@ -4154,6 +4157,7 @@ function execCommonPart() {
 						['破砕スコア', BASE_URL + '/user/ranking.php?m=destroy_score'],
 						['デュエル', BASE_URL + '/user/ranking.php?m=duel'],
 						['南蛮襲来', BASE_URL + '/user/ranking.php?m=npc_assault'],
+						['北伐出陣', BASE_URL + '/user/ranking.php?m=npc_expedition'],
 						['期間', BASE_URL + '/user/period_ranking.php'],
 						['週間', BASE_URL + '/user/weekly_ranking.php'],
 					],
