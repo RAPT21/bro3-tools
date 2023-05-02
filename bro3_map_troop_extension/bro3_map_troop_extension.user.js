@@ -14,7 +14,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.9
+// @version 	2.0
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -53,6 +53,7 @@ jQuery.noConflict();
 // 2022.11.08	1.8	★9(4-4-4-7) を資源地として検出できるように
 // 2022.11.13	1.9	領地(空き地)画面にマップ種別を指定して中央に表示するリンクを追加できるように
 //					レイアウト微妙なので変更するかも
+// 2023.05.02	2.0	標高MAP画面暫定対応（争覇鯖にて検証中）
 
 //==========[オプション]==========
 var OPT_COLORING_RESOURCES = true;		// 資源地カラーリングを行うか。falseだと何も行いません。
@@ -123,6 +124,9 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 		return;
 	}
 
+	// 標高対応鯖か
+	var isElevationMap = $("#change-map-scale2 .elevation-map-link").length > 0;
+
 	// 選択されているマップサイズチェック
 	var viewSize = -1;
 	var mapSelect;
@@ -139,6 +143,9 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 			}
 		}
 	);
+	if (viewSize === -1 && isElevationMap && isExist($("#change-map-scale2 .btn_map_51:eq(0)"))) {
+		viewSize = 51;
+	}
 	if (viewSize != 51) {
 		return;
 	}
@@ -151,6 +158,7 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 	//------------------------
 	var parentElement;
 	var marginStyle;
+	var elevationElement = "";
 	if (isOldMap) {
 		$("#change-map-scale ul").css({'width' : '350px'});
 		parentElement = $("#change-map-scale");
@@ -161,6 +169,11 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 			marginStyle = "margin-top:58px; margin-left:190px;";
 		} else {
 			marginStyle = "margin-top:58px; margin-left:110px;";
+		}
+		if (isElevationMap) {
+			parentElement = $("#change-map-scale2 h4:eq(0)");
+			marginStyle = "margin-top:-20px; margin-left:168px;";
+			elevationElement = "<input id='show_elevation' type='checkbox'><label for='show_elevation'>標高表示</label></input>";
 		}
 	}
 	parentElement.after(
@@ -176,7 +189,10 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 			"<label id='mode_rename' style='display:none;'><input type='radio' name='leftclickmode' value='rename'>領地名編集</input>&nbsp;</label>&nbsp;&nbsp;" +
 			"<label id='mode_axis' style='display:none;'><input type='radio' name='leftclickmode' value='axis'>座標コピー</input>&nbsp;</label>&nbsp;&nbsp;" +
 		"</div>" +
-		"<div id='custom_description' style='display:none; color:blue; font-weight:bold; float:left; position:absolute; font-size:13px; left:18px; margin-top:18px; margin-left:420px;'>右クリックで領地破棄</div>" +
+		"<div id='custom_description' style='display:none; color:blue; font-weight:bold; float:left; position:absolute; font-size:13px; left:18px; margin-top:18px; margin-left:420px;'>" +
+			"<span>右クリックで領地破棄</span>&nbsp;&nbsp;" +
+			elevationElement +
+		"</div>" +
 		"</div>"
 	);
 
@@ -220,6 +236,9 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 		if (mtext.match(/bigmap-caption[^>]*>([^<]+)/)) {
 			obj.areaname = RegExp.$1;
 		}
+		if (mtext.match(/"elevation\-name">([低|平|高|山]地)</)) {
+			obj.elevation = RegExp.$1;
+		}
 		if (mtext.match(/戦力.*>([★]+)<.*木(\d+).*岩(\d+).*鉄(\d+).*糧(\d+)/)) {
 			obj.stars = RegExp.$1.length;
 			obj.wood = parseInt(RegExp.$2, 10);
@@ -229,9 +248,23 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 
 			// 資源地カラーリング適用
 			draw_resources(obj, $(element));
+		} else if (mtext.match(/戦力.*>[★]+\[(\d)\]<.*木(\d+).*岩(\d+).*鉄(\d+).*糧(\d+)/)) {
+			// ★[1] or ★★★★[4] といった形式になっている場合
+			obj.stars = parseInt(RegExp.$1, 10);
+			obj.wood = parseInt(RegExp.$2, 10);
+			obj.stone = parseInt(RegExp.$3, 10);
+			obj.iron = parseInt(RegExp.$4, 10);
+			obj.food = parseInt(RegExp.$5, 10);
+
+			// 資源地カラーリング適用
+			draw_resources(obj, $(element));
+		} else {
+			draw_elevation(obj, $(element));
 		}
 		if (mtext.match(/戦力<.*npc-red-star.*>([★]+)</)) {
 			obj.npcname = obj.areaname + "(" + x + "," + y + ") ★" + RegExp.$1.length;
+		} else if (mtext.match(/戦力<.*npc-red-star.*>[★]+\[(\d)\]</)) {
+			obj.npcname = obj.areaname + "(" + x + "," + y + ") ★" + RegExp.$1;
 		}
 
 		// マップデータを蓄積
@@ -350,6 +383,16 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 					}
 				);
 			}
+		}
+	);
+
+	//-------------------
+	// 標高表示
+	//-------------------
+	$("#show_elevation").click(
+		function() {
+			$("#exit_custom").trigger('click');
+			$("#enter_custom").trigger('click');
 		}
 	);
 
@@ -554,6 +597,11 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 	//--------------------
 	function draw_resources(obj, at) {
 
+		if ($("#show_elevation").is(':checked')) {
+			draw_elevation(obj, at);
+			return;
+		}
+
 		if (!OPT_COLORING_RESOURCES) {
 			return;
 		}
@@ -670,26 +718,73 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 	}
 
 	//--------------------
+	// 標高カラーリング
+	//--------------------
+	function draw_elevation(obj, at) {
+		if (!$("#show_elevation").is(':checked')) {
+			return;
+		}
+
+		var colors = [
+			"#dfe5ed", // 低地
+			"#b7d8b7", // 平地
+			"#c2c28e", // 高地
+			"#ad8467", // 山地
+			""];
+
+		var index = -1;
+		if (obj.elevation.indexOf("低地") >= 0) {
+			index = 0;
+		} else if (obj.elevation.indexOf("平地") >= 0) {
+			index = 1;
+		} else if (obj.elevation.indexOf("高地") >= 0) {
+			index = 2;
+		} else if (obj.elevation.indexOf("山地") >= 0) {
+			index = 3;
+		}
+		if (index !== -1) {
+			if (obj.blank) {
+				at.css({"background-color": colors[index]});
+			} else {
+				at.css({"color": colors[index], "text-shadow": "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000"});
+			}
+		}
+	}
+
+	//--------------------
 	// 全体地図：マップ種別を指定して「中心に表示」するリンクを追加する
 	//--------------------
 	function landOperation() {
 		if (!OPT_LAND_MAPLINK) {
 			return;
 		}
+
+		// 標高対応鯖か
+		var isElevationMap = /\[[低|平|高|山]地\]/.test($("#basepoint .xy").text());
+
 		$("#tMenu_btnif ul.upper li a.show").attr("href").match(/x=([-]*\d+).*y=([-]*\d+)/);
 		var xy = `x=${RegExp.$1}&y=${RegExp.$2}`;
 
 		$("#tMenu_btnif").prepend(
 			// "<div style='display: inline-block;' onclick='location.reload()'>reload", // for Debug
-			"<ul id='z-map-links' style='background-color: pink;'>"
+			"<ul id='z-map-links' style='background-color: pink; margin-bottom: 8px;'>"
 		);
-		$("#z-map-links").append(
-			"<li data-type='1'>11x11",
-			"<li data-type='5'>21x21",
-			"<li data-type='4'>51x51",
-			"<li data-type='6' data-ssize='21'>s21x21",
-			"<li data-type='6' data-ssize='51'>s51x51"
-		);
+		if (isElevationMap) {
+			$("#z-map-links").append(
+				"<li data-type='elv' data-ssize='21'>21x21",
+				"<li data-type='elv' data-ssize='41'>41x41",
+				"<li data-type='3d'>3Dマップ",
+				"<li data-type='4'>旧51x51"
+			);
+		} else {
+			$("#z-map-links").append(
+				"<li data-type='1'>11x11",
+				"<li data-type='5'>21x21",
+				"<li data-type='4'>51x51",
+				"<li data-type='6' data-ssize='21'>s21x21",
+				"<li data-type='6' data-ssize='51'>s51x51"
+			);
+		}
 		$("#z-map-links li").each(function(){
 			// 横並びにする
 			$(this).attr("style", "display: inline-block;");
@@ -697,7 +792,16 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 			// リンクを生成
 			var link;
 			var type = $(this).attr("data-type");
-			if (type === "6") {
+			if (isElevationMap) {
+				if (type === "3d") {
+					link = `/3d_map.php?${xy}`;
+				} else if (type === "elv") {
+					var ssize = $(this).attr("data-ssize");
+					link = `/elevation_map.php?map_size=${ssize}&${xy}`;
+				} else {
+					link = `/big_map.php?type=${type}&${xy}`;
+				}
+			} else if (type === "6") {
 				// スクロールマップ
 				var ssize = $(this).attr("data-ssize");
 				link = `/big_map.php?${xy}&type=${type}&ssize=${ssize}#ptop`;
