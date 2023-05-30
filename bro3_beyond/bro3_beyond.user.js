@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.27
+// @version		1.09.28
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -119,6 +119,7 @@
 //						- 自動スキルLVUP、カード検索、内政スキル使用など、スキル系の機能について、SLカードやL覇など5スキル対応カードでも動作するように
 // 1.09.26	2023/04/29	RAPT. 2023/04/27のメンテナンス以降において、デッキ画面の仕様変更により、デッキ系の機能が動作しなくなっていたのを修正
 // 1.09.27	2023/04/29	RAPT. メニューに北伐関係の項目を追加
+// 1.09.28	2023/05/30	RAPT. 「デッキ：ファイルに下げるボタンを1クリックで使用に変更」が警護デッキで動作していなかった不具合を修正
 
 
 // TODO:
@@ -7318,7 +7319,7 @@ function addDropDeckCard() {
 	}
 
 	// ファイルに戻すボタンのイベントを書き換える
-	var deckcards = q$(".deck_tab:eq(0) div[class^='cardColmn']");
+	var deckcards = q$(".deck_tab div[class^='cardColmn']");
 	for (var i = 0; i < deckcards.length; i++) {
 		var base = q$("div[class='clearfix']", deckcards.eq(i));
 		var inner_a = base.children('a');
