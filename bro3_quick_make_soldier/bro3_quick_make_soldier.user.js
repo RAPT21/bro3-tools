@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name		bro3_quick_make_soldier
 // @namespace	https://github.com/RAPT21/bro3-tools/
-// @description	ブラウザ三国志 援軍造兵＋派兵
+// @description	ブラウザ三国志 援軍造兵＋派遣
 // @include		http://*.3gokushi.jp/village.php*
 // @include		https://*.3gokushi.jp/village.php*
 // @include		http://*.3gokushi.jp/land.php*
@@ -13,7 +13,7 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	0.2
+// @version 	0.3
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -21,14 +21,15 @@ jQuery.noConflict();
 // ▼概要
 // 都市画面で動作します。
 // サイドバーの拠点の横に追加されたリンクをクリックすると、造兵即完可能だった場合に、その拠点で兵士キャパ上限で造兵できます。
-// 援軍モードに切り替えることで、その拠点に待機しているすべての兵士を指定座標へ援軍出兵します。
+// 援軍派遣モードに切り替えることで、その拠点に待機しているすべての兵士を指定座標へ援軍出兵します。
+// 援軍派遣モードに切り替えると、「警護」リンクが表示されます。これをクリックで警護出兵画面を表示します。
 //
 // ▼特徴
 // 造兵兵種を選択できます。デフォルトは重盾兵です。
 // └初期状態では通常南蛮に使用しない兵種はコメントアウトしています。ソース内の兵種対応表のコメントアウトをいじることで変更できます。
 //
-// ▼ヒント
-// 援軍送付先はサイドバー内で指定します。ここに手入力した座標は保存されません。
+// ▼援軍派遣先
+// 援軍派遣先はサイドバー内で指定します。ここに手入力した座標は保存されません。
 // 土地画面下部に援軍出兵先を設定するリンクが追加されます。そのリンククリックで座標が保存されます。
 //
 // ▼既知の不具合
@@ -37,7 +38,8 @@ jQuery.noConflict();
 
 
 // 2023.02.14	0.1	クリックで拠点移動＆重盾造兵
-// 2023.06.01	0.2	造兵種別選択機能追加、援軍派兵モード追加
+// 2023.06.01	0.2	造兵種別選択機能追加、援軍派遣モード追加
+// 2023.06.02	0.3	援軍派遣モードのとき、警護リンクをクリックで警護出兵画面に切り替えるように
 
 
 var SERVER_SCHEME = location.protocol + "//";
@@ -101,9 +103,6 @@ function armyInfo(index, expectedValue) {
 		}
 	}
 	return null;
-}
-function armyInfoByType(value) {
-	return armyInfo(IDX_TYPE, value);
 }
 function armyInfoById(value) {
 	return armyInfo(IDX_ID, value);
@@ -289,11 +288,13 @@ function armyInfoById(value) {
 			}).done(function(res){
 				getHelpSoldierInfo(res, x, y, callback);
 			}).fail(function(){
+				console.log("[qms] 援軍出兵エラー");
 				if (callback) {
 					callback("E2");
 				}
 			});
 		}).fail(function(){
+			console.log("[qms] 拠点移動エラー");
 			if (callback) {
 				callback("E1");
 			}
@@ -324,6 +325,7 @@ function armyInfoById(value) {
 		});
 
 		if (Object.keys(sols).length === 0) {
+			console.log("[qms] 兵キャパ0のため造兵できませんでした。");
 			if (callback) {
 				callback("兵0");
 			}
@@ -358,10 +360,12 @@ function armyInfoById(value) {
 			url: `${SERVER_BASE}/facility/castle_send_troop.php`,
 			data: c
 		}).done(function(){
+			console.log(`[qms] 援軍出兵成功: (${x},${y})`);
 			if (callback) {
 				callback("済");
 			}
 		}).fail(function(){
+			console.log("[qms] 援軍出兵エラー");
 			if (callback) {
 				callback("E3");
 			}
@@ -444,10 +448,10 @@ function armyInfoById(value) {
 
 
 	//----------------------------------------
-	// サイドバーに援軍送付先座標を追加
+	// サイドバーに援軍派遣先座標を追加
 	//----------------------------------------
 	function addCoordinateBox() {
-		// 造兵モードか、援軍送付モードかで表示も切り替える
+		// 造兵モードか、援軍派遣モードかで表示を切り替える
 		var cb = $("<input />", {
 			id: 'qmsSendHelpCheckBox',
 			type: 'checkbox',
@@ -456,6 +460,7 @@ function armyInfoById(value) {
 				click: function(){
 					var isChecked = $(this).is(':checked');
 					$("#qmsCoordinateBox").toggle();
+					$("#qmsSendDefense").toggle();
 					$("#qmsArmyTypeBox").toggle();
 					$('a[id^="qmsMakeSol-"]').each(function(){
 						if (isChecked) {
@@ -470,10 +475,27 @@ function armyInfoById(value) {
 		var label = $("<label />", {
 			for: 'qmsSendHelpCheckBox',
 			id: 'qmsSendHelpCheckLabel',
-			style: 'color: white; font-size: 90%; margin-left: 4px;'
-		}).append("援軍送付モード");
+			style: 'margin-left: 4px; font-size: 90%; color: white;'
+		}).append("援軍派遣モード");
 
-		// 援軍送付先座標欄：初期非表示、援軍送付モードOnで表示
+		// 警護出兵画面を表示するリンク：初期非表示、援軍派遣モードOnで表示
+		var anchor = $("<a />", {
+			id: 'qmsSendDefense',
+			style: 'margin-left: 4px; cursor: pointer; font-size: 85%; text-decoration: underline; padding-bottom: 2px; display: none;',
+			on: {
+				click: function(){
+					$(this).off('click');
+					var coord = getCoordinate();
+					if (coord && coord.length === 2) {
+						var x = coord[0];
+						var y = coord[1];
+						location.href = `${SERVER_BASE}/facility/castle_send_troop.php?x=${x}&y=${y}&deck_mode=2#ptop`;
+					}
+				}
+			}
+		}).append("警護");
+
+		// 援軍派遣先座標欄：初期非表示、援軍派遣モードOnで表示
 		var coordinateX = $("<input />", {
 			id: 'qmsCoordinateX',
 			type: 'text',
@@ -488,17 +510,21 @@ function armyInfoById(value) {
 			size: '6',
 			style: 'text-align: center;'
 		});
-		var link = $("<div />", {
+		var coordinateBox = $("<div />", {
 			id: 'qmsCoordinateBox',
 			style: 'display: none;'
 		});
-		link.append(coordinateX)
+
+		// レイアウト
+		coordinateBox
+			.append(coordinateX)
 			.append(coordinateY)
 			.insertBefore($("#sidebar div.basename"));
-		label.insertBefore(link);
+		label.insertBefore(coordinateBox);
 		cb.insertBefore(label);
+		label.after(anchor);
 
-		// 初期値を設定
+		// 保存されている派遣先座標をセット
 		coordinateX.val(g_options[AXIS_01]);
 		coordinateY.val(g_options[AXIS_02]);
 	}
@@ -544,7 +570,7 @@ function armyInfoById(value) {
 	//----------------------------------------
 	function villageOperation() {
 
-		// 援軍送付先入力BOXを作成
+		// 援軍派遣先入力BOXを作成
 		addCoordinateBox();
 		addArmyType();
 
@@ -565,7 +591,7 @@ function armyInfoById(value) {
 
 
 	//----------------------------------------
-	// 援軍送付先の簡単セット
+	// 援軍派遣先の簡単セット
 	//----------------------------------------
 	function landOperation() {
 		var m = $("#basepoint span.xy").text().match(/\(([-]?\d+),\s*([-]?\d+)\)/);
@@ -585,14 +611,16 @@ function armyInfoById(value) {
 					saveSettings();
 				}
 			}
-		}).append(`(${x},${y})を援軍送付先へセット`);
+		}).append(`(${x},${y})を援軍派遣先へセット`);
 		$("#tMenu_btnif").append(link);
 	}
 
 })(jQuery);
 
 
+//----------------------------------------
 // デフォルトオプション定義の取得
+//----------------------------------------
 function getDefaultOptions() {
 	var settings = {};
 
@@ -603,16 +631,21 @@ function getDefaultOptions() {
 }
 
 
+//----------------------------------------
 // 設定の保存
+//----------------------------------------
 function saveSettingsWithObject(obj) {
 	GM_setValue(SAVENAME + '_options', JSON.stringify(obj));
 }
+
 function saveSettings() {
 	saveSettingsWithObject(g_options);
 }
 
 
+//----------------------------------------
 // 設定のロード
+//----------------------------------------
 function loadSettings() {
 	// 保存データの取得
 	var obj = GM_getValue(SAVENAME + '_options', null);
@@ -633,7 +666,11 @@ function loadSettings() {
 
 	g_options = options;
 }
+
+
+//----------------------------------------
 // for debug print object
+//----------------------------------------
 function po(obj, ext = "") {
 	console.log(ext + JSON.stringify(obj, null, '\t'));
 }
