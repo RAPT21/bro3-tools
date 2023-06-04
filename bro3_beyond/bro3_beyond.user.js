@@ -6434,7 +6434,7 @@ function deck_resttime_checker() {
 		var target = searchSkillInput.val().replace(/[ \t　]/g, "");
 		if (target == "") {
 			alert("検索するスキル名を入力してください。");
-		return;
+			return;
 		}
 		searchFileButton.val("処理実行中").prop("disabled", true);
 
@@ -7082,7 +7082,7 @@ function multipleDeckSet() {
 					selects.prop('outerHTML') +
 					"<input id='multi_card_set' type='button' style='font-size: 12px;' value='実行'></input>" +
 					"<div id='multiple_deckset_status' style='font-weight: bold;'></div>" +
-				"</div>"+
+				"</div>" +
 			"</div>" +
 		"</fieldset>"
 	);
@@ -7123,7 +7123,7 @@ function multipleDeckSet() {
 				url_params = url_params + "&l=" + label;
 			}
 
-			var target_url = BASE_URL + '/card/deck.php?deck_mode=' + select_mode+ url_params;
+			var target_url = BASE_URL + '/card/deck.php?deck_mode=' + select_mode + url_params;
 			history.pushState({}, "", target_url);
 
 			var max_page = 1;
@@ -7138,7 +7138,7 @@ function multipleDeckSet() {
 			})
 			.done(function(res) {
 				// コスト抽出
-				// タグの一個目が通常デッキ、2個目が警護デッキのコスト
+				// タグの1個目が通常デッキ、2個目が警護デッキのコスト
 				var match = q$("div[class='deck-all-tab-element clearfix'] div[class='number clearfix'] span[class='volume'][data-deck-kind='" + village_kind + "']").eq(select_mode - 1).text().match(/\d+(\.\d+)?/g);
 				freecost = parseFloat(match[1]) - parseFloat(match[0]);
 				if (freecost < 1) {
@@ -7292,7 +7292,7 @@ function multipleDeckSet() {
 	// 選定された武将をデッキにセットする
 	function multiple_deck_set_finalstep(target_url, select_village, select_target, targets) {
 
-	// 抽出した武将をテーブルに描画
+		// 抽出した武将をテーブルに描画
 		for (var i = 0; i < targets.length; i++) {
 			// 武将の配置
 			var ssid = getSessionId();
