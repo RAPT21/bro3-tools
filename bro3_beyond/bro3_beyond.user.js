@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.28
+// @version		1.09.29
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -120,6 +120,7 @@
 // 1.09.26	2023/04/29	RAPT. 2023/04/27のメンテナンス以降において、デッキ画面の仕様変更により、デッキ系の機能が動作しなくなっていたのを修正
 // 1.09.27	2023/04/29	RAPT. メニューに北伐関係の項目を追加
 // 1.09.28	2023/05/30	RAPT. 「デッキ：ファイルに下げるボタンを1クリックで使用に変更」が警護デッキで動作していなかった不具合を修正
+// 1.09.29	2023/06/04	RAPT. 回復時間検索、「デッキ：一括デッキセット機能を追加」の不具合修正 by @pla2999 in #38
 
 
 // TODO:
@@ -6434,7 +6435,7 @@ function deck_resttime_checker() {
 		var target = searchSkillInput.val().replace(/[ \t　]/g, "");
 		if (target == "") {
 			alert("検索するスキル名を入力してください。");
-		return;
+			return;
 		}
 		searchFileButton.val("処理実行中").prop("disabled", true);
 
@@ -7082,7 +7083,7 @@ function multipleDeckSet() {
 					selects.prop('outerHTML') +
 					"<input id='multi_card_set' type='button' style='font-size: 12px;' value='実行'></input>" +
 					"<div id='multiple_deckset_status' style='font-weight: bold;'></div>" +
-				"</div>"+
+				"</div>" +
 			"</div>" +
 		"</fieldset>"
 	);
@@ -7123,7 +7124,7 @@ function multipleDeckSet() {
 				url_params = url_params + "&l=" + label;
 			}
 
-			var target_url = BASE_URL + '/card/deck.php?deck_mode=' + select_mode+ url_params;
+			var target_url = BASE_URL + '/card/deck.php?deck_mode=' + select_mode + url_params;
 			history.pushState({}, "", target_url);
 
 			var max_page = 1;
@@ -7138,7 +7139,7 @@ function multipleDeckSet() {
 			})
 			.done(function(res) {
 				// コスト抽出
-				// タグの一個目が通常デッキ、2個目が警護デッキのコスト
+				// タグの1個目が通常デッキ、2個目が警護デッキのコスト
 				var match = q$("div[class='deck-all-tab-element clearfix'] div[class='number clearfix'] span[class='volume'][data-deck-kind='" + village_kind + "']").eq(select_mode - 1).text().match(/\d+(\.\d+)?/g);
 				freecost = parseFloat(match[1]) - parseFloat(match[0]);
 				if (freecost < 1) {
@@ -7292,7 +7293,7 @@ function multipleDeckSet() {
 	// 選定された武将をデッキにセットする
 	function multiple_deck_set_finalstep(target_url, select_village, select_target, targets) {
 
-	// 抽出した武将をテーブルに描画
+		// 抽出した武将をテーブルに描画
 		for (var i = 0; i < targets.length; i++) {
 			// 武将の配置
 			var ssid = getSessionId();
