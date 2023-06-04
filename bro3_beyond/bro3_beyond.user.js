@@ -6419,7 +6419,6 @@ function deck_resttime_checker() {
 							"<table id='search-result' style='font-size: 8pt; display: none; margin-right: 25px;'>" +
 							"</table>" +
 						"</div>" +
-//						"<input type='button' id='close_search_file' style='margin: 4px;' value='閉じる'>&nbsp;" +
 					"</div>" +
 				"</div>" +
 			"</div>" +
@@ -6467,7 +6466,7 @@ function deck_resttime_checker() {
 
 	q$("#search_skill").on('click', function(event) {
 		if (event.target === searchSkillInput[0]) {
-		isInitialClick = false;
+			isInitialClick = false;
 		}
 	});
 
@@ -6563,7 +6562,6 @@ function deck_resttime_checker() {
 							// 基礎情報(武将名、武将レベル、コスト）
 							var cname = q$("div[class^='illustMini__div--name']", cards.eq(i)).text();
 							var info = q$("table[class='statusParameter1'] tbody tr", cards.eq(i));
-//							var cname = q$("td", info.eq(1)).eq(0).text();
 							var clevel = q$("td", info.eq(2)).eq(0).text();
 							var cost = q$("td", info.eq(3)).eq(0).text();
 							var chp = q$("td", info.eq(5)).eq(0).text();
@@ -6576,7 +6574,7 @@ function deck_resttime_checker() {
 								// 副将スキルは外す (2023/05/26 by pla2999)
 								var skill = q$("b", info2).eq(j).text().replace(/[ \t]/g, "");
 								if (/^副/.test(skill)) continue;
-	skill = skill.replace(/^.*:/, "");
+								skill = skill.replace(/^.*:/, "");
 								var rest = q$("p", info2).eq(j).text().replace(/[\t]/g, "");
 								skills.push({name: skill, rest: rest});
 							}
@@ -7013,7 +7011,7 @@ function multipleLabelSet(is_move_top_card_count) {
 							multiple_labe_set_finalstep(selected_label, cids);
 						}
 
-							wait = false;
+						wait = false;
 					});
 				}, AJAX_REQUEST_INVERVAL
 			);
@@ -7069,22 +7067,22 @@ function multipleDeckSet() {
 
 	// 一括デッキセットボタン追加
 	q$("#rotate div[class='number card_count clearfix']").eq(0).after(
-	"<fieldset style='-moz-border-radius:5px; border-radius: 5px; -webkit-border-radius: 5px; margin: 4px; border: 2px solid black;'>" +
-	"<div style='margin: 3px 3px 3px 3px;'>" +
-	"<div id='multiple_set_status'>" +
-	"<span style='margin-left: 4px;'>一括デッキセット</span>" +
-	"<select id='multiple_set_mode' style='margin: 4px;'>" +
-	"<option value='gi'>魏の軍極・軍防・督戦対象武将</option>" +
-	"<option value='go'>呉の軍極・軍防・督戦対象武将</option>" +
-	"<option value='shoku'>蜀の軍極・軍防・督戦対象武将</option>" +
-	"<option value='hoka'>他の軍極・軍防・督戦対象武将</option>" +
-	"<option value='renkan'>連環の計対象武将</option>" +
-	"<option value='lowcost'>低コスト武将（コスト順）</option>" +
-	"</select>" +
-	selects.prop('outerHTML') +
-	"<input id='multi_card_set' type='button' style='font-size: 12px;' value='実行'></input>" +
-	"<div id='multiple_deckset_status' style='font-weight: bold;'></div>" +
-	"<div>"+
+		"<fieldset style='-moz-border-radius:5px; border-radius: 5px; -webkit-border-radius: 5px; margin: 4px; border: 2px solid black;'>" +
+			"<div style='margin: 3px 3px 3px 3px;'>" +
+				"<div id='multiple_set_status'>" +
+					"<span style='margin-left: 4px;'>一括デッキセット</span>" +
+					"<select id='multiple_set_mode' style='margin: 4px;'>" +
+						"<option value='gi'>魏の軍極・軍防・督戦対象武将</option>" +
+						"<option value='go'>呉の軍極・軍防・督戦対象武将</option>" +
+						"<option value='shoku'>蜀の軍極・軍防・督戦対象武将</option>" +
+						"<option value='hoka'>他の軍極・軍防・督戦対象武将</option>" +
+						"<option value='renkan'>連環の計対象武将</option>" +
+						"<option value='lowcost'>低コスト武将（コスト順）</option>" +
+					"</select>" +
+					selects.prop('outerHTML') +
+					"<input id='multi_card_set' type='button' style='font-size: 12px;' value='実行'></input>" +
+					"<div id='multiple_deckset_status' style='font-weight: bold;'></div>" +
+				"</div>"+
 			"</div>" +
 		"</fieldset>"
 	);
