@@ -8834,7 +8834,7 @@ function tableSorter(selector, offset, index, order_ascend, call_back) {
 	nodes.sort(
 		function(a, b) {
 			var result = 0;
-			if (/^[0-9,]+$/.test(a.value.rtim()) && /^[0-9,]+$/.test(b.value.rtim())) {
+			if (/^[0-9,]+$/.test(a.value.trim()) && /^[0-9,]+$/.test(b.value.trim())) {
 				var num1 = parseInt(a.value.replace(/,/g, ""));
 				var num2 = parseInt(b.value.replace(/,/g, ""));
 				if (num1 < num2) {
