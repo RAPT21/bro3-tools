@@ -121,7 +121,9 @@
 // 1.09.27	2023/04/29	RAPT. メニューに北伐関係の項目を追加
 // 1.09.28	2023/05/30	RAPT. 「デッキ：ファイルに下げるボタンを1クリックで使用に変更」が警護デッキで動作していなかった不具合を修正
 // 1.09.29	2023/06/04	RAPT. 回復時間検索、「デッキ：一括デッキセット機能を追加」の不具合修正 by @pla2999 in #38
-// 1.09.30	2023/06/25	RAPT. 「領地一覧：領地LVUP時のアラートを抑制」を追加
+// 1.09.30	2023/06/27	RAPT. 「領地一覧：領地LVUP時のアラートを抑制」を追加
+//						- 「同盟トップ：同盟員全領地座標CSV取得」機能が動作しなくなっていたのを修正
+//						- 「同盟トップ：同盟員本拠座標取得」機能が動作しなくなっていたのを修正
 
 
 // TODO:
@@ -2296,7 +2298,7 @@ function allianceTabControl() {
 								})
 								.done(function(res){
 									var resp = q$("<div>").append(res);
-									var landelems = q$("#gray02Wrapper table[class='commonTables'] tr", resp);
+									var landelems = q$("#gray02Wrapper .profileTable tr", resp);
 									var rowct = 0;
 									for (var n = 0; n < landelems.length; n++) {
 										if (landelems.eq(n).children('th').eq(0).text() == '名前') {
@@ -2428,7 +2430,7 @@ function allianceTabControl() {
 								.done(function(res){
 									var resp = q$("<div>").append(res);
 									var result = "";
-									var landelems = q$("#gray02Wrapper table[class='commonTables'] tr", resp);
+									var landelems = q$("#gray02Wrapper .profileTable tr", resp);
 									var rowct = 0;
 									for (var n = 0; n < landelems.length; n++) {
 										if (landelems.eq(n).children('th').eq(0).text() == '名前') {
