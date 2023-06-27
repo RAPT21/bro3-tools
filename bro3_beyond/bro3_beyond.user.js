@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.29
+// @version		1.09.30
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -121,6 +121,7 @@
 // 1.09.27	2023/04/29	RAPT. メニューに北伐関係の項目を追加
 // 1.09.28	2023/05/30	RAPT. 「デッキ：ファイルに下げるボタンを1クリックで使用に変更」が警護デッキで動作していなかった不具合を修正
 // 1.09.29	2023/06/04	RAPT. 回復時間検索、「デッキ：一括デッキセット機能を追加」の不具合修正 by @pla2999 in #38
+// 1.09.30	2023/06/25	RAPT. 「領地一覧：領地LVUP時のアラートを抑制」を追加
 
 
 // TODO:
@@ -279,6 +280,7 @@ var DECK_1C = 'de1c';		// デッキ：現在の所持枚数をファイルの上
 var DECK_1D = 'de1d';		// デッキ：援軍武将を1クリックで撤退させるボタンを追加
 var DECK_21 = 'de21';		// 領地一覧：領地一覧のソートに取得順を追加
 var DECK_22 = 'de22';		// 領地一覧：「新領地」で始まる領地を全て破棄
+var DECK_23 = 'de23';		// 領地一覧：領地LVUP時のアラートを抑制
 var DECK_31 = 'de31';		// 修行合成でレベルが上がった時に、レベルアップボタンを追加
 var DECK_32 = 'de32';		// 自動スキルレベルアップ合成機能を追加
 var DECK_33 = 'de33';		// スキルレベルアップ合成画面でベースカードの交換機能を追加
@@ -4643,6 +4645,10 @@ function execFacilityPart() {
 			}
 		);
 	}
+
+	if (g_beyond_options[DECK_23] == true) {
+		q$("#all .commonTables td a").prop("onclick", null).off("click");
+	}
 }
 
 //--------------------//
@@ -6134,6 +6140,7 @@ function draw_setting_window(append_target) {
 					<div style='margin-left: 8px;'> \
 						<div><input type='checkbox' id='" + DECK_21 + "'><label for='" + DECK_21 + "'>領地一覧の並び方を初期状態に戻す</label></input></div> \
 						<div><input type='checkbox' id='" + DECK_22 + "'><label for='" + DECK_22 + "'>「新領地」で始まる領地を全て破棄する機能を追加</label></input></div> \
+						<div><input type='checkbox' id='" + DECK_23 + "'><label for='" + DECK_23 + "'>領地LVUP時のアラートを抑制</label></input></div> \
 					</div> \
 				</div> \
 				<div id='tab-report'> \
@@ -10156,6 +10163,7 @@ function getDefaultOptions() {
 	settings[DECK_1D] = false;		// デッキ：援軍武将を1クリックで撤退させるボタンを追加
 	settings[DECK_21] = true;		// 領地一覧：領地一覧の並び方を初期状態に戻す
 	settings[DECK_22] = true;		// 領地一覧：「新領地」で始まる領地を全て破棄
+	settings[DECK_23] = true;		// 領地一覧：領地LVUP時のアラートを抑制
 	settings[DECK_31] = true;		// 修行合成でレベルが上がった時に、レベルアップボタンを追加
 	settings[DECK_32] = true;		// 自動スキルレベルアップ合成機能を追加
 	settings[DECK_33] = true;		// スキルレベルアップ合成画面でベースカードの交換機能を追加
