@@ -171,10 +171,7 @@ function setVALUE(key, value) {
 var g_MD="";
 var d = document;
 var $ = function(id) { return d.getElementById(id); };
-var $x = function(xp,dc) { return d.evaluate(xp, dc||d, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue; };
-var $a = function(xp,dc) { var r = d.evaluate(xp, dc||d, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null); var a=[]; for(var i=0; i<r.snapshotLength; i++){ a.push(r.snapshotItem(i)); } return a; };
 var $e = function(e,t,f) { if (!e) return; e.addEventListener(t, f, false); };
-var $v = function(key) { return d.evaluate(key, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null); };		// 2013.12.18
 var DELIMIT1 = "#$%";
 var DELIMIT2 = "&?@";
 
