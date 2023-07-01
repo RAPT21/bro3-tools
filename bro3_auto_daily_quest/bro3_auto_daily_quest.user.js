@@ -40,7 +40,7 @@ var OPT_TROOPS_Y			= 0;// 出兵先座標y
 // 内部設定
 var OPT_VALUE_IGNORE_SECONDS = -1; // 負荷を下げる為、指定秒数以内のリロード時は処理を行なわない(0以下指定で無効化)
 var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
-var OPT_SELECT_LOGIN_BONUS_ROUTE = true; // 洛陽への路のルートを自動で切り替えるか（テスト中の機能）
+var OPT_SELECT_LOGIN_BONUS_ROUTE = false; // 洛陽への路のルートを自動で切り替えるか（テスト中の機能）
 var OPT_SHOW_YOROZU_COUNT_AT_WEATHER = true; // ヨロズダスの残り回数を天候エリアに表示
 
 
