@@ -1094,6 +1094,13 @@ function openSettingBox() {
 		ccreateCheckBox(td200, OPT_QUEST_01, " [繰り返しクエスト] 自動寄付糧500", "繰り返しクエスト用に同盟へ糧500の寄付を自動で行ないます。");
 		ccreateCheckBox(td200, OPT_QUEST_02, " [繰り返しクエスト] 自動デュエル", "繰り返しクエスト用デュエルを1回だけ自動で行ないます。");
 		ccreateCheckBox(td200, OPT_QUEST_03, " [繰り返しクエスト] 自動出兵", "繰り返しクエスト用鹵獲出兵を自動で行ないます。");
+			var divTroop = q$("<div />", {
+				style: 'padding: 1px; padding-left: 2px'
+			});
+			q$(td200).append(divTroop);
+			ccreateEdit(divTroop, OPT_TROOPS_01, "　　武将カードID: ", 16);
+			ccreateEdit(divTroop, OPT_TROOPS_02, "　X: ", 6);
+			ccreateEdit(divTroop, OPT_TROOPS_03, "　Y: ", 6);
 			ccreateText(td200, "　");
 			ccreateText(td200, "※ クエスト報酬のうち、資源以外は自動で受け取ります。");
 		ccreateCheckBox(td200, OPT_RECEIVE_01, " 自動でヨロズダスをひく", "クエスト報酬がヨロズダスだった場合、自動でヨロズダスをひきます。");
@@ -1320,12 +1327,21 @@ function ccreateCheckBox(container, key, text, title)
 }
 
 
-function cgetCheckBoxValue(id)
+function ccreateEdit(container, key, text, size)
 {
-	var c = id;
-	if( !c ) return 0;
-	if( !c.checked ) return 0;
-	return 1;
+	var lb = q$("<label />", {
+		for: key,
+		style: 'vertical-align: middle'
+	}).append(text);
+	var inp = q$("<input />", {
+		id: key,
+		type: 'text',
+		maxlength: size,
+		size: size,
+		style: 'text-align: center;'
+	});
+	inp.val(g_options[key]);
+	q$(container).append(lb).append(inp);
 }
 
 
