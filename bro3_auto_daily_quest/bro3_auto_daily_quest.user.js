@@ -14,53 +14,12 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2023.07.01
+// @version 	2023.07.02
 // ==/UserScript==
-var VERSION = "2023.07.01"; 	// バージョン情報
+var VERSION = "2023.07.02"; 	// バージョン情報
 
-
-//----------[旧オプション]----------
-// オプション設定 (1 で有効、0 で無効)
-var OPT_QUEST_DONATE		= 0; // 繰り返しクエスト用寄付糧500を自動で行なう
-var OPT_QUEST_DUEL			= 0; // 繰り返しクエスト用デュエルを自動で行なう
-var OPT_QUEST_TROOPS		= 0; // 繰り返しクエスト用出兵を自動で行なう
-
-var OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬 '資源' も自動で受け取る
-
-var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
-var OPT_AUTO_DUEL			= 0; // 自動デュエル
-var OPT_AUTO_JORYOKU		= 0; // 自動助力
-var OPT_AUTO_OPEN_ALL_REPORTS = 0; // 全ての報告書を既読にする
-var OPT_AUTO_RECEIVE_LOGIN_BONUS = 0; // 洛陽への路 通算ログイン報酬を受取る
-var OPT_TRAINING_QUEST		= 0; // 育成クエスト（勝戦の計、攻戦の計）自動受注
-
-var OPT_TROOPS_CARD_ID		= 0;// 出兵武将カードID
-var OPT_TROOPS_X			= 0;// 出兵先座標x
-var OPT_TROOPS_Y			= 0;// 出兵先座標y
-
-//----------[新オプション]----------
-var g_options = {};
-
-var OPT_QUEST_01	= 'dqu01'; // 繰り返しクエスト用寄付糧500を自動で行なう
-var OPT_QUEST_02	= 'dqu02'; // 繰り返しクエスト用デュエルを自動で行なう
-var OPT_QUEST_03	= 'dqu03'; // 繰り返しクエスト用出兵を自動で行なう
-
-var OPT_RECEIVE_01	= 'dre01'; // 自動でヨロズダスをひく
-var OPT_RECEIVE_02	= 'dre02'; // クエスト報酬 '資源' も自動で受け取る
-var OPT_RECEIVE_03	= 'dre03'; // 受信箱から便利アイテムへ移動
-
-var OPT_FEATURE_01	= 'dfe01'; // 自動デュエル
-var OPT_FEATURE_02	= 'dfe02'; // 自動助力
-var OPT_FEATURE_03	= 'dfe03'; // 全ての報告書を既読にする
-var OPT_FEATURE_04	= 'dfe04'; // 洛陽への路 通算ログイン報酬を受取る
-var OPT_FEATURE_05	= 'dfe05'; // 育成クエスト（勝戦の計、攻戦の計）自動受注
-var OPT_FEATURE_06	= 'dfe06'; // [β機能] 洛陽への路のルートを自動で切り替える
-var OPT_FEATURE_07	= 'dfe07'; // ヨロズダスの残り回数を天候エリアに表示
-
-var OPT_TROOPS_01	= 'dtr01'; // 出兵武将カードID
-var OPT_TROOPS_02	= 'dtr02'; // 出兵先座標x
-var OPT_TROOPS_03	= 'dtr03'; // 出兵先座標y
-var OPT_TROOPS_04	= 'dtr04'; // 最小討伐ゲージ
+jQuery.noConflict();
+q$ = jQuery;
 
 //----------[内部設定]----------
 var OPT_VALUE_IGNORE_SECONDS = -1; // 負荷を下げる為、指定秒数以内のリロード時は処理を行なわない(0以下指定で無効化)
@@ -115,13 +74,63 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2023.01.01 お正月期間限定クエも同一スクリプトで手動切り替えできるように
 //			  DONATE_SHOGATSU_RICE に寄付額をセットで有効化。0 をセットで無効化
 // 2023.01.03 DONATE_SHOGATSU_RICE に 1 以上設定時、期間限定クエストを先に処理するように
-// 2023.01.29 洛陽への路のルートを自動で切り替える（テスト中の機能）
+// 2023.01.29 洛陽への路のルートを自動で切り替える（β機能）
 // 2023.07.01 繰り返しクエスト用鹵獲出兵する際の最小討伐ゲージをTP鹵獲できる500へ変更（以前は100でした）
-
-jQuery.noConflict();
-q$ = jQuery;
+// 2023.07.02 ソース内オプションを設定画面へ設置
 
 
+//----------------------------------------
+// 保存設定部品定義
+//----------------------------------------
+var g_options = {};
+
+var OPT_QUEST_01	= 'dqu01'; // 繰り返しクエスト用寄付糧500を自動で行なう
+var OPT_QUEST_02	= 'dqu02'; // 繰り返しクエスト用デュエルを自動で行なう
+var OPT_QUEST_03	= 'dqu03'; // 繰り返しクエスト用出兵を自動で行なう
+
+var OPT_RECEIVE_01	= 'dre01'; // 自動でヨロズダスをひく
+var OPT_RECEIVE_02	= 'dre02'; // クエスト報酬 '資源' も自動で受け取る
+var OPT_RECEIVE_03	= 'dre03'; // 受信箱から便利アイテムへ移動
+
+var OPT_FEATURE_01	= 'dfe01'; // 自動デュエル
+var OPT_FEATURE_02	= 'dfe02'; // 自動助力
+var OPT_FEATURE_03	= 'dfe03'; // 全ての報告書を既読にする
+var OPT_FEATURE_04	= 'dfe04'; // 洛陽への路 通算ログイン報酬を受取る
+var OPT_FEATURE_05	= 'dfe05'; // 育成クエスト（勝戦の計、攻戦の計）自動受注
+var OPT_FEATURE_06	= 'dfe06'; // [β機能] 洛陽への路のルートを自動で切り替える
+var OPT_FEATURE_07	= 'dfe07'; // ヨロズダスの残り回数を天候エリアに表示
+
+var OPT_TROOPS_01	= 'dtr01'; // 出兵武将カードID
+var OPT_TROOPS_02	= 'dtr02'; // 出兵先座標x
+var OPT_TROOPS_03	= 'dtr03'; // 出兵先座標y
+var OPT_TROOPS_04	= 'dtr04'; // 最小討伐ゲージ
+
+
+//----------------------------------------
+// 旧オプション設定 (1 で有効、0 で無効)
+//----------------------------------------
+var OPT_QUEST_DONATE		= 0; // 繰り返しクエスト用寄付糧500を自動で行なう
+var OPT_QUEST_DUEL			= 0; // 繰り返しクエスト用デュエルを自動で行なう
+var OPT_QUEST_TROOPS		= 0; // 繰り返しクエスト用出兵を自動で行なう
+
+var OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬 '資源' も自動で受け取る
+
+var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
+var OPT_AUTO_DUEL			= 0; // 自動デュエル
+var OPT_AUTO_JORYOKU		= 0; // 自動助力
+var OPT_AUTO_OPEN_ALL_REPORTS = 0; // 全ての報告書を既読にする
+var OPT_AUTO_RECEIVE_LOGIN_BONUS = 0; // 洛陽への路 通算ログイン報酬を受取る
+var OPT_TRAINING_QUEST		= 0; // 育成クエスト（勝戦の計、攻戦の計）自動受注
+
+var OPT_TROOPS_CARD_ID		= 0;// 出兵武将カードID
+var OPT_TROOPS_X			= 0;// 出兵先座標x
+var OPT_TROOPS_Y			= 0;// 出兵先座標y
+//
+
+
+//----------------------------------------
+// 初期化
+//----------------------------------------
 var HOST		= location.hostname;
 var SERVER		= HOST.split('.')[0]+'> ';
 var SERVER_SCHEME = location.protocol + "//";
