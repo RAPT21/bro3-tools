@@ -19,6 +19,7 @@
 var VERSION = "2023.07.01"; 	// バージョン情報
 
 
+//----------[旧オプション]----------
 // オプション設定 (1 で有効、0 で無効)
 var OPT_QUEST_DONATE		= 0; // 繰り返しクエスト用寄付糧500を自動で行なう
 var OPT_QUEST_DUEL			= 0; // 繰り返しクエスト用デュエルを自動で行なう
@@ -46,13 +47,13 @@ var OPT_QUEST_03	= 'dqu03'; // 繰り返しクエスト用出兵を自動で行�
 
 var OPT_RECEIVE_01	= 'dre01'; // 自動でヨロズダスをひく
 var OPT_RECEIVE_02	= 'dre02'; // クエスト報酬 '資源' も自動で受け取る
+var OPT_RECEIVE_03	= 'dre03'; // 受信箱から便利アイテムへ移動
 
-var OPT_FEATURE_01	= 'dfe01'; // 受信箱から便利アイテムへ移動
-var OPT_FEATURE_02	= 'dfe02'; // 自動デュエル
-var OPT_FEATURE_03	= 'dfe03'; // 自動助力
-var OPT_FEATURE_04	= 'dfe04'; // 全ての報告書を既読にする
-var OPT_FEATURE_05	= 'dfe05'; // 洛陽への路 通算ログイン報酬を受取る
-var OPT_FEATURE_06	= 'dfe06'; // 育成クエスト（勝戦の計、攻戦の計）自動受注
+var OPT_FEATURE_01	= 'dfe01'; // 自動デュエル
+var OPT_FEATURE_02	= 'dfe02'; // 自動助力
+var OPT_FEATURE_03	= 'dfe03'; // 全ての報告書を既読にする
+var OPT_FEATURE_04	= 'dfe04'; // 洛陽への路 通算ログイン報酬を受取る
+var OPT_FEATURE_05	= 'dfe05'; // 育成クエスト（勝戦の計、攻戦の計）自動受注
 
 var OPT_TROOPS_01	= 'dtr01'; // 出兵武将カードID
 var OPT_TROOPS_02	= 'dtr02'; // 出兵先座標x
@@ -549,7 +550,7 @@ function receiveRewardsImpl(check, path, callback)
 function receiveRewards() {
 	var receive_it = false;
 	var receive = function(){
-		if (g_options[OPT_FEATURE_01]) {
+		if (g_options[OPT_RECEIVE_03]) {
 			if (receive_it) {
 				clearLastTime();
 			}
@@ -821,27 +822,27 @@ function acceptTrainingQuest(callback) {
 		setTimeout(function(){
 
 			// 洛陽への路 通算ログイン報酬を受取る
-			if (g_options[OPT_FEATURE_05]) {
+			if (g_options[OPT_FEATURE_04]) {
 				receiveLoginBonus();
 			}
 
 			// 育成クエ受注
-			if (g_options[OPT_FEATURE_06]) {
+			if (g_options[OPT_FEATURE_05]) {
 				acceptTrainingQuest();
 			}
 
 			// 受信箱から移す
-			if (g_options[OPT_FEATURE_01]) {
+			if (g_options[OPT_RECEIVE_03]) {
 				moveFromInbox(false);
 			}
 
 			// 自動助力
-			if (g_options[OPT_FEATURE_03]) {
+			if (g_options[OPT_FEATURE_02]) {
 				joryoku();
 			}
 
 			// 全ての報告書を既読にする
-			if (g_options[OPT_FEATURE_04]) {
+			if (g_options[OPT_FEATURE_03]) {
 				openAllReports();
 			}
 
@@ -874,7 +875,7 @@ function acceptTrainingQuest(callback) {
 				}
 
 				// サーバー時刻が [00:00:00 - 01:59:59] or [06:00:00 - 23:59:59] であれば自動デュエルする
-				if (g_options[OPT_FEATURE_02]) {
+				if (g_options[OPT_FEATURE_01]) {
 					auto_duel();
 				}
 
@@ -1097,13 +1098,13 @@ function openSettingBox() {
 			ccreateText(td200, "※ クエスト報酬のうち、資源以外は自動で受け取ります。");
 		ccreateCheckBox(td200, OPT_RECEIVE_01, " 自動でヨロズダスをひく", "クエスト報酬がヨロズダスだった場合、自動でヨロズダスをひきます。");
 		ccreateCheckBox(td200, OPT_RECEIVE_02, " クエスト報酬が資源でも自動で受け取る", "クエスト報酬が資源だったときも自動で受け取ります。");
-		ccreateCheckBox(td200, OPT_FEATURE_01, " アイテム受信箱から便利アイテムへ移動", "受信箱内のアイテムを自動で便利アイテムへ移動します。");
+		ccreateCheckBox(td200, OPT_RECEIVE_03, " アイテム受信箱から便利アイテムへ移動", "受信箱内のアイテムを自動で便利アイテムへ移動します。");
 			ccreateText(td200, "　");
-		ccreateCheckBox(td200, OPT_FEATURE_02, " [02:00:00 - 05:59:59] 以外に自動デュエル", "[00:00:00 - 01:59:59], [06:00:00 - 23:59:59] の時間帯のみ自動デュエルを行ないます。");
-		ccreateCheckBox(td200, OPT_FEATURE_03, " 自動助力", "同盟施設に祈祷所がある場合、自動で助力を行ないます。");
-		ccreateCheckBox(td200, OPT_FEATURE_04, " 全ての報告書を既読にする", "報告書タブにあるボタンを自動で押します。");
-		ccreateCheckBox(td200, OPT_FEATURE_05, " 洛陽への路 通算ログイン報酬を受取る", "洛陽への路の通算ログイン報酬を自動で受け取ります。");
-		ccreateCheckBox(td200, OPT_FEATURE_06, " 育成クエスト自動受注", "育成クエスト（勝戦の計、攻戦の計）を自動で受注します。");
+		ccreateCheckBox(td200, OPT_FEATURE_01, " [02:00:00 - 05:59:59] 以外に自動デュエル", "[00:00:00 - 01:59:59], [06:00:00 - 23:59:59] の時間帯のみ自動デュエルを行ないます。");
+		ccreateCheckBox(td200, OPT_FEATURE_02, " 自動助力", "同盟施設に祈祷所がある場合、自動で助力を行ないます。");
+		ccreateCheckBox(td200, OPT_FEATURE_03, " 全ての報告書を既読にする", "報告書タブにあるボタンを自動で押します。");
+		ccreateCheckBox(td200, OPT_FEATURE_04, " 洛陽への路 通算ログイン報酬を受取る", "洛陽への路の通算ログイン報酬を自動で受け取ります。");
+		ccreateCheckBox(td200, OPT_FEATURE_05, " 育成クエスト自動受注", "育成クエスト（勝戦の計、攻戦の計）を自動で受注します。");
 			ccreateText(td200, "　");
 
 	Setting_Box.appendChild(tr100);
@@ -1155,13 +1156,13 @@ function getDefaultOptions() {
 
 	settings[OPT_RECEIVE_01]	= true; // 自動でヨロズダスをひく
 	settings[OPT_RECEIVE_02]	= true; // クエスト報酬 '資源' も自動で受け取る
+	settings[OPT_RECEIVE_03]	= true; // 受信箱から便利アイテムへ移動
 
-	settings[OPT_FEATURE_01]	= true; // 受信箱から便利アイテムへ移動
-	settings[OPT_FEATURE_02]	= true; // 自動デュエル
-	settings[OPT_FEATURE_03]	= true; // 自動助力
-	settings[OPT_FEATURE_04]	= true; // 全ての報告書を既読にする
-	settings[OPT_FEATURE_05]	= true; // 洛陽への路 通算ログイン報酬を受取る
-	settings[OPT_FEATURE_06]	= true; // 育成クエスト（勝戦の計、攻戦の計）自動受注
+	settings[OPT_FEATURE_01]	= true; // 自動デュエル
+	settings[OPT_FEATURE_02]	= true; // 自動助力
+	settings[OPT_FEATURE_03]	= true; // 全ての報告書を既読にする
+	settings[OPT_FEATURE_04]	= true; // 洛陽への路 通算ログイン報酬を受取る
+	settings[OPT_FEATURE_05]	= true; // 育成クエスト（勝戦の計、攻戦の計）自動受注
 
 	settings[OPT_TROOPS_01]		= 0; // 出兵武将カードID
 	settings[OPT_TROOPS_02]		= 0; // 出兵先座標x
@@ -1238,17 +1239,17 @@ function migrateSettings(options) {
 		options[OPT_QUEST_03]		= forIntAsBool(Temp[2]); // 自動出兵
 		options[OPT_RECEIVE_01]		= forIntAsBool(Temp[3]); // 自動でヨロズダスをひく
 		options[OPT_RECEIVE_02]		= forIntAsBool(Temp[4]); // クエスト報酬が資源でも自動で受け取る
-		options[OPT_FEATURE_01]		= forIntAsBool(Temp[5]); // アイテム受信箱から便利アイテムへ移動
-		options[OPT_FEATURE_02]		= forIntAsBool(Temp[6]); // [02:00:00 - 05:59:59] 以外に自動デュエル
-		options[OPT_FEATURE_03]		= forIntAsBool(Temp[7]); // 自動助力
+		options[OPT_RECEIVE_03]		= forIntAsBool(Temp[5]); // アイテム受信箱から便利アイテムへ移動
+		options[OPT_FEATURE_01]		= forIntAsBool(Temp[6]); // [02:00:00 - 05:59:59] 以外に自動デュエル
+		options[OPT_FEATURE_02]		= forIntAsBool(Temp[7]); // 自動助力
 		if (Temp.length > 8) {
-			options[OPT_FEATURE_04] = forIntAsBool(Temp[8]); // 全ての報告書を既読にする
+			options[OPT_FEATURE_03] = forIntAsBool(Temp[8]); // 全ての報告書を既読にする
 		}
 		if (Temp.length > 9) {
-			options[OPT_FEATURE_05] = forIntAsBool(Temp[9]); // 洛陽への路 通算ログイン報酬を受取る
+			options[OPT_FEATURE_04] = forIntAsBool(Temp[9]); // 洛陽への路 通算ログイン報酬を受取る
 		}
 		if (Temp.length > 10) {
-			options[OPT_FEATURE_06] = forIntAsBool(Temp[10]); // 育成クエスト（勝戦の計、攻戦の計）自動受注
+			options[OPT_FEATURE_05] = forIntAsBool(Temp[10]); // 育成クエスト（勝戦の計、攻戦の計）自動受注
 		}
 
 		if (Temp1.length >= 2) {
