@@ -14,9 +14,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2023.01.29
+// @version 	2023.07.01
 // ==/UserScript==
-var VERSION = "2023.01.29"; 	// バージョン情報
+var VERSION = "2023.07.01"; 	// バージョン情報
 
 
 // オプション設定 (1 で有効、0 で無効)
@@ -42,6 +42,7 @@ var OPT_VALUE_IGNORE_SECONDS = -1; // 負荷を下げる為、指定秒数以内
 var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 var OPT_SELECT_LOGIN_BONUS_ROUTE = false; // 洛陽への路のルートを自動で切り替えるか（テスト中の機能）
 var OPT_SHOW_YOROZU_COUNT_AT_WEATHER = true; // ヨロズダスの残り回数を天候エリアに表示
+var OPT_TROOPS_GAGE			= 500; // 繰り返しクエスト用鹵獲出兵する際の最小討伐ゲージ
 
 
 // 2015.05.17 初版作成。繰り返しクエスト受注、寄付クエ実施、クエクリ、ヨロズダス引き、受信箱からアイテムを移す
@@ -93,6 +94,7 @@ var OPT_SHOW_YOROZU_COUNT_AT_WEATHER = true; // ヨロズダスの残り回数�
 //			  DONATE_SHOGATSU_RICE に寄付額をセットで有効化。0 をセットで無効化
 // 2023.01.03 DONATE_SHOGATSU_RICE に 1 以上設定時、期間限定クエストを先に処理するように
 // 2023.01.29 洛陽への路のルートを自動で切り替える（テスト中の機能）
+// 2023.07.01 繰り返しクエスト用鹵獲出兵する際の最小討伐ゲージをTP鹵獲できる500へ変更（以前は100でした）
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -642,8 +644,9 @@ function sendTroop(vID, cardID, cardGage, targetX, targetY, callback) {
 			'village_y_value': targetY, // 出兵先座標y
 			'unit_assign_card_id': cardID, // 武将カードID
 			'radio_move_type': '307', // 301=援軍,302=殲滅,303=強襲,306=偵察,307=鹵獲
-
+			'deck_mode': '1',
 			'radio_reserve_type': '0',
+			'radio_enhanced_loyalty_attack': 0,
 			'btn_send': '出兵',
 			'card_id': '204'
 		};
@@ -692,7 +695,7 @@ function callSendTroop()
 		});
 
 		// 出兵指示
-		if (cardGage >= 100) {
+		if (cardGage >= OPT_TROOPS_GAGE) {
 			sendTroop(vID, cardID, cardGage, targetX, targetY);
 			return true;
 		} else {
@@ -1068,7 +1071,7 @@ function openSettingBox() {
 		td200.style.verticalAlign = "top";
 		ccreateCheckBox(td200, "OPT_QUEST_DONATE"		, OPT_QUEST_DONATE		, " [繰り返しクエスト] 自動寄付糧500", "繰り返しクエスト用に同盟へ糧500の寄付を自動で行ないます。",0);
 		ccreateCheckBox(td200, "OPT_QUEST_DUEL"			, OPT_QUEST_DUEL		, " [繰り返しクエスト] 自動デュエル", "繰り返しクエスト用デュエルを1回だけ自動で行ないます。",0);
-		ccreateCheckBox(td200, "OPT_QUEST_TROOPS"		, OPT_QUEST_TROOPS		, " [繰り返しクエスト] 自動出兵", "繰り返しクエスト用出兵を自動で行ないます。",0);
+		ccreateCheckBox(td200, "OPT_QUEST_TROOPS"		, OPT_QUEST_TROOPS		, " [繰り返しクエスト] 自動出兵", "繰り返しクエスト用鹵獲出兵を自動で行ないます。",0);
 			ccreateText(td200, "dummy", "　", 0 );
 			ccreateText(td200, "dummy", "※ クエスト報酬のうち、資源以外は自動で受け取ります。", 0 );
 		ccreateCheckBox(td200, "OPT_AUTO_YOROZUDAS"		, OPT_AUTO_YOROZUDAS	, " 自動でヨロズダスをひく", "クエスト報酬がヨロズダスだった場合、自動でヨロズダスをひきます。",0);
