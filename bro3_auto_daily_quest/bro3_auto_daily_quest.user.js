@@ -906,10 +906,10 @@ function acceptTrainingQuest(callback) {
 				clearInfo.style.cursor = "pointer";
 				clearInfo.addEventListener("click", function() {
 
-					g_options[OPT_TROOPS_01]		= 0; // 出兵武将カードID
-					g_options[OPT_TROOPS_02]			= targetX; // 出兵先座標x
-					g_options[OPT_TROOPS_03]			= targetY; // 出兵先座標y
-					saveSettingLocal();
+					g_options[OPT_TROOPS_01]	= 0; // 出兵武将カードID
+					g_options[OPT_TROOPS_02]	= targetX; // 出兵先座標x
+					g_options[OPT_TROOPS_03]	= targetY; // 出兵先座標y
+					saveSettings();
 					var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 				}, true);
 			var regInfo = d.createElement("input");
@@ -925,10 +925,10 @@ function acceptTrainingQuest(callback) {
 				regInfo.style.cursor = "pointer";
 				regInfo.addEventListener("click", function() {
 
-					g_options[OPT_TROOPS_01]		= cardID; // 出兵武将カードID
-					g_options[OPT_TROOPS_02]			= targetX; // 出兵先座標x
-					g_options[OPT_TROOPS_03]			= targetY; // 出兵先座標y
-					saveSettingLocal();
+					g_options[OPT_TROOPS_01]	= cardID; // 出兵武将カードID
+					g_options[OPT_TROOPS_02]	= targetX; // 出兵先座標x
+					g_options[OPT_TROOPS_03]	= targetY; // 出兵先座標y
+					saveSettings();
 					var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 				}, true);
 			q$("#btn_send").after(regInfo).after(clearInfo);
@@ -1077,34 +1077,34 @@ function openSettingBox() {
 
 	var tr100 = d.createElement("tr");
 		tr100.style.border = "solid 1px black";
-		tr100.style.backgroundColor =COLOR_TITLE;
+		tr100.style.backgroundColor = COLOR_TITLE;
 
 	var td100 = d.createElement("td");
 		td100.colSpan = "1";
-		ccreateText(td100, "dummy", "■ 繰り返しクエスト自動化 ■", 0 );
+		ccreateText(td100, "■ 繰り返しクエスト自動化 ■");
 
 	var tr200 = d.createElement("tr");
 		tr200.style.border = "solid 1px black";
-		tr200.style.backgroundColor =COLOR_BACK;
+		tr200.style.backgroundColor = COLOR_BACK;
 
 	var td200 = d.createElement("td");
 		td200.style.padding = "2px";
 		td200.style.verticalAlign = "top";
-		ccreateCheckBox(td200, "OPT_QUEST_DONATE"		, OPT_QUEST_DONATE		, " [繰り返しクエスト] 自動寄付糧500", "繰り返しクエスト用に同盟へ糧500の寄付を自動で行ないます。",0);
-		ccreateCheckBox(td200, "OPT_QUEST_DUEL"			, OPT_QUEST_DUEL		, " [繰り返しクエスト] 自動デュエル", "繰り返しクエスト用デュエルを1回だけ自動で行ないます。",0);
-		ccreateCheckBox(td200, "OPT_QUEST_TROOPS"		, OPT_QUEST_TROOPS		, " [繰り返しクエスト] 自動出兵", "繰り返しクエスト用鹵獲出兵を自動で行ないます。",0);
-			ccreateText(td200, "dummy", "　", 0 );
-			ccreateText(td200, "dummy", "※ クエスト報酬のうち、資源以外は自動で受け取ります。", 0 );
-		ccreateCheckBox(td200, "OPT_AUTO_YOROZUDAS"		, OPT_AUTO_YOROZUDAS	, " 自動でヨロズダスをひく", "クエスト報酬がヨロズダスだった場合、自動でヨロズダスをひきます。",0);
-		ccreateCheckBox(td200, "OPT_RECEIVE_RESOURCES"	, OPT_RECEIVE_RESOURCES	, " クエスト報酬が資源でも自動で受け取る", "クエスト報酬が資源だったときも自動で受け取ります。",0);
-		ccreateCheckBox(td200, "OPT_MOVE_FROM_INBOX"	, OPT_MOVE_FROM_INBOX	, " アイテム受信箱から便利アイテムへ移動", "受信箱内のアイテムを自動で便利アイテムへ移動します。",0);
-			ccreateText(td200, "dummy", "　", 0 );
-		ccreateCheckBox(td200, "OPT_AUTO_DUEL"			, OPT_AUTO_DUEL			, " [02:00:00 - 05:59:59] 以外に自動デュエル", "[00:00:00 - 01:59:59], [06:00:00 - 23:59:59] の時間帯のみ自動デュエルを行ないます。",0);
-		ccreateCheckBox(td200, "OPT_AUTO_JORYOKU"		, OPT_AUTO_JORYOKU		, " 自動助力", "同盟施設に祈祷所がある場合、自動で助力を行ないます。",0);
-		ccreateCheckBox(td200, "OPT_AUTO_OPEN_ALL_REPORTS", OPT_AUTO_OPEN_ALL_REPORTS, " 全ての報告書を既読にする", "報告書タブにあるボタンを自動で押します。",0);
-		ccreateCheckBox(td200, "OPT_AUTO_RECEIVE_LOGIN_BONUS", OPT_AUTO_RECEIVE_LOGIN_BONUS, " 洛陽への路 通算ログイン報酬を受取る", "洛陽への路の通算ログイン報酬を自動で受け取ります。",0);
-		ccreateCheckBox(td200, "OPT_TRAINING_QUEST", OPT_TRAINING_QUEST, " 育成クエスト自動受注", "育成クエスト（勝戦の計、攻戦の計）を自動で受注します。",0);
-			ccreateText(td200, "dummy", "　", 0 );
+		ccreateCheckBox(td200, OPT_QUEST_01, " [繰り返しクエスト] 自動寄付糧500", "繰り返しクエスト用に同盟へ糧500の寄付を自動で行ないます。");
+		ccreateCheckBox(td200, OPT_QUEST_02, " [繰り返しクエスト] 自動デュエル", "繰り返しクエスト用デュエルを1回だけ自動で行ないます。");
+		ccreateCheckBox(td200, OPT_QUEST_03, " [繰り返しクエスト] 自動出兵", "繰り返しクエスト用鹵獲出兵を自動で行ないます。");
+			ccreateText(td200, "　");
+			ccreateText(td200, "※ クエスト報酬のうち、資源以外は自動で受け取ります。");
+		ccreateCheckBox(td200, OPT_RECEIVE_01, " 自動でヨロズダスをひく", "クエスト報酬がヨロズダスだった場合、自動でヨロズダスをひきます。");
+		ccreateCheckBox(td200, OPT_RECEIVE_02, " クエスト報酬が資源でも自動で受け取る", "クエスト報酬が資源だったときも自動で受け取ります。");
+		ccreateCheckBox(td200, OPT_FEATURE_01, " アイテム受信箱から便利アイテムへ移動", "受信箱内のアイテムを自動で便利アイテムへ移動します。");
+			ccreateText(td200, "　");
+		ccreateCheckBox(td200, OPT_FEATURE_02, " [02:00:00 - 05:59:59] 以外に自動デュエル", "[00:00:00 - 01:59:59], [06:00:00 - 23:59:59] の時間帯のみ自動デュエルを行ないます。");
+		ccreateCheckBox(td200, OPT_FEATURE_03, " 自動助力", "同盟施設に祈祷所がある場合、自動で助力を行ないます。");
+		ccreateCheckBox(td200, OPT_FEATURE_04, " 全ての報告書を既読にする", "報告書タブにあるボタンを自動で押します。");
+		ccreateCheckBox(td200, OPT_FEATURE_05, " 洛陽への路 通算ログイン報酬を受取る", "洛陽への路の通算ログイン報酬を自動で受け取ります。");
+		ccreateCheckBox(td200, OPT_FEATURE_06, " 育成クエスト自動受注", "育成クエスト（勝戦の計、攻戦の計）を自動で受注します。");
+			ccreateText(td200, "　");
 
 	Setting_Box.appendChild(tr100);
 	tr100.appendChild(td100);
@@ -1122,12 +1122,17 @@ function openSettingBox() {
 
 	// 保存ボタン
 	var Button2 = d.createElement("span");
-		ccreateButton(Button2, "保存して閉じる", "設定内容を保存してウィンドウを閉じます。", function() {saveSettingBox(); closeSettingBox();}, 120);
-	ButtonBox.appendChild(Button2);
+		ccreateButton(Button2, "保存して閉じる", "設定内容を保存してウィンドウを閉じます。", 120, function() {
+			saveSettingBox();
+			closeSettingBox();
+		});
+	ButtonBox.append(Button2);
 
 	// 閉じるボタン
 	var Button3 = d.createElement("span");
-		ccreateButton(Button3, "キャンセル", "設定内容を破棄してウィンドウを閉じます。", function() {closeSettingBox();}, 88);
+		ccreateButton(Button3, "キャンセル", "設定内容を破棄してウィンドウを閉じます。", 88, function() {
+			closeSettingBox();
+		});
 	ButtonBox.appendChild(Button3);
 }
 
@@ -1144,19 +1149,19 @@ function closeSettingBox() {
 function getDefaultOptions() {
 	var settings = {};
 
-	settings[OPT_QUEST_01]		= 1; // 繰り返しクエスト用寄付糧500を自動で行なう
-	settings[OPT_QUEST_02]		= 1; // 繰り返しクエスト用デュエルを自動で行なう
-	settings[OPT_QUEST_03]		= 0; // 繰り返しクエスト用出兵を自動で行なう
+	settings[OPT_QUEST_01]		= true; // 繰り返しクエスト用寄付糧500を自動で行なう
+	settings[OPT_QUEST_02]		= true; // 繰り返しクエスト用デュエルを自動で行なう
+	settings[OPT_QUEST_03]		= false; // 繰り返しクエスト用出兵を自動で行なう
 
-	settings[OPT_RECEIVE_01]	= 1; // 自動でヨロズダスをひく
-	settings[OPT_RECEIVE_02]	= 1; // クエスト報酬 '資源' も自動で受け取る
+	settings[OPT_RECEIVE_01]	= true; // 自動でヨロズダスをひく
+	settings[OPT_RECEIVE_02]	= true; // クエスト報酬 '資源' も自動で受け取る
 
-	settings[OPT_FEATURE_01]	= 1; // 受信箱から便利アイテムへ移動
-	settings[OPT_FEATURE_02]	= 1; // 自動デュエル
-	settings[OPT_FEATURE_03]	= 1; // 自動助力
-	settings[OPT_FEATURE_04]	= 1; // 全ての報告書を既読にする
-	settings[OPT_FEATURE_05]	= 1; // 洛陽への路 通算ログイン報酬を受取る
-	settings[OPT_FEATURE_06]	= 1; // 育成クエスト（勝戦の計、攻戦の計）自動受注
+	settings[OPT_FEATURE_01]	= true; // 受信箱から便利アイテムへ移動
+	settings[OPT_FEATURE_02]	= true; // 自動デュエル
+	settings[OPT_FEATURE_03]	= true; // 自動助力
+	settings[OPT_FEATURE_04]	= true; // 全ての報告書を既読にする
+	settings[OPT_FEATURE_05]	= true; // 洛陽への路 通算ログイン報酬を受取る
+	settings[OPT_FEATURE_06]	= true; // 育成クエスト（勝戦の計、攻戦の計）自動受注
 
 	settings[OPT_TROOPS_01]		= 0; // 出兵武将カードID
 	settings[OPT_TROOPS_02]		= 0; // 出兵先座標x
@@ -1177,42 +1182,24 @@ function saveSettings() {
 	saveSettingsWithObject(g_options);
 }
 
-// old
 function saveSettingBox() {
-	var strSave = "";
+	var defOptions = getDefaultOptions();
 
-	strSave += cgetCheckBoxValue($("OPT_QUEST_DONATE"))		+ DELIMIT2; // 自動寄付糧500
-	strSave += cgetCheckBoxValue($("OPT_QUEST_DUEL"))		+ DELIMIT2; // 自動デュエル
-	strSave += cgetCheckBoxValue($("OPT_QUEST_TROOPS"))		+ DELIMIT2; // 自動出兵
-	strSave += cgetCheckBoxValue($("OPT_AUTO_YOROZUDAS"))	+ DELIMIT2; // 自動でヨロズダスをひく
-	strSave += cgetCheckBoxValue($("OPT_RECEIVE_RESOURCES"))+ DELIMIT2; // クエスト報酬が資源でも自動で受け取る
-	strSave += cgetCheckBoxValue($("OPT_MOVE_FROM_INBOX"))	+ DELIMIT2; // アイテム受信箱から便利アイテムへ移動
-	strSave += cgetCheckBoxValue($("OPT_AUTO_DUEL"))		+ DELIMIT2; // [02:00:00 - 05:59:59] 以外に自動デュエル
-	strSave += cgetCheckBoxValue($("OPT_AUTO_JORYOKU"))		+ DELIMIT2; // 自動助力
-	strSave += cgetCheckBoxValue($("OPT_AUTO_OPEN_ALL_REPORTS"))+ DELIMIT2; // 全ての報告書を既読にする
-	strSave += cgetCheckBoxValue($("OPT_AUTO_RECEIVE_LOGIN_BONUS"))+ DELIMIT2; // 洛陽への路 通算ログイン報酬を受取る
-	strSave += cgetCheckBoxValue($("OPT_TRAINING_QUEST"))+ DELIMIT2; // 育成クエスト（勝戦の計、攻戦の計）自動受注
-	strSave += DELIMIT1;
-	strSave += OPT_TROOPS_CARD_ID	+ DELIMIT2; // 出兵武将カードID
-	strSave += OPT_TROOPS_X			+ DELIMIT2; // 出兵先座標x
-	strSave += OPT_TROOPS_Y			+ DELIMIT2; // 出兵先座標y
-
-	setVALUE("", strSave);
-}
-
-// old
-function saveSettingLocal() {
-	var src = getVALUE("", "");
-	if (src) {
-		var Temp1= src.split(DELIMIT1);
-		var strSave = Temp1[0];
-		strSave += DELIMIT1;
-		strSave += OPT_TROOPS_CARD_ID	+ DELIMIT2; // 出兵武将カードID
-		strSave += OPT_TROOPS_X			+ DELIMIT2; // 出兵先座標x
-		strSave += OPT_TROOPS_Y			+ DELIMIT2; // 出兵先座標y
-
-		setVALUE("", strSave);
-	}
+	q$("#ADContainer input").each(function(){
+		var key = q$(this).attr('id');
+		var type = q$(this).attr('type');
+		if (type == 'checkbox') {
+			g_options[key] = q$(this).prop('checked');
+		} else if (type == 'text') {
+			var num = parseInt(q$(this).val(), 10);
+			if (!isNaN(num) && num > 0) {
+				g_options[key] = num;
+			} else {
+				g_options[key] = defOptions[key];
+			}
+		}
+	});
+	saveSettings();
 }
 
 
@@ -1243,27 +1230,25 @@ function loadSettings() {
 
 function migrateSettings(options) {
 	var src = getVALUE("", "");
-	if (src === "") {
-		return options;
-	} else {
+	if (src !== "") {
 		var Temp1= src.split(DELIMIT1);
 		var Temp = Temp1[0].split(DELIMIT2);
-		options[OPT_QUEST_01]		= forInt(Temp[0]); // 自動寄付糧500
-		options[OPT_QUEST_02]		= forInt(Temp[1]); // 自動デュエル
-		options[OPT_QUEST_03]		= forInt(Temp[2]); // 自動出兵
-		options[OPT_RECEIVE_01]		= forInt(Temp[3]); // 自動でヨロズダスをひく
-		options[OPT_RECEIVE_02]		= forInt(Temp[4]); // クエスト報酬が資源でも自動で受け取る
-		options[OPT_FEATURE_01]		= forInt(Temp[5]); // アイテム受信箱から便利アイテムへ移動
-		options[OPT_FEATURE_02]		= forInt(Temp[6]); // [02:00:00 - 05:59:59] 以外に自動デュエル
-		options[OPT_FEATURE_03]		= forInt(Temp[7]); // 自動助力
+		options[OPT_QUEST_01]		= forIntAsBool(Temp[0]); // 自動寄付糧500
+		options[OPT_QUEST_02]		= forIntAsBool(Temp[1]); // 自動デュエル
+		options[OPT_QUEST_03]		= forIntAsBool(Temp[2]); // 自動出兵
+		options[OPT_RECEIVE_01]		= forIntAsBool(Temp[3]); // 自動でヨロズダスをひく
+		options[OPT_RECEIVE_02]		= forIntAsBool(Temp[4]); // クエスト報酬が資源でも自動で受け取る
+		options[OPT_FEATURE_01]		= forIntAsBool(Temp[5]); // アイテム受信箱から便利アイテムへ移動
+		options[OPT_FEATURE_02]		= forIntAsBool(Temp[6]); // [02:00:00 - 05:59:59] 以外に自動デュエル
+		options[OPT_FEATURE_03]		= forIntAsBool(Temp[7]); // 自動助力
 		if (Temp.length > 8) {
-			options[OPT_FEATURE_04] = forInt(Temp[8]); // 全ての報告書を既読にする
+			options[OPT_FEATURE_04] = forIntAsBool(Temp[8]); // 全ての報告書を既読にする
 		}
 		if (Temp.length > 9) {
-			options[OPT_FEATURE_05] = forInt(Temp[9]); // 洛陽への路 通算ログイン報酬を受取る
+			options[OPT_FEATURE_05] = forIntAsBool(Temp[9]); // 洛陽への路 通算ログイン報酬を受取る
 		}
 		if (Temp.length > 10) {
-			options[OPT_FEATURE_06] = forInt(Temp[10]); // 育成クエスト（勝戦の計、攻戦の計）自動受注
+			options[OPT_FEATURE_06] = forIntAsBool(Temp[10]); // 育成クエスト（勝戦の計、攻戦の計）自動受注
 		}
 
 		if (Temp1.length >= 2) {
@@ -1273,19 +1258,18 @@ function migrateSettings(options) {
 			options[OPT_TROOPS_03]	= forInt(Temp[2]); // 出兵先座標y
 		}
 	}
+	return options;
 }
 
 
-function ccreateText(container, id, text, left )
+function ccreateText(container, text)
 {
-	left += 2;
 	var dv = d.createElement("div");
 		dv.style.padding = "2px";
-		dv.style.paddingLeft= left + "px";
+		dv.style.paddingLeft= "2px";
 		dv.style.paddingBottom = "4px";
 
 	var lb = d.createElement("label");
-		lb.htmlFor = id;
 		lb.style.verticalAlign = "middle";
 	var tx = d.createTextNode(text);
 		tx.fontsize = "9px";
@@ -1296,56 +1280,42 @@ function ccreateText(container, id, text, left )
 }
 
 
-function ccreateButton(container, text, title, func, width, top)
+function ccreateButton(container, text, title, width, func)
 {
-	var btn = d.createElement("input");
-		btn.style.padding = "0px";
-		btn.type = "button";
-		btn.value = text;
-	if (top !== undefined) {
-		btn.style.marginTop = top + "px";
-	}
-	if (width === undefined) {
-		btn.style.width = "54px";
-	} else {
-		btn.style.width = width + "px";
-	}
-	btn.style.height = "20px";
-	btn.style.verticalAlign = "middle";
-	btn.title = title;
-	container.appendChild(d.createTextNode(" "));
-	container.appendChild(btn);
-	container.appendChild(d.createTextNode(" "));
-	$e(btn, "click", func);
-	return btn;
+	var btn = q$("<input />", {
+		type: 'button',
+		value: text,
+		style: `padding: 0px; width: ${width}px; height; 20px; vertical-align: middle`,
+		title: title,
+		on: {
+			click: func
+		}
+	});
+	q$(container).append(" ").append(btn).append(" ");
 }
 
 
-function ccreateCheckBox(container, id, def, text, title, left )
+function ccreateCheckBox(container, key, text, title)
 {
-	left += 2;
-	var dv = d.createElement("div");
-		dv.style.padding = "1px";
-		dv.style.paddingLeft= left + "px";
-		dv.title = title;
-	var cb = d.createElement("input");
-		cb.type = "checkbox";
-		cb.style.verticalAlign = "middle";
-		cb.id = id;
-		cb.value = 1;
-	if( def ) cb.checked = true;
+	var dv = q$("<div />", {
+		style: 'padding: 1px; padding-left: 2px',
+		title: title
+	});
+	var cb = q$("<input />", {
+		type: 'checkbox',
+		style: 'vertical-align: middle',
+		id: key,
+		value: 1
+	});
+	if (g_options[key]) {
+		cb.prop('checked', true);
+	}
+	var lb = q$("<label />", {
+		for: key,
+		style: 'vertical-align: middle'
+	}).append(text);
 
-	var lb = d.createElement("label");
-		lb.htmlFor = id;
-		lb.style.verticalAlign = "middle";
-
-	var tx = d.createTextNode(text);
-	lb.appendChild( tx );
-
-	dv.appendChild(cb);
-	dv.appendChild(lb);
-	container.appendChild(dv);
-	return cb;
+	q$(container).append(dv.append(cb).append(lb));
 }
 
 
@@ -1357,6 +1327,10 @@ function cgetCheckBoxValue(id)
 	return 1;
 }
 
+
+function forIntAsBool(num,def){
+	return forInt(num,def) ? true : false;
+}
 
 function forInt(num,def){
 	if (def === undefined) { def = 0; }
@@ -1375,4 +1349,12 @@ function array_reversed(object) {
 	var newObject = JSON.parse(JSON.stringify(object));
 	newObject.reverse();
 	return newObject;
+}
+
+
+//----------------------------------------
+// for debug print object
+//----------------------------------------
+function po(obj, ext = "") {
+	console.log(ext + JSON.stringify(obj, null, '\t'));
 }
