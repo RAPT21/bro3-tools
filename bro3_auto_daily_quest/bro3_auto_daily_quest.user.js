@@ -37,7 +37,28 @@ var OPT_TROOPS_CARD_ID		= 0;// 出兵武将カードID
 var OPT_TROOPS_X			= 0;// 出兵先座標x
 var OPT_TROOPS_Y			= 0;// 出兵先座標y
 
-// 内部設定
+//----------[新オプション]----------
+var g_options = {};
+
+var OPT_QUEST_01	= 'dqu01'; // 繰り返しクエスト用寄付糧500を自動で行なう
+var OPT_QUEST_02	= 'dqu02'; // 繰り返しクエスト用デュエルを自動で行なう
+var OPT_QUEST_03	= 'dqu03'; // 繰り返しクエスト用出兵を自動で行なう
+
+var OPT_RECEIVE_01	= 'dre01'; // 自動でヨロズダスをひく
+var OPT_RECEIVE_02	= 'dre02'; // クエスト報酬 '資源' も自動で受け取る
+
+var OPT_FEATURE_01	= 'dfe01'; // 受信箱から便利アイテムへ移動
+var OPT_FEATURE_02	= 'dfe02'; // 自動デュエル
+var OPT_FEATURE_03	= 'dfe03'; // 自動助力
+var OPT_FEATURE_04	= 'dfe04'; // 全ての報告書を既読にする
+var OPT_FEATURE_05	= 'dfe05'; // 洛陽への路 通算ログイン報酬を受取る
+var OPT_FEATURE_06	= 'dfe06'; // 育成クエスト（勝戦の計、攻戦の計）自動受注
+
+var OPT_TROOPS_01	= 'dtr01'; // 出兵武将カードID
+var OPT_TROOPS_02	= 'dtr02'; // 出兵先座標x
+var OPT_TROOPS_03	= 'dtr03'; // 出兵先座標y
+
+//----------[内部設定]----------
 var OPT_VALUE_IGNORE_SECONDS = -1; // 負荷を下げる為、指定秒数以内のリロード時は処理を行なわない(0以下指定で無効化)
 var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 var OPT_SELECT_LOGIN_BONUS_ROUTE = false; // 洛陽への路のルートを自動で切り替えるか（テスト中の機能）
@@ -107,6 +128,9 @@ var SERVER_BASE = SERVER_SCHEME + location.hostname;
 
 var INTERVAL	= 500;
 var PGNAME		= "_bro3_auto_daily_quest_20150607_"; //グリモン領域への保存時のPGの名前
+
+var SERVER_NAME = location.hostname.match(/^(.*)\.3gokushi/)[1];
+var SAVENAME = SERVER_NAME + "_bro3_auto_daily_quest_20230701_"; //グリモン領域への保存時のPGの名前; v2
 
 
 // クエストID
@@ -492,7 +516,7 @@ function receiveRewardsImpl(check, path, callback)
 			receive_it = true;
 			if (name.match(/木材|石|鉄|食料/)) {
 				// 資源報酬の場合は、自動で受け取る設定に依る
-				receive_it = OPT_RECEIVE_RESOURCES ? true : false;
+				receive_it = g_options[OPT_RECEIVE_02] ? true : false;
 			}
 
 			if (receive_it){
@@ -525,7 +549,7 @@ function receiveRewardsImpl(check, path, callback)
 function receiveRewards() {
 	var receive_it = false;
 	var receive = function(){
-		if (OPT_MOVE_FROM_INBOX) {
+		if (g_options[OPT_FEATURE_01]) {
 			if (receive_it) {
 				clearLastTime();
 			}
@@ -657,11 +681,11 @@ function sendTroop(vID, cardID, cardGage, targetX, targetY, callback) {
 function callSendTroop()
 {
 	var vID		= 0;					// 出兵拠点ID
-	var cardID	= OPT_TROOPS_CARD_ID;	// 出兵武将カードID
-	var targetX	= OPT_TROOPS_X;			// 出兵先座標x
-	var targetY	= OPT_TROOPS_Y;			// 出兵先座標y
+	var cardID	= g_options[OPT_TROOPS_01];	// 出兵武将カードID
+	var targetX	= g_options[OPT_TROOPS_02];			// 出兵先座標x
+	var targetY	= g_options[OPT_TROOPS_03];			// 出兵先座標y
 
-	if (OPT_TROOPS_CARD_ID === 0) {
+	if (g_options[OPT_TROOPS_01] === 0) {
 		console.log(SERVER+"出兵クエ情報が登録されていません！");
 		return false;
 	}
@@ -779,7 +803,7 @@ function acceptTrainingQuest(callback) {
 
 
 ( function() {
-	loadSettingBox();
+	loadSettings();
 	addOpenSettingLink();
 
 	console.log(SERVER+'*** bro3_quest ***');
@@ -797,27 +821,27 @@ function acceptTrainingQuest(callback) {
 		setTimeout(function(){
 
 			// 洛陽への路 通算ログイン報酬を受取る
-			if (OPT_AUTO_RECEIVE_LOGIN_BONUS) {
+			if (g_options[OPT_FEATURE_05]) {
 				receiveLoginBonus();
 			}
 
 			// 育成クエ受注
-			if (OPT_TRAINING_QUEST) {
+			if (g_options[OPT_FEATURE_06]) {
 				acceptTrainingQuest();
 			}
 
 			// 受信箱から移す
-			if (OPT_MOVE_FROM_INBOX) {
+			if (g_options[OPT_FEATURE_01]) {
 				moveFromInbox(false);
 			}
 
 			// 自動助力
-			if (OPT_AUTO_JORYOKU) {
+			if (g_options[OPT_FEATURE_03]) {
 				joryoku();
 			}
 
 			// 全ての報告書を既読にする
-			if (OPT_AUTO_OPEN_ALL_REPORTS) {
+			if (g_options[OPT_FEATURE_04]) {
 				openAllReports();
 			}
 
@@ -831,17 +855,17 @@ function acceptTrainingQuest(callback) {
 						postDonate(DONATE_SHOGATSU_RICE, receiveRewards);
 						return;
 					}
-					if (quest_id == ID_DONATE && OPT_QUEST_DONATE){
+					if (quest_id == ID_DONATE && g_options[OPT_QUEST_01]){
 						// 通常寄付クエ
 						postDonate(500, receiveRewards);
 						return;
 					}
-					if (quest_id == ID_DUEL && OPT_QUEST_DUEL){
+					if (quest_id == ID_DUEL && g_options[OPT_QUEST_02]){
 						// デュエルクエ
 						duel(function(worked){receiveRewards();});
 						return;
 					}
-					if (quest_id == ID_TROOPS && OPT_QUEST_TROOPS){
+					if (quest_id == ID_TROOPS && g_options[OPT_QUEST_03]){
 						// 出兵クエ
 						if (callSendTroop()) {
 							return;
@@ -850,7 +874,7 @@ function acceptTrainingQuest(callback) {
 				}
 
 				// サーバー時刻が [00:00:00 - 01:59:59] or [06:00:00 - 23:59:59] であれば自動デュエルする
-				if (OPT_AUTO_DUEL) {
+				if (g_options[OPT_FEATURE_02]) {
 					auto_duel();
 				}
 
@@ -872,7 +896,7 @@ function acceptTrainingQuest(callback) {
 				clearInfo.type = "button";
 				clearInfo.style.marginTop = "10px";
 				clearInfo.style.padding = "10px";
-				if (OPT_TROOPS_CARD_ID) {
+				if (g_options[OPT_TROOPS_01]) {
 					clearInfo.value = "自動出兵情報をクリア";
 				} else {
 					clearInfo.value = "自動出兵情報は未登録";
@@ -882,9 +906,9 @@ function acceptTrainingQuest(callback) {
 				clearInfo.style.cursor = "pointer";
 				clearInfo.addEventListener("click", function() {
 
-					OPT_TROOPS_CARD_ID		= 0; // 出兵武将カードID
-					OPT_TROOPS_X			= targetX; // 出兵先座標x
-					OPT_TROOPS_Y			= targetY; // 出兵先座標y
+					g_options[OPT_TROOPS_01]		= 0; // 出兵武将カードID
+					g_options[OPT_TROOPS_02]			= targetX; // 出兵先座標x
+					g_options[OPT_TROOPS_03]			= targetY; // 出兵先座標y
 					saveSettingLocal();
 					var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 				}, true);
@@ -901,9 +925,9 @@ function acceptTrainingQuest(callback) {
 				regInfo.style.cursor = "pointer";
 				regInfo.addEventListener("click", function() {
 
-					OPT_TROOPS_CARD_ID		= cardID; // 出兵武将カードID
-					OPT_TROOPS_X			= targetX; // 出兵先座標x
-					OPT_TROOPS_Y			= targetY; // 出兵先座標y
+					g_options[OPT_TROOPS_01]		= cardID; // 出兵武将カードID
+					g_options[OPT_TROOPS_02]			= targetX; // 出兵先座標x
+					g_options[OPT_TROOPS_03]			= targetY; // 出兵先座標y
 					saveSettingLocal();
 					var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 				}, true);
@@ -975,7 +999,7 @@ function addOpenSettingLink() {
 
 function openSettingBox() {
 	closeSettingBox();
-	loadSettingBox();
+	loadSettings();
 
 	// 色設定
 	var COLOR_FRAME = "#333333";	// 枠背景色
@@ -1114,6 +1138,46 @@ function closeSettingBox() {
 }
 
 
+//----------------------------------------
+// デフォルトオプション定義の取得
+//----------------------------------------
+function getDefaultOptions() {
+	var settings = {};
+
+	settings[OPT_QUEST_01]		= 1; // 繰り返しクエスト用寄付糧500を自動で行なう
+	settings[OPT_QUEST_02]		= 1; // 繰り返しクエスト用デュエルを自動で行なう
+	settings[OPT_QUEST_03]		= 0; // 繰り返しクエスト用出兵を自動で行なう
+
+	settings[OPT_RECEIVE_01]	= 1; // 自動でヨロズダスをひく
+	settings[OPT_RECEIVE_02]	= 1; // クエスト報酬 '資源' も自動で受け取る
+
+	settings[OPT_FEATURE_01]	= 1; // 受信箱から便利アイテムへ移動
+	settings[OPT_FEATURE_02]	= 1; // 自動デュエル
+	settings[OPT_FEATURE_03]	= 1; // 自動助力
+	settings[OPT_FEATURE_04]	= 1; // 全ての報告書を既読にする
+	settings[OPT_FEATURE_05]	= 1; // 洛陽への路 通算ログイン報酬を受取る
+	settings[OPT_FEATURE_06]	= 1; // 育成クエスト（勝戦の計、攻戦の計）自動受注
+
+	settings[OPT_TROOPS_01]		= 0; // 出兵武将カードID
+	settings[OPT_TROOPS_02]		= 0; // 出兵先座標x
+	settings[OPT_TROOPS_03]		= 0; // 出兵先座標y
+
+	return settings;
+}
+
+
+//----------------------------------------
+// 設定の保存
+//----------------------------------------
+function saveSettingsWithObject(obj) {
+	GM_setValue(SAVENAME + '_options', JSON.stringify(obj));
+}
+
+function saveSettings() {
+	saveSettingsWithObject(g_options);
+}
+
+// old
 function saveSettingBox() {
 	var strSave = "";
 
@@ -1136,7 +1200,7 @@ function saveSettingBox() {
 	setVALUE("", strSave);
 }
 
-
+// old
 function saveSettingLocal() {
 	var src = getVALUE("", "");
 	if (src) {
@@ -1152,55 +1216,61 @@ function saveSettingLocal() {
 }
 
 
-function loadSettingBox() {
+//----------------------------------------
+// 設定のロード
+//----------------------------------------
+function loadSettings() {
+	// 保存データの取得
+	var obj = GM_getValue(SAVENAME + '_options', null);
+	if (obj === null) {
+		// 保存データがない場合、マイグレーションを試みる
+		g_options = migrateSettings(getDefaultOptions());
+		return;
+	}
+
+	var options = JSON.parse(obj);
+
+	// 保存データにデフォルト設定の情報がない場合、デフォルト設定値を追加
+	var defaults = getDefaultOptions();
+	for (var key in defaults) {
+		if (typeof options[key] === "undefined") {
+			options[key] = defaults[key];
+		}
+	}
+
+	g_options = options;
+}
+
+function migrateSettings(options) {
 	var src = getVALUE("", "");
 	if (src === "") {
-		OPT_QUEST_DONATE		= 1; // 自動寄付糧500
-		OPT_QUEST_DUEL			= 1; // 自動デュエル
-		OPT_QUEST_TROOPS		= 0; // 自動出兵
-		OPT_AUTO_YOROZUDAS		= 1; // 自動でヨロズダスをひく
-		OPT_RECEIVE_RESOURCES	= 1; // クエスト報酬が資源でも自動で受け取る
-		OPT_MOVE_FROM_INBOX		= 1; // アイテム受信箱から便利アイテムへ移動
-		OPT_AUTO_DUEL			= 1; // [02:00:00 - 05:59:59] 以外に自動デュエル
-		OPT_AUTO_JORYOKU		= 1; // 自動助力
-		OPT_AUTO_OPEN_ALL_REPORTS = 1; // 全ての報告書を既読にする
-		OPT_AUTO_RECEIVE_LOGIN_BONUS = 1; // 洛陽への路 通算ログイン報酬を受取る
-		OPT_TRAINING_QUEST		= 1; // 育成クエスト（勝戦の計、攻戦の計）自動受注
-		OPT_TROOPS_CARD_ID		= 0; // 出兵武将カードID
-		OPT_TROOPS_X			= 0; // 出兵先座標x
-		OPT_TROOPS_Y			= 0; // 出兵先座標y
+		return options;
 	} else {
 		var Temp1= src.split(DELIMIT1);
 		var Temp = Temp1[0].split(DELIMIT2);
-		OPT_QUEST_DONATE		= forInt(Temp[0]); // 自動寄付糧500
-		OPT_QUEST_DUEL			= forInt(Temp[1]); // 自動デュエル
-		OPT_QUEST_TROOPS		= forInt(Temp[2]); // 自動出兵
-		OPT_AUTO_YOROZUDAS		= forInt(Temp[3]); // 自動でヨロズダスをひく
-		OPT_RECEIVE_RESOURCES	= forInt(Temp[4]); // クエスト報酬が資源でも自動で受け取る
-		OPT_MOVE_FROM_INBOX		= forInt(Temp[5]); // アイテム受信箱から便利アイテムへ移動
-		OPT_AUTO_DUEL			= forInt(Temp[6]); // [02:00:00 - 05:59:59] 以外に自動デュエル
-		OPT_AUTO_JORYOKU		= forInt(Temp[7]); // 自動助力
+		options[OPT_QUEST_01]		= forInt(Temp[0]); // 自動寄付糧500
+		options[OPT_QUEST_02]		= forInt(Temp[1]); // 自動デュエル
+		options[OPT_QUEST_03]		= forInt(Temp[2]); // 自動出兵
+		options[OPT_RECEIVE_01]		= forInt(Temp[3]); // 自動でヨロズダスをひく
+		options[OPT_RECEIVE_02]		= forInt(Temp[4]); // クエスト報酬が資源でも自動で受け取る
+		options[OPT_FEATURE_01]		= forInt(Temp[5]); // アイテム受信箱から便利アイテムへ移動
+		options[OPT_FEATURE_02]		= forInt(Temp[6]); // [02:00:00 - 05:59:59] 以外に自動デュエル
+		options[OPT_FEATURE_03]		= forInt(Temp[7]); // 自動助力
 		if (Temp.length > 8) {
-			OPT_AUTO_OPEN_ALL_REPORTS = forInt(Temp[8]); // 全ての報告書を既読にする
-		} else {
-			OPT_AUTO_OPEN_ALL_REPORTS = 1;
+			options[OPT_FEATURE_04] = forInt(Temp[8]); // 全ての報告書を既読にする
 		}
 		if (Temp.length > 9) {
-			OPT_AUTO_RECEIVE_LOGIN_BONUS = forInt(Temp[9]); // 洛陽への路 通算ログイン報酬を受取る
-		} else {
-			OPT_AUTO_RECEIVE_LOGIN_BONUS = 1;
+			options[OPT_FEATURE_05] = forInt(Temp[9]); // 洛陽への路 通算ログイン報酬を受取る
 		}
 		if (Temp.length > 10) {
-			OPT_TRAINING_QUEST = forInt(Temp[10]); // 育成クエスト（勝戦の計、攻戦の計）自動受注
-		} else {
-			OPT_TRAINING_QUEST = 1;
+			options[OPT_FEATURE_06] = forInt(Temp[10]); // 育成クエスト（勝戦の計、攻戦の計）自動受注
 		}
 
 		if (Temp1.length >= 2) {
 			Temp = Temp1[1].split(DELIMIT2);
-			OPT_TROOPS_CARD_ID		= forInt(Temp[0]); // 出兵武将カードID
-			OPT_TROOPS_X			= forInt(Temp[1]); // 出兵先座標x
-			OPT_TROOPS_Y			= forInt(Temp[2]); // 出兵先座標y
+			options[OPT_TROOPS_01]	= forInt(Temp[0]); // 出兵武将カードID
+			options[OPT_TROOPS_02]	= forInt(Temp[1]); // 出兵先座標x
+			options[OPT_TROOPS_03]	= forInt(Temp[2]); // 出兵先座標y
 		}
 	}
 }
