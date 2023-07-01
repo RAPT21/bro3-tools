@@ -8,7 +8,7 @@
 // @include		https://*.3gokushi.jp/facility/castle_send_troop.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @exclude		https://*.3gokushi.jp/maintenance*
-// @require		http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js
+// @require		https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @grant		GM_getValue
