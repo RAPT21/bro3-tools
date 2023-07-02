@@ -75,7 +75,6 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 //			  DONATE_SHOGATSU_RICE に寄付額をセットで有効化。0 をセットで無効化
 // 2023.01.03 DONATE_SHOGATSU_RICE に 1 以上設定時、期間限定クエストを先に処理するように
 // 2023.01.29 洛陽への路のルートを自動で切り替える（β機能）
-// 2023.07.01 繰り返しクエスト用鹵獲出兵する際の最小討伐ゲージをTP鹵獲できる500へ変更（以前は100でした）
 // 2023.07.02 ソース内オプションを設定画面へ設置
 
 
@@ -1195,7 +1194,7 @@ function getDefaultOptions() {
 	settings[OPT_TROOPS_01]		= 0; // 出兵武将カードID
 	settings[OPT_TROOPS_02]		= 0; // 出兵先座標x
 	settings[OPT_TROOPS_03]		= 0; // 出兵先座標y
-	settings[OPT_TROOPS_04]		= 500; // 討伐ゲージ
+	settings[OPT_TROOPS_04]		= 100; // 討伐ゲージ
 
 	return settings;
 }
