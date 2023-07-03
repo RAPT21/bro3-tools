@@ -14,9 +14,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2023.07.02
+// @version 	2023.07.03
 // ==/UserScript==
-var VERSION = "2023.07.02"; 	// バージョン情報
+var VERSION = "2023.07.03"; 	// バージョン情報
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -76,6 +76,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2023.01.03 DONATE_SHOGATSU_RICE に 1 以上設定時、期間限定クエストを先に処理するように
 // 2023.01.29 洛陽への路のルートを自動で切り替える（β機能）
 // 2023.07.02 ソース内オプションを設定画面へ設置
+// 2023.07.03 ソース内に不要となった旧オプション設定が残ったままだった
 
 
 //----------------------------------------
@@ -103,28 +104,6 @@ var OPT_TROOPS_01	= 'dtr01'; // 出兵武将カードID
 var OPT_TROOPS_02	= 'dtr02'; // 出兵先座標x
 var OPT_TROOPS_03	= 'dtr03'; // 出兵先座標y
 var OPT_TROOPS_04	= 'dtr04'; // 最小討伐ゲージ
-
-
-//----------------------------------------
-// 旧オプション設定 (1 で有効、0 で無効)
-//----------------------------------------
-var OPT_QUEST_DONATE		= 0; // 繰り返しクエスト用寄付糧500を自動で行なう
-var OPT_QUEST_DUEL			= 0; // 繰り返しクエスト用デュエルを自動で行なう
-var OPT_QUEST_TROOPS		= 0; // 繰り返しクエスト用出兵を自動で行なう
-
-var OPT_RECEIVE_RESOURCES	= 0; // クエスト報酬 '資源' も自動で受け取る
-
-var OPT_MOVE_FROM_INBOX		= 1; // 受信箱から便利アイテムへ移動
-var OPT_AUTO_DUEL			= 0; // 自動デュエル
-var OPT_AUTO_JORYOKU		= 0; // 自動助力
-var OPT_AUTO_OPEN_ALL_REPORTS = 0; // 全ての報告書を既読にする
-var OPT_AUTO_RECEIVE_LOGIN_BONUS = 0; // 洛陽への路 通算ログイン報酬を受取る
-var OPT_TRAINING_QUEST		= 0; // 育成クエスト（勝戦の計、攻戦の計）自動受注
-
-var OPT_TROOPS_CARD_ID		= 0;// 出兵武将カードID
-var OPT_TROOPS_X			= 0;// 出兵先座標x
-var OPT_TROOPS_Y			= 0;// 出兵先座標y
-//
 
 
 //----------------------------------------
