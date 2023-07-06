@@ -2,15 +2,17 @@
 // @name		bro3_initial_quest_helper
 // @namespace	https://gist.github.com/RAPT21/
 // @description	ブラウザ三国志 初期クエクリ補助 by RAPT
+// @include		https://*.3gokushi.jp/quest*
 // @include		http://*.3gokushi.jp/quest*
+// @exclude		https://*.3gokushi.jp/maintenance*
 // @exclude		http://*.3gokushi.jp/maintenance*
-// @require		http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
+// @require		https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @author		RAPT
-// @version 	2020.11.03
+// @version 	2023.07.07
 // ==/UserScript==
-var VERSION = "2020.11.03"; 	// バージョン情報
+var VERSION = "2023.07.07"; 	// バージョン情報
 
 
 // 2016.07.25 初版作成
@@ -20,6 +22,7 @@ var VERSION = "2020.11.03"; 	// バージョン情報
 // 2019.04.10 同盟ランクが取得できなくなっていたのを対応、41鯖で同盟ポイントが取得できなくなっていたのを対応
 // 2020.11.03 他の君主を探そう、天下統一への第一歩のクエクリ対応
 //			  Chrome のときクエストタブ内の操作がおかしくなる対策(j$→q$)
+// 2023.07.07 https 対応
 
 
 jQuery.noConflict();
@@ -29,6 +32,9 @@ var HOST		= location.hostname;
 var SERVER		= HOST.split('.')[0]+'> ';
 var INTERVAL	= 500;
 var PGNAME		= "_bro3_initial_quest_helper_20160724_"; //グリモン領域への保存時のPGの名前
+
+var SERVER_SCHEME = location.protocol + "//";
+var BASE_URL = SERVER_SCHEME + location.hostname;
 
 
 // ヘルパー関数
@@ -170,7 +176,7 @@ function appendLog(key, value) {
 
 // 個人ランク
 function self_rank(handler){
-	httpGET('http://'+HOST+'/user/ranking.php',function(x){
+	httpGET(BASE_URL+'/user/ranking.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 		var rankNum = q$('.mydata>.rankNum', htmldoc).text().substr(1).trim();
@@ -181,7 +187,7 @@ function self_rank(handler){
 
 // 同盟ランク,同盟ポイント,同盟人数,同盟盟主座標
 function ally_rank(handler){
-	httpGET('http://'+HOST+'/alliance/list.php',function(x){
+	httpGET(BASE_URL+'/alliance/list.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 		var td = q$('tr.mydata td', htmldoc);
@@ -197,7 +203,7 @@ function ally_rank(handler){
 
 		var allyUrl = q$("a", td.eq(1)).attr("href");
 		if (allyUrl.indexOf("info.php?id=") === 0) {
-			allyUrl = 'http://'+HOST+'/alliance/' + allyUrl;
+			allyUrl = BASE_URL+'/alliance/' + allyUrl;
 		}
 		handler({
 			leaderXY: leaderXY,
@@ -211,7 +217,7 @@ function ally_rank(handler){
 
 // 週間ランキング
 function weekly_rank(handler){
-	httpGET('http://'+HOST+'/user/weekly_ranking.php',function(x){
+	httpGET(BASE_URL+'/user/weekly_ranking.php',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 		var base = q$('.tables[summary="攻撃ランキング"]', htmldoc);
@@ -223,7 +229,7 @@ function weekly_rank(handler){
 
 // 人口,撃破スコア
 function profile_jinko(fn){
-	httpGET('http://'+HOST+'/user/',function(x){
+	httpGET(BASE_URL+'/user/',function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 		var text = q$('table.commonTables', htmldoc).text().replace(/\s+/g, '');
