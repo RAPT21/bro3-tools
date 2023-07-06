@@ -3,8 +3,11 @@
 // @namespace	https://gist.github.com/RAPT21/
 // @description	ブラウザ三国志 寄付ツール
 // @include		http://*.3gokushi.jp/alliance/info.php*
+// @include		https://*.3gokushi.jp/alliance/info.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
+// @exclude		https://*.3gokushi.jp/maintenance*
 // @exclude		http://info.3gokushi.jp/*
+// @exclude		https://info.3gokushi.jp/*
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
 // @require		https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js
 // @resource	jqueryui_css	https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css
@@ -38,6 +41,9 @@ var HOST = location.hostname; //アクセスURLホスト
 var SERVER_NAME = HOST.match(/^(.*)\.3gokushi/)[1];
 var LOGGER	 = SERVER_NAME + '.donate> ';
 var INTERVAL = 500;
+
+var SERVER_SCHEME = location.protocol + "//";
+var BASE_URL = SERVER_SCHEME + location.hostname;
 
 var DEBUG = false;
 
@@ -248,7 +254,7 @@ GM_addStyle(`
 			rice: r,
 			contribution: 1
 		};
-		$.post('http://'+location.hostname+'/alliance/level.php',c,function(){
+		$.post(BASE_URL+'/alliance/level.php',c,function(){
 			var tid=setTimeout(function(){location.reload();}, INTERVAL);
 		});
 	}
