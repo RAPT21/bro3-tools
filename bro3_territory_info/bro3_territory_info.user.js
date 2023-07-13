@@ -169,6 +169,10 @@ var lineSeparator = "\n";
 				if (obj[1].length === 0) {
 					return true;
 				}
+				if (obj[0] === '-' && obj[1] === 'NPC') {
+					// NPC領地は空き地のためスキップ
+					return true;
+				}
 				var area_info = $("dt:contains(座標)+dd", gloss).text().match(/([-]?\d+),([-]?\d+)/);
 				if (area_info !== null && area_info.length >= 3) {
 					array_merge(obj, [area_info[1], area_info[2]]);
