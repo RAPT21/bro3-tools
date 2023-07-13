@@ -10,12 +10,13 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	0.2
+// @version 	0.3
 // ==/UserScript==
-var VERSION = "0.2";
+var VERSION = "0.3";
 
 // 2017.10.05	0.1	同盟タブで「全領土をCSV形式でテキスト出力する」ボタンをクリックすると全領土のCSV情報を取得します。
 // 2017.10.06	0.2	構造上の誤りを修正
+// 2023.07.14	0.3	https 対応、戦力表記が変更された対応、NPC領地は空き地のためリストアップしないように修正
 
 jQuery.noConflict();
 
