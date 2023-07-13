@@ -178,7 +178,7 @@ var lineSeparator = "\n";
 				obj.push(quotes($("dt.bigmap-caption", gloss).text()));
 				obj.push($("dt:contains(人口)+dd", gloss).text());
 				obj.push("");
-				obj.push($("dt:contains(戦力)+dd", gloss).text());
+				obj.push($("dt:contains(戦力)+dd", gloss).text().replace(/(★+).*/, '$1'));
 				var rsrc = $("dt:contains(資源)+dd", gloss).text().match(/木(\d+)\s*岩(\d+)\s*鉄(\d+)\s*糧(\d+)/);
 				if (rsrc !== null && rsrc.length >= 5) {
 					array_merge(obj, [rsrc[1], rsrc[2], rsrc[3], rsrc[4]]);
