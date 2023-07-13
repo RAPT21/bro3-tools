@@ -2,9 +2,11 @@
 // @name		bro3_territory_info
 // @namespace	https://gist.github.com/RAPT21/
 // @description	ブラウザ三国志 全領土情報取得ツール by RAPT
+// @include 	https://*.3gokushi.jp/alliance/info.php*
 // @include 	http://*.3gokushi.jp/alliance/info.php*
+// @exclude		https://*.3gokushi.jp/maintenance*
 // @exclude		http://*.3gokushi.jp/maintenance*
-// @require		http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
+// @require		https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
@@ -17,7 +19,9 @@ var VERSION = "0.2";
 
 jQuery.noConflict();
 
-var HOST = location.hostname;
+var SERVER_SCHEME = location.protocol + "//";
+var BASE_URL = SERVER_SCHEME + location.hostname;
+
 var columnSeparator = ",";
 var lineSeparator = "\n";
 
@@ -141,7 +145,7 @@ var lineSeparator = "\n";
 	// MAP データを取得
 	function getMap(x, y, handler){
 		$.ajax({
-			url: 'http://' + HOST + '/map.php',
+			url: BASE_URL + '/map.php',
 			type: 'GET',
 			datatype: 'html',
 			cache: false,
@@ -200,7 +204,7 @@ var lineSeparator = "\n";
 	// MAP サイズを取得
 	function getMapList(handler){
 		$.ajax({
-			url: 'http://' + HOST + '/map.php',
+			url: BASE_URL + '/map.php',
 			type: 'GET',
 			datatype: 'html',
 			cache: false,
