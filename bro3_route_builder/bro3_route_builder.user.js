@@ -1,10 +1,10 @@
 ﻿// ==UserScript==
-// @name		 bro3_route_builder
+// @name		bro3_route_builder
 // @namespace	bro3_route_builder
 // @include		https://*.3gokushi.jp/big_map.php*
 // @include		http://*.3gokushi.jp/big_map.php*
-// @description	ブラウザ三国志ルート構築(51x51)
-// @version		1.07
+// @description	ブラウザ三国志ルート構築(51x51) with RAPT
+// @version		1.07.1
 
 // @grant	GM_addStyle
 // @grant	GM_deleteValue
@@ -12,11 +12,14 @@
 // @grant	GM_setValue
 // @grant	GM_xmlhttpRequest
 // @grant	GM_getResourceText
-// @require	http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js
+// @require	https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js
 
 // ==/UserScript==
 // version date		author
-// 1.04    2018/07/25 Craford NPC領地に対応、FF3+GM3系で動かない問題を修正
+// 1.01		2016/03/19	Craford 氏	http://silent-stage.air-nifty.com/steps/2016/03/post-60ac.html
+// 1.01.1	2017/07/14	RAPT. 2017/07/12 の大型アップデートに伴い、ツールが動作しなくなっていたのを修正
+// 1.04		2018/07/25	Craford NPC領地に対応、FF3+GM3系で動かない問題を修正
+// 1.07.1	2023/07/14	RAPT. アップデートに伴い、ツールが動作しなくなっていたのを修正。地形1.0マップにも対応
 
 var ua = window.navigator.userAgent;
 
@@ -52,24 +55,30 @@ var chkptn = [ [1,0], [0,1], [-1,0], [0,-1], [1,1], [1,-1], [-1,1], [-1,-1] ];
 (function() {
 	// 実行判定
 	if (isExecute() === false) {
-	return;
+		return;
 	}
 	// マップ画面以外はなにもしない
 	if (!location.href.match(/big_map.php/)) {
 		return;
 	}
 
-	// 選択されているマップサイズチェック
-	var viewSize = -1;
-	q$("div[id=change-map-scale2] div a[class*=now]").each(
-		function(){
-			if( q$(this).attr("class").match(/sort(\d+) now/) !== null ){
-				viewSize = RegExp.$1;
+	// 地形マップか
+	var isElevationMap = q$("#change-map-scale2 .elevation-map-link").length > 0;
+
+	// 地形マップでは big_map は 51x51 しかない
+	if (!isElevationMap) {
+		// 選択されているマップサイズチェック
+		var viewSize = -1;
+		q$("div[id=change-map-scale2] div a[class*=now]").each(
+			function(){
+				if( q$(this).attr("class").match(/sort(\d+) now/) !== null ){
+					viewSize = RegExp.$1;
+				}
 			}
+		);
+		if (viewSize != 51) {
+			return;
 		}
-	);
-	if (viewSize != 51) {
-		return;
 	}
 
 	// マップデータ保持用
@@ -84,67 +93,68 @@ var chkptn = [ [1,0], [0,1], [-1,0], [0,-1], [1,1], [1,-1], [-1,1], [-1,-1] ];
 	//------------------------
 	// 51x51のマップ情報収集
 	//------------------------
-	q$("#change-map-scale2 ul").css({'width' : '350px'});
 	q$("#change-map-scale2").after(
-		"<div style='margin-left: 114px; margin-top: 58px; font-size: 16px;'>" +
+		"<div style='margin-left: 204px; margin-top: 56px; font-size: 16px;'>" +
 			"<span>" +
-				"<input type='button' id='routing_start' style='margin-left: 20px;' value='ルート構築開始'></input>" +
-				"<input type='button' id='restore_map' style='display:none; margin-left: 20px;' value='ルート構築終了'></input>" +
+				"<input type='button' id='routing_start' style='margin-left: 0px;' value='ルート構築開始'></input>" +
+				"<input type='button' id='restore_map' style='display:none; margin-left: 0px;' value='ルート構築終了'></input>" +
 			"</span>" +
 			"<span>" +
-				"<a style='display: none; margin-left: 8px; font-weight: bold; color: blue;' href='#' id='route_setting'>ルート設定</a>" +
+				"<a style='display: none; margin-left: 4px; font-weight: bold; color: blue;' href='#' id='route_setting'>ルート設定</a>" +
 			"</span>" +
 		"</div>"
 	);
 
 	q$("#single-allow-south").after(
 		"<div style='text-align: left;'>" +
-			"<fieldset id='routing' style='display:none; -moz-border-radius:5px; border-radius: 5px; -webkit-border-radius: 5px; margin-bottom:6px; border: 2px solid black; background-color:#faebd7; margin-left:20px; margin-right:20px; position: absolute; top: 120px; left: 0px; width: 716px; height: 200px; z-index:200;'>" +
+			"<fieldset id='routing' style='display:none; -moz-border-radius:5px; border-radius: 5px; -webkit-border-radius: 5px; margin-bottom:6px; border: 2px solid black; background-color:#faebd7; margin-left:20px; margin-right:20px; position: absolute; top: 120px; left: 0px; width: 716px; height: 220px; z-index:200;'>" +
 			"<div style='margin-top:2px; margin-left:6px; margin-bottom: 2px;'>" +
 				"<div style='float:left;'>" +
-				"<div>" +
-					"<span style='font-weight: bold;'>探索レベル：</span>" +
-					"<select id='pass_level'>" +
-					"<option value='1'>★1以下</option>" +
-					"<option value='2'>★2以下</option>" +
-					"<option value='3'>★3以下</option>" +
-					"<option value='4'>★4以下</option>" +
-					"<option value='5'>★5以下</option>" +
-					"<option value='6'>★6以下</option>" +
-					"<option value='7'>★7以下</option>" +
-					"<option value='8'>★8以下</option>" +
-					"<option value='9'>すべて</option>" +
-					"</select>" +
-					"<span style='margin-left: 6px; font-weight: bold;'>通過対象：</span>" +
-					"<select id='pass_area'>" +
-					"<option value='0'>空き地のみ</option>" +
-					"<option value='2'>空き地のみ（NPC領地を含む）</option>" +
-					"<option value='1'>すべて</option>" +
-					"</select>" +
-				"</div>" +
-				"<div>" +
-					"<div style='font-weight: bold;'>非通過領地：<br>例「★2(0-3-0-0),★3(1-1-1-0)」" +
-					"<input style='font-weight: normal; font-size:12px;' type='button' id='viewskiparea' value='反映'></input></div>" +
-					"<textarea cols=45 rows=1 style='resize:none;' id='skip_area'></textarea>" +
-				"</div>" +
-				"<div>" +
-					"<div style='font-weight: bold;'>通過数上限（通過ルートが検知できないことあり）：<br>例「★2(20),★3(10)」</div>" +
-					"<textarea cols=45 rows=1 style='resize:none;' id='pass_limit'></textarea>" +
-				"</div>" +
-				"<input id='save_route_setting' type='button' value='設定を保存'></input>" +
-				"</div>" +
-				"<div style='float:right;'>" +
 					"<div>" +
-						"<span style='font-weight: bold;'>空き地を探す：<br>例「★2(0-3-0-0)」</span>" +
-						"<input style='font-weight: normal; font-size:12px;' type='button' id='viewres' value='反映'></input>" +
+						"<span style='font-weight: bold;'>探索レベル：</span>" +
+						"<select id='pass_level'>" +
+						"<option value='1'>★1以下</option>" +
+						"<option value='2'>★2以下</option>" +
+						"<option value='3'>★3以下</option>" +
+						"<option value='4'>★4以下</option>" +
+						"<option value='5'>★5以下</option>" +
+						"<option value='6'>★6以下</option>" +
+						"<option value='7'>★7以下</option>" +
+						"<option value='8'>★8以下</option>" +
+						"<option value='9'>すべて</option>" +
+						"</select>" +
 					"</div>" +
-					"<textarea cols=40 rows=1 style='font-size:10px; resize:none; overflow:auto; margin-right:6px;' id='search_res'></textarea>" +
+					"<div>" +
+						"<span style='margin-left: 6px; font-weight: bold;'>通過対象：</span>" +
+						"<select id='pass_area'>" +
+						"<option value='0'>空き地のみ</option>" +
+						"<option value='2'>空き地のみ（NPC領地を含む）</option>" +
+						"<option value='1'>すべて</option>" +
+						"</select>" +
+					"</div>" +
+					"<div>" +
+						"<div style='font-weight: bold;'>非通過領地：<br>例「★2(0-3-0-0),★3(1-1-1-0)」" +
+						"<input style='font-weight: normal; font-size:12px;' type='button' id='viewskiparea' value='反映'></input></div>" +
+						"<textarea cols=45 rows=1 style='resize:none;' id='skip_area'></textarea>" +
+					"</div>" +
+					"<div>" +
+						"<div style='font-weight: bold;'>通過数上限（通過ルートが検知できないことあり）：<br>例「★2(20),★3(10)」</div>" +
+						"<textarea cols=45 rows=1 style='resize:none;' id='pass_limit'></textarea>" +
+					"</div>" +
+					"<input id='save_route_setting' type='button' value='設定を保存'></input>" +
+					"</div>" +
+					"<div style='float:right;'>" +
+						"<div>" +
+							"<span style='font-weight: bold;'>空き地を探す：<br>例「★2(0-3-0-0)」</span>" +
+							"<input style='font-weight: normal; font-size:12px;' type='button' id='viewres' value='反映'></input>" +
+						"</div>" +
+						"<textarea cols=40 rows=1 style='font-size:10px; resize:none; overflow:auto; margin-right:6px;' id='search_res'></textarea>" +
+					"</div>" +
 				"</div>" +
-			"</div>" +
 			"</fieldset>" +
 		"</div>" +
 		"<div style='text-align: left;'>" +
-			"<fieldset id='routing2' style='display:none; -moz-border-radius:5px; border-radius: 5px; -webkit-border-radius: 5px; margin-bottom:6px; border: 2px solid black; background-color:#faebd7; margin-left:20px; margin-right:20px; position: absolute; top: 35px; left: 450px; height: 64px; z-index:201;'>" +
+			"<fieldset id='routing2' style='display:none; -moz-border-radius:5px; border-radius: 5px; -webkit-border-radius: 5px; margin-bottom:6px; border: 2px solid black; background-color:#faebd7; margin-left:10px; margin-right:20px; position: absolute; top: 35px; left: 450px; height: 80px; z-index:201;'>" +
 				"<div style='margin-top:2px; margin-left:6px; margin-bottom: 2px;'>" +
 					"<div style='float:right;'>" +
 						"<div>" +
@@ -152,7 +162,7 @@ var chkptn = [ [1,0], [0,1], [-1,0], [0,-1], [1,1], [1,-1], [-1,1], [-1,-1] ];
 							"<input style='font-weight: normal; font-size:12px;' type='button' id='viewroute' value='反映'></input>" +
 							"<input style='font-weight: normal; font-size:12px;' type='button' id='clearroute' value='クリア'></input>" +
 						"</div>" +
-						"<textarea cols=40 rows=3 style='font-size:10px; resize:none; overflow:auto; margin-right:6px;' id='route'></textarea>" +
+						"<textarea cols=40 rows=3 style='font-size:9px; resize:none; overflow:auto; margin-right:6px;' id='route'></textarea>" +
 					"</div>" +
 				"</div>" +
 			"</fieldset>" +
@@ -400,18 +410,18 @@ var chkptn = [ [1,0], [0,1], [-1,0], [0,-1], [1,1], [1,-1], [-1,1], [-1,-1] ];
 				obj.stone = 0;
 				obj.iron = 0;
 				obj.food = 0;
-				var match = mtext.match(/戦力.*>([★]+)<.*木(\d+).*岩(\d+).*鉄(\d+).*糧(\d+)/);
+				var match = mtext.match(/戦力.*>([★]+).*<.*木(\d+).*岩(\d+).*鉄(\d+).*糧(\d+)/);
 				if (match !== null) {
 					obj.stars = RegExp.$1.length;
-					obj.wood = parseInt(RegExp.$2);
-					obj.stone = parseInt(RegExp.$3);
-					obj.iron = parseInt(RegExp.$4);
-					obj.food = parseInt(RegExp.$5);
+					obj.wood = parseInt(RegExp.$2, 10);
+					obj.stone = parseInt(RegExp.$3, 10);
+					obj.iron = parseInt(RegExp.$4, 10);
+					obj.food = parseInt(RegExp.$5, 10);
 					// 白地図モード搭載するときはこれを外す
 //					q$(map[i]).css({"background-color":"white"});
 				} else if(mtext.match(/npc-red-star/) !== null) {
 					obj.npc = true;
-					mtext.match(/bigmap-caption">(.*)<\/dt><dd class="bigmap-subcap.*npc-red-star">([★]+)</);
+					mtext.match(/bigmap-caption">(.*)<\/dt><dd class="bigmap-subcap.*npc-red-star">([★]+).*</);
 					obj.npcname = RegExp.$1;
 					obj.stars = RegExp.$2.length;
 				} else {
@@ -448,7 +458,7 @@ var chkptn = [ [1,0], [0,1], [-1,0], [0,-1], [1,1], [1,-1], [-1,1], [-1,-1] ];
 				var keyx = "x" + x;
 				var keyy = "y" + y;
 				if (typeof mapdata[keyx] == 'undefined') {
-				 mapdata[keyx] = [];
+					mapdata[keyx] = [];
 				}
 				mapdata[keyx][keyy] = obj;
 
@@ -581,7 +591,7 @@ var chkptn = [ [1,0], [0,1], [-1,0], [0,-1], [1,1], [1,-1], [-1,1], [-1,-1] ];
 							// 複数中継点に対応させるループ
 							//-------------------------------
 							// 固定数通過上限
-							var pass_level = parseInt(q$("#pass_level").val());
+							var pass_level = parseInt(q$("#pass_level").val(), 10);
 							var pass_area = q$("#pass_area").val();
 
 							var marks = [0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -629,14 +639,14 @@ SEARCH_ALL:				for (var k = 0; k < routemarkers.length - 1; k++) {
 
 								// 通過禁止ブロックの設定（個数上限）
 								for (i = 0; i < block_ct; i++) {
-									var keyx = "x" + parseInt(blocks[i].x);
-									var keyy = "y" + parseInt(blocks[i].y);
+									var keyx = "x" + parseInt(blocks[i].x, 10);
+									var keyy = "y" + parseInt(blocks[i].y, 10);
 									statuses[keyx][keyy] = -2;	// 通過不可
 								}
 
 								// 終点マーカーの座標は無条件通過許可にする
-								var epx = "x" + parseInt(routemarkers[k + 1].x);
-								var epy = "y" + parseInt(routemarkers[k + 1].y);
+								var epx = "x" + parseInt(routemarkers[k + 1].x, 10);
+								var epy = "y" + parseInt(routemarkers[k + 1].y, 10);
 								statuses[epx][epy] = -1;
 
 								//----------------------
@@ -646,19 +656,19 @@ SEARCH_ALL:				for (var k = 0; k < routemarkers.length - 1; k++) {
 								var routing_ct = 0;
 
 								// 始点は各間の開始ポイントとする
-								routing[0] = {x: parseInt(routemarkers[k].x), y: parseInt(routemarkers[k].y)};
+								routing[0] = {x: parseInt(routemarkers[k].x, 10), y: parseInt(routemarkers[k].y, 10)};
 								statuses["x" + routing[0].x]["y" + routing[0].y] = 0;	// 始点の距離は0
 								for (var i = 0; i < routing.length; i++) {
 
 									// 現在の座標の距離を取得
-									var dist = parseInt(statuses["x" + routing[i].x]["y" + routing[i].y]);
+									var dist = parseInt(statuses["x" + routing[i].x]["y" + routing[i].y], 10);
 
-								 // 周囲8マスをチェック
+									// 周囲8マスをチェック
 									for (var j = 0; j < chkptn.length; j++) {
 
 										// 調査する座標
-										var searchx = parseInt(routing[i].x) + parseInt(chkptn[j][0]);
-										var searchy = parseInt(routing[i].y) + parseInt(chkptn[j][1]);
+										var searchx = parseInt(routing[i].x, 10) + parseInt(chkptn[j][0], 10);
+										var searchy = parseInt(routing[i].y, 10) + parseInt(chkptn[j][1], 10);
 										var keyx = "x" + searchx;
 										var keyy = "y" + searchy;
 
@@ -671,7 +681,7 @@ SEARCH_ALL:				for (var k = 0; k < routemarkers.length - 1; k++) {
 										}
 
 										// 未設定か、距離が長い場合は距離を再設定して積み直す
-										var nextdist = parseInt(dist) + 1;
+										var nextdist = parseInt(dist, 10) + 1;
 										if (statuses[keyx][keyy] == -1 || statuses[keyx][keyy] > nextdist) {
 											statuses[keyx][keyy] = nextdist;
 											routing_ct ++;
@@ -683,8 +693,8 @@ SEARCH_ALL:				for (var k = 0; k < routemarkers.length - 1; k++) {
 								//-----------
 								// 到達判定
 								//-----------
-								var targetx = "x" + parseInt(routemarkers[k + 1].x);
-								var targety = "y" + parseInt(routemarkers[k + 1].y);
+								var targetx = "x" + parseInt(routemarkers[k + 1].x, 10);
+								var targety = "y" + parseInt(routemarkers[k + 1].y, 10);
 								if (statuses[targetx][targety] < 0) {
 									alert("指定されたルートは設定された条件では到達できません");
 									return false;
@@ -695,15 +705,15 @@ SEARCH_ALL:				for (var k = 0; k < routemarkers.length - 1; k++) {
 								//---------------------------------------------------
 								var routing = [];
 								var routing_ct = 0;
-								var rest = parseInt(statuses[targetx][targety]);
-								var basex = parseInt(routemarkers[k + 1].x);
-								var basey = parseInt(routemarkers[k + 1].y);
+								var rest = parseInt(statuses[targetx][targety], 10);
+								var basex = parseInt(routemarkers[k + 1].x, 10);
+								var basey = parseInt(routemarkers[k + 1].y, 10);
 								routing[0] = {x: basex, y: basey};
 								for (var i = rest - 1; i >= 0; i--) {
 									var saved = [];
 									for (var j = 0; j < chkptn.length; j++) {
-										var searchx = basex + parseInt(chkptn[j][0]);
-										var searchy = basey + parseInt(chkptn[j][1]);
+										var searchx = basex + parseInt(chkptn[j][0], 10);
+										var searchy = basey + parseInt(chkptn[j][1], 10);
 										var keyx = "x" + searchx;
 										var keyy = "y" + searchy;
 
@@ -777,8 +787,8 @@ SEARCH_ALL:				for (var k = 0; k < routemarkers.length - 1; k++) {
 							for (var j = 0; j < 8; j++) {
 
 								// 調査する座標
-								var searchx = parseInt(fixed[i].x) + parseInt(chkptn[j][0]);
-								var searchy = parseInt(fixed[i].y) + parseInt(chkptn[j][1]);
+								var searchx = parseInt(fixed[i].x, 10) + parseInt(chkptn[j][0], 10);
+								var searchy = parseInt(fixed[i].y, 10) + parseInt(chkptn[j][1], 10);
 								var nkeyx = "x" + searchx;
 								var nkeyy = "y" + searchy;
 
@@ -837,7 +847,7 @@ SEARCH_ALL:				for (var k = 0; k < routemarkers.length - 1; k++) {
 			if (match !== null) {
 				for (var i = 0; i < match.length; i++) {
 					match[i].match(/★(\d)\((\d+)-(\d+)-(\d+)-(\d+)\)/);
-					list[list.length] = {stars: parseInt(RegExp.$1), wood: parseInt(RegExp.$2), stone: parseInt(RegExp.$3), iron: parseInt(RegExp.$4), food: parseInt(RegExp.$5)};
+					list[list.length] = {stars: parseInt(RegExp.$1, 10), wood: parseInt(RegExp.$2, 10), stone: parseInt(RegExp.$3, 10), iron: parseInt(RegExp.$4, 10), food: parseInt(RegExp.$5, 10)};
 				}
 			}
 		}
@@ -855,7 +865,7 @@ SEARCH_ALL:				for (var k = 0; k < routemarkers.length - 1; k++) {
 			if (match !== null) {
 				for (var i = 0; i < match.length; i++) {
 					match[i].match(/★(\d)\((\d+)\)/);
-					list[parseInt(RegExp.$1) - 1] = parseInt(RegExp.$2);
+					list[parseInt(RegExp.$1, 10) - 1] = parseInt(RegExp.$2, 10);
 				}
 			}
 		}
@@ -872,7 +882,7 @@ SEARCH_ALL:				for (var k = 0; k < routemarkers.length - 1; k++) {
 		if (match !== null) {
 			for (var i = 0; i < match.length; i++) {
 				match[i].match(/★(\d)\((\d+)-(\d+)-(\d+)-(\d+)\)/);
-				list[list.length] = {stars: parseInt(RegExp.$1), wood: parseInt(RegExp.$2), stone: parseInt(RegExp.$3), iron: parseInt(RegExp.$4), food: parseInt(RegExp.$5)};
+				list[list.length] = {stars: parseInt(RegExp.$1, 10), wood: parseInt(RegExp.$2, 10), stone: parseInt(RegExp.$3, 10), iron: parseInt(RegExp.$4, 10), food: parseInt(RegExp.$5, 10)};
 			}
 		}
 		return list;
@@ -889,7 +899,7 @@ SEARCH_ALL:				for (var k = 0; k < routemarkers.length - 1; k++) {
 		// 作成済みルートを消す（マップの着色を元に戻す）
 		for (keyx in mapdata) {
 			for (keyy in mapdata[keyx]) {
-				if (!isNaN(parseInt(q$(mapdata[keyx][keyy].map).text()))) {
+				if (!isNaN(parseInt(q$(mapdata[keyx][keyy].map).text(), 10))) {
 					// 非通過領地の再設定
 					mapdata[keyx][keyy].view_skip = false;
 					for (var i = 0; i < skiplist.length; i++) {
@@ -926,24 +936,24 @@ SEARCH_ALL:				for (var k = 0; k < routemarkers.length - 1; k++) {
 	// 設定に従って座標の装飾を変更
 	//-------------------------------
 	function draw_decorate(posx, posy) {
-	q$(mapdata[posx][posy].map).css({"text-decoration":""});
-	if (mapdata[posx][posy].view_build_route === true) {
-		q$(mapdata[posx][posy].map).css({'background-color':'indigo'});
-		q$(mapdata[posx][posy].map).css({'color':'white'});
-	} else if (mapdata[posx][posy].view_route === true) {
-		q$(mapdata[posx][posy].map).css({"background-color":"#8a2be2"});
-		q$(mapdata[posx][posy].map).css({"color":"white"});
-	} else if (mapdata[posx][posy].view_res === true) {
-		q$(mapdata[posx][posy].map).css({"background-color":"#4169e1"});
-		q$(mapdata[posx][posy].map).css({"color":"white"});
-	} else if (mapdata[posx][posy].view_skip === true) {
-		q$(mapdata[posx][posy].map).css({"text-decoration":"line-through"});
-		q$(mapdata[posx][posy].map).css({'background-color':''});
-		q$(mapdata[posx][posy].map).css({'color':'black'});
-	} else {
-		q$(mapdata[posx][posy].map).css({'background-color':''});
-		q$(mapdata[posx][posy].map).css({'color':'black'});
-	}
+		q$(mapdata[posx][posy].map).css({"text-decoration":""});
+		if (mapdata[posx][posy].view_build_route === true) {
+			q$(mapdata[posx][posy].map).css({'background-color':'indigo'});
+			q$(mapdata[posx][posy].map).css({'color':'white'});
+		} else if (mapdata[posx][posy].view_route === true) {
+			q$(mapdata[posx][posy].map).css({"background-color":"#8a2be2"});
+			q$(mapdata[posx][posy].map).css({"color":"white"});
+		} else if (mapdata[posx][posy].view_res === true) {
+			q$(mapdata[posx][posy].map).css({"background-color":"#4169e1"});
+			q$(mapdata[posx][posy].map).css({"color":"white"});
+		} else if (mapdata[posx][posy].view_skip === true) {
+			q$(mapdata[posx][posy].map).css({"text-decoration":"line-through"});
+			q$(mapdata[posx][posy].map).css({'background-color':''});
+			q$(mapdata[posx][posy].map).css({'color':'black'});
+		} else {
+			q$(mapdata[posx][posy].map).css({'background-color':''});
+			q$(mapdata[posx][posy].map).css({'color':'black'});
+		}
 	}
 
 })();
@@ -963,7 +973,7 @@ function loadValue(key, def) {
 	var wkey = GM_KEY + key;
 	var value = GM_getValue(wkey, "");
 	if (value === "") {
-	return def;
+		return def;
 	}
 	return value;
 }
@@ -974,12 +984,12 @@ function loadValue(key, def) {
 function isExecute() {
 	// mixi鯖障害回避用: 広告iframe内で呼び出されたら無視
 	if (q$("#container").length === 0) {
-	return false;
+		return false;
 	}
 
 	// 歴史書モードの場合、ツールを動かさない
 	if( q$("#sidebar img[title=歴史書]").length > 0 ){
-	return false;
+		return false;
 	}
 	return true;
 }
