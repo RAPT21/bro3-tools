@@ -19,7 +19,6 @@
 | [bro3_send_friendly_army](bro3_send_friendly_army) | ★人気★　友軍状況画面でリンクをクリックで友軍を派遣 |
 | [bro3_territory_info](bro3_territory_info) | 全領地情報収集 |
 | [bro3_quick_make_soldier](bro3_quick_make_soldier) | ★人気★　都市画面でワンクリックで造兵したり、援軍派遣したり |
-| [bro3_route_builder](bro3_route_builder) | 51x51 MAP でルート構築、ルートからMAP色付け表示にも対応 |
 
 ## 臨時
 
