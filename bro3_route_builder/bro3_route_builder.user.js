@@ -1,25 +1,24 @@
 ﻿// ==UserScript==
 // @name		bro3_route_builder
-// @namespace	bro3_route_builder
+// @namespace	https://github.com/RAPT21/bro3-tools/
+// @description	ブラウザ三国志ルート構築(51x51) with RAPT
 // @include		https://*.3gokushi.jp/big_map.php*
 // @include		http://*.3gokushi.jp/big_map.php*
-// @description	ブラウザ三国志ルート構築(51x51) with RAPT
+// @require		https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
+// @connect		3gokushi.jp
+// @grant		GM_deleteValue
+// @grant		GM_getValue
+// @grant		GM_setValue
+// @author		RAPT
 // @version		1.07.1
-
-// @grant	GM_addStyle
-// @grant	GM_deleteValue
-// @grant	GM_getValue
-// @grant	GM_setValue
-// @grant	GM_xmlhttpRequest
-// @grant	GM_getResourceText
-// @require	https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js
-
 // ==/UserScript==
-// version date		author
-// 1.01		2016/03/19	Craford 氏	http://silent-stage.air-nifty.com/steps/2016/03/post-60ac.html
-// 1.01.1	2017/07/14	RAPT. 2017/07/12 の大型アップデートに伴い、ツールが動作しなくなっていたのを修正
-// 1.04		2018/07/25	Craford NPC領地に対応、FF3+GM3系で動かない問題を修正
-// 1.07.1	2023/07/14	RAPT. アップデートに伴い、ツールが動作しなくなっていたのを修正。地形1.0マップにも対応
+
+// 1.01		2016.03.19	Craford 氏
+//						http://silent-stage.air-nifty.com/steps/2016/03/post-60ac.html
+// 1.01.1	2017.07.14	RAPT. 2017/07/12 の大型アップデートに伴い、ツールが動作しなくなっていたのを修正
+// 1.04		2018.07.25	Craford NPC領地に対応、FF3+GM3系で動かない問題を修正
+//						http://silent-stage.air-nifty.com/steps/2018/08/beyond-route_bu.html
+// 1.07.1	2023.07.14	RAPT. アップデートに伴い、ツールが動作しなくなっていたのを修正。地形1.0マップにも対応
 
 var ua = window.navigator.userAgent;
 
@@ -1002,11 +1001,6 @@ function initGMWrapper() {
 	// @copyright		2009, James Campos
 	// @license		cc-by-3.0; http://creativecommons.org/licenses/by/3.0/
 	if ((typeof GM_getValue == 'undefined') || (GM_getValue('a', 'b') == undefined)) {
-		GM_addStyle = function (css) {
-			var style = document.createElement('style');
-			style.textContent = css;
-			document.getElementsByTagName('head')[0].appendChild(style);
-		};
 		GM_deleteValue = function (name) {
 			sessionStorage.removeItem(name);
 			localStorage.removeItem(name);
