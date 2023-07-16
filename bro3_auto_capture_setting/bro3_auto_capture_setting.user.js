@@ -61,9 +61,9 @@ function deckOperation($) {
 }
 
 // 自動鹵獲出兵先設定画面の解析
-function settingOperation($, d = window.document, ssid) {
+function settingOperation($, d = window.document, ssid, callback) {
 	// 簡易登録
-	var baseXY = $("#basepoint .xy").text().trim();
+	var baseXY = $("#basepoint .xy").text().match(/(\([^\)]+\))/)[1];
 	var easy1 = $("#acm_setting_deck1");
 	var easy2 = $("#acm_setting_deck2");
 
@@ -73,6 +73,8 @@ function settingOperation($, d = window.document, ssid) {
 	// 結果表示用
 	var body1 = $("#acm_list_body1");
 	var body2 = $("#acm_list_body2");
+	body1.empty();
+	body2.empty();
 
 	var exports = {
 		deck1: [],
@@ -166,15 +168,23 @@ function settingOperation($, d = window.document, ssid) {
 
 		});
 	});
+	if ($("td", body1).length === 0) {
+		body1.append($("<td />", {colspan: 4}).append("未登録"));
+	}
+	if ($("td", body2).length === 0) {
+		body2.append($("<td />", {colspan: 4}).append("未登録"));
+	}
+
 	$("#acm_export_deck1").val(JSON.stringify(exports.deck1, null, ''));
+	$("#acm_current_deck1").val(JSON.stringify(exports.deck1, null, ''));
 	$("#acm_export_deck2").val(JSON.stringify(exports.deck2, null, ''));
+	$("#acm_current_deck2").val(JSON.stringify(exports.deck2, null, ''));
+	if (callback) callback(true);
 }
 
 // 自動鹵獲出兵先設定を取得
-function getAutoCaptureMaterialSetting($, ssid) {
+function getAutoCaptureMaterialSetting($, ssid, callback) {
 	$("#acm_result").append("処理中");
-	$("#acm_list_body1").empty();
-	$("#acm_list_body2").empty();
 	$.ajax({
 		url: '/auto_capture_material/setting.php',
 		type: 'GET',
@@ -182,18 +192,18 @@ function getAutoCaptureMaterialSetting($, ssid) {
 		cache: false
 	}).fail(function(){
 		$("#acm_result").append("自動鹵獲出兵先設定取得エラー");
+		if (callback) callback(false);
 	})
 	.done(function(res) {
 		$("#acm_result").empty();
 		var response = $("<div />").append(res);
-		settingOperation($, response, ssid);
+		settingOperation($, response, ssid, callback);
 	});
 }
 
-// 自動鹵獲出兵先に登録
-function registerLand($, ssid, deck_kind, x, y, mode = 'set_auto_capture_material') {
-	$("#acm_result").append("処理中");
-	$.ajax({
+// 自動鹵獲出兵先簡易設定API
+function territoryProcAPI($, ssid, deck_kind, x, y, mode = 'set_auto_capture_material') {
+	return $.ajax({
 		url: `./territory_proc.php?x=${x}&y=${y}&mode=${mode}`,
 		type: 'POST',
 		datatype: 'html',
@@ -202,23 +212,130 @@ function registerLand($, ssid, deck_kind, x, y, mode = 'set_auto_capture_materia
 			ssid: ssid,
 			deck_kind: deck_kind
 		}
-	}).fail(function(){
-		$("#acm_result").append(mode === 'set_auto_capture_material' ? "登録エラー" : "削除エラー");
-	}).done(function(res) {
-		$("#acm_result").empty();
-		getAutoCaptureMaterialSetting($, ssid);
 	});
+}
+
+// 自動鹵獲出兵先に登録
+function registerLand($, ssid, deck_kind, x, y) {
+	$("#acm_result").append("処理中");
+	territoryProcAPI($, ssid, deck_kind, x, y, 'set_auto_capture_material')
+		.fail(function(){
+			$("#acm_result").append("登録エラー");
+		})
+		.done(function(res) {
+			$("#acm_result").empty();
+			getAutoCaptureMaterialSetting($, ssid);
+		});
 }
 
 // 自動鹵獲出兵先から外す
 function unregisterLand($, ssid, deck_kind, x, y) {
-	registerLand($, ssid, deck_kind, x, y, 'unset_auto_capture_material');
+	$("#acm_result").append("処理中");
+	territoryProcAPI($, ssid, deck_kind, x, y, 'unset_auto_capture_material')
+		.fail(function(){
+			$("#acm_result").append("削除エラー");
+		})
+		.done(function(res) {
+			$("#acm_result").empty();
+			getAutoCaptureMaterialSetting($, ssid);
+		});
 }
 
-function performImport($, ssid, deck_type, json_text) {
-	var list = JSON.parse(json_text);
+// 非同期処理でリストを順次処理
+function perform_each(list, processing, callback) {
+	var index = 0;
+	var wait = false;
+	var timer1 = setInterval(function(){
+		if (wait) {
+			return;
+		}
+		wait = true;
+		if (index >= list.length) {
+			// 終端に達した
+			clearInterval(timer1);
+			timer1 = null;
+			if (callback) {
+				callback(true);
+			}
+			return;
+		}
 
+		// 逐一処理
+		if (processing) {
+			processing(index, list[index], function(abort){
+				if (abort) {
+					clearInterval(timer1);
+					timer1 = null;
+					if (callback) {
+						callback(false);
+					}
+					return;
+				}
+				index++;
+				wait = false;
+			});
+		} else {
+			index++;
+			wait = false;
+		}
+	}, 200);
 }
+
+// インポート処理
+function performImport($, ssid, deck_kind, delete_text, import_text, callback) {
+	var delete_list = [];
+	var import_list = [];
+	try {
+		if (delete_text.length > 2) {
+			delete_list = JSON.parse(delete_text);
+		}
+		if (import_text.length > 2) {
+			import_list = JSON.parse(import_text);
+		}
+	} catch (error) {
+		console.log(error);
+		if (callback) callback("フォーマット不正のため処理中断");
+		return;
+	}
+
+	// まず削除
+	perform_each(delete_list, function(index, item, proc){
+		territoryProcAPI($, ssid, deck_kind, item.x, item.y, 'unset_auto_capture_material')
+			.fail(function(){
+				if (proc) proc(true);
+			})
+			.done(function(res) {
+				if (proc) proc(false);
+			});
+	}, function(done){
+		if (done) {
+			// 追加
+			perform_each(import_list, function(index, item, proc){
+				if (index >= REGISTER_LIMIT_COUNT) {
+					// 上限数に達している場合はエラーにせず終わる
+					proc(false);
+					return;
+				}
+				territoryProcAPI($, ssid, deck_kind, item.x, item.y, 'set_auto_capture_material')
+					.fail(function(){
+						if (proc) proc(true);
+					})
+					.done(function(res) {
+						if (proc) proc(false);
+					});
+			}, function(done){
+				if (done) {
+					if (callback) callback("インポート完了");
+				} else {
+					if (callback) callback("インポート - 追加エラー");
+				}
+			});
+		} else {
+					if (callback) callback("インポート - 削除エラー");
+		}
+	});
+}
+
 // 土地画面での処理
 function landOperation($) {
 	var form = $("#form_auto_capture_material");
@@ -240,18 +357,18 @@ function landOperation($) {
 			}
 		});
 
-	// 登録/設定BOXの下に表示させる
+	// オーバーラップ表示させる
 	$("#tMenu_btnif").css({position: 'relative'});
 	var view = $("<div />", {
 		id: 'acm_setting_view',
-		style: 'width: 500px; line-height: 20px; display: none;' +
-		'position: absolute; top: 124px; right: 0px; ' +
-		'padding: 4px 16px 8px 16px; ' +
-		'color: #333333; background-color: white; ' +
-		'cursor: default; -moz-border-radius:3px; border-radius: 3px; -webkit-border-radius: 3px; border: 2px solid #009; ' +
-		'z-index:9999; '
+		style: 'width: 500px; line-height: 20px; display: none;'
+			+ ' position: absolute; top: 4px; left: 0px;'
+			+ ' padding: 4px 16px 8px 16px;'
+			+ ' color: #333333; background-color: white;'
+			+ ' cursor: default; -moz-border-radius:3px; border-radius: 3px; -webkit-border-radius: 3px; border: 2px solid #009;'
+			+ ' z-index:9999;'
 	});
-	$("#tMenu_btnif .send_troop_option").append(view);
+	$("#tMenu_btnif").prepend(view);
 	view.append(
 		$("<div />", {
 			style: 'font-weight: bold; margin-bottom: 4px; background-color: #ffffc0; padding: 2px 0px 6px 0px;'
@@ -261,6 +378,7 @@ function landOperation($) {
 	);
 	view.data("isLoadList", false);
 
+	// 簡易設定BOX
 	view.append($("<div />", {id: 'acm_setting_box'}));
 
 	// 本拠地、拠点への簡易設定
@@ -293,6 +411,7 @@ function landOperation($) {
 		);
 	});
 
+	// 簡易設定の処理結果
 	$("#acm_setting_box").append(
 		$("<div />", {id: 'acm_result'})
 	);
@@ -316,13 +435,17 @@ function landOperation($) {
 			$("<div />", {id: 'acm_setting_box_deck1', style: 'float: left;'}).append(
 				$("<table />", {cols: 4, border: 1}).append(
 					$("<caption />", {style: 'font-weight: bold'}).append("本拠地"),
-					$("<tbody />", {id: 'acm_list_body1'})
+					$("<tbody />", {id: 'acm_list_body1'}).append(
+						$("<td />", {colspan: 4}).append("未登録")
+					)
 				)
 			),
 			$("<div />", {id: 'acm_setting_box_deck2', style: 'float: right;'}).append(
 				$("<table />", {cols: 4, border: 1}).append(
 					$("<caption />", {style: 'font-weight: bold'}).append("拠点"),
-					$("<tbody />", {id: 'acm_list_body2'})
+					$("<tbody />", {id: 'acm_list_body2'}).append(
+						$("<td />", {colspan: 4}).append("未登録")
+					)
 				)
 			)
 		)
@@ -338,7 +461,7 @@ function landOperation($) {
 		)
 	);
 
-	// export/import
+	// Export/Import
 	view.append(
 		$("<div />", {style: 'margin: 10px 0px;'}).append(
 			$("<button />", {
@@ -349,6 +472,7 @@ function landOperation($) {
 					click: function(){
 						$("#acm_setting_box").toggle();
 						$("#acm_porting_box").toggle();
+						$("#acm_import_status").text("");
 					}
 				}
 			}).append("Export / Import")
@@ -357,34 +481,67 @@ function landOperation($) {
 			$("<div />", {}).append(
 				$("<span />", {
 					style: 'color: red'
-				}).append("Importすると今の設定をすべて削除して、置き換えます。")
+				}).append(
+					"Importすると今の設定をすべて削除して、置き換えます。<br />",
+					"今のところ有効化や優先順位はインポートできないため、設定画面で編集してください。"
+				)
 			),
-			$("<dl />").append(
+			$("<div />", {}).append(
+				$("<span />", {
+					id: 'acm_import_status',
+					style: 'color: blue; display: none; '
+				}).append("")
+			),
+			$("<dl />", {id: 'acm_export_list'}).append(
 				$("<dt />", {style: 'font-weight: bold;'}).append("本拠地デッキ"),
 				$("<dd />").append(
 					$("<textarea />", {id: 'acm_export_deck1', cols: 45, rows: 3}),
+					$("<input />", {id: 'acm_current_deck1', type: 'hidden'}),
 					$("<button />", {
+						id: 'acm_import_deck1',
 						type: 'button',
 						style: 'width: 80px; margin-left: 8px;',
 						on: {
 							click: function(){
-								performImport($, ssid, 1, $("#acm_export_deck1").val())
+								$("#acm_export_list").hide();
+								$("#acm_import_status").text("本拠地デッキ インポート処理中...").show();
+								performImport($, ssid, 1, $("#acm_current_deck1").val(), $("#acm_export_deck1").val(), function(msg){
+									$("#acm_import_status").text(msg);
+									// 画面更新
+									getAutoCaptureMaterialSetting($, ssid, function(){
+										$("#acm_export_list").toggle();
+										$("#acm_setting_box").toggle();
+										$("#acm_porting_box").toggle();
+									});
+								});
 							}
 						}
-					}).append("Import")
+					}).append("Import開始")
 				),
 				$("<dt />", {style: 'font-weight: bold;'}).append("拠点デッキ"),
 				$("<dd />").append(
 					$("<textarea />", {id: 'acm_export_deck2', cols: 45, rows: 3}),
+					$("<input />", {id: 'acm_current_deck2', type: 'hidden'}),
 					$("<button />", {
+						id: 'acm_import_deck2',
 						type: 'button',
 						style: 'width: 80px; margin-left: 8px;',
 						on: {
 							click: function(){
-								performImport($, ssid, 2, $("#acm_export_deck2").val())
+								$("#acm_export_list").hide();
+								$("#acm_import_status").text("拠点デッキ インポート処理中...").show();
+								performImport($, ssid, 2, $("#acm_current_deck2").val(), $("#acm_export_deck2").val(), function(msg){
+									$("#acm_import_status").text(msg);
+									// 画面更新
+									getAutoCaptureMaterialSetting($, ssid, function(){
+										$("#acm_export_list").toggle();
+										$("#acm_setting_box").toggle();
+										$("#acm_porting_box").toggle();
+									});
+								});
 							}
 						}
-					}).append("Import")
+					}).append("Import開始")
 				)
 			)
 		)
@@ -396,54 +553,7 @@ function landOperation($) {
 //	jQuery を使用しない共通関数定義
 //========================================
 
-function isNullOrEmpty(obj) {
-	return obj === null || typeof obj === 'undefined' || obj.length === 0;
-}
-
-function nvl(obj, nullValue = '') {
-	return obj === null ? nullValue : obj;
-}
-
-function toNumber(obj, defaultValue = null) {
-	if (obj === null) {
-		return defaultValue;
-	}
-	var num = parseInt(obj, 10);
-	if (isNaN(num)) {
-		return defaultValue;
-	}
-	return num;
-}
-
-// セッションID取得
-function getSessionId() {
-	return getCookie('SSID');
-}
-
-// source: http://stackoverflow.com/questions/10687746/getcookie-returns-null
-function getCookie(name) {
-	var nameEQ = name + "=";
-	var ca = document.cookie.split(';');
-	for (var i = 0; i < ca.length; i++) {
-		var c = ca[i];
-		while (c.charAt(0) === ' ') {
-			c = c.substring(1, c.length);
-		}
-		if (c.indexOf(nameEQ) === 0) {
-			return c.substring(nameEQ.length, c.length);
-		}
-	}
-	return null;
-}
 // for debug print object
 function po(obj, ext = "") {
 	console.log(ext + JSON.stringify(obj, null, '\t'));
-}
-function array_merge(dest, src) {
-	Array.prototype.push.apply(dest, src);
-}
-function array_unique(array) {
-	return array.filter(function(element, index) {
-		return array.indexOf(element) === index; // Chrome 系では、filter で第3引数がない
-	});
 }
