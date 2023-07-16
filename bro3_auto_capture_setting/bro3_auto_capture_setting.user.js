@@ -74,6 +74,11 @@ function settingOperation($, d = window.document, ssid) {
 	var body1 = $("#acm_list_body1");
 	var body2 = $("#acm_list_body2");
 
+	var exports = {
+		deck1: [],
+		deck2: []
+	};
+
 	// 自動鹵獲出兵先設定を取得
 	var sel = $("[class*=commonTables][data-deck-kind-visible]", d);
 	$("[class*=commonTables][data-deck-kind-visible]", d).each(function(){
@@ -108,6 +113,7 @@ function settingOperation($, d = window.document, ssid) {
 				}).append(xy)
 
 				var use = $('td:eq(0)', this).text().trim();
+				var priority = parseInt($('td:eq(1)', this).text().trim(), 10);
 				if ($('td:eq(3)', this).text().replace(/\s/g, '').match(/(★+)(\S+)/) !== null) {
 					var material = RegExp.$2;
 					var spec = `★${RegExp.$1.length} (`;
@@ -143,6 +149,13 @@ function settingOperation($, d = window.document, ssid) {
 						)
 					);
 
+					var item = {x: parseInt(x, 10), y: parseInt(y, 10), active: (use === "〇" ? true : false), priority: priority};
+					if (deck_kind === 1) {
+						exports.deck1.push(item);
+					} else {
+						exports.deck2.push(item);
+					}
+
 					// 上限到達時は追加できない
 					if ($("tr", target).length === REGISTER_LIMIT_COUNT) {
 						easy_target.text(`${easy_title}デッキ登録上限。削除してから登録してください`).css({'color': 'black', 'pointer-events': 'none'});
@@ -153,6 +166,8 @@ function settingOperation($, d = window.document, ssid) {
 
 		});
 	});
+	$("#acm_export_deck1").val(JSON.stringify(exports.deck1, null, ''));
+	$("#acm_export_deck2").val(JSON.stringify(exports.deck2, null, ''));
 }
 
 // 自動鹵獲出兵先設定を取得
@@ -200,6 +215,10 @@ function unregisterLand($, ssid, deck_kind, x, y) {
 	registerLand($, ssid, deck_kind, x, y, 'unset_auto_capture_material');
 }
 
+function performImport($, ssid, deck_type, json_text) {
+	var list = JSON.parse(json_text);
+
+}
 // 土地画面での処理
 function landOperation($) {
 	var form = $("#form_auto_capture_material");
@@ -213,10 +232,10 @@ function landOperation($) {
 	// 運営のクリック時処理を無効化し、簡易設定表示に置き換える
 	$("#tMenu_btnif a.send_troop_auto_capture_material").prop("onclick", null).off("click")
 		.on("click", function(){
-			$("#acm_setting_box").toggle();
+			$("#acm_setting_view").toggle();
 			// 無用な通信を避けるため、初めて設定画面を開いたときにロードする
-			if ($("#acm_setting_box").data("isLoadList") === false) {
-				$("#acm_setting_box").data("isLoadList", true);
+			if ($("#acm_setting_view").data("isLoadList") === false) {
+				$("#acm_setting_view").data("isLoadList", true);
 				getAutoCaptureMaterialSetting($, ssid);
 			}
 		});
@@ -224,7 +243,7 @@ function landOperation($) {
 	// 登録/設定BOXの下に表示させる
 	$("#tMenu_btnif").css({position: 'relative'});
 	var view = $("<div />", {
-		id: 'acm_setting_box',
+		id: 'acm_setting_view',
 		style: 'width: 500px; line-height: 20px; display: none;' +
 		'position: absolute; top: 124px; right: 0px; ' +
 		'padding: 4px 16px 8px 16px; ' +
@@ -242,11 +261,7 @@ function landOperation($) {
 	);
 	view.data("isLoadList", false);
 
-	/*
-x,yを指定して登録できる画面がほしい
-textareaでコピペ登録できるように。
-登録したあとは運営の画面で編集すればよい
-*/
+	view.append($("<div />", {id: 'acm_setting_box'}));
 
 	// 本拠地、拠点への簡易設定
 	decisions.each(function(){
@@ -320,6 +335,58 @@ textareaでコピペ登録できるように。
 				href: '/auto_capture_material/setting.php',
 				style: 'color: #0000dd;'
 			}).append("自動鹵獲出兵先設定画面を開く")
+		)
+	);
+
+	// export/import
+	view.append(
+		$("<div />", {style: 'margin: 10px 0px;'}).append(
+			$("<button />", {
+				id: 'acm_export',
+				type: 'button',
+				style: 'width: 200px;',
+				on: {
+					click: function(){
+						$("#acm_setting_box").toggle();
+						$("#acm_porting_box").toggle();
+					}
+				}
+			}).append("Export / Import")
+		),
+		$("<div />", {id: 'acm_porting_box', style: 'display: none;'}).append(
+			$("<div />", {}).append(
+				$("<span />", {
+					style: 'color: red'
+				}).append("Importすると今の設定をすべて削除して、置き換えます。")
+			),
+			$("<dl />").append(
+				$("<dt />", {style: 'font-weight: bold;'}).append("本拠地デッキ"),
+				$("<dd />").append(
+					$("<textarea />", {id: 'acm_export_deck1', cols: 45, rows: 3}),
+					$("<button />", {
+						type: 'button',
+						style: 'width: 80px; margin-left: 8px;',
+						on: {
+							click: function(){
+								performImport($, ssid, 1, $("#acm_export_deck1").val())
+							}
+						}
+					}).append("Import")
+				),
+				$("<dt />", {style: 'font-weight: bold;'}).append("拠点デッキ"),
+				$("<dd />").append(
+					$("<textarea />", {id: 'acm_export_deck2', cols: 45, rows: 3}),
+					$("<button />", {
+						type: 'button',
+						style: 'width: 80px; margin-left: 8px;',
+						on: {
+							click: function(){
+								performImport($, ssid, 2, $("#acm_export_deck2").val())
+							}
+						}
+					}).append("Import")
+				)
+			)
 		)
 	);
 }
