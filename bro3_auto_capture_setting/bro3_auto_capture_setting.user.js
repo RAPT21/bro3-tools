@@ -100,7 +100,7 @@ function settingOperation($, d = window.document, ssid) {
 				}
 
 				var link = $("<a />", {
-					href: `/land.php?x=${x}&y=-${y}`,
+					href: `/land.php?x=${x}&y=${y}`,
 					style: 'color: #0000dd; cursor: pointer; text-decoration: none;',
 					on: {
 						mouseenter: function() {
