@@ -2,8 +2,8 @@
 // @name		bro3_auto_capture_setting
 // @namespace	https://github.com/RAPT21/bro3-tools/
 // @description	ブラウザ三国志 自動鹵獲設定補助
-// @include		https://*.3gokushi.jp/*
-// @include		http://*.3gokushi.jp/*
+// @include		https://*.3gokushi.jp/land.php*
+// @include		http://*.3gokushi.jp/land.php*
 // @exclude		https://*.3gokushi.jp/maintenance*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @exclude		https://info.3gokushi.jp/*
