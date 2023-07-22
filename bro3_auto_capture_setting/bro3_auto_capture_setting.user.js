@@ -18,14 +18,31 @@ jQuery.noConflict();
 
 //==========[機能]==========
 // 自動鹵獲出兵先設定を簡単に編集できるようにします。
+//
+// 土地画面（右下に簡易出兵先、自動鹵獲、自動出兵のメニューがある画面）で、「自動鹵獲」をクリックすると設定画面を開けます。
+// 再度「自動鹵獲」をクリックすると設定画面を閉じます。
+//
+// 「本拠地デッキに登録する」、「拠点デッキに登録する」をクリックでメイン画面更新なしで登録できます。
+//
+// 設定画面下部には現在の設定内容を表示します。ここから個別に削除できます。
+// 現在表示している座標が登録済の場合、背景色がピンク色になります。
+// 本拠地デッキ、拠点デッキ、それぞれについて10件登録済の場合はいずれか削除してから登録してください。
+//
+// 鹵獲先リストのExport/Importが可能です。
+// たとえば本拠地デッキに登録した座標と同じ内容で拠点デッキに登録したい場合は、
+// 本拠地デッキ側にExportされた内容を拠点デッキ側にコピペして、「Import開始」をクリックしてください。
+// ImportフォーマットはJSON形式だけでなく、(x,y)形式で改行区切りにしたリストも利用できます。
+// 鹵獲先の有効化や優先順位はインポートできないため、自動鹵獲出兵先設定画面で編集してください
+//
 
 // 2023.07.15	開発着手
+// 2023.07.23	初版公開
 
-var VERSION = "2023.07.15.dev";
+var VERSION = "2023.07.23";
 
 var BASE_URL = location.protocol + "//" + location.hostname;
 
-// 自動鹵獲出兵先設定に登録する上限数
+// 自動鹵獲出兵先設定に登録できる上限数
 var REGISTER_LIMIT_COUNT = 10;
 
 //==========[本体]==========
@@ -41,10 +58,10 @@ var REGISTER_LIMIT_COUNT = 10;
 		return;
 	}
 
-	if (location.pathname === '/auto_capture_material/setting.php') {
-		//デバッグ用
-		//settingOperation($);
-	}
+	// デバッグ用
+	//if (location.pathname === '/auto_capture_material/setting.php') {
+	//	settingOperation($);
+	//}
 
 	// 領地(空き地)画面
 	if (location.pathname === '/land.php') {
@@ -379,7 +396,7 @@ function landOperation($) {
 	$("#tMenu_btnif").css({position: 'relative'});
 	var view = $("<div />", {
 		id: 'acm_setting_view',
-		style: 'width: 500px; line-height: 20px; display: none;'
+		style: 'width: 520px; line-height: 20px; display: none;'
 			+ ' position: absolute; top: 4px; left: 0px;'
 			+ ' padding: 4px 16px 8px 16px;'
 			+ ' color: #333333; background-color: white;'
@@ -485,7 +502,7 @@ function landOperation($) {
 			$("<button />", {
 				id: 'acm_export',
 				type: 'button',
-				style: 'width: 200px;',
+				style: 'width: 220px;',
 				on: {
 					click: function(){
 						$("#acm_setting_box").toggle();
@@ -493,7 +510,7 @@ function landOperation($) {
 						$("#acm_import_status").text("");
 					}
 				}
-			}).append("Export / Import")
+			}).append("Export / Import 表示切替")
 		),
 		$("<div />", {id: 'acm_porting_box', style: 'display: none;'}).append(
 			$("<div />", {}).append(
