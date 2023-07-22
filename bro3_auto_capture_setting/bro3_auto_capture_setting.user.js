@@ -281,6 +281,19 @@ function perform_each(list, processing, callback) {
 	}, 200);
 }
 
+// (x,y)の配列とみなして解析
+function parseAsAxisArray($, text) {
+	var list = [];
+	var array = text.split('\n');
+	$.each(array, function(){
+		var m = this.trim().match(/^\((-?\d+),(-?\d+)\)/);
+		if (m !== null && m.length > 2) {
+			list.push({x: parseInt(m[1], 10), y: parseInt(m[2], 10), active: true, priority: 1});
+		}
+	});
+	return list;
+}
+
 // インポート処理
 function performImport($, ssid, deck_kind, delete_text, import_text, callback) {
 	var delete_list = [];
@@ -290,7 +303,12 @@ function performImport($, ssid, deck_kind, delete_text, import_text, callback) {
 			delete_list = JSON.parse(delete_text);
 		}
 		if (import_text.length > 2) {
-			import_list = JSON.parse(import_text);
+			if (import_text.indexOf("(") === 0) {
+				// (x,y)の配列とみなして解析
+				import_list = parseAsAxisArray($, import_text);
+			} else {
+				import_list = JSON.parse(import_text);
+			}
 		}
 	} catch (error) {
 		console.log(error);
