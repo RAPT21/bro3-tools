@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.30
+// @version		1.09.31
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -124,6 +124,9 @@
 // 1.09.30	2023/06/27	RAPT. 「領地一覧：領地LVUP時のアラートを抑制」を追加
 //						- 「同盟トップ：同盟員全領地座標CSV取得」機能が動作しなくなっていたのを修正
 //						- 「同盟トップ：同盟員本拠座標取得」機能が動作しなくなっていたのを修正
+// 1.09.31	2023/07/25	RAPT. 「共通：地形1.0」を追加
+//						- メニューの一部を地形1.0対応
+//						- 地形1.0マップで「Profile：NPC隣接同盟探索」が動作するよう暫定対処
 
 
 //----------------------------------------------------------------------
