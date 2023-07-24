@@ -1107,17 +1107,17 @@ function profileControl() {
 				y1 = sw;
 			}
 
-			if (x1 < -1200) {
-				x1 = -1200;
+			if (x1 < -1300) {
+				x1 = -1300;
 			}
-			if (x2 > 1200) {
-				x2 = 1200;
+			if (x2 > 1300) {
+				x2 = 1300;
 			}
-			if (y1 < -1200) {
-				y1 = -1200;
+			if (y1 < -1300) {
+				y1 = -1300;
 			}
-			if (y2 > 1200) {
-				y2 = 1200;
+			if (y2 > 1300) {
+				y2 = 1300;
 			}
 
 			var sizex = Math.abs(x2 - x1) + 1 - 10 * 2;
@@ -1472,8 +1472,7 @@ function profileControl() {
 					//-------------
 					// NPC隣接探索
 					//-------------
-					if (q$("#search_event_npc").prop('checked') == false) {
-						// search_pattern = new RegExp("rewrite\\('(.*)', '(.*)', '.*', '(.*)', '(.*)', '([★]*)', '.*', '.*', '.*', '.*', '.*', '.*', '.*'\\); overOpe");
+					if (q$("#search_event_npc").prop('checked') == false) {// 削除中、(地名)、(君主名)、人口、(座標)、(同盟名)、(戦力)、距離、森岩鉄糧、NPCフラグ、保護期間、深夜停戦
 						search_pattern = new RegExp("rewriteAddRemoving\\('.*','(.*)', '(.*)', '.*', '(.*)', '(.*)', '([★]*)', '.*', '.*', '.*', '.*', '.*', '.*', '.*', .*\\); overOpe");
 					} else {
 						search_pattern = new RegExp("rewritePF\\(.*,'(.*)', '(.*)', '.*', '(.*)', '(.*)', '([★]*) '.*', '.*', '.*', '.*', '.*', '.*', '.*'\\); overOpe");
@@ -1505,7 +1504,11 @@ function profileControl() {
 					var result_box = q$("#result_npc_box");
 
 					var list = new Array();
-					list.push("NPC名\tX座標\tY座標\t★\t所有同盟\t北西\t北\t北東\t西\t東\t南西\t南\t南東");
+					if (g_beyond_options[COMMON_04]) {
+						list.push("NPC名\tX座標\tY座標\t★\t所有盟主\t北西\t北\t北東\t西\t東\t南西\t南\t南東");
+					} else {
+						list.push("NPC名\tX座標\tY座標\t★\t所有同盟\t北西\t北\t北東\t西\t東\t南西\t南\t南東");
+					}
 					var listcnt = 0;
 					var count = 1;
 					var max = search_target.length;
@@ -1528,9 +1531,11 @@ function profileControl() {
 
 						wait = true;
 
-						var loc = {'x':search_target[count-1].x, 'y':search_target[count-1].y, 'type':1};
+						var map_type = g_beyond_options[COMMON_04] ? 4 : 1;
+						var map_path = g_beyond_options[COMMON_04] ? '/big_map.php' : '/map.php';
+						var loc = {'x':search_target[count-1].x, 'y':search_target[count-1].y, 'type':map_type};
 						q$.ajax({
-							url: BASE_URL + '/map.php',
+							url: BASE_URL + map_path,
 							type: 'GET',
 							datatype: 'html',
 							cache: false,
@@ -1538,32 +1543,108 @@ function profileControl() {
 						})
 						.done(function(res) {
 							var resp = q$("<div>").append(res);
-							var area = q$("#mapOverlayMap area", resp);
+							var area = g_beyond_options[COMMON_04] ? q$("#map51-content.map-v2 li a[onmouseover]", resp) : q$("#mapOverlayMap area[onmouseover]", resp);
 
 							// NPC隣接調査
-							var check = [60, 48, 59, 70, 49, 71, 50, 61, 72];
+							function checkMapCellList() {
+								var map_size = g_beyond_options[COMMON_04] ? 51 : 11;
+								// 配列の順は 対象NPC砦、北西、北、北東、西、東、南西、南、南東
+								var idx_center = (map_size + 1) * ((map_size - 1) / 2);
+								var list = [idx_center];
+								if (map_size === 11) {
+									// 斜めMAPの場合、最西から北→南で並ぶ; center = 60
+									list.push(idx_center - map_size - 1);
+									list.push(idx_center - 1);
+									list.push(idx_center + map_size - 1);
+									list.push(idx_center - map_size);
+									list.push(idx_center + map_size);
+									list.push(idx_center - map_size + 1);
+									list.push(idx_center + 1);
+									list.push(idx_center + map_size + 1);
+								} else if (map_size === 51) {
+									// 51MAPの場合、最北から西→東で並ぶ; center = 1300
+									list.push(idx_center - map_size - 1);
+									list.push(idx_center - map_size);
+									list.push(idx_center - map_size + 1);
+									list.push(idx_center - 1);
+									list.push(idx_center + 1);
+									list.push(idx_center + map_size - 1);
+									list.push(idx_center + map_size);
+									list.push(idx_center + map_size + 1);
+								} else {
+									console.log("不明なMAPです。");
+								}
+								return list;
+							}
+
+							var check = checkMapCellList();
 							var tsv = "";
 							var neighbor = "";
 							for (var i = 0; i < check.length; i++) {
 								// 一致検索
-								var match = q$(area[check[i]]).attr("onmouseover").match(search_pattern);
-								if (match == null) {
-									continue;
-								}
-								if (match[4] == '') {
-									match[4] = '-';
-								}
-
-								if (i == 0) {
-									// NPC名、座標、★数、所有同盟
-									var pos = match[3].match(/([-]*\d+),([-]*\d+)/);
-									tsv += match[1] + "\t" + parseInt(pos[1]) + "\t" + parseInt(pos[2]) + "\t★" + match[5].length + "\t" + match[4];
-								} else {
-									// 隣接（北西、北、北東、西、東、南西、南、南東の順）。所持同盟がいない場合'-'
-									if (match[4] != '-') {
-										tsv += match[4];
+								var attr_onmouseover = q$(area[check[i]]).attr("onmouseover");
+								if (g_beyond_options[COMMON_04]) {
+									var axis = attr_onmouseover.match(new RegExp('距離</dt><dd>\\(([-]?\\d+),([-]?\\d+)\\)'));
+									if (axis == null) {
+										continue;
+									}
+									// NPC砦では同盟名が取得できないので取得できなくてもエラーにしない
+									var ally_name = attr_onmouseover.match(new RegExp('<dt>同盟名</dt><dd>(.*?)</dd>'));
+									ally_name = (ally_name == null) ? '-' : ally_name[1];
+									if (i == 0) {
+										var npc_name = attr_onmouseover.match(new RegExp('<dt class=\"bigmap-caption\">(.*?)</dt>'));
+										if (npc_name == null) {
+											continue;
+										} else {
+											npc_name = npc_name[1];
+										}
+										var owner_name = attr_onmouseover.match(new RegExp('<dt>君主名</dt><dd>(.*?)</dd>'));
+										if (owner_name == null) {
+											continue;
+										} else {
+											owner_name = owner_name[1];
+										}
+										var star = attr_onmouseover.match(new RegExp('<span class="npc-red-star">([★]+).*?</span>'));
+										if (star == null) {
+											continue;
+										} else {
+											star = star[1].length;
+										}
+										// NPC砦名と守衛名が一致する場合は未攻略砦とし、所有君主名'-'
+										var ma = npc_name.match(/^(.*?)砦(\d+)$/);
+										var mo = owner_name.match(/^(.*?)守衛(\d+)$/);
+										if (ma != null && mo != null && ma[1] == mo[1] && ma[2] == mo[2]) {
+											owner_name = '-';
+										}
+										tsv += npc_name + "\t" + parseInt(axis[1]) + "\t" + parseInt(axis[2]) + "\t★" + star + "\t" + owner_name;
 									} else {
-										tsv += "-";
+										// 隣接（北西、北、北東、西、東、南西、南、南東の順）。所持同盟がいない場合'-'
+										if (ally_name != '-') {
+											tsv += ally_name;
+										} else {
+											tsv += "-";
+										}
+									}
+								} else {
+									var match = attr_onmouseover.match(search_pattern);
+									if (match == null) {
+										continue;
+									}
+									if (match[4] == '') {
+										match[4] = '-';
+									}
+
+									if (i == 0) {
+										// NPC名、座標、★数、所有同盟
+										var pos = match[3].match(/([-]*\d+),([-]*\d+)/);
+										tsv += match[1] + "\t" + parseInt(pos[1]) + "\t" + parseInt(pos[2]) + "\t★" + match[5].length + "\t" + match[4];
+									} else {
+										// 隣接（北西、北、北東、西、東、南西、南、南東の順）。所持同盟がいない場合'-'
+										if (match[4] != '-') {
+											tsv += match[4];
+										} else {
+											tsv += "-";
+										}
 									}
 								}
 								if (i != 8) {
@@ -1592,7 +1673,7 @@ function profileControl() {
 							wait = false;
 						});
 					};
-					npc_timer = setInterval(neighbor_search_func, 150);
+					npc_timer = setInterval(neighbor_search_func, 1000);
 				}
 			}
 		);
