@@ -3887,6 +3887,8 @@ function execCommonPart() {
 
 		var loc = q$("li.gnavi02 a").attr('href');
 		var bigloc = loc.replace('/map.php?', '/big_map.php?');
+		var eleloc = loc.replace('/map.php?', '/elevation_map.php?');
+		var _3dloc = loc.replace('/map.php?', '/3d_map.php?');
 
 		var cur_x = 0;
 		var cur_y = 0;
@@ -3894,6 +3896,50 @@ function execCommonPart() {
 		if (match) {
 			cur_x = match[1];
 			cur_y = match[2];
+		}
+
+		var mapmenu;
+		if (g_beyond_options[COMMON_04]) {
+			mapmenu = [
+				['21x21', eleloc + '&map_size=21'], ['41x41', eleloc + '&map_size=41'], ['3D', _3dloc], ['旧51x51', bigloc + '&type=4'],
+			];
+		} else {
+			mapmenu = [
+				['11x11', loc + '&type=1'], ['21x21', loc + '&type=5'], ['51x51', loc + '&type=4'], ['スクロール21x21', bigloc + '&type=6&ssize=21'], ['スクロール51x51', bigloc + '&type=6&ssize=51'],
+			];
+		}
+
+		var allymenu;
+		if (g_beyond_options[COMMON_04]) {
+			allymenu = [
+				['連結状況', alurl + '/rampart_tower_group.php'],
+				['友軍状況', alurl + '/friendly_army.php'],
+				['遷都状況', alurl + '/castle_transfer.php'],
+				['同盟ログ', alurl + '/alliance_log.php',
+					[
+						['全て', alogurl], ['攻撃', alogurl + '?m=attack'], ['防御', alogurl + '?m=defense'], ['偵察', alogurl + '?m=scout'],
+						['破壊', alogurl + '?m=fall'], ['援軍', alogurl + '?m=reinforcement'], ['友軍', alogurl + '?m=friendly_army'], ['同盟', alogurl + '?m=alliance'],
+					],
+				],
+				['ランキング', alurl + '/ranking.php'], ['勢力リスト', alurl + '/dependency.php'], ['同盟掲示板', BASE_URL + '/bbs/topic_view.php'],
+				['同盟スキル', alurl + '/alliance_skill.php'],
+				['管理', alurl + '/manage.php'],
+				['配下同盟管理', alurl + '/manage_dep.php'],
+			];
+		} else {
+			allymenu = [
+				['友軍状況', alurl + '/friendly_army.php'],
+				['同盟ログ', alurl + '/alliance_log.php',
+					[
+						['全て', alogurl], ['攻撃', alogurl + '?m=attack'], ['防御', alogurl + '?m=defense'], ['偵察', alogurl + '?m=scout'],
+						['破壊', alogurl + '?m=fall'], ['援軍', alogurl + '?m=reinforcement'], ['友軍', alogurl + '?m=friendly_army'], ['同盟', alogurl + '?m=alliance'],
+					],
+				],
+				['ランキング', alurl + '/ranking.php'], ['勢力リスト', alurl + '/dependency.php'], ['同盟掲示板', BASE_URL + '/bbs/topic_view.php'],
+				['同盟スキル', alurl + '/alliance_skill.php'],
+				['管理', alurl + '/manage.php'],
+				['配下同盟管理', alurl + '/manage_dep.php'],
+			];
 		}
 
 		var menus = [
@@ -3927,23 +3973,9 @@ function execCommonPart() {
 				],
 			],
 			// 全体地図
-			[
-				['11x11', loc + '&type=1'], ['21x21', loc + '&type=5'], ['51x51', loc + '&type=4'], ['スクロール21x21', bigloc + '&type=6&ssize=21'], ['スクロール51x51', bigloc + '&type=6&ssize=51'],
-			],
+			mapmenu,
 			// 同盟
-			[
-				['友軍状況', alurl + '/friendly_army.php'],
-				['同盟ログ', BASE_URL + '/alliance/alliance_log.php',
-					[
-						['全て', alogurl], ['攻撃', alogurl + '?m=attack'], ['防御', alogurl + '?m=defense'], ['偵察', alogurl + '?m=scout'],
-						['破壊', alogurl + '?m=fall'], ['援軍', alogurl + '?m=reinforcement'], ['友軍', alogurl + '?m=friendly_army'], ['同盟', alogurl + '?m=alliance'],
-					],
-				],
-				['ランキング', alurl + '/ranking.php'], ['勢力リスト', alurl + '/dependency.php'], ['同盟掲示板', BASE_URL + '/bbs/topic_view.php'],
-				['同盟スキル', alurl + '/alliance_skill.php'],
-				['管理', alurl + '/manage.php'],
-				['配下同盟管理', alurl + '/manage_dep.php'],
-			],
+			allymenu,
 			// デッキ
 			[
 				['城トップ', facurl + '/castle.php'],
@@ -4002,6 +4034,7 @@ function execCommonPart() {
 								['名声獲得', BASE_URL + '/council/arms.php?council_function_id=207'],
 							],
 						],
+						['城壁塔', BASE_URL + '/council/?tab=7'], // 地形1.0マップのみだが階層が深いのでこのままにしておく
 						['農村', BASE_URL + '/council/?tab=3'],
 						['設計', BASE_URL + '/council/?tab=4'],
 						['南蛮', BASE_URL + '/council/?tab=5'],
