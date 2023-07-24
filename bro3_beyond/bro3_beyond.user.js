@@ -228,6 +228,7 @@ var AJAX_REQUEST_INTERVAL = 100; // (ms)
 var COMMON_01 = 'co01';		// 資源タイマー
 var COMMON_02 = 'co02';		// プルダウンメニューを差し替える
 var COMMON_03 = 'co03';		// 天気予告常時表示
+var COMMON_04 = 'co04';		// 地形1.0
 
 // プロフィールタブ
 var PROFILE_01 = 'pr01';	// ランキングリンク追加
@@ -6007,6 +6008,7 @@ function draw_setting_window(append_target) {
 					<div><input type='checkbox' id='" + COMMON_01 + "'><label for='" + COMMON_01 + "'>資源タイマーを追加</label></input></div> \
 					<div><input type='checkbox' id='" + COMMON_02 + "'><label for='" + COMMON_02 + "'>プルダウンメニューを差し替える</label></input></div> \
 					<div><input type='checkbox' id='" + COMMON_03 + "'><label for='" + COMMON_03 + "'>天気バー上に天気予告を常時表示する</label></input></div> \
+					<div><input type='checkbox' id='" + COMMON_04 + "'><label for='" + COMMON_04 + "'>地形1.0</label></input></div> \
 				</div> \
 				<div id='tab-profile'> \
 					<div><input type='checkbox' id='" + PROFILE_01 + "'><label for='" + PROFILE_01 + "'>ランキングへのリンクを追加</label></input></div> \
@@ -10111,6 +10113,7 @@ function getDefaultOptions() {
 	settings[COMMON_01] = true;		// 資源タイマー
 	settings[COMMON_02] = true;		// プルダウンメニューを差し替える
 	settings[COMMON_03] = true; 	// 天気予告常時表示
+	settings[COMMON_04] = (["w7","w11","w20","w24","w28","w32"].indexOf(SERVER_NAME) < 0);	// 地形1.0 (公開時点で未対応鯖は初期値false、それ以外はtrue)
 
 	// プロフィール
 	settings[PROFILE_01] = true;	// ランキングのリンク追加
