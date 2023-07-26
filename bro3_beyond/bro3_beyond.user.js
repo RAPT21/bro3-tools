@@ -2717,7 +2717,7 @@ function allianceTabControl() {
 								}
 								wait = false;
 							});
-						}, AJAX_REQUEAT_INTERVAL
+						}, AJAX_REQUEST_INTERVAL
 					);
 				}
 			);
@@ -7138,7 +7138,7 @@ function multipleLabelSet(is_move_top_card_count) {
 
 						wait = false;
 					});
-				}, AJAX_REQUEST_INVERVAL
+				}, AJAX_REQUEST_INTERVAL
 			);
 		}
 	);
