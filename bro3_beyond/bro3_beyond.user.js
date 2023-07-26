@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.31
+// @version		1.09.32
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -127,6 +127,7 @@
 // 1.09.31	2023/07/25	RAPT. 「共通：地形1.0」を追加
 //						- メニューの一部を地形1.0対応
 //						- 地形1.0マップで「Profile：NPC隣接同盟探索」が動作するよう暫定対処
+// 1.09.32	2023/07/27	RAPT. 1.09.29で同盟ログ検索、一括ラベルセットが動かなくなっていた不具合を修正
 
 
 //----------------------------------------------------------------------
@@ -2717,7 +2718,7 @@ function allianceTabControl() {
 								}
 								wait = false;
 							});
-						}, AJAX_REQUEAT_INTERVAL
+						}, AJAX_REQUEST_INTERVAL
 					);
 				}
 			);
@@ -7138,7 +7139,7 @@ function multipleLabelSet(is_move_top_card_count) {
 
 						wait = false;
 					});
-				}, AJAX_REQUEST_INVERVAL
+				}, AJAX_REQUEST_INTERVAL
 			);
 		}
 	);
@@ -10230,7 +10231,7 @@ function getDefaultOptions() {
 	settings[COMMON_01] = true;		// 資源タイマー
 	settings[COMMON_02] = true;		// プルダウンメニューを差し替える
 	settings[COMMON_03] = true; 	// 天気予告常時表示
-	settings[COMMON_04] = (["w7","w11","w20","w24","w28","w32"].indexOf(SERVER_NAME) < 0);	// 地形1.0 (公開時点で未対応鯖は初期値false、それ以外はtrue)
+	settings[COMMON_04] = (["w11","w24","w28","w32"].indexOf(SERVER_NAME) < 0);	// 地形1.0 (公開時点で未対応鯖は初期値false、それ以外はtrue)
 
 	// プロフィール
 	settings[PROFILE_01] = true;	// ランキングのリンク追加
