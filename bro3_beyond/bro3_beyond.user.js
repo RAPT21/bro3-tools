@@ -10230,7 +10230,7 @@ function getDefaultOptions() {
 	settings[COMMON_01] = true;		// 資源タイマー
 	settings[COMMON_02] = true;		// プルダウンメニューを差し替える
 	settings[COMMON_03] = true; 	// 天気予告常時表示
-	settings[COMMON_04] = (["w7","w11","w20","w24","w28","w32"].indexOf(SERVER_NAME) < 0);	// 地形1.0 (公開時点で未対応鯖は初期値false、それ以外はtrue)
+	settings[COMMON_04] = (["w11","w24","w28","w32"].indexOf(SERVER_NAME) < 0);	// 地形1.0 (公開時点で未対応鯖は初期値false、それ以外はtrue)
 
 	// プロフィール
 	settings[PROFILE_01] = true;	// ランキングのリンク追加
