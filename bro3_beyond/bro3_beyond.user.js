@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.31
+// @version		1.09.32
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -127,6 +127,7 @@
 // 1.09.31	2023/07/25	RAPT. 「共通：地形1.0」を追加
 //						- メニューの一部を地形1.0対応
 //						- 地形1.0マップで「Profile：NPC隣接同盟探索」が動作するよう暫定対処
+// 1.09.32	2023/07/27	RAPT. 1.09.29で同盟ログ検索、一括ラベルセットが動かなくなっていた不具合を修正
 
 
 //----------------------------------------------------------------------
