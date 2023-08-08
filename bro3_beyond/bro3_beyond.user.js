@@ -7437,7 +7437,7 @@ function addDropDomesticDeckCard() {
 		var match = q$("dd[class='btm_none'] a", base).attr('href').match(/village_change.php\?village_id=(\d+)/);
 
 		q$("img[class='btn_deck_set_s']", base).replaceWith(
-			"<span class='btn_deck_set_s' id='drop_vid_" + match[1] + "' style='font-weight: bold; vertical-align: middle; height: 33px;'>" +
+			"<span class='btn_deck_set_s' id='drop_vid_" + match[1] + "' style='font-weight: bold; vertical-align: middle; height: 37px;'>" +
 				"<input value='ファイルに下げる' type='button'></input>" +
 			"</span>"
 		);
