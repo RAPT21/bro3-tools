@@ -2,22 +2,27 @@
 // @name		bro3_territory_info
 // @namespace	https://gist.github.com/RAPT21/
 // @description	ブラウザ三国志 全領土情報取得ツール by RAPT
+// @include 	https://*.3gokushi.jp/alliance/info.php*
 // @include 	http://*.3gokushi.jp/alliance/info.php*
+// @exclude		https://*.3gokushi.jp/maintenance*
 // @exclude		http://*.3gokushi.jp/maintenance*
-// @require		http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
+// @require		https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	0.2
+// @version 	0.3
 // ==/UserScript==
-var VERSION = "0.2";
+var VERSION = "0.3";
 
 // 2017.10.05	0.1	同盟タブで「全領土をCSV形式でテキスト出力する」ボタンをクリックすると全領土のCSV情報を取得します。
 // 2017.10.06	0.2	構造上の誤りを修正
+// 2023.07.14	0.3	https 対応、戦力表記が変更された対応、NPC領地は空き地のためリストアップしないように修正
 
 jQuery.noConflict();
 
-var HOST = location.hostname;
+var SERVER_SCHEME = location.protocol + "//";
+var BASE_URL = SERVER_SCHEME + location.hostname;
+
 var columnSeparator = ",";
 var lineSeparator = "\n";
 
@@ -141,7 +146,7 @@ var lineSeparator = "\n";
 	// MAP データを取得
 	function getMap(x, y, handler){
 		$.ajax({
-			url: 'http://' + HOST + '/map.php',
+			url: BASE_URL + '/map.php',
 			type: 'GET',
 			datatype: 'html',
 			cache: false,
@@ -165,6 +170,10 @@ var lineSeparator = "\n";
 				if (obj[1].length === 0) {
 					return true;
 				}
+				if (obj[0] === '-' && obj[1] === 'NPC') {
+					// NPC領地は空き地のためスキップ
+					return true;
+				}
 				var area_info = $("dt:contains(座標)+dd", gloss).text().match(/([-]?\d+),([-]?\d+)/);
 				if (area_info !== null && area_info.length >= 3) {
 					array_merge(obj, [area_info[1], area_info[2]]);
@@ -174,7 +183,7 @@ var lineSeparator = "\n";
 				obj.push(quotes($("dt.bigmap-caption", gloss).text()));
 				obj.push($("dt:contains(人口)+dd", gloss).text());
 				obj.push("");
-				obj.push($("dt:contains(戦力)+dd", gloss).text());
+				obj.push($("dt:contains(戦力)+dd", gloss).text().replace(/(★+).*/, '$1'));
 				var rsrc = $("dt:contains(資源)+dd", gloss).text().match(/木(\d+)\s*岩(\d+)\s*鉄(\d+)\s*糧(\d+)/);
 				if (rsrc !== null && rsrc.length >= 5) {
 					array_merge(obj, [rsrc[1], rsrc[2], rsrc[3], rsrc[4]]);
@@ -200,7 +209,7 @@ var lineSeparator = "\n";
 	// MAP サイズを取得
 	function getMapList(handler){
 		$.ajax({
-			url: 'http://' + HOST + '/map.php',
+			url: BASE_URL + '/map.php',
 			type: 'GET',
 			datatype: 'html',
 			cache: false,

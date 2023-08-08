@@ -3,18 +3,19 @@
 // @namespace	https://gist.github.com/RAPT21/
 // @description	ブラウザ三国志 寄付ツール
 // @include		http://*.3gokushi.jp/alliance/info.php*
+// @include		https://*.3gokushi.jp/alliance/info.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
+// @exclude		https://*.3gokushi.jp/maintenance*
 // @exclude		http://info.3gokushi.jp/*
+// @exclude		https://info.3gokushi.jp/*
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
 // @require		https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js
 // @resource	jqueryui_css	https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css
 // @connect		3gokushi.jp
-// @grant		GM_getValue
-// @grant		GM_setValue
 // @grant		GM_getResourceText
 // @grant		GM_addStyle
 // @author		RAPT
-// @version 	1.2
+// @version 	1.3
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
@@ -32,12 +33,16 @@ GM_addStyle(jQueryUICss);
 // 2017.12.03	1.0	初版公開
 // 2019.04.19	1.1	2019.04.03以降に開始された期で一部の数値がカンマ付きになった影響で寄付済額が取得できなくなっていたのを対応
 // 2020.01.30	1.2	1/30の運営仕様変更に伴い、資源情報を取得できなくなっていた問題を修正
+// 2023.07.06	https 対応、同盟画面、プロフィール画面の仕様変更に伴い、新規サーバーや君主名を変更したときなどに寄付ができなくなったいた問題を修正（同盟画面仕様変更に伴い、君主名は不要になった）
 
-var VERSION = "2020.01.30";
+var VERSION = "2023.07.06";
 var HOST = location.hostname; //アクセスURLホスト
 var SERVER_NAME = HOST.match(/^(.*)\.3gokushi/)[1];
 var LOGGER	 = SERVER_NAME + '.donate> ';
 var INTERVAL = 500;
+
+var SERVER_SCHEME = location.protocol + "//";
+var BASE_URL = SERVER_SCHEME + location.hostname;
 
 var DEBUG = false;
 
@@ -80,7 +85,6 @@ GM_addStyle(`
 			$("#donate_window").css('display', 'none');
 		}
 	});
-	request_username(function(x){});
 	create_window();
 
 	// 窓を作成
@@ -89,7 +93,6 @@ GM_addStyle(`
 		$("ul[id=statMenu]").eq(0).append(`
 			<div id='donate_window' style='display: none; padding: 8px; width: 600px;'>
 				<table border=0 cellspacing=0 cellpadding=2>
-					<tr><td colspan=6>君主名：&nbsp;${get_username()}&nbsp;<span id='reset_username' style='color: blue; cursor: pointer; font-size: 80%;'>&rarr;&nbsp;君主名が異なる場合はここをクリックしてから画面をリロードしてください。</span></td></tr>
 					<tr><th>&nbsp;</th><th>木</th><th>石</th><th>鉄</th><th>糧</th><th>合計</th></tr>
 					<tr>
 						<th>現在</th>
@@ -159,11 +162,6 @@ GM_addStyle(`
 			});
 		});
 
-		// [DEV] 君主名をリセット
-		$("#reset_username").on('click', function() {
-			reset_username();
-		});
-
 		// アクション
 		$("#current_wood").val(wood);
 		$("#current_stone").val(stone);
@@ -226,11 +224,6 @@ GM_addStyle(`
 			var r = toInt($("#donate_rice").val());
 			send_donate(w, s, i, r);
 		});
-
-		// 全額寄付
-		//	$("#send_donate_all").on("click", function(){
-		//		send_donate(wood, stone, iron, rice);
-		//	});
 	}
 
 	// 寄付を実行
@@ -248,7 +241,7 @@ GM_addStyle(`
 			rice: r,
 			contribution: 1
 		};
-		$.post('http://'+location.hostname+'/alliance/level.php',c,function(){
+		$.post(BASE_URL+'/alliance/level.php',c,function(){
 			var tid=setTimeout(function(){location.reload();}, INTERVAL);
 		});
 	}
@@ -271,81 +264,13 @@ GM_addStyle(`
 		$("#reserve_rice").val(rice - r);
 	}
 
-	// 君主名を探す
-	var timer1 = null;
-	function request_username(aHandler) {
-		if (timer1) {
-			return;
-		}
-		var count = 0;
-		var max = 3;
-		var wait = false;
-		timer1 = setInterval(function(){
-			if (wait) {
-				return;
-			}
-			wait = true;
-			if (count++ >= max) {
-				clearInterval(timer1);
-				timer1 = null;
-				wait = false;
-				aHandler(false);
-			}
-			$.ajax({
-				url: 'http://' + location.hostname + '/user/',
-				type: 'GET',
-				datatype: 'html',
-				cache: false
-			})
-			.fail(function(){
-				count++;
-				wait = false;
-			})
-			.done(function(res) {
-				var resp = $("<div>").append(res);
-				var username = $("#gray02Wrapper table[class='commonTables'] tbody tr", resp).eq(1).children("td").eq(1).text().replace(/\s+/g, '');
-				GM_setValue(SERVER_NAME + '_username', username);
-
-				clearInterval(timer1);
-				timer1 = null;
-				wait = false;
-				aHandler(true);
-			});
-		}, 200);
-	}
-	// 君主名を取得
-	function get_username() {
-		return GM_getValue(SERVER_NAME + '_username', '');
-	}
-	// 君主名をリセット
-	function reset_username() {
-		GM_setValue(SERVER_NAME + '_username', '');
-		set_already();
-	}
-
 	// 寄付済み額を画面に反映
 	function set_already() {
-		var username = get_username();
-		if (isNullOrEmpty(username)) {
-			var t1 = setTimeout(function(){
-				request_username(function(result){
-					if (result) {
-						var t2 = setTimeout(function(){
-							set_already();
-						}, 200);
-					}
-				});
-			}, 200);
-			return;
-		}
-
-		$(`table[class='tables'] tbody tr td a:contains(${username})`).each(function(){
-			if ($(this).text() === username) {
-				var already = $(this).closest("tr").children("td").eq(3).text().replace(/[ \t\r\n,]/g, "");
-				$("#total_already").val(already);
-				console.log(LOGGER+`[${username}] の寄付額は [${already}]`);
-				return false;
-			}
+		$("table[class='tables'] tbody tr.mydata td:eq(3)").each(function(){
+			var already = $(this).text().replace(/[ \t\r\n,]/g, "");
+			$("#total_already").val(already);
+			console.log(LOGGER+`[${username}] の寄付額は [${already}]`);
+			return false;
 		});
 	}
 })(jQuery);
