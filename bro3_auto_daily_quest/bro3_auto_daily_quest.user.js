@@ -14,9 +14,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2023.07.03
+// @version 	2023.08.11
 // ==/UserScript==
-var VERSION = "2023.07.03"; 	// バージョン情報
+var VERSION = "2023.08.11"; 	// バージョン情報
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -77,6 +77,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2023.01.29 洛陽への路のルートを自動で切り替える（β機能）
 // 2023.07.02 ソース内オプションを設定画面へ設置
 // 2023.07.03 ソース内に不要となった旧オプション設定が残ったままだった
+// 2023.08.11 2023.07.02版以降にて、繰り返しクエスト用出兵の出兵先として0以下の座標を出力先に指定できなくなっていた不具合を修正
 
 
 //----------------------------------------
@@ -1199,8 +1200,9 @@ function saveSettingBox() {
 		if (type == 'checkbox') {
 			g_options[key] = q$(this).prop('checked');
 		} else if (type == 'text') {
-			var num = parseInt(q$(this).val(), 10);
-			if (!isNaN(num) && num > 0) {
+			var src = q$(this).val().replace(/\s/g, '');
+			var num = parseInt(src, 10);
+			if (!isNaN(num)) {
 				g_options[key] = num;
 			} else {
 				g_options[key] = defOptions[key];
