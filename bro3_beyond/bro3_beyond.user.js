@@ -126,10 +126,11 @@
 //						- 「同盟トップ：同盟員本拠座標取得」機能が動作しなくなっていたのを修正
 // 1.09.31	2023/07/25	RAPT. 「共通：地形1.0」を追加
 //						- メニューの一部を地形1.0対応
-//						- 地形1.0マップで「Profile：NPC隣接同盟探索」が動作するよう暫定対処
+//						- 地形1.0マップで「Profile：NPCの隣接同盟探索」が動作するよう修正
 // 1.09.32	2023/07/27	RAPT. 1.09.29で同盟ログ検索、一括ラベルセットが動かなくなっていた不具合を修正
 // 1.09.33	2023/08/11	RAPT. 「倉庫からファイルに移動する画面へ一括ラベル機能を追加」を追加
 //						- 「Profile：資源パネル探索」が動作するよう修正
+//						- 「Profile：NPC座標探索」が動作するよう修正
 
 
 //----------------------------------------------------------------------
@@ -1442,18 +1443,23 @@ function profileControl() {
 					// NPC座標探索
 					//-------------
 					if (q$("#search_event_npc").prop('checked') == false) {
-						// search_pattern = new RegExp("rewrite\\('(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '', '', '', '', '1', '.*'\\); overOpe");
 						search_pattern = new RegExp("rewriteAddRemoving\\('.*','(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '.*', '.*', '.*', '.*', '1', '.*', .*\\); overOpe");
 					} else {
 						search_pattern = new RegExp("rewritePF\\(.*,'(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '', '', '', '', '1', '.*'\\); overOpe");
 					}
-
+					if (g_beyond_options[COMMON_04]) {
+						search_pattern = new RegExp("bigmap-caption[^>]*?>([^<]+?)<\\/dt>.*<dt>座標.+?距離<\\/dt><dd>\\((.*?)\\).+?elevation-name[^>]*?>([^<]*?)<\\/span>.*?npc-red-star[^>]*?>([★]+)");
+					}
 					q$("#npc_box").val("高速化のため、検出中のデータは最後に表示します");
 					var sx = result.x1;
 					var sy = result.y1;
 
 					var list = new Array();
-					list.push("NPC名\tX座標\tY座標\t★");
+					if (g_beyond_options[COMMON_04]) {
+						list.push("NPC名\tX座標\tY座標\t★\t標高");
+					} else {
+						list.push("NPC名\tX座標\tY座標\t★");
+					}
 					var listcnt = 0;
 					var count = 1;
 					wait = false;
@@ -1478,9 +1484,12 @@ function profileControl() {
 
 						wait = true;
 
-						var loc = {'x':sx, 'y':sy, 'type':5};
+						var map_size = g_beyond_options[COMMON_04] ? 51 : 21;
+						var map_type = g_beyond_options[COMMON_04] ? 4 : 5;
+						var map_path = g_beyond_options[COMMON_04] ? '/big_map.php' : '/map.php';
+						var loc = {'x':sx, 'y':sy, 'type':map_type};
 						q$.ajax({
-							url: BASE_URL + '/map.php',
+							url: BASE_URL + map_path,
 							type: 'GET',
 							datatype: 'html',
 							cache: false,
@@ -1488,8 +1497,8 @@ function profileControl() {
 						})
 						.done(function(res) {
 							loc = null;
-							var resp = q$("<div>").append(res);
-							var area = q$("#mapOverlayMap area", resp);
+							var resp = q$("<div />").append(res);
+							var area = g_beyond_options[COMMON_04] ? q$("#map51-content.map-v2 li a[onmouseover]", resp) : q$("#mapOverlayMap area[onmouseover]", resp);
 
 							// NPC座標調査
 							for (var i = 0; i < area.length; i++) {
@@ -1516,7 +1525,11 @@ function profileControl() {
 								}
 
 								// ヒットした座標を蓄積
-								list.push(match[1] + "\t" + parseInt(pos[1]) + "\t" + parseInt(pos[2]) + "\t" + "\t★" + match[4].length);
+								var item = match[1] + "\t" + parseInt(pos[1]) + "\t" + parseInt(pos[2]) + "\t" + "\t★" + match[4].length;
+								if (g_beyond_options[COMMON_04]) {
+									item += "\t" + match[3];
+								}
+								list.push(item);
 								listcnt ++;
 
 								match = null;
@@ -1526,10 +1539,10 @@ function profileControl() {
 							area = null;
 
 							// 探索座標切り替え
-							sx += 21;
+							sx += map_size;
 							if (sx > result.x2) {
 								sx = result.x1;
-								sy += 21;
+								sy += map_size;
 								if (sy > result.y2) {
 									// NPC座標検索では座標ボックスに値を入れる
 									q$("#npc_box").val(list.join("\r\n"));
