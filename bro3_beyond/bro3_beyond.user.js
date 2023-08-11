@@ -129,6 +129,7 @@
 //						- 地形1.0マップで「Profile：NPC隣接同盟探索」が動作するよう暫定対処
 // 1.09.32	2023/07/27	RAPT. 1.09.29で同盟ログ検索、一括ラベルセットが動かなくなっていた不具合を修正
 // 1.09.33	2023/08/11	RAPT. 「倉庫からファイルに移動する画面へ一括ラベル機能を追加」を追加
+//						- 「Profile：資源パネル探索」が動作するよう修正
 
 
 //----------------------------------------------------------------------
@@ -1194,11 +1195,16 @@ function profileControl() {
 
 				var matches = [];
 				for (var i = 0; i < targets.length; i++) {
-					var matchstr = "'" + '★'.repeat(targets[i].level) +
+					var matchstr;
+					if (g_beyond_options[COMMON_04]) {
+						matchstr = `<dt>戦力<\\/dt><dd>${'★'.repeat(targets[i].level)}[^<]*<\\/dd>.*?資源<\\/dt><dd [^>]*?>木${targets[i].wood}.*岩${targets[i].stone}.*鉄${targets[i].iron}.*糧${targets[i].food}[^<]*?<\\/dd>`
+					} else {
+						matchstr = "'" + '★'.repeat(targets[i].level) +
 									"', '.*', '" + targets[i].wood +
 									"', '" + targets[i].stone +
 									"', '" + targets[i].iron +
 									"', '"	+ targets[i].food + "', '', '0', [a-z]+, '', ''\\); over";
+					}
 					var reg = new RegExp(matchstr);
 					matches.push(reg);
 				}
@@ -1208,7 +1214,11 @@ function profileControl() {
 				var sy = result.y1;
 
 				var list = new Array();
-				list.push("★\t領地タイプ\tX座標\tY座標\t所有同盟\t所有者");
+				if (g_beyond_options[COMMON_04]) {
+					list.push("★\t領地タイプ\tX座標\tY座標\t所有同盟\t所有者\t標高");
+				} else {
+					list.push("★\t領地タイプ\tX座標\tY座標\t所有同盟\t所有者");
+				}
 				var listcnt = 0;
 				var count = 1;
 				wait = false;
@@ -1232,9 +1242,12 @@ function profileControl() {
 
 					wait = true;
 
-					var loc = {'x':sx, 'y':sy, 'type':5};
+					var map_size = g_beyond_options[COMMON_04] ? 51 : 21;
+					var map_type = g_beyond_options[COMMON_04] ? 4 : 5;
+					var map_path = g_beyond_options[COMMON_04] ? '/big_map.php' : '/map.php';
+					var loc = {'x':sx, 'y':sy, 'type':map_type};
 					q$.ajax({
-						url: BASE_URL + '/map.php',
+						url: BASE_URL + map_path,
 						type: 'GET',
 						datatype: 'html',
 						cache: false,
@@ -1242,11 +1255,13 @@ function profileControl() {
 					})
 					.done(function(res) {
 						var resp = q$("<div>").append(res);
-						var area = q$("#mapOverlayMap area", resp);
+						var area = g_beyond_options[COMMON_04] ? q$("#map51-content.map-v2 li a[onmouseover]", resp) : q$("#mapOverlayMap area[onmouseover]", resp);
+
 						for (var i = 0; i < area.length; i++) {
+							var attr_onmouseover = q$(area[i]).attr("onmouseover");
 							var index = -1;
 							for (var j = 0; j < matches.length; j++) {
-								if (q$(area[i]).attr("onmouseover").match(matches[j]) != null) {
+								if (attr_onmouseover.match(matches[j]) != null) {
 									index = j;
 									break;
 								}
@@ -1255,62 +1270,120 @@ function profileControl() {
 								continue;
 							}
 
-							// 一致検索
-							var match;
-							if (search_event == false) {
-								match = q$(area[i]).attr("onmouseover").match(/rewriteAddRemoving\('\d+','.*', '(.*)', '.*', '(.*)', '(.*)', '[★]+', '.*', '(\d+)', '(\d+)', '(\d+)', '(\d+)', '', '(\d+)', [a-z]+, '', ''\); over.*$/);
+							if (g_beyond_options[COMMON_04]) {
+								q$(area[i]).attr('href').match(/x=([-]*\d+).*y=([-]*\d+)#ptop/);
+								var x = parseInt(RegExp.$1, 10);
+								var y = parseInt(RegExp.$2, 10);
+								var owner = '-';
+								if (attr_onmouseover.match(/<dt>君主名<\/dt><dd>([^<]*?)<\/dd>/) !== null) {
+									owner = RegExp.$1;
+								}
+								var ally = '-';
+								if (attr_onmouseover.match(/<dt>同盟名<\/dt><dd>([^<]*?)<\/dd>/) !== null) {
+									ally = RegExp.$1;
+								}
+								var elevation = ''
+								if (attr_onmouseover.match(/elevation-name[^>]*?>(.+?)<\/span>/) !== null) {
+									elevation = RegExp.$1;
+								}
+
+								// 一致検索
+								var match = attr_onmouseover.match(/>.*?資源<\/dt><dd [^>]*?>木(\d+).*岩(\d+).*鉄(\d+).*糧(\d+)[^<]*?<\/dd>/);
+								if (match == null) {
+									clearInterval(timer);
+									q$("#search_resource_exec").text("探索中断");
+									stop = false;
+									g_event_process = false;
+									alert("マップデータの形式が変わりました。探索できません。");
+									return;
+								}
+
+								// 空き地検索で所持者がいる場合除外
+								if (owner != '-' && search_empty == true) {
+									continue;
+								}
+
+								// 範囲外の座標の場合除外
+								if (x < result.x1 || x > result.x2) {
+									continue;
+								}
+								if (y < result.y1 || y > result.y2) {
+									continue;
+								}
+
+								// 結果生成
+								list.push(
+									"★" + targets[index].level +
+									"\t" +
+									"(" + targets[index].wood +
+									"," + targets[index].stone +
+									"," + targets[index].iron +
+									"," + targets[index].food + ")" +
+									"\t" + x +
+									"\t" + y +
+									"\t" + ally +
+									"\t" + owner +
+									"\t" + elevation
+								);
 							} else {
-								match = q$(area[i]).attr("onmouseover").match(/rewritePF\(.*,'.*', '(.*)', '.*', '(.*)', '(.*)', '[★]+', '.*', '(\d+)', '(\d+)', '(\d+)', '(\d+)', '', '.*'\); over.*$/);
-							}
 
-							if (match == null) {
-								clearInterval(timer);
-								q$("#search_resource_exec").text("探索中断");
-								stop = false;
-								g_event_process = false;
-								alert("マップデータの形式が変わりました。探索できません。");
-								return;
-							}
+								// 一致検索
+								var match;
+								if (search_event == false) {
+									match = attr_onmouseover.match(/rewriteAddRemoving\('\d+','.*', '(.*)', '.*', '(.*)', '(.*)', '[★]+', '.*', '(\d+)', '(\d+)', '(\d+)', '(\d+)', '', '(\d+)', [a-z]+, '', ''\); over.*$/);
+								} else {
+									match = attr_onmouseover.match(/rewritePF\(.*,'.*', '(.*)', '.*', '(.*)', '(.*)', '[★]+', '.*', '(\d+)', '(\d+)', '(\d+)', '(\d+)', '', '.*'\); over.*$/);
+								}
 
-							// 空き地検索で所持者がいる場合除外
-							if (match[1] != '' && search_empty == true) {
-								continue;
-							}
+								if (match == null) {
+									clearInterval(timer);
+									q$("#search_resource_exec").text("探索中断");
+									stop = false;
+									g_event_process = false;
+									alert("マップデータの形式が変わりました。探索できません。");
+									return;
+								}
 
-							// 範囲外の座標の場合除外
-							var pos = match[2].match(/([-]*\d+),([-]*\d+)/);
-							if (parseInt(pos[1]) < result.x1 || parseInt(pos[1]) > result.x2) {
-								continue;
-							}
-							if (parseInt(pos[2]) < result.y1 || parseInt(pos[2]) > result.y2) {
-								continue;
-							}
-							if (match[3] == '') {
-								match[1] = '-';
-								match[3] = '-';
-							}
+								// 空き地検索で所持者がいる場合除外
+								if (match[1] != '' && search_empty == true) {
+									continue;
+								}
 
-							// 結果生成
-							list.push(
-								"★" + targets[index].level +
-								"\t" +
-								"(" + targets[index].wood +
-								"," + targets[index].stone +
-								"," + targets[index].iron +
-								"," + targets[index].food + ")" +
-								"\t" + parseInt(pos[1]) +
-								"\t" + parseInt(pos[2]) +
-								"\t" + match[3] +
-								"\t" + match[1]
-							);
+								// 範囲外の座標の場合除外
+								var pos = match[2].match(/([-]*\d+),([-]*\d+)/);
+								if (parseInt(pos[1]) < result.x1 || parseInt(pos[1]) > result.x2) {
+									continue;
+								}
+								if (parseInt(pos[2]) < result.y1 || parseInt(pos[2]) > result.y2) {
+									continue;
+								}
+								if (match[3] == '') {
+									match[1] = '-';
+									match[3] = '-';
+								}
+
+								// 結果生成
+								list.push(
+									"★" + targets[index].level +
+									"\t" +
+									"(" + targets[index].wood +
+									"," + targets[index].stone +
+									"," + targets[index].iron +
+									"," + targets[index].food + ")" +
+									"\t" + parseInt(pos[1]) +
+									"\t" + parseInt(pos[2]) +
+									"\t" + match[3] +
+									"\t" + match[1]
+								);
+							}
 							listcnt ++;
 						}
 
 						// 探索座標切り替え
-						sx += 21;
+						sx += map_size;
 						if (sx > result.x2) {
 							sx = result.x1;
-							sy += 21;
+							sy += map_size;
 							if (sy > result.y2) {
 								// 結果ボックスに値を入れる
 								q$("#result_box").val(list.join("\r\n"));
