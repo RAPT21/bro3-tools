@@ -1198,7 +1198,7 @@ function profileControl() {
 									"', '.*', '" + targets[i].wood +
 									"', '" + targets[i].stone +
 									"', '" + targets[i].iron +
-									"', '"	+ targets[i].food + "', '', '0', \\w+\\); over";
+									"', '"	+ targets[i].food + "', '', '0', [a-z]+, '', ''\\); over";
 					var reg = new RegExp(matchstr);
 					matches.push(reg);
 				}
@@ -1258,8 +1258,7 @@ function profileControl() {
 							// 一致検索
 							var match;
 							if (search_event == false) {
-							//	match = q$(area[i]).attr("onmouseover").match(/rewrite\('.*', '(.*)', '.*', '(.*)', '(.*)', '[★]+', '.*', '(\d+)', '(\d+)', '(\d+)', '(\d+)', '', '.*'\); over.*$/);
-								match = q$(area[i]).attr("onmouseover").match(/rewriteAddRemoving\('\d+','.*', '(.*)', '.*', '(.*)', '(.*)', '[★]+', '.*', '(\d+)', '(\d+)', '(\d+)', '(\d+)', '', '(\d+)', \w+\); over.*$/);
+								match = q$(area[i]).attr("onmouseover").match(/rewriteAddRemoving\('\d+','.*', '(.*)', '.*', '(.*)', '(.*)', '[★]+', '.*', '(\d+)', '(\d+)', '(\d+)', '(\d+)', '', '(\d+)', [a-z]+, '', ''\); over.*$/);
 							} else {
 								match = q$(area[i]).attr("onmouseover").match(/rewritePF\(.*,'.*', '(.*)', '.*', '(.*)', '(.*)', '[★]+', '.*', '(\d+)', '(\d+)', '(\d+)', '(\d+)', '', '.*'\); over.*$/);
 							}
