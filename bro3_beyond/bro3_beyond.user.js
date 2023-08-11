@@ -967,12 +967,12 @@ function profileControl() {
 							"<div style='font-weight: bold; color: red; font-size: 12px;'>NPC調査対象</div>" +
 							"<div style='margin-left: 8px;'>" +
 								"<div>" +
-									"<input type='radio' name='search_npc_target' value='pos'>" +
+									"<input id='search_pos' type='radio' name='search_npc_target' value='pos'>" +
 										"<label for='search_pos'>NPC座標（こちらの探索は時間がかかります）</label>" +
 									"</input>" +
 								"</div>" +
 								"<div>" +
-									"<input type='radio' name='search_npc_target' value='neighbor' checked>" +
+									"<input id='search_neighbor' type='radio' name='search_npc_target' value='neighbor' checked>" +
 										"<label for='search_neighbor'>NPCの隣接同盟（NPC座標リストが必要です）</label>" +
 									"</input>" +
 								"</div>" +
@@ -984,7 +984,7 @@ function profileControl() {
 						"</div>" +
 						"<div>" +
 							"<input type='checkbox' id='search_event_npc' style='margin-left: 6px;'>" +
-								"<label for='search_event'>イベント鯖マップ探索</label>" +
+								"<label for='search_event_npc'>イベント鯖マップ探索</label>" +
 							"</input>" +
 						"</div>" +
 						"<div>" +
