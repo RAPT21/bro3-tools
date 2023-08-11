@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.32
+// @version		1.09.33
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -128,6 +128,7 @@
 //						- メニューの一部を地形1.0対応
 //						- 地形1.0マップで「Profile：NPC隣接同盟探索」が動作するよう暫定対処
 // 1.09.32	2023/07/27	RAPT. 1.09.29で同盟ログ検索、一括ラベルセットが動かなくなっていた不具合を修正
+// 1.09.33	2023/08/11	RAPT. 「倉庫からファイルに移動する画面へ一括ラベル機能を追加」を追加
 
 
 //----------------------------------------------------------------------
@@ -291,6 +292,7 @@ var DECK_34 = 'de34';		// 合成画面のボタン説明表示を消す
 var DECK_35 = 'de35';		// 自動副将枠解放合成機能を追加
 var DECK_51 = 'de51';		// 兵士管理リンクをクリックした際の初期タブを「全て表示」にする
 var DECK_61 = 'de61';		// スキル3つ以上、レベル50、スコア100万のいずれかに該当するカードを倉庫へ移動できなくする
+var DECK_71 = 'de71';		// 倉庫からファイルに移動する画面へ一括ラベル機能を追加
 
 // 報告書タブ
 var REPORT_01 = 're01';		// 自動整形機能の追加
@@ -2981,7 +2983,7 @@ function deckTabControl() {
 	}
 
 	// 倉庫画面
-	if (location.pathname === "/card/card_stock_file.php" || location.pathname === "/card/card_stock.php" || location.pathname === "/card/card_stock_file_confirm.php") {
+	if (location.pathname === "/card/card_stock_file.php" || location.pathname === "/card/card_stock.php" || location.pathname === "/card/card_stock_file_confirm.php" || location.pathname === "/card/card_stock_confirm.php") {
 		execStockPart();
 	}
 
@@ -5657,7 +5659,7 @@ function execStockPart() {
 	var tbllist = q$("table[class='tbl_cards_list'] tbody tr");
 
 	// カードNo.をトレードリンクにし、図鑑へのリンクを付与
-	if (g_beyond_options[DECK_02] == true) {
+	if (g_beyond_options[DECK_02] == true && location.pathname !== "/card/card_stock_confirm.php") {
 
 		// スキル名変換列の決定
 		var skill_col = 6;
@@ -5729,6 +5731,32 @@ function execStockPart() {
 					"</div>"
 				);
 			}
+		}
+	}
+
+	// 倉庫からファイルに移動する画面へ一括ラベル機能を追加
+	if (g_beyond_options[DECK_71] == true) {
+		if (location.pathname === "/card/card_stock_confirm.php" && q$("#form_cards_list").length > 0) {
+			// 選択肢をつくる
+			var sel = q$("#form_cards_list td.td_cards_list:nth-child(6) > select:nth-child(1)").eq(0).clone(false, false);
+			sel.removeAttr("name");
+			sel.change(function(){
+				var selected_label = q$(this).val();
+				q$("#tbl_cards_list td.td_cards_list:nth-child(6) > select").each(function(){
+					q$(this).val(selected_label);
+				});
+			});
+
+			// 画面へ追加
+			q$("<div />", {
+				id: "set_move_card_data",
+				style: "text-align: right; maring: 4px;"
+			})
+				.append(
+					q$("<span />", { style: "margin: 4px;" }).append("一括ラベル"),
+					sel
+				)
+				.insertBefore(q$("#tbl_cards_list"));
 		}
 	}
 }
@@ -6252,6 +6280,7 @@ function draw_setting_window(append_target) {
 					<div style='font-weight: bold'>倉庫画面</div> \
 					<div style='margin-left: 8px;'> \
 						<div><input type='checkbox' id='" + DECK_61 + "'><label for='" + DECK_61 + "'>スキル3つ以上、レベル50、スコア100万のいずれかに該当するカードを倉庫へ移動できなくする</label></input></div> \
+						<div><input type='checkbox' id='" + DECK_71 + "'><label for='" + DECK_71 + "'>倉庫からファイルに移動する画面へ一括ラベル機能を追加</label></input></div> \
 					</div> \
 					<br> \
 					<div style='font-weight: bold'>領地一覧画面</div> \
@@ -10290,6 +10319,7 @@ function getDefaultOptions() {
 	settings[DECK_35] = true;		// 自動副将枠解放合成機能を追加
 	settings[DECK_51] = true;		// 兵士管理リンクをクリックした際の初期タブを「全て表示」にする
 	settings[DECK_61] = false;		// スキル3つ以上、レベル50、スコア100万のいずれかに該当するカードを倉庫へ移動できなくする
+	settings[DECK_71] = true;		// 倉庫からファイルに移動する画面へ一括ラベル機能を追加
 
 	// 報告書
 	settings[REPORT_01] = true;		// 自動整形機能の追加
