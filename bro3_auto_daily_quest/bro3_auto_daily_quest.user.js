@@ -804,6 +804,9 @@ function callSendTroopEx(enabled, cardID, targetX, targetY, minGage, skillID, ca
 						return false;
 					}
 				});
+				if (vID > 0 && cardGage > 0) {
+					return false;
+				}
 			}
 		});
 
