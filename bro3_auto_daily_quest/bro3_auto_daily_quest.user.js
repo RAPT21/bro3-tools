@@ -1092,11 +1092,13 @@ function openSettingBox() {
 			ccreateEdit(divTroop, OPT_TROOPS_04, "討伐", 6);
 
 			ccreateText(td200, "　");
+			ccreateText(td200, "報酬受領", true);
 			ccreateText(td200, "※ クエスト報酬のうち、資源以外は自動で受け取ります。");
 		ccreateCheckBox(td200, OPT_RECEIVE_01, " 自動でヨロズダスをひく", "クエスト報酬がヨロズダスだった場合、自動でヨロズダスをひきます。");
 		ccreateCheckBox(td200, OPT_RECEIVE_02, " クエスト報酬が資源でも自動で受け取る", "クエスト報酬が資源だったときも自動で受け取ります。");
 		ccreateCheckBox(td200, OPT_RECEIVE_03, " アイテム受信箱から便利アイテムへ移動", "受信箱内のアイテムを自動で便利アイテムへ移動します。");
 			ccreateText(td200, "　");
+			ccreateText(td200, "その他の機能", true);
 		ccreateCheckBox(td200, OPT_FEATURE_01, " [02:00:00 - 05:59:59] 以外に自動デュエル", "[00:00:00 - 01:59:59], [06:00:00 - 23:59:59] の時間帯のみ自動デュエルを行ないます。");
 		ccreateCheckBox(td200, OPT_FEATURE_02, " 自動助力", "同盟施設に祈祷所がある場合、自動で助力を行ないます。");
 		ccreateCheckBox(td200, OPT_FEATURE_03, " 全ての報告書を既読にする", "報告書タブにあるボタンを自動で押します。");
@@ -1267,21 +1269,23 @@ function migrateSettings(options) {
 }
 
 
-function ccreateText(container, text)
+function ccreateText(container, text, caption = false)
 {
-	var dv = d.createElement("div");
-		dv.style.padding = "2px";
-		dv.style.paddingLeft= "2px";
-		dv.style.paddingBottom = "4px";
-
-	var lb = d.createElement("label");
-		lb.style.verticalAlign = "middle";
-	var tx = d.createTextNode(text);
-		tx.fontsize = "9px";
-	lb.appendChild( tx );
-
-	dv.appendChild(lb);
-	container.appendChild(dv);
+	var dv = q$("<div />", {
+		style: 'padding: 2px; margin-bottom: 2px'
+	});
+	var lb = q$("<label />", {
+		style: 'vertical-align: middle;'
+	}).append(text);
+	if (caption) {
+		dv.css({
+			'background-color': '#FFE000',
+			'border': 'solid 1px black',
+			'border-left': 'solid 8px black'
+		});
+		lb.css('padding-left', '4px');
+	}
+	q$(container).append(dv.append(lb));
 }
 
 
