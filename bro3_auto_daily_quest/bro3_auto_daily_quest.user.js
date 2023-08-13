@@ -1018,7 +1018,7 @@ function openSettingBox() {
 		ADContainer.style.padding = "2px";
 		ADContainer.style.MozBorderRadius = "4px";
 		ADContainer.style.zIndex = 9999;
-		ADContainer.style.width = "400px";
+		ADContainer.style.width = "500px";
 	d.body.appendChild(ADContainer);
 
 	$e(ADContainer, "mousedown", function(event){
@@ -1083,18 +1083,13 @@ function openSettingBox() {
 		ccreateCheckBox(td200, OPT_QUEST_02, " [繰り返しクエスト] 自動デュエル", "繰り返しクエスト用デュエルを1回だけ自動で行ないます。");
 		ccreateCheckBox(td200, OPT_QUEST_03, " [繰り返しクエスト] 自動出兵", "繰り返しクエスト用鹵獲出兵を自動で行ないます。");
 			var divTroop = q$("<div />", {
-				style: 'padding: 1px; padding-left: 2px'
+				style: 'padding: 1px; padding-left: 16px'
 			});
 			q$(td200).append(divTroop);
-			ccreateEdit(divTroop, OPT_TROOPS_01, "　　武将カードID: ", 16);
-			ccreateEdit(divTroop, OPT_TROOPS_02, "　X: ", 6);
-			ccreateEdit(divTroop, OPT_TROOPS_03, "　Y: ", 6);
-
-			var divGage = q$("<div />", {
-				style: 'padding: 1px; padding-left: 2px'
-			});
-			q$(td200).append(divGage);
-			ccreateEdit(divGage, OPT_TROOPS_04, "　　最小討伐ゲージ: ", 6);
+			ccreateEdit(divTroop, OPT_TROOPS_01, "カードID", 16);
+			ccreateEdit(divTroop, OPT_TROOPS_02, "座標", 6);
+			ccreateEdit(divTroop, OPT_TROOPS_03, "", 6);
+			ccreateEdit(divTroop, OPT_TROOPS_04, "討伐", 6);
 
 			ccreateText(td200, "　");
 			ccreateText(td200, "※ クエスト報酬のうち、資源以外は自動で受け取ります。");
@@ -1333,7 +1328,7 @@ function ccreateEdit(container, key, text, size)
 {
 	var lb = q$("<label />", {
 		for: key,
-		style: 'vertical-align: middle'
+		style: 'margin-left: 8px; margin-right: 2px;'
 	}).append(text);
 	var inp = q$("<input />", {
 		id: key,
@@ -1343,7 +1338,14 @@ function ccreateEdit(container, key, text, size)
 		style: 'text-align: center;'
 	});
 	inp.val(g_options[key]);
-	q$(container).append(lb).append(inp);
+	inp.attr("size", size); // ここで設定しないと反映されない環境がある
+	if (text.length) {
+		q$(container).append(lb).append(inp);
+	} else {
+		// テキストがない場合はマージンを入れる
+		q$(container).append(inp);
+		inp.css("margin-left", "2px");
+	}
 }
 
 
