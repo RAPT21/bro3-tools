@@ -14,9 +14,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2023.08.11
+// @version 	2023.08.14
 // ==/UserScript==
-var VERSION = "2023.08.11"; 	// バージョン情報
+var VERSION = "2023.08.14"; 	// バージョン情報
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -78,6 +78,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2023.07.02 ソース内オプションを設定画面へ設置
 // 2023.07.03 ソース内に不要となった旧オプション設定が残ったままだった
 // 2023.08.11 2023.07.02版以降にて、繰り返しクエスト用出兵の出兵先として0以下の座標を出力先に指定できなくなっていた不具合を修正
+// 2023.08.14 設定画面のレイアウト調整、TP鹵獲オプションβを追加
 
 
 //----------------------------------------
@@ -105,6 +106,48 @@ var OPT_TROOPS_01	= 'dtr01'; // 出兵武将カードID
 var OPT_TROOPS_02	= 'dtr02'; // 出兵先座標x
 var OPT_TROOPS_03	= 'dtr03'; // 出兵先座標y
 var OPT_TROOPS_04	= 'dtr04'; // 最小討伐ゲージ
+
+var OPT_CAPTURE_10	= 'dca10'; // 鹵獲出兵1
+var OPT_CAPTURE_11	= 'dca11'; // _カードID
+var OPT_CAPTURE_12	= 'dca12'; // _座標x
+var OPT_CAPTURE_13	= 'dca13'; // _座標y
+var OPT_CAPTURE_14	= 'dca14'; // _討伐ゲージ
+var OPT_CAPTURE_15	= 'dca15'; // _スキルID
+
+var OPT_CAPTURE_20	= 'dca20'; // 鹵獲出兵2
+var OPT_CAPTURE_21	= 'dca21'; // _カードID
+var OPT_CAPTURE_22	= 'dca22'; // _座標x
+var OPT_CAPTURE_23	= 'dca23'; // _座標y
+var OPT_CAPTURE_24	= 'dca24'; // _討伐ゲージ
+var OPT_CAPTURE_25	= 'dca25'; // _スキルID
+
+var OPT_CAPTURE_30	= 'dca30'; // 鹵獲出兵3
+var OPT_CAPTURE_31	= 'dca31'; // _カードID
+var OPT_CAPTURE_32	= 'dca32'; // _座標x
+var OPT_CAPTURE_33	= 'dca33'; // _座標y
+var OPT_CAPTURE_34	= 'dca34'; // _討伐ゲージ
+var OPT_CAPTURE_35	= 'dca35'; // _スキルID
+
+var OPT_CAPTURE_40	= 'dca40'; // 鹵獲出兵4
+var OPT_CAPTURE_41	= 'dca41'; // _カードID
+var OPT_CAPTURE_42	= 'dca42'; // _座標x
+var OPT_CAPTURE_43	= 'dca43'; // _座標y
+var OPT_CAPTURE_44	= 'dca44'; // _討伐ゲージ
+var OPT_CAPTURE_45	= 'dca45'; // _スキルID
+
+var OPT_CAPTURE_50	= 'dca50'; // 鹵獲出兵5
+var OPT_CAPTURE_51	= 'dca51'; // _カードID
+var OPT_CAPTURE_52	= 'dca52'; // _座標x
+var OPT_CAPTURE_53	= 'dca53'; // _座標y
+var OPT_CAPTURE_54	= 'dca54'; // _討伐ゲージ
+var OPT_CAPTURE_55	= 'dca55'; // _スキルID
+
+var OPT_CAPTURE_60	= 'dca60'; // 鹵獲出兵6
+var OPT_CAPTURE_61	= 'dca61'; // _カードID
+var OPT_CAPTURE_62	= 'dca62'; // _座標x
+var OPT_CAPTURE_63	= 'dca63'; // _座標y
+var OPT_CAPTURE_64	= 'dca64'; // _討伐ゲージ
+var OPT_CAPTURE_65	= 'dca65'; // _スキルID
 
 
 //----------------------------------------
@@ -646,7 +689,7 @@ function acceptAttentionQuest(callback) {
 }
 
 // 自動出兵
-function sendTroop(vID, cardID, cardGage, targetX, targetY, callback) {
+function sendTroop(vID, cardID, cardGage, targetX, targetY, cardSkillID, callback) {
 	// 指定の武将を指定の拠点から指定座標に向ける
 	httpGET(`/village_change.php?village_id=${vID}&from=menu&page=%2Fvillage.php#ptop`,function(x){
 		var c = {
@@ -660,24 +703,84 @@ function sendTroop(vID, cardID, cardGage, targetX, targetY, callback) {
 			'btn_send': '出兵',
 			'card_id': '204'
 		};
+		if (!isNullOrEmpty(cardSkillID)) {
+			c[`use_skill_id[${cardID}]`] = cardSkillID;
+		}
 
-		console.log(SERVER+"拠点 "+vID+" から ("+targetX+","+targetY+") へ "+cardID+" [討伐:"+cardGage+"] で出兵します。");
+		console.log(SERVER+"拠点 "+vID+" から ("+targetX+","+targetY+") へ "+cardID+" [討伐:"+cardGage+"] スキル:"+cardSkillID+" で出兵します。");
 		httpPOST('/facility/castle_send_troop.php',c,function(x){
-			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
+			if (callback) {
+				callback(true);
+			} else {
+				var tid=setTimeout(function(){location.reload(false);},INTERVAL);
+			}
 		});
 	});
 }
 function callSendTroop()
 {
-	var vID		= 0;					// 出兵拠点ID
 	var cardID	= g_options[OPT_TROOPS_01];	// 出兵武将カードID
-	var targetX	= g_options[OPT_TROOPS_02];			// 出兵先座標x
-	var targetY	= g_options[OPT_TROOPS_03];			// 出兵先座標y
+	var targetX	= g_options[OPT_TROOPS_02];	// 出兵先座標x
+	var targetY	= g_options[OPT_TROOPS_03];	// 出兵先座標y
+	var minGage	= g_options[OPT_TROOPS_04];	// 最小討伐ゲージ
 
 	if (g_options[OPT_TROOPS_01] === 0) {
 		console.log(SERVER+"出兵クエ情報が登録されていません！");
 		return false;
 	}
+
+	return callSendTroopEx(true, cardID, targetX, targetY, minGage, '', null);
+}
+
+function performCaptures() {
+	var items = [
+		{ enabled: OPT_CAPTURE_10, card_id: OPT_CAPTURE_11, x: OPT_CAPTURE_12, y: OPT_CAPTURE_13, gage: OPT_CAPTURE_14, skill_id: OPT_CAPTURE_15 },
+		{ enabled: OPT_CAPTURE_20, card_id: OPT_CAPTURE_21, x: OPT_CAPTURE_22, y: OPT_CAPTURE_23, gage: OPT_CAPTURE_24, skill_id: OPT_CAPTURE_25 },
+		{ enabled: OPT_CAPTURE_30, card_id: OPT_CAPTURE_31, x: OPT_CAPTURE_32, y: OPT_CAPTURE_33, gage: OPT_CAPTURE_34, skill_id: OPT_CAPTURE_35 },
+		{ enabled: OPT_CAPTURE_40, card_id: OPT_CAPTURE_41, x: OPT_CAPTURE_42, y: OPT_CAPTURE_43, gage: OPT_CAPTURE_44, skill_id: OPT_CAPTURE_45 },
+		{ enabled: OPT_CAPTURE_50, card_id: OPT_CAPTURE_51, x: OPT_CAPTURE_52, y: OPT_CAPTURE_53, gage: OPT_CAPTURE_54, skill_id: OPT_CAPTURE_55 },
+		{ enabled: OPT_CAPTURE_60, card_id: OPT_CAPTURE_61, x: OPT_CAPTURE_62, y: OPT_CAPTURE_63, gage: OPT_CAPTURE_64, skill_id: OPT_CAPTURE_65 }
+	];
+
+	var index = 0;
+	var max = items.length;
+	var wait = false;
+	var timer1 = setInterval(function() {
+		if (wait) {
+			return;
+		}
+		wait = true;
+		var item = items[index];
+
+		callSendTroopEx(
+			g_options[item.enabled],
+			g_options[item.card_id],
+			g_options[item.x],
+			g_options[item.y],
+			g_options[item.gage],
+			g_options[item.skill_id],
+			function(isSent) {
+				index++;
+				if (index >= max) {
+					clearInterval(timer1);
+					timer1 = null;
+				}
+				wait = false;
+			}
+		);
+	}, INTERVAL);
+}
+
+function callSendTroopEx(enabled, cardID, targetX, targetY, minGage, skillID, callback)
+{
+	if (!enabled) {
+		if (callback) {
+			callback(false);
+		}
+		return false;
+	}
+
+	var vID		= 0;					// 出兵拠点ID
 
 	// 討伐ゲージを取得
 	var cardGage = 0;
@@ -705,11 +808,14 @@ function callSendTroop()
 		});
 
 		// 出兵指示
-		if (cardGage >= g_options[OPT_TROOPS_04]) {
-			sendTroop(vID, cardID, cardGage, targetX, targetY);
+		if (cardGage >= minGage) {
+			sendTroop(vID, cardID, cardGage, targetX, targetY, skillID, callback);
 			return true;
 		} else {
 			console.log("[出兵クエ] 討伐ゲージ回復待ち。current="+cardGage);
+			if (callback) {
+				callback(false);
+			}
 			return false;
 		}
 
@@ -805,6 +911,8 @@ function acceptTrainingQuest(callback) {
 		//========================================
 		// 「都市」タブで動作
 		//========================================
+
+		performCaptures();
 
 		// クエスト受注
 		setTimeout(function(){
@@ -1018,7 +1126,7 @@ function openSettingBox() {
 		ADContainer.style.padding = "2px";
 		ADContainer.style.MozBorderRadius = "4px";
 		ADContainer.style.zIndex = 9999;
-		ADContainer.style.width = "500px";
+		ADContainer.style.width = "550px";
 	d.body.appendChild(ADContainer);
 
 	$e(ADContainer, "mousedown", function(event){
@@ -1108,6 +1216,14 @@ function openSettingBox() {
 			ccreateText(td200, "　");
 		ccreateCheckBox(td200, OPT_FEATURE_06, " [β機能] 洛陽への路のルートを自動で切り替える", "洛陽への路 ルートログイン報酬のルートを次の優先順位で選択します。\n　1.自動建設アイテム\n　2.南蛮防御アイテム\n　3.なるべく下のルート\nただし、隘路のチケット宝箱（序）、チケット宝箱（中）の場合は可能であれば海路を選択します。");
 			ccreateText(td200, "　");
+			ccreateText(td200, "[β機能] TP鹵獲", true);
+		ccreateCaptureBox(td200, OPT_CAPTURE_10, OPT_CAPTURE_11, OPT_CAPTURE_12, OPT_CAPTURE_13, OPT_CAPTURE_14, OPT_CAPTURE_15);
+		ccreateCaptureBox(td200, OPT_CAPTURE_20, OPT_CAPTURE_21, OPT_CAPTURE_22, OPT_CAPTURE_23, OPT_CAPTURE_24, OPT_CAPTURE_25);
+		ccreateCaptureBox(td200, OPT_CAPTURE_30, OPT_CAPTURE_31, OPT_CAPTURE_32, OPT_CAPTURE_33, OPT_CAPTURE_34, OPT_CAPTURE_35);
+		ccreateCaptureBox(td200, OPT_CAPTURE_40, OPT_CAPTURE_41, OPT_CAPTURE_42, OPT_CAPTURE_43, OPT_CAPTURE_44, OPT_CAPTURE_45);
+		ccreateCaptureBox(td200, OPT_CAPTURE_50, OPT_CAPTURE_51, OPT_CAPTURE_52, OPT_CAPTURE_53, OPT_CAPTURE_54, OPT_CAPTURE_55);
+		ccreateCaptureBox(td200, OPT_CAPTURE_60, OPT_CAPTURE_61, OPT_CAPTURE_62, OPT_CAPTURE_63, OPT_CAPTURE_64, OPT_CAPTURE_65);
+			ccreateText(td200, "　");
 
 	Setting_Box.appendChild(tr100);
 	tr100.appendChild(td100);
@@ -1172,6 +1288,48 @@ function getDefaultOptions() {
 	settings[OPT_TROOPS_02]		= 0; // 出兵先座標x
 	settings[OPT_TROOPS_03]		= 0; // 出兵先座標y
 	settings[OPT_TROOPS_04]		= 100; // 討伐ゲージ
+
+	settings[OPT_CAPTURE_10]	= false; // 鹵獲出兵1
+	settings[OPT_CAPTURE_11]	= 0; // _カードID
+	settings[OPT_CAPTURE_12]	= 0; // _座標x
+	settings[OPT_CAPTURE_13]	= 0; // _座標y
+	settings[OPT_CAPTURE_14]	= 500; // _討伐ゲージ
+	settings[OPT_CAPTURE_15]	= ''; // _スキルID
+
+	settings[OPT_CAPTURE_20]	= false; // 鹵獲出兵2
+	settings[OPT_CAPTURE_21]	= 0; // _カードID
+	settings[OPT_CAPTURE_22]	= 0; // _座標x
+	settings[OPT_CAPTURE_23]	= 0; // _座標y
+	settings[OPT_CAPTURE_24]	= 500; // _討伐ゲージ
+	settings[OPT_CAPTURE_25]	= ''; // _スキルID
+
+	settings[OPT_CAPTURE_30]	= false; // 鹵獲出兵3
+	settings[OPT_CAPTURE_31]	= 0; // _カードID
+	settings[OPT_CAPTURE_32]	= 0; // _座標x
+	settings[OPT_CAPTURE_33]	= 0; // _座標y
+	settings[OPT_CAPTURE_34]	= 500; // _討伐ゲージ
+	settings[OPT_CAPTURE_35]	= ''; // _スキルID
+
+	settings[OPT_CAPTURE_40]	= false; // 鹵獲出兵4
+	settings[OPT_CAPTURE_41]	= 0; // _カードID
+	settings[OPT_CAPTURE_42]	= 0; // _座標x
+	settings[OPT_CAPTURE_43]	= 0; // _座標y
+	settings[OPT_CAPTURE_44]	= 500; // _討伐ゲージ
+	settings[OPT_CAPTURE_45]	= ''; // _スキルID
+
+	settings[OPT_CAPTURE_50]	= false; // 鹵獲出兵5
+	settings[OPT_CAPTURE_51]	= 0; // _カードID
+	settings[OPT_CAPTURE_52]	= 0; // _座標x
+	settings[OPT_CAPTURE_53]	= 0; // _座標y
+	settings[OPT_CAPTURE_54]	= 500; // _討伐ゲージ
+	settings[OPT_CAPTURE_55]	= ''; // _スキルID
+
+	settings[OPT_CAPTURE_60]	= false; // 鹵獲出兵6
+	settings[OPT_CAPTURE_61]	= 0; // _カードID
+	settings[OPT_CAPTURE_62]	= 0; // _座標x
+	settings[OPT_CAPTURE_63]	= 0; // _座標y
+	settings[OPT_CAPTURE_64]	= 500; // _討伐ゲージ
+	settings[OPT_CAPTURE_65]	= ''; // _スキルID
 
 	return settings;
 }
@@ -1325,6 +1483,17 @@ function ccreateCheckBox(container, key, text, title)
 	}).append(text);
 
 	q$(container).append(dv.append(cb).append(lb));
+	return dv;
+}
+
+
+function ccreateCaptureBox(container, check, card, x, y, gage, skill) {
+	var dv = ccreateCheckBox(container, check, ' カードID', '');
+	ccreateEdit(dv, card, "", 16);
+	ccreateEdit(dv, x, "座標", 6);
+	ccreateEdit(dv, y, "", 6);
+	ccreateEdit(dv, gage, "討伐", 3);
+	ccreateEdit(dv, skill, "スキルID", 8);
 }
 
 
@@ -1374,6 +1543,10 @@ function array_reversed(object) {
 	var newObject = JSON.parse(JSON.stringify(object));
 	newObject.reverse();
 	return newObject;
+}
+
+function isNullOrEmpty(obj) {
+	return obj === null || typeof obj === 'undefined' || obj.length === 0;
 }
 
 
