@@ -12,7 +12,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	0.1
+// @version 	0.2
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -37,8 +37,9 @@ jQuery.noConflict();
 
 // 2023.07.15	開発着手
 // 2023.07.23	初版公開
+// 2023.08.04	エクスポート/インポートがうまく動作しない環境への対処
 
-var VERSION = "2023.07.23";
+var VERSION = "2023.08.04";
 
 var BASE_URL = location.protocol + "//" + location.hostname;
 
@@ -192,10 +193,10 @@ function settingOperation($, d = window.document, ssid, callback) {
 		body2.append($("<td />", {colspan: 4}).append("未登録"));
 	}
 
-	$("#acm_export_deck1").val(JSON.stringify(exports.deck1, null, ''));
-	$("#acm_current_deck1").val(JSON.stringify(exports.deck1, null, ''));
-	$("#acm_export_deck2").val(JSON.stringify(exports.deck2, null, ''));
-	$("#acm_current_deck2").val(JSON.stringify(exports.deck2, null, ''));
+	$("#acm_export_deck1").val(JSON.stringify(exports.deck1, null, '').replace(/\\"/g, '"').replace(/^\"/, '').replace(/\"$/, ''));
+	$("#acm_current_deck1").val(JSON.stringify(exports.deck1, null, '').replace(/\\"/g, '"').replace(/^\"/, '').replace(/\"$/, ''));
+	$("#acm_export_deck2").val(JSON.stringify(exports.deck2, null, '').replace(/\\"/g, '"').replace(/^\"/, '').replace(/\"$/, ''));
+	$("#acm_current_deck2").val(JSON.stringify(exports.deck2, null, '').replace(/\\"/g, '"').replace(/^\"/, '').replace(/\"$/, ''));
 	if (callback) callback(true);
 }
 
