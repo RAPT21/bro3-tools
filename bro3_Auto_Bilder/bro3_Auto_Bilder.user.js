@@ -3705,16 +3705,16 @@ function clearRemoveBox(){
 function InitPreset_01(){	// 衝車研究まで
 	clearInifacBox();
 
-	var checkbox = $a('//input[@id="OPT_CHKBOX7"]');	checkbox[0].checked = true; 		// 鍛冶場
-	var checkbox = $a('//input[@id="OPT_CHKBOX8"]');	checkbox[0].checked = true; 		// 防具工場
-	var checkbox = $a('//input[@id="OPT_CHKBOX9"]');	checkbox[0].checked = true; 		// 練兵所
-	var checkbox = $a('//input[@id="OPT_CHKBOX14"]');	checkbox[0].checked = false;		// 兵器工房
-	var checkbox = $a('//input[@id="OPT_CHKBOX19"]');	checkbox[0].checked = true; 		// 研究所
+	var checkbox = $a('//input[@id="OPT_CHKBOX7"]');	checkbox[0].checked = true;		// 鍛冶場
+	var checkbox = $a('//input[@id="OPT_CHKBOX8"]');	checkbox[0].checked = true;		// 防具工場
+	var checkbox = $a('//input[@id="OPT_CHKBOX9"]');	checkbox[0].checked = true;		// 練兵所
+	var checkbox = $a('//input[@id="OPT_CHKBOX14"]');	checkbox[0].checked = false;	// 兵器工房
+	var checkbox = $a('//input[@id="OPT_CHKBOX19"]');	checkbox[0].checked = true;		// 研究所
 
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV7"]');	 textbox[0].value = "3";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV8"]');	 textbox[0].value = "3";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV9"]');	 textbox[0].value = "3";
-	var textbox  = $a('//input[@id="OPT_CHKBOXLV14"]');	 textbox[0].value = "8";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV14"]');	 textbox[0].value = "5";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV19"]');	 textbox[0].value = "5";
 }
 
@@ -3723,10 +3723,10 @@ function InitPreset_02(){	// 訓練所まで
 
 	var checkbox = $a('//input[@id="OPT_CHKBOX4"]');	checkbox[0].checked = true;		// 畑
 	var checkbox = $a('//input[@id="OPT_CHKBOX5"]');	checkbox[0].checked = true;		// 倉庫
-	var checkbox = $a('//input[@id="OPT_CHKBOX6"]');	checkbox[0].checked = true; 		// 銅雀台
-	var checkbox = $a('//input[@id="OPT_CHKBOX7"]');	checkbox[0].checked = true; 		// 鍛冶場
-	var checkbox = $a('//input[@id="OPT_CHKBOX9"]');	checkbox[0].checked = true; 		// 練兵所
-	var checkbox = $a('//input[@id="OPT_CHKBOX16"]');	checkbox[0].checked = true; 		// 訓練所
+	var checkbox = $a('//input[@id="OPT_CHKBOX6"]');	checkbox[0].checked = true;		// 銅雀台
+	var checkbox = $a('//input[@id="OPT_CHKBOX7"]');	checkbox[0].checked = true;		// 鍛冶場
+	var checkbox = $a('//input[@id="OPT_CHKBOX9"]');	checkbox[0].checked = true;		// 練兵所
+	var checkbox = $a('//input[@id="OPT_CHKBOX16"]');	checkbox[0].checked = true;		// 訓練所
 
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV4"]');	 textbox[0].value = "5";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV5"]');	 textbox[0].value = "1";
@@ -3741,15 +3741,15 @@ function InitPreset_03(){	// 遠征訓練所まで
 
 	var checkbox = $a('//input[@id="OPT_CHKBOX4"]');	checkbox[0].checked = true;		// 畑
 	var checkbox = $a('//input[@id="OPT_CHKBOX5"]');	checkbox[0].checked = true;		// 倉庫
-	var checkbox = $a('//input[@id="OPT_CHKBOX6"]');	checkbox[0].checked = true; 		// 銅雀台
-	var checkbox = $a('//input[@id="OPT_CHKBOX7"]');	checkbox[0].checked = true; 		// 鍛冶場
-	var checkbox = $a('//input[@id="OPT_CHKBOX8"]');	checkbox[0].checked = true; 		// 防具工場
-	var checkbox = $a('//input[@id="OPT_CHKBOX9"]');	checkbox[0].checked = true; 		// 練兵所
-	var checkbox = $a('//input[@id="OPT_CHKBOX13"]');	checkbox[0].checked = true; 		// 宿舎
-	var checkbox = $a('//input[@id="OPT_CHKBOX16"]');	checkbox[0].checked = true; 		// 訓練所
-	var checkbox = $a('//input[@id="OPT_CHKBOX20"]');	checkbox[0].checked = true; 		// 大宿舎
-	var checkbox = $a('//input[@id="OPT_CHKBOX21"]');	checkbox[0].checked = true; 		// 遠征訓練所
-	var checkbox = $a('//input[@id="OPT_CHKBOX22"]');	checkbox[0].checked = true; 		// 見張り台
+	var checkbox = $a('//input[@id="OPT_CHKBOX6"]');	checkbox[0].checked = true;		// 銅雀台
+	var checkbox = $a('//input[@id="OPT_CHKBOX7"]');	checkbox[0].checked = true;		// 鍛冶場
+	var checkbox = $a('//input[@id="OPT_CHKBOX8"]');	checkbox[0].checked = true;		// 防具工場
+	var checkbox = $a('//input[@id="OPT_CHKBOX9"]');	checkbox[0].checked = true;		// 練兵所
+	var checkbox = $a('//input[@id="OPT_CHKBOX13"]');	checkbox[0].checked = true;		// 宿舎
+	var checkbox = $a('//input[@id="OPT_CHKBOX16"]');	checkbox[0].checked = true;		// 訓練所
+	var checkbox = $a('//input[@id="OPT_CHKBOX20"]');	checkbox[0].checked = true;		// 大宿舎
+	var checkbox = $a('//input[@id="OPT_CHKBOX21"]');	checkbox[0].checked = true;		// 遠征訓練所
+	var checkbox = $a('//input[@id="OPT_CHKBOX22"]');	checkbox[0].checked = true;		// 見張り台
 
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV4"]');	 textbox[0].value = "5";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV5"]');	 textbox[0].value = "1";
@@ -3760,7 +3760,7 @@ function InitPreset_03(){	// 遠征訓練所まで
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV13"]');	 textbox[0].value = "15";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV16"]');	 textbox[0].value = "5";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV20"]');	 textbox[0].value = "8";
-	var textbox  = $a('//input[@id="OPT_CHKBOXLV21"]');	 textbox[0].value = "3";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV21"]');	 textbox[0].value = "5";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV22"]');	 textbox[0].value = "8";
 }
 
@@ -3795,8 +3795,6 @@ function InitDaiShukushaVillage(cb){
 	var checkbox = $a('//input[@id="OPT_REMOVE"]');  		checkbox[0].checked = false; // 自動削除
 	var checkbox = $a('//input[@id="OPT_RM_CHKBOX5"]');		checkbox[0].checked = true;	// 倉庫
 	var textbox  = $a('//input[@id="OPT_RM_CHKBOXLV5"]');	 textbox[0].value = "0";
-	var checkbox = $a('//input[@id="OPT_RM_CHKBOX9"]');		checkbox[0].checked = true;	// 練兵所
-	var checkbox = $a('//input[@id="OPT_RM_CHKBOX8"]');		checkbox[0].checked = true;	// 防具工場
 }
 
 function InitSuishaVillage(cb){
