@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2022.11.17
+// @version		2023.08.15
 // ==/UserScript==
 
 // 配布サイト
@@ -168,8 +168,9 @@
 //			  (Chrome+)Tampermonkey 4.18 で使えなくなった対策(thx>@kisara-icy #33
 // 2022.11.13 自動施設LVUP対象に大城塞(拠点LV21-30)と要塞(拠点LV1-15)を追加
 // 2022.11.17 市場自動変換で変換パターンが「スマート変換」または「余剰分を変換」のとき、変換先資源が1億以上あると動作できていなかった不具合を修正
+// 2023.08.15 城壁塔対応鯖で、NPC砦持ちの盟主のとき、プロフィール画面を開いても要塞、城壁塔の拠点情報が取得できなくなっていた対策
 
-var VERSION = "2022.11.17"; 	// バージョン情報
+var VERSION = "2023.08.15"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -6081,7 +6082,7 @@ function getUserProf(htmldoc) {
 		var popul = trim(getChildElement(item, 2).innerHTML.replace(/[ \t\r\n,]/g, ""));
 
 		//拠点じゃなければ終了
-		if (!isNumeric(popul)) break;
+		if (!isNumeric(popul)) continue;
 
 		//データマージ
 		var newVil = new Array();
