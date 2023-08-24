@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.33
+// @version		1.09.34
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -131,6 +131,7 @@
 // 1.09.33	2023/08/11	RAPT. 「倉庫からファイルに移動する画面へ一括ラベル機能を追加」を追加
 //						- 「Profile：資源パネル探索」が動作するよう修正
 //						- 「Profile：NPC座標探索」が動作するよう修正
+// 1.09.34	2023/08/25	RAPT. スキル連続レベルアップ時、主将スキルとしての副将の明鏡スキルもLVUPできるように
 
 
 //----------------------------------------------------------------------
@@ -5191,15 +5192,15 @@ function execUnionPart() {
 			);
 
 			// レベルアップ選択ラジオボタンの描画
-			var skills = q$("#gray02Wrapper div[class*='right'] ul[class^='back_skill'] li:not([class='subgeneral']) span:not([class^='skillComment'])");
-			var stats = q$("#gray02Wrapper div[class*='right'] ul[class^='back_skill'] li a[class*=btn_detail_s]");
-			for (var i = 0; i < skills.length && i < stats.length; i++) {
-				var skillText = skills.eq(i).text().replace(/[ \t\r\n]/g, "");
-				if (skillText == "") {
-					// 副将スキルは無視
-					continue;
+			var skills = q$("#gray02Wrapper div[class*='right'] ul[class^='back_skill'] li");
+			skills.each(function(i){
+				var skillText = q$("span[class^='skillName']", this).text().replace(/[ \t\r\n]/g, "");
+				var stat = q$("a[class*=btn_detail_s]", this);
+				if (skillText.length === 0 || stat.length === 0) {
+					return true; //continue-each
 				}
-				var match = stats.eq(i).attr('onclick').match(/Thick\('(.....)([0-9])',/);
+
+				var match = stat.attr('onclick').match(/Thick\('(.....)([0-9])',/);
 				if (match[2] != '9') {
 					q$("#target_skills").append(
 						"<div style='padding: 1px;'>" +
@@ -5217,7 +5218,7 @@ function execUnionPart() {
 						"</div>"
 					);
 				}
-			}
+			});
 
 			// 検索
 			q$("#multi_levelup_start").on('click',
