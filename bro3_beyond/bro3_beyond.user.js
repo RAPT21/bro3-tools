@@ -7677,8 +7677,8 @@ function addDropDomesticDeckCard() {
 		var match = q$("dd[class='btm_none'] a", base).attr('href').match(/village_change.php\?village_id=(\d+)/);
 
 		q$("img[class='btn_deck_set_s']", base).replaceWith(
-			"<span class='btn_deck_set_s' id='drop_vid_" + match[1] + "' style='font-weight: bold; vertical-align: middle; height: 33px;'>" +
-				"<input value='ファイルに下げる' type='button'></input>" +
+			"<span class='btn_deck_set_s' id='drop_vid_" + match[1] + "' style='font-weight: bold; vertical-align: middle; height: 37px;'>" +
+				"<input value='ファイルに下げる' type='button' style='height: 37px'></input>" +
 			"</span>"
 		);
 
@@ -9074,9 +9074,9 @@ function tableSorter(selector, offset, index, order_ascend, call_back) {
 	nodes.sort(
 		function(a, b) {
 			var result = 0;
-			if (q$.isNumeric(a.value) && q$.isNumeric(b.value)) {
-				var num1 = parseInt(a.value);
-				var num2 = parseInt(b.value);
+			if (/^[0-9,]+$/.test(a.value.trim()) && /^[0-9,]+$/.test(b.value.trim())) {
+				var num1 = parseInt(a.value.replace(/,/g, ""));
+				var num2 = parseInt(b.value.replace(/,/g, ""));
 				if (num1 < num2) {
 					result = -1;
 				} else if (num1 > num2) {
@@ -9598,7 +9598,7 @@ function show_message_image() {
 	var elem_body = q$("#messageBody").html();
 
 	// 展開後gyazoはimgタグを付与
-	var match = elem_body.match(/https:\/\/i.gyazo.com\/[a-z0-9]+\.(png|gif)/g);
+	var match = elem_body.match(/https:\/\/i.gyazo.com\/[a-z0-9]+\.(png|gif|jpg)/g);
 	if (match != null) {
 		for (var i = 0; i < match.length; i++) {
 			elem_body = elem_body.replace(
@@ -9612,32 +9612,32 @@ function show_message_image() {
 		q$("#messageBody").html(elem_body);
 	}
 
-	// 非展開gyazoはpng->gifの順に展開にトライ
+	// 非展開gyazoはpng->jpgの順に展開にトライ
 	match = elem_body.match(/https:\/\/gyazo.com\/[a-z0-9]+/g);
 	if (match != null) {
 		// まずpngにしてみる
 		for (var i = 0; i < match.length; i++) {
 			var eid = "gimg_" + i;
-			var url = match[i].replace("http://gyazo.com/", "");
+			var url = match[i].replace("https://gyazo.com/", "");
 			elem_body = elem_body.replace(
-				"http:\/\/gyazo.com\/" + url,
+				"https:\/\/gyazo.com\/" + url,
 				"<span>" +
 					"<div><a href='" + match[i] + "' target='_blank'>" + match[i] + "</a></div>" +
-					"<img id='" + eid + "' src='http://i.gyazo.com/" + url + ".png' style='max-width: 100%; border: 1px solid black;'></img>" +
+					"<img id='" + eid + "' src='https://i.gyazo.com/" + url + ".png' style='max-width: 100%; border: 1px solid black;'></img>" +
 				"</span>"
 			);
 		}
 
 		q$("#messageBody").html(elem_body);
 
-		// だめならgifにし、それでもだめならURLに戻す
+		// だめならjpgにし、それでもだめならURLに戻す
 		for (var i = 0; i < match.length; i++) {
 			var eid = "gimg_" + i;
 			q$("#" + eid).on('error', function() {
 				var vid = q$(this).attr('id');
 				q$("#" + vid).off();
 				var isrc = q$(this).attr('src');
-				isrc = isrc.replace("png", "gif");
+				isrc = isrc.replace("png", "jpg");
 				q$("#" + vid).attr('src', isrc);
 				setTimeout(
 					function() {
@@ -9645,7 +9645,7 @@ function show_message_image() {
 							var vid = q$(this).attr('id');
 							q$("#" + vid).off();
 							isrc = isrc.replace("i.gyazo.com", "gyazo.com");
-							isrc = isrc.replace(".gif", " (展開できませんでした)");
+							isrc = isrc.replace(".jpg", " (展開できませんでした)");
 							q$("#" + vid).parent().html(isrc);
 						});
 					}, 50
