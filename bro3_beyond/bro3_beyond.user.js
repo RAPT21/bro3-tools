@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.34
+// @version		1.09.35
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -132,6 +132,7 @@
 //						- 「Profile：資源パネル探索」が動作するよう修正
 //						- 「Profile：NPC座標探索」が動作するよう修正
 // 1.09.34	2023/08/25	RAPT. スキル連続レベルアップ時、主将スキルとしての副将の明鏡スキルもLVUPできるように
+// 1.09.35	2023/08/29	同盟内ランキングソート不具合、内政官を下げるボタンのサイズ、書簡内のgyazoの展開の不具合修正 by @pla2999 #61
 
 
 //----------------------------------------------------------------------
@@ -10345,8 +10346,8 @@ function getDefaultOptions() {
 	// 共通
 	settings[COMMON_01] = true;		// 資源タイマー
 	settings[COMMON_02] = true;		// プルダウンメニューを差し替える
-	settings[COMMON_03] = true; 	// 天気予告常時表示
-	settings[COMMON_04] = (["w24"].indexOf(SERVER_NAME) < 0);	// 地形1.0 (公開時点で未対応鯖は初期値false、それ以外はtrue)
+	settings[COMMON_03] = true;		// 天気予告常時表示
+	settings[COMMON_04] = true;		// 地形1.0
 
 	// プロフィール
 	settings[PROFILE_01] = true;	// ランキングのリンク追加
