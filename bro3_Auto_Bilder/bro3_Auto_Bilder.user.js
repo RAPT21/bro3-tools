@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2023.02.11
+// @version		2023.08.15
 // ==/UserScript==
 
 // 配布サイト
@@ -83,8 +83,9 @@
 // 2022.11.13 自動施設LVUP対象に大城塞(拠点LV21-30)と要塞(拠点LV1-15)を追加
 // 2022.11.17 市場自動変換で変換パターンが「スマート変換」または「余剰分を変換」のとき、変換先資源が1億以上あると動作できていなかった不具合を修正
 // 2023.02.11 水車村オプション、工場村オプションを削除。★4資源村オプションを追加。
+// 2023.08.15 城壁塔対応鯖で、NPC砦持ちの盟主のとき、プロフィール画面を開いても要塞、城壁塔の拠点情報が取得できなくなっていた対策
 
-var VERSION = "2023.02.11"; 	// バージョン情報
+var VERSION = "2023.08.15"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -2921,7 +2922,7 @@ function InitPreset_01(){	// 衝車研究まで
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV7"]');	 textbox[0].value = "3";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV8"]');	 textbox[0].value = "3";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV9"]');	 textbox[0].value = "3";
-	var textbox  = $a('//input[@id="OPT_CHKBOXLV14"]');	 textbox[0].value = "8";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV14"]');	 textbox[0].value = "5";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV19"]');	 textbox[0].value = "5";
 }
 
@@ -2967,7 +2968,7 @@ function InitPreset_03(){	// 遠征訓練所まで
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV13"]');	 textbox[0].value = "15";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV16"]');	 textbox[0].value = "5";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV20"]');	 textbox[0].value = "8";
-	var textbox  = $a('//input[@id="OPT_CHKBOXLV21"]');	 textbox[0].value = "3";
+	var textbox  = $a('//input[@id="OPT_CHKBOXLV21"]');	 textbox[0].value = "5";
 	var textbox  = $a('//input[@id="OPT_CHKBOXLV22"]');	 textbox[0].value = "8";
 }
 
@@ -3002,8 +3003,6 @@ function InitDaiShukushaVillage(cb){
 	var checkbox = $a('//input[@id="OPT_REMOVE"]');  		checkbox[0].checked = false; // 自動削除
 	var checkbox = $a('//input[@id="OPT_RM_CHKBOX5"]');		checkbox[0].checked = true;	// 倉庫
 	var textbox  = $a('//input[@id="OPT_RM_CHKBOXLV5"]');	 textbox[0].value = "0";
-	var checkbox = $a('//input[@id="OPT_RM_CHKBOX9"]'); 	   checkbox[0].checked = true;	  // 練兵所
-	var checkbox = $a('//input[@id="OPT_RM_CHKBOX8"]'); 	   checkbox[0].checked = true;	  // 防具工場}
 }
 
 function InitSuishaVillage(cb){
@@ -5215,7 +5214,7 @@ function getUserProf(htmldoc) {
 		var popul = trim(getChildElement(item, 2).innerHTML.replace(/[ \t\r\n,]/g, ""));
 
 		//拠点じゃなければ終了
-		if (!isNumeric(popul)) break;
+		if (!isNumeric(popul)) continue;
 
 		//データマージ
 		var newVil = new Array();
