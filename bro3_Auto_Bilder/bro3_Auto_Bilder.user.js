@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2023.08.15
+// @version		2023.10.17
 // ==/UserScript==
 
 // 配布サイト
@@ -84,8 +84,9 @@
 // 2022.11.17 市場自動変換で変換パターンが「スマート変換」または「余剰分を変換」のとき、変換先資源が1億以上あると動作できていなかった不具合を修正
 // 2023.02.11 水車村オプション、工場村オプションを削除。★4資源村オプションを追加。
 // 2023.08.15 城壁塔対応鯖で、NPC砦持ちの盟主のとき、プロフィール画面を開いても要塞、城壁塔の拠点情報が取得できなくなっていた対策
+// 2023.10.17 拠点の自動LVUPで大城塞,城壁塔に対応
 
-var VERSION = "2023.08.15"; 	// バージョン情報
+var VERSION = "2023.10.17"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -2081,6 +2082,8 @@ debugLog("=== Start setVillageFacility ===");
 				case "城":
 				case "砦":
 				case "要塞":
+				case "大城塞":
+				case "城壁塔":
 					tmpName1  = "拠点";
 					chkFlg = 1;
 					break;
@@ -2090,7 +2093,7 @@ debugLog("=== Start setVillageFacility ===");
 				continue;
 			} //指定Lv以上ならメインに戻る
 			//建築物名分回す
-			OPT_FUC_NAME.push("村","城","砦","要塞");
+			OPT_FUC_NAME.push("村","城","砦","要塞","大城塞","城壁塔");
 			if(OPT_CHKBOX[0] == 1) {
 				OPT_CHKBOX.push(1,1,1,1);
 				OPT_CHKBOXLV.push(OPT_CHKBOXLV[0],OPT_CHKBOXLV[0],OPT_CHKBOXLV[0],OPT_CHKBOXLV[0]);
@@ -4173,10 +4176,6 @@ function addInifacHtml(vId) {
 	tr620.appendChild(td620);
 	Waterwheel_Box.appendChild(tr621);
 	tr621.appendChild(td621a);
-//	Waterwheel_Box.appendChild(tr622);
-//	tr622.appendChild(td622);
-//	Waterwheel_Box.appendChild(tr623);
-//	tr623.appendChild(td623);
 
 	// ==== 自動兵産設定 ====
 
@@ -6102,6 +6101,23 @@ function getBuildResources(constructorName, level){
 	  {wood: 7999700, stone: 9538104, iron: 8615062, food: 4615211, time: 71744},
 	  {wood: 12399535, stone: 14784061, iron: 13353346, food: 7153578, time: 86093},
 	  {wood: 19219280, stone: 22915295, iron: 20697686, food: 11088045, time: 103312}
+	],
+	'城壁塔': [ // name="form_252"
+	 {wood: 13699, stone: 13699, iron: 9132, food: 9132, time: 0},
+	 {wood: 31964, stone: 31964, iron: 21309, food: 21309, time: 1620},
+	 {wood: 79326, stone: 93360, iron: 56392, food: 52884, time: 4050},
+	 {wood: 182119, stone: 226609, iron: 132535, food: 121412, time: 7695},
+	 {wood: 415728, stone: 460218, iron: 658156, food: 296621, time: 13163},
+	 {wood: 952770, stone: 997260, iron: 1568795, food: 646868, time: 21365},
+	 {wood: 2305440, stone: 2349930, iron: 2969774, food: 1371514, time: 33667},
+	 {wood: 5905685, stone: 5950175, iron: 6698599, food: 3300215, time: 52120},
+	 {wood: 11019872, stone: 11064362, iron: 11995435, food: 6039959, time: 79800},
+	 {wood: 18299064, stone: 18343554, iron: 19534599, food: 9939527, time: 121319},
+	 {wood: 28564675, stone: 28609165, iron: 30166839, food: 15438961, time: 171141},
+	 {wood: 43339147, stone: 43383637, iron: 45468971, food: 23353856, time: 230928},
+	 {wood: 64788384, stone: 64832874, iron: 67684251, food: 34844518, time: 302672},
+	 {wood: 95216829, stone: 95261319, iron: 99199427, food: 51145472, time: 388765},
+	 {wood: 138871424, stone: 138915914, iron: 144413113, food: 74531861, time: 492077},
 	]
   };
 
