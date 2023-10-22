@@ -938,6 +938,14 @@ function getAddingVillage(htmldoc) {
 		fortLink.addEventListener("click", function() {addReserveVillages(222);}, true);
 		tMenu.snapshotItem(0).appendChild(fortLink);
 
+		//城壁塔作成予約
+		var fortLink = document.createElement("a");
+		fortLink.id = "tower";
+		fortLink.href = "javascript:void(0);";
+		fortLink.innerHTML = "塔建設予約";
+		fortLink.addEventListener("click", function() {addReserveVillages(252);}, true);
+		tMenu.snapshotItem(0).appendChild(fortLink);
+
 	}
 
 	function addLink2() {
@@ -985,6 +993,24 @@ function getAddingVillage(htmldoc) {
 		fortLink.href = "javascript:void(0);";
 		fortLink.innerHTML = "砦";
 		fortLink.addEventListener("click", function() {addReserveVillages(222);}, true);
+		tMenu.snapshotItem(0).appendChild(fortLink);
+
+		var villageLink = document.createElement("span");
+		villageLink.style.color = "white";
+		villageLink.style.fontSize = "10px";
+		villageLink.style.textAlign = "center";
+		villageLink.innerHTML = "  ";
+		tMenu.snapshotItem(0).appendChild(villageLink);
+
+		//城壁塔作成予約
+		var fortLink = document.createElement("a");
+		fortLink.id = "tower";
+		fortLink.style.color = "white";
+		fortLink.style.fontSize = "10px";
+		fortLink.style.textAlign = "center";
+		fortLink.href = "javascript:void(0);";
+		fortLink.innerHTML = "塔";
+		fortLink.addEventListener("click", function() {addReserveVillages(252);}, true);
 		tMenu.snapshotItem(0).appendChild(fortLink);
 
 	}
@@ -1079,6 +1105,18 @@ function addLinkTondenVillage() {
 		fortLink.addEventListener("click", function() {addReserveVillages(222);}, true);
 		tMenu.snapshotItem(0).appendChild(fortLink);
 
+		var villageLink = document.createElement("span");
+		villageLink.innerHTML = "  ";
+		tMenu.snapshotItem(0).appendChild(villageLink);
+
+		//城壁塔作成予約
+		var fortLink = document.createElement("a");
+		fortLink.id = "tower";
+		fortLink.href = "javascript:void(0);";
+		fortLink.innerHTML = "塔";
+		fortLink.addEventListener("click", function() {addReserveVillages(252);}, true);
+		tMenu.snapshotItem(0).appendChild(fortLink);
+
 	}
 
 	function addReserveVillages(kind) {
@@ -1089,6 +1127,7 @@ function addLinkTondenVillage() {
 			msg += "(" + x + "," + y + ")への、";
 				  if(kind == 220){msg += "村建設予約";
 			}else if(kind == 222){msg += "砦建設予約";
+			}else if(kind == 252){msg += "城壁塔建設予約";
 			}
 			msg += "を受け付けました。";
 		} else {
@@ -1101,7 +1140,7 @@ function addLinkTondenVillage() {
 		}
 	}
 
-	function addList2(kind, status, x, y) //kind=220:村予約 222:砦予約
+	function addList2(kind, status, x, y) //kind=220:村予約 222:砦予約 252:塔予約
 	{
 		var lists = cloadData(HOST+"ReserveList", "[]", true, true);
 
@@ -1138,12 +1177,16 @@ function getDeletingVillage(htmldoc) {
 	var x = Temp[0];
 	var y = Temp[1];
 
-	var rmtime = htmldoc.innerHTML.match(/(村を削除中です。|砦を削除中です。)[^\d]*(\d+-\d+-\d+ \d+:\d+:\d+)に完了します。/);
+	var rmtime = htmldoc.innerHTML.match(/([村|砦|要塞|城壁塔]を削除中です。)[^\d]*(\d+-\d+-\d+ \d+:\d+:\d+)に完了します。/);
 	if( rmtime ) {
 		if( rmtime[1] == "村を削除中です。" ) {
 			addList(rmtime[2], 220, DESTROY_ING, x, y );
 		}else if( rmtime[1] == "砦を削除中です。" ) {
 			addList(rmtime[2], 222, DESTROY_ING, x, y );
+		}else if( rmtime[1] == "要塞を削除中です。" ) {
+			addList(rmtime[2], 222, DESTROY_ING, x, y );
+		}else if( rmtime[1] == "城壁塔を削除中です。" ) {
+			addList(rmtime[2], 252, DESTROY_ING, x, y );
 		}
 	}else{
 		delList(1, x, y);
@@ -2069,7 +2112,7 @@ debugLog("=== Start setVillageFacility ===");
 	q$.get(SERVER_BASE+"/facility/facility.php?x=3&y=3#ptop",function(x){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
-		var rmtime = htmldoc.innerHTML.match(/(村を削除中です。|砦を削除中です。)[^\d]*(\d+-\d+-\d+ \d+:\d+:\d+)に完了します。/);
+		var rmtime = htmldoc.innerHTML.match(/([村|砦|要塞|城壁塔]を削除中です。)[^\d]*(\d+-\d+-\d+ \d+:\d+:\d+)に完了します。/);
 		if (rmtime && !OPT_BUILD_WHILE_REMOVING_VILLAGE) {
 			// 拠点削除中のため何もしない
 			return;
