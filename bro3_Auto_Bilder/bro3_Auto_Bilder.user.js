@@ -23,7 +23,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2023.10.17
+// @version		2023.11.19
 // ==/UserScript==
 
 // 配布サイト
@@ -85,8 +85,10 @@
 // 2023.02.11 水車村オプション、工場村オプションを削除。★4資源村オプションを追加。
 // 2023.08.15 城壁塔対応鯖で、NPC砦持ちの盟主のとき、プロフィール画面を開いても要塞、城壁塔の拠点情報が取得できなくなっていた対策
 // 2023.10.17 拠点の自動LVUPで大城塞,城壁塔に対応
+// 2023.11.07 拠点の建設予約で城壁塔、要塞に対応
+// 2023.11.19 フラット遠訓オプションを追加
 
-var VERSION = "2023.10.17"; 	// バージョン情報
+var VERSION = "2023.11.19"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -215,6 +217,7 @@ var OPT_DAISHUKUSHA	= 0;	 // 大宿舎
 var OPT_DORM		= 0;	 // 自動宿舎村化オプション			2013.12.26
 var OPT_1111Q1MURA	= 0;	 // ★4(1-1-1-1)資源
 var OPT_1111Q2MURA	= 0;	 // ★4(1-1-1-1)資源+大倉庫5+畑7+銅雀台
+var OPT_S9YOUSAI 	= 0;	 // フラット遠訓
 
 var OPT_REMOVE = 0; // 施設削除オプション 2015.05.10
 
@@ -876,13 +879,17 @@ function getAddingVillage(htmldoc) {
 	var x = RegExp.$1;
 	var y = RegExp.$2;
 
-	var rmname = htmldoc.innerHTML.match(/(現在村を建設中です|現在砦を建設中です)/ );
+	var rmname = htmldoc.innerHTML.match(/(現在[村|砦|城壁塔|要塞]を建設中です)/ );
 	if( rmname ) {
 		var rmtime = htmldoc.innerHTML.match(/(\d+-\d+-\d+ \d+:\d+:\d+)*に完了します。/ );
 		if( rmname[1] == "現在村を建設中です" ) {
 			addList(rmtime[1], 220, VS_BUILD_ING, x, y );
 		}else if( rmname[1] == "現在砦を建設中です" ) {
 			addList(rmtime[1], 222, VS_BUILD_ING, x, y );
+		}else if( rmname[1] == "現在城壁塔を建設中です" ) {
+			addList(rmtime[1], 252, VS_BUILD_ING, x, y );
+		}else if( rmname[1] == "現在要塞を建設中です" ) {
+			addList(rmtime[1], 251, VS_BUILD_ING, x, y );
 		}
 	}
 
@@ -944,6 +951,14 @@ function getAddingVillage(htmldoc) {
 		fortLink.href = "javascript:void(0);";
 		fortLink.innerHTML = "塔建設予約";
 		fortLink.addEventListener("click", function() {addReserveVillages(252);}, true);
+		tMenu.snapshotItem(0).appendChild(fortLink);
+
+		//要塞作成予約
+		var fortLink = document.createElement("a");
+		fortLink.id = "tower";
+		fortLink.href = "javascript:void(0);";
+		fortLink.innerHTML = "要塞建設予約";
+		fortLink.addEventListener("click", function() {addReserveVillages(251);}, true);
 		tMenu.snapshotItem(0).appendChild(fortLink);
 
 	}
@@ -1013,6 +1028,24 @@ function getAddingVillage(htmldoc) {
 		fortLink.addEventListener("click", function() {addReserveVillages(252);}, true);
 		tMenu.snapshotItem(0).appendChild(fortLink);
 
+		var villageLink = document.createElement("span");
+		villageLink.style.color = "white";
+		villageLink.style.fontSize = "10px";
+		villageLink.style.textAlign = "center";
+		villageLink.innerHTML = "  ";
+		tMenu.snapshotItem(0).appendChild(villageLink);
+
+		//要塞作成予約
+		var fortLink = document.createElement("a");
+		fortLink.id = "tower";
+		fortLink.style.color = "white";
+		fortLink.style.fontSize = "10px";
+		fortLink.style.textAlign = "center";
+		fortLink.href = "javascript:void(0);";
+		fortLink.innerHTML = "塞";
+		fortLink.addEventListener("click", function() {addReserveVillages(251);}, true);
+		tMenu.snapshotItem(0).appendChild(fortLink);
+
 	}
 
 	function addReserveVillages(kind) {
@@ -1023,6 +1056,8 @@ function getAddingVillage(htmldoc) {
 			msg += "(" + URL_PARAM.x + "," + URL_PARAM.y + ")への、";
 				  if(kind == 220){msg += "村建設予約";
 			}else if(kind == 222){msg += "砦建設予約";
+			}else if(kind == 252){msg += "城壁塔建設予約";
+			}else if(kind == 251){msg += "要塞建設予約";
 			}
 			msg += "を受け付けました。";
 		} else {
@@ -1117,6 +1152,18 @@ function addLinkTondenVillage() {
 		fortLink.addEventListener("click", function() {addReserveVillages(252);}, true);
 		tMenu.snapshotItem(0).appendChild(fortLink);
 
+		var villageLink = document.createElement("span");
+		villageLink.innerHTML = "  ";
+		tMenu.snapshotItem(0).appendChild(villageLink);
+
+		//要塞作成予約
+		var fortLink = document.createElement("a");
+		fortLink.id = "tower";
+		fortLink.href = "javascript:void(0);";
+		fortLink.innerHTML = "塞";
+		fortLink.addEventListener("click", function() {addReserveVillages(251);}, true);
+		tMenu.snapshotItem(0).appendChild(fortLink);
+
 	}
 
 	function addReserveVillages(kind) {
@@ -1128,6 +1175,7 @@ function addLinkTondenVillage() {
 				  if(kind == 220){msg += "村建設予約";
 			}else if(kind == 222){msg += "砦建設予約";
 			}else if(kind == 252){msg += "城壁塔建設予約";
+			}else if(kind == 251){msg += "要塞建設予約";
 			}
 			msg += "を受け付けました。";
 		} else {
@@ -1184,7 +1232,7 @@ function getDeletingVillage(htmldoc) {
 		}else if( rmtime[1] == "砦を削除中です。" ) {
 			addList(rmtime[2], 222, DESTROY_ING, x, y );
 		}else if( rmtime[1] == "要塞を削除中です。" ) {
-			addList(rmtime[2], 222, DESTROY_ING, x, y );
+			addList(rmtime[2], 251, DESTROY_ING, x, y );
 		}else if( rmtime[1] == "城壁塔を削除中です。" ) {
 			addList(rmtime[2], 252, DESTROY_ING, x, y );
 		}
@@ -2048,6 +2096,9 @@ debugLog("=== Start setVillageFacility ===");
 	else if (OPT_1111Q2MURA == 1) { // ★4(1-1-1-1)資源+大倉庫5+畑7+銅雀台
 		if (build1111Q2(vId)) return;
 	}
+	else if (OPT_S9YOUSAI == 1) { // フラット遠訓
+		if (buildS9YOUSAI(vId)) return;
+	}
 
 	// 宿舎
 	if (OPT_SHUKUSHA == 1) {
@@ -2237,20 +2288,30 @@ function get_area_all(){
 }
 
 // 既存の自動レベル上げに切り替える
-function switchToAutoLevelUp(vId){
+function switchToAutoLevelUp(vId, isFort){
 	var src = GM_getValue(HOST+PGNAME+vId, "");
 
 	var Temp = src.split(DELIMIT1);
 	var Temp2 = Temp[1].split(DELIMIT2);
 
-	Temp2[1] = 1;	// 伐採所
-	Temp2[2] = 1;	// 石切り場
-	Temp2[3] = 1;	// 製鉄所
-	Temp2[4] = 1;	// 畑
-//	Temp2[6] = 1;	// 銅雀台
-	Temp2[263] = 1;	// 大倉庫
+	if (isFort) {
+		Temp2[0] = 1;	// 拠点
+		Temp2[21] = 1;	// 遠征訓練所
+		Temp2[9] = 1;	// 練兵所
+		Temp2[12] = 1;	// 厩舎
+		Temp2[8] = 1;	// 防具工場
+		Temp2[183] = 1; // OPT_REMOVE
+	} else {
+		Temp2[1] = 1;	// 伐採所
+		Temp2[2] = 1;	// 石切り場
+		Temp2[3] = 1;	// 製鉄所
+		Temp2[4] = 1;	// 畑
+//		Temp2[6] = 1;	// 銅雀台
+		Temp2[263] = 1;	// 大倉庫
 
-	Temp2[183] = 0; // OPT_REMOVE
+		Temp2[183] = 0; // OPT_REMOVE
+	}
+
 	Temp2[230] = 0; // (removed) OPT_1112MURA
 	Temp2[231] = 0; // (removed) OPT_0001S5MURA
 	Temp2[232] = 0; // (removed) OPT_PLANT5MURAN
@@ -2259,7 +2320,7 @@ function switchToAutoLevelUp(vId){
 	Temp2[235] = 0; // (removed) OPT_PLANT5MURAS
 	Temp2[236] = 0; // (removed) OPT_0001S7MURA -> OPT_1111Q1MURA
 	Temp2[237] = 0; // (removed) OPT_0001S3MURA -> OPT_1111Q2MURA
-	Temp2[238] = 0; // (removed) OPT_0000S8MURA
+	Temp2[238] = 0; // (removed) OPT_0000S8MURA -> OPT_S9YOUSAI
 	if(Temp2[239] != ""){
 		Temp2[239] = 0; // OPT_SHUKUSHA
 		Temp2[240] = 0; // OPT_DAISHUKUSHA
@@ -2315,14 +2376,34 @@ var Hatake		= 215, // 畑
 	Ishikiri	= 211, // 石切り場
 	Seitetsu	= 213, // 製鉄所
 	Suzume		= 216, // 銅雀台
+	Kunren		= 229, // 訓練所
+	Heisha		= 235, // 兵舎
+	YumiHeisha	= 236, // 弓兵舎
+	Kyusha		= 237, // 厩舎
+	Mihari		= 243, // 見張り台
 	Daishuku	= 244, // 大宿舎
-//	OnoHeisha	= 247, // 斧兵舎
-//	SouHeisha	= 248, // 双兵舎
-//	SuiHeisha	= 249, // 錘兵舎
+	Enkun		= 246, // 遠征訓練所
+	OnoHeisha	= 247, // 斧兵舎
+	SouHeisha	= 248, // 双兵舎
+	SuiHeisha	= 249, // 錘兵舎
 	DaiSouko	= 250; // 大倉庫	2020.02.05
 
+function isExistFacility(area, name) {
+	var isExisted = false;
+	for(var i=0;i<area.length;i++){
+		if (area[i].name.startsWith(name)) {
+			isExisted = true;
+			break;
+		}
+	}
+	return isExisted;
+}
+
 // 指定座標に施設LVまで新規建築＆LVUP
-function createFacilityEx(x, y, f, lv, area){
+function createFacilityEx(x, y, f, lv, area, canSkip = false){
+	if (canSkip) {
+		return false;
+	}
 	if (f==0) {
 		return false;
 	}
@@ -2346,7 +2427,16 @@ function createFacilityEx(x, y, f, lv, area){
 				||	(f == Ishikiri && Chek_Sigen(new lv_sort("石切り場",0,"")) != 1)
 				||	(f == Seitetsu && Chek_Sigen(new lv_sort("製鉄所",0,"")) != 1)
 				||	(f == Suzume   && Chek_Sigen(new lv_sort("銅雀台",0,"")) != 1)
+				||	(f == Kunren   && Chek_Sigen(new lv_sort("訓練所",0,"")) != 1)
+				||	(f == Heisha   && Chek_Sigen(new lv_sort("兵舎",0,"")) != 1)
+				||	(f == YumiHeisha && Chek_Sigen(new lv_sort("弓兵舎",0,"")) != 1)
+				||	(f == Kyusha   && Chek_Sigen(new lv_sort("厩舎",0,"")) != 1)
+				||	(f == Mihari   && Chek_Sigen(new lv_sort("見張り台",0,"")) != 1)
 				||	(f == Daishuku && Chek_Sigen(new lv_sort("大宿舎",0,"")) != 1)
+				||	(f == Enkun    && Chek_Sigen(new lv_sort("遠征訓練所",0,"")) != 1)
+				||	(f == OnoHeisha && Chek_Sigen(new lv_sort("斧兵舎",0,"")) != 1)
+				||	(f == SouHeisha && Chek_Sigen(new lv_sort("双兵舎",0,"")) != 1)
+				||	(f == SuiHeisha && Chek_Sigen(new lv_sort("錘兵舎",0,"")) != 1)
 				||	(f == DaiSouko && Chek_Sigen(new lv_sort("大倉庫",0,"")) != 1)
 				){
 					create = 1;
@@ -2367,7 +2457,16 @@ function createFacilityEx(x, y, f, lv, area){
 			else if (f == Ishikiri && area[i].name.match(/^(石切り場)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
 			else if (f == Seitetsu && area[i].name.match(/^(製鉄所)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
 			else if (f == Suzume   && area[i].name.match(/^(銅雀台)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Kunren   && area[i].name.match(/^(訓練所)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Heisha   && area[i].name.match(/^(兵舎)\s*.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == YumiHeisha && area[i].name.match(/^(弓兵舎)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Kyusha   && area[i].name.match(/^(厩舎)\s*.*?(\d+)/)		&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Mihari   && area[i].name.match(/^(見張り台)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
 			else if (f == Daishuku && area[i].name.match(/^(大宿舎)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == Enkun    && area[i].name.match(/^(遠征訓練所)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == OnoHeisha && area[i].name.match(/^(斧兵舎)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == SouHeisha && area[i].name.match(/^(双兵舎)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
+			else if (f == SouHeisha && area[i].name.match(/^(錘兵舎)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
 			else if (f == DaiSouko && area[i].name.match(/^(大倉庫)\s*.*?(\d+)/)	&& parseInt(RegExp.$2,10) < lv && Chek_Sigen(new lv_sort(RegExp.$1,parseInt(RegExp.$2,10)+1,"")) != 1) lvup = 1;
 			break;
 		}
@@ -2553,6 +2652,48 @@ function build1111Q2(vId){
 	checkReached(reached);
 	if (reached[0]){
 		switchToAutoLevelUp(vId);
+	}
+	return handled;
+}
+
+function buildS9YOUSAI(vId) {
+	var area = get_area_all();
+	if (! checkVillageType(area, 0,0,0,0,0)){
+		return false;
+	}
+
+	// ★9要塞 or 城壁塔
+	var reached = [false];
+	var handled =
+	createFacilityEx(0, 0, Souko, 1, area, isExistFacility(area, "練兵所")) ||
+	createFacilityEx(0, 1, Renpei, 1, area) ||
+	createFacilityEx(0, 5, Shukusha, 1, area) ||
+	createFacilityEx(1, 1, Hatake, 1, area) ||
+
+	createFacilityEx(0, 1, Renpei, 3, area) ||
+	createFacilityEx(0, 2, Bougu, 1, area) ||
+	createFacilityEx(1, 3, Kajiba, 1, area) ||
+	createFacilityEx(1, 1, Hatake, 5, area) ||
+	createFacilityEx(1, 2, Suzume, 1, area) ||
+
+	createFacilityEx(0, 2, Bougu, 7, area) ||
+	createFacilityEx(1, 3, Kajiba, 5, area) ||
+	createFacilityEx(1, 2, Suzume, 7, area) ||
+
+	createFacilityEx(0, 6, Mihari, 1, area) ||
+	createFacilityEx(1, 0, Kunren, 1, area) ||
+
+	createFacilityEx(0, 6, Mihari, 8, area) ||
+	createFacilityEx(0, 5, Shukusha, 15, area) ||
+	createFacilityEx(1, 6, Daishuku, 8, area) ||
+	createFacilityEx(1, 0, Kunren, 5, area) ||
+
+	createFacilityEx(6, 0, Enkun, 5, area) ||
+
+	// ここまで来たら既存の自動LVUPに移管する
+	checkReached(reached);
+	if (reached[0]){
+		switchToAutoLevelUp(vId, true);
 	}
 	return handled;
 }
@@ -2840,6 +2981,7 @@ function closeInifacBox() {
 function clearWaterwheelBox(){
 	var checkbox = $a('//input[@id="OPT_1111Q1MURA"]');	checkbox[0].checked = false; // 資源村化
 	var checkbox = $a('//input[@id="OPT_1111Q2MURA"]');	checkbox[0].checked = false; // 資源村化
+	var checkbox = $a('//input[@id="OPT_S9YOUSAI"]');	checkbox[0].checked = false; // フラット遠訓
 }
 
 ///LvUP対象施設設のチェックボックスをクリアする
@@ -3065,6 +3207,34 @@ function InitSuishaVillage(cb){
 	var textbox = $a('//input[@id="OPT_CHKBOXLV4"]');	textbox[0].value = 15;	// 畑
 	var textbox = $a('//input[@id="OPT_CHKBOXLV26"]');	textbox[0].value = 20;	// 大倉庫
 	var textbox = $a('//input[@id="OPT_CHKBOXLV6"]');	textbox[0].value = 10;	// 銅雀台
+
+	return true;
+}
+
+function InitFort(cb) {
+	// 要塞 or 城壁塔
+	if (cb && !cb.checked) return;
+
+	clearInifacBox();
+	if (cb) cb.checked = true;
+
+	var textbox = $a('//input[@id="OPT_CHKBOXLV0"]');	textbox[0].value = 15;	// 拠点
+	var textbox = $a('//input[@id="OPT_CHKBOXLV21"]');	textbox[0].value = 20;	// 遠征訓練所
+	var textbox = $a('//input[@id="OPT_CHKBOXLV12"]');	textbox[0].value = 15;	// 厩舎
+	var textbox = $a('//input[@id="OPT_CHKBOXLV9"]');	textbox[0].value = 10;	// 練兵所
+	var textbox = $a('//input[@id="OPT_CHKBOXLV8"]');	textbox[0].value = 10;	// 防具工場
+	var textbox = $a('//input[@id="OPT_CHKBOXLV7"]');	textbox[0].value = 10;	// 鍛冶場
+	var textbox = $a('//input[@id="OPT_CHKBOXLV23"]');	textbox[0].value = 15;	// 斧兵舎
+	var textbox = $a('//input[@id="OPT_CHKBOXLV24"]');	textbox[0].value = 15;	// 双兵舎
+	var textbox = $a('//input[@id="OPT_CHKBOXLV25"]');	textbox[0].value = 15;	// 錐兵舎
+
+	var checkbox = $a('//input[@id="OPT_RM_CHKBOX5"]');	checkbox[0].checked = true;	// 倉庫
+	var checkbox = $a('//input[@id="OPT_RM_CHKBOX4"]');	checkbox[0].checked = true;	// 畑
+	var checkbox = $a('//input[@id="OPT_RM_CHKBOX6"]');	checkbox[0].checked = true;	// 銅雀台
+	var checkbox = $a('//input[@id="OPT_RM_CHKBOX7"]');	checkbox[0].checked = true;	// 鍛冶場
+
+	var textbox = $a('//input[@id="OPT_BG_LV17"]');	textbox[0].value = 10;	// 重盾兵(防具)
+	var checkbox = $a('//input[@id="OPT_BKBG_CHK"]');	checkbox[0].checked = true;	// 自動武器・防具強化
 
 	return true;
 }
@@ -3571,6 +3741,8 @@ function addIniBilderHtml() {
 		actionDiv.innerHTML = "座標" + vId + " に ";
 			  if(lists[i].kind == 220){ actionDiv.innerHTML += "「村」";
 		}else if(lists[i].kind == 222){ actionDiv.innerHTML += "「砦」";
+		}else if(lists[i].kind == 252){ actionDiv.innerHTML += "「城壁塔」";
+		}else if(lists[i].kind == 251){ actionDiv.innerHTML += "「要塞」";
 		}
 			  if(lists[i].status == VS_BUILD_FAIL	){actionDiv.innerHTML += "作成失敗";
 		}else if(lists[i].status == VS_BUILD_RESERVE){actionDiv.innerHTML += "作成予約";
@@ -4214,6 +4386,7 @@ function addInifacHtml(vId) {
 		td621a.style.verticalAlign = "top";
 		ccreateCheckBoxF(td621a, "OPT_1111Q1MURA", OPT_1111Q1MURA, " ★4(1-1-1-1)資源", "この都市で資源を建設する。",0,InitSuishaVillage);
 		ccreateCheckBoxF(td621a, "OPT_1111Q2MURA", OPT_1111Q2MURA, " ★4(1-1-1-1)資源+大倉庫5+畑7+銅雀台", "この都市を資源+大倉庫5+畑7+銅雀台にする。",0,InitSuishaVillage);
+		ccreateCheckBoxF(td621a, "OPT_S9YOUSAI", OPT_S9YOUSAI, " フラット要塞/城壁塔 遠訓LV5", "この都市を軍事用として遠征訓練所LV5まで建設する。",0,InitFort);
 
 	Waterwheel_Box.appendChild(tr620);
 	tr620.appendChild(td620);
@@ -4920,7 +5093,7 @@ function SaveInifacBox(vId){
 	strSave += cgetCheckBoxValue($("OPT_PLANT5MURAS")) + DELIMIT2; // (removed)
 	strSave += cgetCheckBoxValue($("OPT_1111Q1MURA")) + DELIMIT2; // (removed) OPT_0001S7MURA -> OPT_1111Q1MURA
 	strSave += cgetCheckBoxValue($("OPT_1111Q2MURA")) + DELIMIT2; // (removed) OPT_0001S3MURA -> OPT_1111Q2MURA
-	strSave += cgetCheckBoxValue($("OPT_0000S8MURA")) + DELIMIT2; // (removed)
+	strSave += cgetCheckBoxValue($("OPT_S9YOUSAI")) + DELIMIT2; // (removed) OPT_0000S8MURA -> OPT_S9YOUSAI
 
 	strSave += cgetCheckBoxValue($("OPT_SHUKUSHA")) + DELIMIT2;
 	strSave += cgetCheckBoxValue($("OPT_DAISHUKUSHA")) + DELIMIT2;
@@ -4991,6 +5164,7 @@ debugLog("=== Start Load_OPT ===");
 		OPT_DAISHUKUSHA		= 0;
 		OPT_1111Q1MURA		= 0;
 		OPT_1111Q2MURA		= 0;
+		OPT_S9YOUSAI		= 0;
 		OPT_DORM			= 0;				// 2013.12.16
 		OPT_SOUKO_MAX		= 0;
 		OPT_SOUKO_DAISOUKO	= 0;				// @2020.02.09
@@ -5180,7 +5354,8 @@ debugLog("=== Start Load_OPT ===");
 		OPT_1111Q1MURA = forInt(Temp2[236]);
 		if(Temp2[237] == ""){return;}
 		OPT_1111Q2MURA = forInt(Temp2[237]);
-
+		if(Temp2[238] == ""){return;}
+		OPT_S9YOUSAI = forInt(Temp2[238]);
 		if(Temp2[239] == ""){return;}
 		OPT_SHUKUSHA = forInt(Temp2[239]);
 		OPT_DAISHUKUSHA = forInt(Temp2[240]);
