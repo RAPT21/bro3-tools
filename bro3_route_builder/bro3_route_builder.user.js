@@ -10,7 +10,7 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version		1.07.1
+// @version		1.07.5
 // ==/UserScript==
 
 // 1.01		2016.03.19	Craford 氏
