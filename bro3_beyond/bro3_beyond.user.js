@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.35
+// @version		1.09.36
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -133,6 +133,7 @@
 //						- 「Profile：NPC座標探索」が動作するよう修正
 // 1.09.34	2023/08/25	RAPT. スキル連続レベルアップ時、主将スキルとしての副将の明鏡スキルもLVUPできるように
 // 1.09.35	2023/08/29	同盟内ランキングソート不具合、内政官を下げるボタンのサイズ、書簡内のgyazoの展開の不具合修正 by @pla2999 #61
+// 1.09.36	2023/11/28	11/15のメンテ以降で、同盟画面のBeyond機能が動作しなくなっていたのを修正
 
 
 //----------------------------------------------------------------------
@@ -714,7 +715,7 @@ function profileControl() {
 
 	// 同盟ランキング着色用のユーザー名記録
 	if (g_beyond_options[ALLIANCE_02]) {
-		var username = q$("#gray02Wrapper table[class='commonTables'] tbody tr").eq(1).children("td").eq(1).text().replace(/[ \t\r\n]/g, "");
+		var username = q$("#gray02Wrapper table.profileTable tbody tr").eq(1).children("td").eq(0).text().replace(/[ \t\r\n]/g, "");
 		GM_setValue(SERVER_NAME + '_username', username);
 	}
 
@@ -2306,7 +2307,7 @@ function allianceTabControl() {
 	if (location.pathname === "/alliance/info.php") {
 		// テーブルソーターの追加
 		if (g_beyond_options[ALLIANCE_01]) {
-			q$("table[class='tables'] th:not(:eq(0))").each(
+			q$("table.tables th:not(:eq(0))").each(
 				function(index) {
 					// ソートアイコン追加
 					q$(this).append(
@@ -2321,7 +2322,7 @@ function allianceTabControl() {
 
 					// 昇順ソートイベント
 					q$("#lowersort_" + index).on('click',
-						{selector: "table[class='tables'] tr", offset: 2, index: index, order_ascend: true},
+						{selector: "table.tables tr", offset: 2, index: index, order_ascend: true},
 						function(param) {
 							tableSorter(param.data.selector, param.data.offset, param.data.index, param.data.order_ascend);
 						}
@@ -2329,7 +2330,7 @@ function allianceTabControl() {
 
 					// 降順ソートイベント
 					q$("#uppersort_" + index).on('click',
-						{selector: "table[class='tables'] tr", offset: 2, index: index, order_ascend: false},
+						{selector: "table.tables tr", offset: 2, index: index, order_ascend: false},
 						function(param) {
 							tableSorter(param.data.selector, param.data.offset, param.data.index, param.data.order_ascend);
 						}
@@ -2338,8 +2339,11 @@ function allianceTabControl() {
 			);
 		}
 
+		// 伍人組対応鯖か
+		var isGonin = q$("table.info-with-alliance-power").length !== 0;
+
 		// 同盟情報付与
-		if (g_beyond_options[ALLIANCE_03] && q$("#contribution_table").length !== 0) {
+		if (g_beyond_options[ALLIANCE_03] && q$("#contribution_table").length !== 0 && !isGonin) { // 伍人組対応鯖では運営が機能を取り込んでいるため不要
 			var elem = q$("#gray02Wrapper table[class='commonTables'] tbody tr");
 
 			// 同盟レベル
@@ -2383,10 +2387,10 @@ function allianceTabControl() {
 		}
 
 		// 同盟ランキング内のプレイヤー着色
-		if (g_beyond_options[ALLIANCE_02]) {
+		if (g_beyond_options[ALLIANCE_02]) { // 運営が機能を取り込んでいるため削除していいかも(2023年追記)
 			var username = GM_getValue(SERVER_NAME + '_username', null);
 			if (username != null) {
-				var elems = q$("table[class='tables'] tbody tr");
+				var elems = q$("table.tables tbody tr");
 				for (var i = 0; i < elems.length; i++) {
 					var elem = q$("td a", elems.eq(i));
 					if (elem.length > 0) {
@@ -2402,7 +2406,7 @@ function allianceTabControl() {
 
 		// CSVダウンロード機能追加、同盟員本拠座標取得機能追加
 		if (g_beyond_options[ALLIANCE_04] || g_beyond_options[ALLIANCE_05]) {
-			var tb = q$("table[class='tables']");
+			var tb = q$("table.tables");
 			var htmlText = "";
 			htmlText += "<div>";
 			if (g_beyond_options[ALLIANCE_04]) {
@@ -2429,12 +2433,15 @@ function allianceTabControl() {
 						q$("#result_csv").val("領地取得中です。しばらくお待ち下さい。");
 
 						// 同盟名を取得
-						var alliance_name = q$("table[class='commonTables'] tbody tr").eq(1).children('td').text().replace(/[ \t\r\n]/g, "");
+						var alliance_name = q$("table.commonTables:eq(0) tbody tr").eq(1).children('td').text().replace(/[ \t\r\n]/g, "");
+						if (isGonin) {
+							alliance_name = q$("table.commonTables:eq(0) tbody tr").eq(1).children('td').text().split(/[\r\n]/)[1].replace(/[ \t\r\n]/g, "");
+						}
 
 						// 所属同盟員の鯖内IDを全て取得
 						var users = new Array();
 						var usernames = new Array();
-						var elems = q$("table[class='tables'] tbody tr");
+						var elems = q$("table.tables tbody tr");
 						for (var i = 2; i < elems.length; i++) {
 							var userid = elems.eq(i).children('td').eq(1).children('a').attr('href').replace(/^.*user_id=/,'');
 							var name = elems.eq(i).children('td').eq(1).text().replace(/[ \t\r\n]/g, "");
@@ -2530,7 +2537,7 @@ function allianceTabControl() {
 				}
 
 				// 本拠地列を作る
-				var elems = q$("table[class='tables'] tbody tr");
+				var elems = q$("table.tables tbody tr");
 				var coln = elems.eq(1).children('th').length;
 				var myAlliance = elems.eq(1).text().replace(/[ \t\r\n,]/g, "").indexOf('ログイン') >= 0;
 				for (var i = 1; i < elems.length; i++) {
@@ -2567,7 +2574,7 @@ function allianceTabControl() {
 						// 所属同盟員の鯖内IDを全て取得
 						var users = [];
 						var usernames = [];
-						var elems = q$("table[class='tables'] tbody tr");
+						var elems = q$("table.tables tbody tr");
 						var myAlliance = elems.eq(1).text().replace(/[ \t\r\n,]/g, "").indexOf('ログイン') >= 0;
 						for (var i = 2; i < elems.length; i++) {
 							var userid = elems.eq(i).children('td').eq(1).children('a').attr('href').replace(/^.*user_id=/,'');
