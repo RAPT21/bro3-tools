@@ -5752,7 +5752,7 @@ function execStockPart() {
 	// テーブルアクセス用のリスト
 	var tbllist = q$("table[class='tbl_cards_list'] tbody tr");
 
-	// カードNo.をトレードリンクにし、図鑑へのリンクを付与
+	// トレードへのリンクを追加
 	if (g_beyond_options[DECK_02] == true && location.pathname !== "/card/card_stock_confirm.php") {
 
 		// スキル名変換列の決定
@@ -5764,7 +5764,13 @@ function execStockPart() {
 		for (var i = 0; i < tbllist.length; i++) {
 			var tdlist = tbllist.eq(i).children("td");
 
-			// ID列
+			// カードNo.をトレードリンクにし、図鑑へのリンクを付与
+			var id = tdlist.eq(2).text();
+			tdlist.eq(2).html(
+				"<a href='trade.php?s=price&o=a&t=no&k=" + id + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + id + "</a>" +
+				"<br><a href='" + BASE_URL + "/card/busyo_data.php?search_options=&q=&status=&ability_type=&ability_value=&sort=card-no-asc&search_mode=detail&view_mode=&double_skill_height=&card_number=" + id + "' target='_blank'>(図鑑)</a>"
+			);
+
 			// スキル名にトレードリンクを付与
 			var skills = tdlist.eq(skill_col).html().replace(/[ \t\r\n]/g, "").split("<br>");
 			var replaced = "";
