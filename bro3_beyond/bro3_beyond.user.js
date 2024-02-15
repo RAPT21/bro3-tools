@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.36
+// @version		1.09.37
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -134,6 +134,7 @@
 // 1.09.34	2023/08/25	RAPT. スキル連続レベルアップ時、主将スキルとしての副将の明鏡スキルもLVUPできるように
 // 1.09.35	2023/08/29	同盟内ランキングソート不具合、内政官を下げるボタンのサイズ、書簡内のgyazoの展開の不具合修正 by @pla2999 #61
 // 1.09.36	2023/11/28	11/15のメンテ以降で、同盟画面のBeyond機能が動作しなくなっていたのを修正
+// 1.09.37	2023/12/11	カード倉庫画面で、カードNo.によるトレードと図鑑へのリンクを追加 #64 @pla2999
 
 
 //----------------------------------------------------------------------
@@ -5769,11 +5770,11 @@ function execStockPart() {
 			var replaced = "<a href='trade.php?s=price&o=a&t=no&k=" + id + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + id + "</a>" +
 				"<br><a href='" + BASE_URL + "/card/busyo_data.php?search_options=&q=&status=&ability_type=&ability_value=&sort=card-no-asc&search_mode=detail&view_mode=&double_skill_height=&card_number=" + id + "' target='_blank'>(図鑑)</a>"
 
-            if (location.pathname === "/card/card_stock.php") {
-                replaced += '<input type="hidden" value="' + id+ '" name="move_card_data[' + i + '][card_number]">';
-            }
-            tdlist.eq(2).html(replaced);
-			
+			if (location.pathname === "/card/card_stock.php") {
+				replaced += '<input type="hidden" value="' + id+ '" name="move_card_data[' + i + '][card_number]">';
+			}
+			tdlist.eq(2).html(replaced);
+
 			// スキル名にトレードリンクを付与
 			var skills = tdlist.eq(skill_col).html().replace(/[ \t\r\n]/g, "").split("<br>");
 			replaced = "";
