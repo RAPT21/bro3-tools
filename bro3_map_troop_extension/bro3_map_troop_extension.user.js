@@ -14,7 +14,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	2.0
+// @version 	2.1
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -54,6 +54,7 @@ jQuery.noConflict();
 // 2022.11.13	1.9	領地(空き地)画面にマップ種別を指定して中央に表示するリンクを追加できるように
 //					レイアウト微妙なので変更するかも
 // 2023.05.02	2.0	標高MAP画面暫定対応（争覇鯖にて検証中）
+// 2024.02.18	2.1	地形2.0対応
 
 //==========[オプション]==========
 var OPT_COLORING_RESOURCES = true;		// 資源地カラーリングを行うか。falseだと何も行いません。
@@ -90,10 +91,6 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 	//------------------------
 	// 準備
 	//------------------------
-	var isOldMap = $("#change-map-scale ul").length > 0;
-	if (isOldMap) {
-		$("#mapAll").css({'height':'1160px'});
-	}
 
 	// iframeの高さは動的に変えられないので、更新をiframeに通知する
 	$('iframe').on(
@@ -124,17 +121,9 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 		return;
 	}
 
-	// 標高対応鯖か
-	var isElevationMap = $("#change-map-scale2 .elevation-map-link").length > 0;
-
 	// 選択されているマップサイズチェック
 	var viewSize = -1;
-	var mapSelect;
-	if (isOldMap) {
-		mapSelect = $("div[id=change-map-scale] li[class*=now]");
-	} else {
-		mapSelect = $("div[id=change-map-scale2] a[class*=now]");
-	}
+	var mapSelect = $("div[id=change-map-scale2] a[class*=now]");
 
 	mapSelect.each(
 		function(){
@@ -143,7 +132,7 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 			}
 		}
 	);
-	if (viewSize === -1 && isElevationMap && isExist($("#change-map-scale2 .btn_map_51:eq(0)"))) {
+	if (viewSize === -1 && isExist($("#change-map-scale2 .btn_map_51:eq(0)"))) {
 		viewSize = 51;
 	}
 	if (viewSize != 51) {
@@ -156,26 +145,11 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 	//------------------------
 	// モード切替ボタンの配置
 	//------------------------
-	var parentElement;
-	var marginStyle;
-	var elevationElement = "";
-	if (isOldMap) {
-		$("#change-map-scale ul").css({'width' : '350px'});
-		parentElement = $("#change-map-scale");
-		marginStyle = "margin-top:76px;";
-	} else {
-		parentElement = $("#enemyView2");
-		if (isExist($("#toAutoSendTroop"))) {
-			marginStyle = "margin-top:58px; margin-left:190px;";
-		} else {
-			marginStyle = "margin-top:58px; margin-left:110px;";
-		}
-		if (isElevationMap) {
-			parentElement = $("#change-map-scale2 h4:eq(0)");
-			marginStyle = "margin-top:-20px; margin-left:168px;";
-			elevationElement = "<input id='show_elevation' type='checkbox'><label for='show_elevation'>標高表示</label></input>";
-		}
-	}
+
+	var parentElement = $("#change-map-scale2 h4:eq(0)");
+	var marginStyle = "margin-top:-20px; margin-left:168px;";
+	var elevationElement = "<input id='show_elevation' type='checkbox'><label for='show_elevation'>標高表示</label></input>";
+
 	parentElement.after(
 		"<div style='" + marginStyle + " width:45%;'>" +
  			"<input type='button' id='enter_custom' style='margin-left:20px;' value='クリック拡張モードにする'></input>" +
@@ -759,9 +733,6 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 			return;
 		}
 
-		// 標高対応鯖か
-		var isElevationMap = /\[[低|平|高|山]地\]/.test($("#basepoint .xy").text());
-
 		$("#tMenu_btnif ul.upper li a.show").attr("href").match(/x=([-]*\d+).*y=([-]*\d+)/);
 		var xy = `x=${RegExp.$1}&y=${RegExp.$2}`;
 
@@ -769,22 +740,13 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 			// "<div style='display: inline-block;' onclick='location.reload()'>reload", // for Debug
 			"<ul id='z-map-links' style='background-color: pink; margin-bottom: 8px;'>"
 		);
-		if (isElevationMap) {
-			$("#z-map-links").append(
-				"<li data-type='elv' data-ssize='21'>21x21",
-				"<li data-type='elv' data-ssize='41'>41x41",
-				"<li data-type='3d'>3Dマップ",
-				"<li data-type='4'>旧51x51"
-			);
-		} else {
-			$("#z-map-links").append(
-				"<li data-type='1'>11x11",
-				"<li data-type='5'>21x21",
-				"<li data-type='4'>51x51",
-				"<li data-type='6' data-ssize='21'>s21x21",
-				"<li data-type='6' data-ssize='51'>s51x51"
-			);
-		}
+		$("#z-map-links").append(
+			"<li data-type='elv' data-ssize='21'>21x21",
+			"<li data-type='elv' data-ssize='41'>41x41",
+			"<li data-type='wid'>91x91",
+			"<li data-type='3d'>3Dマップ",
+			"<li data-type='4'>旧51x51"
+		);
 		$("#z-map-links li").each(function(){
 			// 横並びにする
 			$(this).attr("style", "display: inline-block;");
@@ -792,21 +754,15 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 			// リンクを生成
 			var link;
 			var type = $(this).attr("data-type");
-			if (isElevationMap) {
-				if (type === "3d") {
-					link = `/3d_map.php?${xy}`;
-				} else if (type === "elv") {
-					var ssize = $(this).attr("data-ssize");
-					link = `/elevation_map.php?map_size=${ssize}&${xy}`;
-				} else {
-					link = `/big_map.php?type=${type}&${xy}`;
-				}
-			} else if (type === "6") {
-				// スクロールマップ
+			if (type === "3d") {
+				link = `/3d_map.php?${xy}`;
+			} else if (type === "elv") {
 				var ssize = $(this).attr("data-ssize");
-				link = `/big_map.php?${xy}&type=${type}&ssize=${ssize}#ptop`;
+				link = `/elevation_map.php?map_size=${ssize}&${xy}`;
+			} else if (type === "wid") {
+				link = `/wide_map.php?${xy}`;
 			} else {
-				link = `/map.php?${xy}&type=${type}#ptop`;
+				link = `/big_map.php?type=${type}&${xy}`;
 			}
 
 			$(this).css({'color': '#0000dd', 'cursor': 'pointer'}).on({
