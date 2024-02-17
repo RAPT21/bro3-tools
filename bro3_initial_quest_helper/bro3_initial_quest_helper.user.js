@@ -10,10 +10,9 @@
 // @connect		3gokushi.jp
 // @grant		GM_xmlhttpRequest
 // @author		RAPT
-// @version 	2023.07.07
+// @version 	2024.02.18
 // ==/UserScript==
-var VERSION = "2023.07.07"; 	// バージョン情報
-
+var VERSION = "2024.02.18"; 	// バージョン情報
 
 // 2016.07.25 初版作成
 // 2016.08.17 Firefox サポート
@@ -23,7 +22,8 @@ var VERSION = "2023.07.07"; 	// バージョン情報
 // 2020.11.03 他の君主を探そう、天下統一への第一歩のクエクリ対応
 //			  Chrome のときクエストタブ内の操作がおかしくなる対策(j$→q$)
 // 2023.07.07 https 対応
-
+// 2024.01.31 総人口と撃破スコアが正しく取得できなくなっていたのを修正
+// 2024.02.18 地形2.0サーバーで君主名が取得できなくなったのを修正
 
 jQuery.noConflict();
 q$ = jQuery; // Tampermonkey の場合、j$ だと競合してしまうので避ける
@@ -233,10 +233,9 @@ function profile_jinko(fn){
 		var htmldoc = document.createElement("html");
 			htmldoc.innerHTML = x;
 		var text = q$('table.commonTables', htmldoc).text().replace(/\s+/g, '');
-		var name = text.match(/お気に入り武将カード君主(.+)個人掲示板/)[1];
-		var sumJinko = text.match(/総人口(\d+)/)[1].replace(/,/g, '');
-		var attScore = text.match(/撃破スコア(\d+)/)[1].replace(/,/g, '');
-		appendLog("君主", name);
+		var name = text.match(/お気に入り武将カード君主(.+?)[個人掲示板|今期ログイン日数]/)[1];
+		var sumJinko = text.match(/総人口(\d[,\d]*)/)[1].replace(/,/g, '');
+		var attScore = text.match(/撃破スコア(\d[,\d]*)/)[1].replace(/,/g, '');		appendLog("君主", name);
 		appendLog("総人口", sumJinko);
 		appendLog("撃破スコア", attScore);
 		if (fn !== null) {
