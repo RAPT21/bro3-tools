@@ -10,7 +10,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.3
+// @version 	1.4
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
@@ -42,6 +42,7 @@ q$ = jQuery;
 // 2023.01.28	1.3	友軍送付後に自動で造兵できるように
 //					即完できる場合のみ造兵します。送った兵種を送った数だけ造兵します。資源不足はチェックしません。
 //					友軍状況画面を開いたあと造兵情報を収集するため、造兵可能になるまで数秒～数十秒かかる場合があります。
+// 2024.01.18	1.4	地形1.0で、基本鋭兵の造兵ができなくなっていたのを修正
 
 
 var SERVER_SCHEME = location.protocol + "//";
@@ -66,7 +67,7 @@ var armyTable = {
 //	騎兵	: ['騎兵'		, 'cavalry_count'		, 305, 0, 0, 0],
 //	衝車	: ['衝車'		, 'ram_count'			, 312, 0, 0, 0],
 //	斥候	: ['斥候'		, 'scout_count'			, 310, 0, 0, 0],
-	大剣兵	: ['大剣兵'		, 'large_infantry_count', 315, 0, 0, 0],
+//	大剣兵	: ['大剣兵'		, 'large_infantry_count', 315, 0, 0, 0],
 	重盾兵	: ['重盾兵'		, 'heavy_shield_count'	, 317, 0, 0, 0],
 	矛槍兵	: ['矛槍兵'		, 'halbert_count'		, 304, 0, 0, 0],
 	弩兵	: ['弩兵'		, 'crossbow_count'		, 309, 0, 0, 0],
@@ -100,7 +101,7 @@ function addArmyType() {
 		code += `<input type='checkbox' id='a-make' name='a-make' disabled><label for='a-make' title='友軍送付後に自動で造兵します。資源枯渇はチェックしません。即完兵種がない場合は使用できません。'>補充</label></input>\n`
 	}
 	q$("#gray02Wrapper table[class*='tables']").before(`<div id="armyType">${code}</div>`);
-	q$("#a-type1").prop('checked', true); // デフォルトは重盾兵
+	q$("#a-type0").prop('checked', true); // デフォルトは重盾兵
 }
 
 // 造兵する
@@ -294,7 +295,7 @@ function getMakeSoldierInfo(res, callback) {
 			q$("th.mainTtl", resp2).each(function(index, mainTtl){
 				if (index === 0) { return true; }
 
-				var sol_name = q$(mainTtl).text();
+				var sol_name = q$(mainTtl).text().replace(/\[.+\]/, "");
 				var time = q$("td", q$(mainTtl).closest("tr").next().next().next().next()).text();
 				if (Object.keys(armyTable).indexOf(sol_name) >= 0) {
 					armyTable[sol_name][IDX_CAN] = /00:00:0[01]/.test(time); // 即完のみ作成可能とする
