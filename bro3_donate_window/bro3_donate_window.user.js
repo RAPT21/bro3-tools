@@ -15,7 +15,7 @@
 // @grant		GM_getResourceText
 // @grant		GM_addStyle
 // @author		RAPT
-// @version 	1.3
+// @version 	1.4
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
@@ -33,9 +33,10 @@ GM_addStyle(jQueryUICss);
 // 2017.12.03	1.0	初版公開
 // 2019.04.19	1.1	2019.04.03以降に開始された期で一部の数値がカンマ付きになった影響で寄付済額が取得できなくなっていたのを対応
 // 2020.01.30	1.2	1/30の運営仕様変更に伴い、資源情報を取得できなくなっていた問題を修正
-// 2023.07.06	https 対応、同盟画面、プロフィール画面の仕様変更に伴い、新規サーバーや君主名を変更したときなどに寄付ができなくなったいた問題を修正（同盟画面仕様変更に伴い、君主名は不要になった）
+// 2023.07.06	1.3 https 対応、同盟画面、プロフィール画面の仕様変更に伴い、新規サーバーや君主名を変更したときなどに寄付ができなくなったいた問題を修正（同盟画面仕様変更に伴い、君主名は不要になった）
+// 2024.02.18	1.4 地形2.0対応。同盟画面に役割列が追加されたことで既寄付額が取得できなくなっていたのを修正
 
-var VERSION = "2023.07.06";
+var VERSION = "2024.02.18";
 var HOST = location.hostname; //アクセスURLホスト
 var SERVER_NAME = HOST.match(/^(.*)\.3gokushi/)[1];
 var LOGGER	 = SERVER_NAME + '.donate> ';
@@ -266,7 +267,9 @@ GM_addStyle(`
 
 	// 寄付済み額を画面に反映
 	function set_already() {
-		$("table[class='tables'] tbody tr.mydata td:eq(3)").each(function(){
+		// 役割テーブルの時は寄付額がずれる
+		var tdx = $("table.ranking-with-roles").length > 0 ? 4 : 3;
+		$(`table.tables tbody tr.mydata td:eq(${tdx})`).each(function(){
 			var already = $(this).text().replace(/[ \t\r\n,]/g, "");
 			$("#total_already").val(already);
 			console.log(LOGGER+`[${username}] の寄付額は [${already}]`);
