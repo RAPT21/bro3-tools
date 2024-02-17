@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.36
+// @version		1.09.38
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -134,6 +134,8 @@
 // 1.09.34	2023/08/25	RAPT. スキル連続レベルアップ時、主将スキルとしての副将の明鏡スキルもLVUPできるように
 // 1.09.35	2023/08/29	同盟内ランキングソート不具合、内政官を下げるボタンのサイズ、書簡内のgyazoの展開の不具合修正 by @pla2999 #61
 // 1.09.36	2023/11/28	11/15のメンテ以降で、同盟画面のBeyond機能が動作しなくなっていたのを修正
+// 1.09.37	2023/12/11	カード倉庫画面で、カードNo.によるトレードと図鑑へのリンクを追加 by @pla2999 #64
+// 1.09.38	2024/02/15	RAPT. 地形2.0対応。地形未対応時の処理を削除
 
 
 //----------------------------------------------------------------------
@@ -238,7 +240,7 @@ var AJAX_REQUEST_INTERVAL = 100; // (ms)
 var COMMON_01 = 'co01';		// 資源タイマー
 var COMMON_02 = 'co02';		// プルダウンメニューを差し替える
 var COMMON_03 = 'co03';		// 天気予告常時表示
-var COMMON_04 = 'co04';		// 地形1.0
+//var COMMON_04 = 'co04';		// 地形1.0 (2024年時点ですべての鯖導入済のため削除)
 
 // プロフィールタブ
 var PROFILE_01 = 'pr01';	// ランキングリンク追加
@@ -1199,16 +1201,7 @@ function profileControl() {
 
 				var matches = [];
 				for (var i = 0; i < targets.length; i++) {
-					var matchstr;
-					if (g_beyond_options[COMMON_04]) {
-						matchstr = `<dt>戦力<\\/dt><dd>${'★'.repeat(targets[i].level)}[^<]*<\\/dd>.*?資源<\\/dt><dd [^>]*?>木${targets[i].wood}.*岩${targets[i].stone}.*鉄${targets[i].iron}.*糧${targets[i].food}[^<]*?<\\/dd>`
-					} else {
-						matchstr = "'" + '★'.repeat(targets[i].level) +
-									"', '.*', '" + targets[i].wood +
-									"', '" + targets[i].stone +
-									"', '" + targets[i].iron +
-									"', '"	+ targets[i].food + "', '', '0', [a-z]+, '', ''\\); over";
-					}
+					var matchstr = `<dt>戦力<\\/dt><dd>${'★'.repeat(targets[i].level)}[^<]*<\\/dd>.*?資源<\\/dt><dd [^>]*?>木${targets[i].wood}.*岩${targets[i].stone}.*鉄${targets[i].iron}.*糧${targets[i].food}[^<]*?<\\/dd>`
 					var reg = new RegExp(matchstr);
 					matches.push(reg);
 				}
@@ -1218,11 +1211,7 @@ function profileControl() {
 				var sy = result.y1;
 
 				var list = new Array();
-				if (g_beyond_options[COMMON_04]) {
-					list.push("★\t領地タイプ\tX座標\tY座標\t所有同盟\t所有者\t標高");
-				} else {
-					list.push("★\t領地タイプ\tX座標\tY座標\t所有同盟\t所有者");
-				}
+				list.push("★\t領地タイプ\tX座標\tY座標\t所有同盟\t所有者\t標高");
 				var listcnt = 0;
 				var count = 1;
 				wait = false;
@@ -1246,12 +1235,10 @@ function profileControl() {
 
 					wait = true;
 
-					var map_size = g_beyond_options[COMMON_04] ? 51 : 21;
-					var map_type = g_beyond_options[COMMON_04] ? 4 : 5;
-					var map_path = g_beyond_options[COMMON_04] ? '/big_map.php' : '/map.php';
-					var loc = {'x':sx, 'y':sy, 'type':map_type};
+					var map_size = 51;
+					var loc = {'x':sx, 'y':sy, 'type':4};
 					q$.ajax({
-						url: BASE_URL + map_path,
+						url: BASE_URL + '/big_map.php',
 						type: 'GET',
 						datatype: 'html',
 						cache: false,
@@ -1259,7 +1246,7 @@ function profileControl() {
 					})
 					.done(function(res) {
 						var resp = q$("<div>").append(res);
-						var area = g_beyond_options[COMMON_04] ? q$("#map51-content.map-v2 li a[onmouseover]", resp) : q$("#mapOverlayMap area[onmouseover]", resp);
+						var area = q$("#map51-content.map-v2 li a[onmouseover]", resp);
 
 						for (var i = 0; i < area.length; i++) {
 							var attr_onmouseover = q$(area[i]).attr("onmouseover");
@@ -1274,112 +1261,60 @@ function profileControl() {
 								continue;
 							}
 
-							if (g_beyond_options[COMMON_04]) {
-								q$(area[i]).attr('href').match(/x=([-]*\d+).*y=([-]*\d+)#ptop/);
-								var x = parseInt(RegExp.$1, 10);
-								var y = parseInt(RegExp.$2, 10);
-								var owner = '-';
-								if (attr_onmouseover.match(/<dt>君主名<\/dt><dd>([^<]*?)<\/dd>/) !== null) {
-									owner = RegExp.$1;
-								}
-								var ally = '-';
-								if (attr_onmouseover.match(/<dt>同盟名<\/dt><dd>([^<]*?)<\/dd>/) !== null) {
-									ally = RegExp.$1;
-								}
-								var elevation = ''
-								if (attr_onmouseover.match(/elevation-name[^>]*?>(.+?)<\/span>/) !== null) {
-									elevation = RegExp.$1;
-								}
-
-								// 一致検索
-								var match = attr_onmouseover.match(/>.*?資源<\/dt><dd [^>]*?>木(\d+).*岩(\d+).*鉄(\d+).*糧(\d+)[^<]*?<\/dd>/);
-								if (match == null) {
-									clearInterval(timer);
-									q$("#search_resource_exec").text("探索中断");
-									stop = false;
-									g_event_process = false;
-									alert("マップデータの形式が変わりました。探索できません。");
-									return;
-								}
-
-								// 空き地検索で所持者がいる場合除外
-								if (owner != '-' && search_empty == true) {
-									continue;
-								}
-
-								// 範囲外の座標の場合除外
-								if (x < result.x1 || x > result.x2) {
-									continue;
-								}
-								if (y < result.y1 || y > result.y2) {
-									continue;
-								}
-
-								// 結果生成
-								list.push(
-									"★" + targets[index].level +
-									"\t" +
-									"(" + targets[index].wood +
-									"," + targets[index].stone +
-									"," + targets[index].iron +
-									"," + targets[index].food + ")" +
-									"\t" + x +
-									"\t" + y +
-									"\t" + ally +
-									"\t" + owner +
-									"\t" + elevation
-								);
-							} else {
-
-								// 一致検索
-								var match;
-								if (search_event == false) {
-									match = attr_onmouseover.match(/rewriteAddRemoving\('\d+','.*', '(.*)', '.*', '(.*)', '(.*)', '[★]+', '.*', '(\d+)', '(\d+)', '(\d+)', '(\d+)', '', '(\d+)', [a-z]+, '', ''\); over.*$/);
-								} else {
-									match = attr_onmouseover.match(/rewritePF\(.*,'.*', '(.*)', '.*', '(.*)', '(.*)', '[★]+', '.*', '(\d+)', '(\d+)', '(\d+)', '(\d+)', '', '.*'\); over.*$/);
-								}
-
-								if (match == null) {
-									clearInterval(timer);
-									q$("#search_resource_exec").text("探索中断");
-									stop = false;
-									g_event_process = false;
-									alert("マップデータの形式が変わりました。探索できません。");
-									return;
-								}
-
-								// 空き地検索で所持者がいる場合除外
-								if (match[1] != '' && search_empty == true) {
-									continue;
-								}
-
-								// 範囲外の座標の場合除外
-								var pos = match[2].match(/([-]*\d+),([-]*\d+)/);
-								if (parseInt(pos[1]) < result.x1 || parseInt(pos[1]) > result.x2) {
-									continue;
-								}
-								if (parseInt(pos[2]) < result.y1 || parseInt(pos[2]) > result.y2) {
-									continue;
-								}
-								if (match[3] == '') {
-									match[1] = '-';
-									match[3] = '-';
-								}
-
-								// 結果生成
-								list.push(
-									"★" + targets[index].level +
-									"\t" +
-									"(" + targets[index].wood +
-									"," + targets[index].stone +
-									"," + targets[index].iron +
-									"," + targets[index].food + ")" +
-									"\t" + parseInt(pos[1]) +
-									"\t" + parseInt(pos[2]) +
-									"\t" + match[3] +
-									"\t" + match[1]
-								);
+							q$(area[i]).attr('href').match(/x=([-]*\d+).*y=([-]*\d+)#ptop/);
+							var x = parseInt(RegExp.$1, 10);
+							var y = parseInt(RegExp.$2, 10);
+							var owner = '-';
+							if (attr_onmouseover.match(/<dt>君主名<\/dt><dd>([^<]*?)<\/dd>/) !== null) {
+								owner = RegExp.$1;
 							}
+							var ally = '-';
+							if (attr_onmouseover.match(/<dt>同盟名<\/dt><dd>([^<]*?)<\/dd>/) !== null) {
+								ally = RegExp.$1;
+							}
+							var elevation = ''
+							if (attr_onmouseover.match(/elevation-name[^>]*?>(.+?)<\/span>/) !== null) {
+								elevation = RegExp.$1;
+							}
+
+							// 一致検索
+							var match = attr_onmouseover.match(/>.*?資源<\/dt><dd [^>]*?>木(\d+).*岩(\d+).*鉄(\d+).*糧(\d+)[^<]*?<\/dd>/);
+							if (match == null) {
+								clearInterval(timer);
+								q$("#search_resource_exec").text("探索中断");
+								stop = false;
+								g_event_process = false;
+								alert("マップデータの形式が変わりました。探索できません。");
+								return;
+							}
+
+							// 空き地検索で所持者がいる場合除外
+							if (owner != '-' && search_empty == true) {
+								continue;
+							}
+
+							// 範囲外の座標の場合除外
+							if (x < result.x1 || x > result.x2) {
+								continue;
+							}
+							if (y < result.y1 || y > result.y2) {
+								continue;
+							}
+
+							// 結果生成
+							list.push(
+								"★" + targets[index].level +
+								"\t" +
+								"(" + targets[index].wood +
+								"," + targets[index].stone +
+								"," + targets[index].iron +
+								"," + targets[index].food + ")" +
+								"\t" + x +
+								"\t" + y +
+								"\t" + ally +
+								"\t" + owner +
+								"\t" + elevation
+							);
 							listcnt ++;
 						}
 
@@ -1450,19 +1385,13 @@ function profileControl() {
 					} else {
 						search_pattern = new RegExp("rewritePF\\(.*,'(.*)', '.*', '.*', '(.*)', '(.*)', '([★]+)', '.*', '', '', '', '', '1', '.*'\\); overOpe");
 					}
-					if (g_beyond_options[COMMON_04]) {
-						search_pattern = new RegExp("bigmap-caption[^>]*?>([^<]+?)<\\/dt>.*<dt>座標.+?距離<\\/dt><dd>\\((.*?)\\).+?elevation-name[^>]*?>([^<]*?)<\\/span>.*?npc-red-star[^>]*?>([★]+)");
-					}
+					search_pattern = new RegExp("bigmap-caption[^>]*?>([^<]+?)<\\/dt>.*<dt>座標.+?距離<\\/dt><dd>\\((.*?)\\).+?elevation-name[^>]*?>([^<]*?)<\\/span>.*?npc-red-star[^>]*?>([★]+)");
 					q$("#npc_box").val("高速化のため、検出中のデータは最後に表示します");
 					var sx = result.x1;
 					var sy = result.y1;
 
 					var list = new Array();
-					if (g_beyond_options[COMMON_04]) {
-						list.push("NPC名\tX座標\tY座標\t★\t標高");
-					} else {
-						list.push("NPC名\tX座標\tY座標\t★");
-					}
+					list.push("NPC名\tX座標\tY座標\t★\t標高");
 					var listcnt = 0;
 					var count = 1;
 					wait = false;
@@ -1487,12 +1416,10 @@ function profileControl() {
 
 						wait = true;
 
-						var map_size = g_beyond_options[COMMON_04] ? 51 : 21;
-						var map_type = g_beyond_options[COMMON_04] ? 4 : 5;
-						var map_path = g_beyond_options[COMMON_04] ? '/big_map.php' : '/map.php';
-						var loc = {'x':sx, 'y':sy, 'type':map_type};
+						var map_size = 51;
+						var loc = {'x':sx, 'y':sy, 'type':4};
 						q$.ajax({
-							url: BASE_URL + map_path,
+							url: BASE_URL + '/big_map.php',
 							type: 'GET',
 							datatype: 'html',
 							cache: false,
@@ -1501,7 +1428,7 @@ function profileControl() {
 						.done(function(res) {
 							loc = null;
 							var resp = q$("<div />").append(res);
-							var area = g_beyond_options[COMMON_04] ? q$("#map51-content.map-v2 li a[onmouseover]", resp) : q$("#mapOverlayMap area[onmouseover]", resp);
+							var area = q$("#map51-content.map-v2 li a[onmouseover]", resp);
 
 							// NPC座標調査
 							for (var i = 0; i < area.length; i++) {
@@ -1528,10 +1455,7 @@ function profileControl() {
 								}
 
 								// ヒットした座標を蓄積
-								var item = match[1] + "\t" + parseInt(pos[1]) + "\t" + parseInt(pos[2]) + "\t" + "\t★" + match[4].length;
-								if (g_beyond_options[COMMON_04]) {
-									item += "\t" + match[3];
-								}
+								var item = match[1] + "\t" + parseInt(pos[1]) + "\t" + parseInt(pos[2]) + "\t" + "\t★" + match[4].length + "\t" + match[3];
 								list.push(item);
 								listcnt ++;
 
@@ -1598,11 +1522,7 @@ function profileControl() {
 					var result_box = q$("#result_npc_box");
 
 					var list = new Array();
-					if (g_beyond_options[COMMON_04]) {
-						list.push("NPC名\tX座標\tY座標\t★\t所有盟主\t北西\t北\t北東\t西\t東\t南西\t南\t南東");
-					} else {
-						list.push("NPC名\tX座標\tY座標\t★\t所有同盟\t北西\t北\t北東\t西\t東\t南西\t南\t南東");
-					}
+					list.push("NPC名\tX座標\tY座標\t★\t所有盟主\t北西\t北\t北東\t西\t東\t南西\t南\t南東");
 					var listcnt = 0;
 					var count = 1;
 					var max = search_target.length;
@@ -1625,11 +1545,9 @@ function profileControl() {
 
 						wait = true;
 
-						var map_type = g_beyond_options[COMMON_04] ? 4 : 1;
-						var map_path = g_beyond_options[COMMON_04] ? '/big_map.php' : '/map.php';
-						var loc = {'x':search_target[count-1].x, 'y':search_target[count-1].y, 'type':map_type};
+						var loc = {'x':search_target[count-1].x, 'y':search_target[count-1].y, 'type':4};
 						q$.ajax({
-							url: BASE_URL + map_path,
+							url: BASE_URL + '/big_map.php',
 							type: 'GET',
 							datatype: 'html',
 							cache: false,
@@ -1637,11 +1555,11 @@ function profileControl() {
 						})
 						.done(function(res) {
 							var resp = q$("<div>").append(res);
-							var area = g_beyond_options[COMMON_04] ? q$("#map51-content.map-v2 li a[onmouseover]", resp) : q$("#mapOverlayMap area[onmouseover]", resp);
+							var area = q$("#map51-content.map-v2 li a[onmouseover]", resp);
 
 							// NPC隣接調査
 							function checkMapCellList() {
-								var map_size = g_beyond_options[COMMON_04] ? 51 : 11;
+								var map_size = 51;
 								// 配列の順は 対象NPC砦、北西、北、北東、西、東、南西、南、南東
 								var idx_center = (map_size + 1) * ((map_size - 1) / 2);
 								var list = [idx_center];
@@ -1677,68 +1595,45 @@ function profileControl() {
 							for (var i = 0; i < check.length; i++) {
 								// 一致検索
 								var attr_onmouseover = q$(area[check[i]]).attr("onmouseover");
-								if (g_beyond_options[COMMON_04]) {
-									var axis = attr_onmouseover.match(new RegExp('距離</dt><dd>\\(([-]?\\d+),([-]?\\d+)\\)'));
-									if (axis == null) {
+								var axis = attr_onmouseover.match(new RegExp('距離</dt><dd>\\(([-]?\\d+),([-]?\\d+)\\)'));
+								if (axis == null) {
+									continue;
+								}
+								// NPC砦では同盟名が取得できないので取得できなくてもエラーにしない
+								var ally_name = attr_onmouseover.match(new RegExp('<dt>同盟名</dt><dd>(.*?)</dd>'));
+								ally_name = (ally_name == null) ? '-' : ally_name[1];
+								if (i == 0) {
+									var npc_name = attr_onmouseover.match(new RegExp('<dt class=\"bigmap-caption\">(.*?)</dt>'));
+									if (npc_name == null) {
 										continue;
-									}
-									// NPC砦では同盟名が取得できないので取得できなくてもエラーにしない
-									var ally_name = attr_onmouseover.match(new RegExp('<dt>同盟名</dt><dd>(.*?)</dd>'));
-									ally_name = (ally_name == null) ? '-' : ally_name[1];
-									if (i == 0) {
-										var npc_name = attr_onmouseover.match(new RegExp('<dt class=\"bigmap-caption\">(.*?)</dt>'));
-										if (npc_name == null) {
-											continue;
-										} else {
-											npc_name = npc_name[1];
-										}
-										var owner_name = attr_onmouseover.match(new RegExp('<dt>君主名</dt><dd>(.*?)</dd>'));
-										if (owner_name == null) {
-											continue;
-										} else {
-											owner_name = owner_name[1];
-										}
-										var star = attr_onmouseover.match(new RegExp('<span class="npc-red-star">([★]+).*?</span>'));
-										if (star == null) {
-											continue;
-										} else {
-											star = star[1].length;
-										}
-										// NPC砦名と守衛名が一致する場合は未攻略砦とし、所有君主名'-'
-										var ma = npc_name.match(/^(.*?)砦(\d+)$/);
-										var mo = owner_name.match(/^(.*?)守衛(\d+)$/);
-										if (ma != null && mo != null && ma[1] == mo[1] && ma[2] == mo[2]) {
-											owner_name = '-';
-										}
-										tsv += npc_name + "\t" + parseInt(axis[1]) + "\t" + parseInt(axis[2]) + "\t★" + star + "\t" + owner_name;
 									} else {
-										// 隣接（北西、北、北東、西、東、南西、南、南東の順）。所持同盟がいない場合'-'
-										if (ally_name != '-') {
-											tsv += ally_name;
-										} else {
-											tsv += "-";
-										}
+										npc_name = npc_name[1];
 									}
+									var owner_name = attr_onmouseover.match(new RegExp('<dt>君主名</dt><dd>(.*?)</dd>'));
+									if (owner_name == null) {
+										continue;
+									} else {
+										owner_name = owner_name[1];
+									}
+									var star = attr_onmouseover.match(new RegExp('<span class="npc-red-star">([★]+).*?</span>'));
+									if (star == null) {
+										continue;
+									} else {
+										star = star[1].length;
+									}
+									// NPC砦名と守衛名が一致する場合は未攻略砦とし、所有君主名'-'
+									var ma = npc_name.match(/^(.*?)砦(\d+)$/);
+									var mo = owner_name.match(/^(.*?)守衛(\d+)$/);
+									if (ma != null && mo != null && ma[1] == mo[1] && ma[2] == mo[2]) {
+										owner_name = '-';
+									}
+									tsv += npc_name + "\t" + parseInt(axis[1]) + "\t" + parseInt(axis[2]) + "\t★" + star + "\t" + owner_name;
 								} else {
-									var match = attr_onmouseover.match(search_pattern);
-									if (match == null) {
-										continue;
-									}
-									if (match[4] == '') {
-										match[4] = '-';
-									}
-
-									if (i == 0) {
-										// NPC名、座標、★数、所有同盟
-										var pos = match[3].match(/([-]*\d+),([-]*\d+)/);
-										tsv += match[1] + "\t" + parseInt(pos[1]) + "\t" + parseInt(pos[2]) + "\t★" + match[5].length + "\t" + match[4];
+									// 隣接（北西、北、北東、西、東、南西、南、南東の順）。所持同盟がいない場合'-'
+									if (ally_name != '-') {
+										tsv += ally_name;
 									} else {
-										// 隣接（北西、北、北東、西、東、南西、南、南東の順）。所持同盟がいない場合'-'
-										if (match[4] != '-') {
-											tsv += match[4];
-										} else {
-											tsv += "-";
-										}
+										tsv += "-";
 									}
 								}
 								if (i != 8) {
@@ -4070,6 +3965,7 @@ function execCommonPart() {
 		var bigloc = loc.replace('/map.php?', '/big_map.php?');
 		var eleloc = loc.replace('/map.php?', '/elevation_map.php?');
 		var _3dloc = loc.replace('/map.php?', '/3d_map.php?');
+		var widloc = loc.replace('/map.php?', '/wide_map.php?');
 
 		var cur_x = 0;
 		var cur_y = 0;
@@ -4077,50 +3973,6 @@ function execCommonPart() {
 		if (match) {
 			cur_x = match[1];
 			cur_y = match[2];
-		}
-
-		var mapmenu;
-		if (g_beyond_options[COMMON_04]) {
-			mapmenu = [
-				['21x21', eleloc + '&map_size=21'], ['41x41', eleloc + '&map_size=41'], ['3D', _3dloc], ['旧51x51', bigloc + '&type=4'],
-			];
-		} else {
-			mapmenu = [
-				['11x11', loc + '&type=1'], ['21x21', loc + '&type=5'], ['51x51', loc + '&type=4'], ['スクロール21x21', bigloc + '&type=6&ssize=21'], ['スクロール51x51', bigloc + '&type=6&ssize=51'],
-			];
-		}
-
-		var allymenu;
-		if (g_beyond_options[COMMON_04]) {
-			allymenu = [
-				['連結状況', alurl + '/rampart_tower_group.php'],
-				['友軍状況', alurl + '/friendly_army.php'],
-				['遷都状況', alurl + '/castle_transfer.php'],
-				['同盟ログ', alurl + '/alliance_log.php',
-					[
-						['全て', alogurl], ['攻撃', alogurl + '?m=attack'], ['防御', alogurl + '?m=defense'], ['偵察', alogurl + '?m=scout'],
-						['破壊', alogurl + '?m=fall'], ['援軍', alogurl + '?m=reinforcement'], ['友軍', alogurl + '?m=friendly_army'], ['同盟', alogurl + '?m=alliance'],
-					],
-				],
-				['ランキング', alurl + '/ranking.php'], ['勢力リスト', alurl + '/dependency.php'], ['同盟掲示板', BASE_URL + '/bbs/topic_view.php'],
-				['同盟スキル', alurl + '/alliance_skill.php'],
-				['管理', alurl + '/manage.php'],
-				['配下同盟管理', alurl + '/manage_dep.php'],
-			];
-		} else {
-			allymenu = [
-				['友軍状況', alurl + '/friendly_army.php'],
-				['同盟ログ', alurl + '/alliance_log.php',
-					[
-						['全て', alogurl], ['攻撃', alogurl + '?m=attack'], ['防御', alogurl + '?m=defense'], ['偵察', alogurl + '?m=scout'],
-						['破壊', alogurl + '?m=fall'], ['援軍', alogurl + '?m=reinforcement'], ['友軍', alogurl + '?m=friendly_army'], ['同盟', alogurl + '?m=alliance'],
-					],
-				],
-				['ランキング', alurl + '/ranking.php'], ['勢力リスト', alurl + '/dependency.php'], ['同盟掲示板', BASE_URL + '/bbs/topic_view.php'],
-				['同盟スキル', alurl + '/alliance_skill.php'],
-				['管理', alurl + '/manage.php'],
-				['配下同盟管理', alurl + '/manage_dep.php'],
-			];
 		}
 
 		var menus = [
@@ -4154,9 +4006,26 @@ function execCommonPart() {
 				],
 			],
 			// 全体地図
-			mapmenu,
+			[
+				['21x21', eleloc + '&map_size=21'], ['41x41', eleloc + '&map_size=41'], ['91x91', widloc], ['3D', _3dloc], ['旧51x51', bigloc + '&type=4'],
+			],
 			// 同盟
-			allymenu,
+			[
+				['伍人組', alurl + '/squad.php'],
+				['友軍状況', alurl + '/friendly_army.php'],
+				['遷都状況', alurl + '/castle_transfer.php'],
+				['同盟ログ', alurl + '/alliance_log.php',
+					[
+						['全て', alogurl], ['攻撃', alogurl + '?m=attack'], ['防御', alogurl + '?m=defense'], ['偵察', alogurl + '?m=scout'],
+						['破壊', alogurl + '?m=fall'], ['援軍', alogurl + '?m=reinforcement'], ['友軍', alogurl + '?m=friendly_army'], ['同盟', alogurl + '?m=alliance'],
+					],
+				],
+				['ランキング', alurl + '/ranking.php'], ['勢力リスト', alurl + '/dependency.php'], ['同盟掲示板', BASE_URL + '/bbs/topic_view.php'],
+				['同盟スキル', alurl + '/alliance_skill.php'],
+				['助力履歴', alurl + '/assist_history.php'],
+				['管理', alurl + '/manage.php'],
+				['配下同盟管理', alurl + '/manage_dep.php'],
+			],
 			// デッキ
 			[
 				['城トップ', facurl + '/castle.php'],
@@ -4200,6 +4069,8 @@ function execCommonPart() {
 								['鹵獲', BASE_URL + '/council/order.php?order_type=3'],
 								['援軍', BASE_URL + '/council/order.php?order_type=4'],
 								['友軍', BASE_URL + '/council/order.php?order_type=5'],
+								['偵察', BASE_URL + '/council/order.php?order_type=8'],
+								['兵器', BASE_URL + '/council/order.php?order_type=9'],
 								['南蛮', BASE_URL + '/council/order.php?order_type=6'],
 								['回復', BASE_URL + '/council/order.php?order_type=7'],
 							],
@@ -4215,7 +4086,7 @@ function execCommonPart() {
 								['名声獲得', BASE_URL + '/council/arms.php?council_function_id=207'],
 							],
 						],
-						['城壁塔', BASE_URL + '/council/?tab=7'], // 地形1.0マップのみだが階層が深いのでこのままにしておく
+						['盟・伍', BASE_URL + '/council/?tab=8'],
 						['農村', BASE_URL + '/council/?tab=3'],
 						['設計', BASE_URL + '/council/?tab=4'],
 						['南蛮', BASE_URL + '/council/?tab=5'],
@@ -5752,8 +5623,8 @@ function execStockPart() {
 	// テーブルアクセス用のリスト
 	var tbllist = q$("table[class='tbl_cards_list'] tbody tr");
 
-	// カードNo.をトレードリンクにし、図鑑へのリンクを付与
-	if (g_beyond_options[DECK_02] == true && location.pathname !== "/card/card_stock_confirm.php") {
+	// トレードへのリンクを追加
+	if (g_beyond_options[DECK_02] == true && location.pathname !== "/card/card_stock_confirm.php" && location.pathname !== "/card/card_stock_file_confirm.php") {
 
 		// スキル名変換列の決定
 		var skill_col = 6;
@@ -5764,10 +5635,19 @@ function execStockPart() {
 		for (var i = 0; i < tbllist.length; i++) {
 			var tdlist = tbllist.eq(i).children("td");
 
-			// ID列
+			// カードNo.をトレードリンクにし、図鑑へのリンクを付与
+			var id = tdlist.eq(2).text().trim();
+			var replaced = "<a href='trade.php?s=price&o=a&t=no&k=" + id + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1&r_pr=&r_hr=&r_lr=&lim=1' target='_blank'>" + id + "</a>" +
+				"<br><a href='" + BASE_URL + "/card/busyo_data.php?search_options=&q=&status=&ability_type=&ability_value=&sort=card-no-asc&search_mode=detail&view_mode=&double_skill_height=&card_number=" + id + "' target='_blank'>(図鑑)</a>"
+
+			if (location.pathname === "/card/card_stock.php") {
+				replaced += '<input type="hidden" value="' + id+ '" name="move_card_data[' + i + '][card_number]">';
+			}
+			tdlist.eq(2).html(replaced);
+
 			// スキル名にトレードリンクを付与
 			var skills = tdlist.eq(skill_col).html().replace(/[ \t\r\n]/g, "").split("<br>");
-			var replaced = "";
+			replaced = "";
 			for (var j = 0; j < skills.length; j++) {
 				var match = skills[j].match(/(.*)(LV[0-9]*)/);
 				if (match) {
@@ -6248,7 +6128,6 @@ function draw_setting_window(append_target) {
 					<div><input type='checkbox' id='" + COMMON_01 + "'><label for='" + COMMON_01 + "'>資源タイマーを追加</label></input></div> \
 					<div><input type='checkbox' id='" + COMMON_02 + "'><label for='" + COMMON_02 + "'>プルダウンメニューを差し替える</label></input></div> \
 					<div><input type='checkbox' id='" + COMMON_03 + "'><label for='" + COMMON_03 + "'>天気バー上に天気予告を常時表示する</label></input></div> \
-					<div><input type='checkbox' id='" + COMMON_04 + "'><label for='" + COMMON_04 + "'>地形1.0</label></input></div> \
 				</div> \
 				<div id='tab-profile'> \
 					<div><input type='checkbox' id='" + PROFILE_01 + "'><label for='" + PROFILE_01 + "'>ランキングへのリンクを追加</label></input></div> \
@@ -10354,7 +10233,7 @@ function getDefaultOptions() {
 	settings[COMMON_01] = true;		// 資源タイマー
 	settings[COMMON_02] = true;		// プルダウンメニューを差し替える
 	settings[COMMON_03] = true;		// 天気予告常時表示
-	settings[COMMON_04] = true;		// 地形1.0
+	//settings[COMMON_04] = true;		// 地形1.0 (2024年時点ですべての鯖導入済のため削除)
 
 	// プロフィール
 	settings[PROFILE_01] = true;	// ランキングのリンク追加
