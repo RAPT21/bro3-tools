@@ -13,7 +13,7 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	1.0
+// @version 	1.1
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -41,6 +41,7 @@ jQuery.noConflict();
 // 2023.06.01	0.2	造兵種別選択機能追加。援軍派遣モード追加。
 // 2023.06.02	0.3	援軍派遣モードのとき、警護リンクをクリックで警護出兵画面に切り替えるように。
 // 2023.06.03	1.0	初公開。
+// 2024.01.18	1.1	地形1.0で、基本鋭兵の造兵ができなくなっていたのを修正
 
 
 var SERVER_SCHEME = location.protocol + "//";
@@ -188,6 +189,7 @@ function armyInfoById(value) {
 			if (callback) {
 				callback([], 0);
 			}
+			return;
 		}
 
 		// 拠点の造兵施設を収集
@@ -238,7 +240,7 @@ function armyInfoById(value) {
 				$("th.mainTtl", resp2).each(function(index, mainTtl){
 					if (index === 0) { return true; }
 
-					var sol_name = $(mainTtl).text();
+					var sol_name = $(mainTtl).text().replace(/\[.+\]/, "");
 					var time = $("td", $(mainTtl).closest("tr").next().next().next().next()).text();
 					if (Object.keys(armyTable).indexOf(sol_name) >= 0) {
 						armyTable[sol_name][IDX_CAN] = /00:00:0[01]/.test(time); // 即完のみ作成可能とする
