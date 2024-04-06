@@ -229,8 +229,8 @@ if (ua.indexOf("Firefox") > 0 && GM_info.version >= 4) {
 var SERVER_SCHEME = location.protocol + "//";
 var BASE_URL = SERVER_SCHEME + location.hostname;
 var SERVER_NAME = location.hostname.match(/^(.*)\.3gokushi/)[1];
-var SORT_UP_ICON = BASE_URL + "/20160427-03/extend_project/w945/img/trade/icon_up.gif";
-var SORT_DOWN_ICON = BASE_URL + "/20160427-03/extend_project/w945/img/trade/icon_down.gif";
+var SORT_UP_ICON = BASE_URL + "/BscROi7Vz9V1KQRhS5v3IDqASJOBMbShEHSmE3v+WhU=/20240402-01/extend_project/w945/img/trade/icon_up.gif";
+var SORT_DOWN_ICON = BASE_URL + "/BscROi7Vz9V1KQRhS5v3IDqASJOBMbShEHSmE3v+WhU=/20240402-01/extend_project/w945/img/trade/icon_down.gif";
 var AJAX_REQUEST_INTERVAL = 100; // (ms)
 
 //----------------------------------------------------------------------
