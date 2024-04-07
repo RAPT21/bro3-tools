@@ -384,7 +384,7 @@ function addGlobalStyles() {
 			float: left; \
 			width: 105px; \
 			height: 10px; \
-			background-image: url('/20160714-01/extend_project/w945/img/menu_mark.jpg'); \
+			background-image: url('/BscROi7Vz9V1KQRhS5v3IDqASJOBMbShEHSmE3v+WhU=/20240402-01/extend_project/w945/img/menu_mark.jpg'); \
 			z-index: 9902; \
 		} \
 		.menu > li a { \
@@ -2961,7 +2961,7 @@ function deckTabControl() {
 						q$("div[class='front'] span[class='status_frontback']").append(
 							"<span class='status_levelup'>" +
 								"<a href='" + BASE_URL + "/card/status_info.php?cid=" + cid + "'>" +
-									"<img src='/20160620-01/extend_project/w945/img/card/common/btn_levelup.png' alt='ステータス強化' title='ステータス強化' class='levelup'>" +
+									"<img src='/BscROi7Vz9V1KQRhS5v3IDqASJOBMbShEHSmE3v+WhU=/20240402-01/extend_project/w945/img/card/common/btn_levelup.png' alt='ステータス強化' title='ステータス強化' class='levelup'>" +
 								"</a>" +
 							"</span>"
 						);
@@ -4457,7 +4457,7 @@ function execCommonPart() {
 			weather_html.push(
 				'<p class="weather-ui__p--current-weather" style="' + weather_style + '">' +
 					'<span style="margin-right: 10px;">' + timeline + '</span>' +
-					'<img class="weather-icon" src="https://cdn-3gokushi.marv-games.jp/20181114-02/extend_project/w945/img/weather/icon_weather_' + weather_no + '_s.png">' +
+					'<img class="weather-icon" src="https://cdn-3gokushi.marv-games.jp/BscROi7Vz9V1KQRhS5v3IDqASJOBMbShEHSmE3v+WhU=/20240402-01/extend_project/w945/img/weather/icon_weather_' + weather_no + '_s.png">' +
 					'&nbsp;' +
 					'<span class="weather-name">' + weather + '</span>' +
 					effect +
@@ -5335,7 +5335,7 @@ function execUnionPart() {
 
 					q$("div[class^='left']", cards[i]).eq(0).append(
 						'<a href=' + BASE_URL + '/union/lvup.php?cid=' + card_id + '>' +
-							'<img style="width: 90%; cursor: pointer;" src="/20161222-01/extend_project/w945/img/union/btn_levelupskill_mini.png" alt="ベースカードをこのカードに変更" title="ベースカードをこのカードに変更">' +
+							'<img style="width: 90%; cursor: pointer;" src="/BscROi7Vz9V1KQRhS5v3IDqASJOBMbShEHSmE3v+WhU=/20240402-01/extend_project/w945/img/union/btn_levelupskill_mini.png" alt="ベースカードをこのカードに変更" title="ベースカードをこのカードに変更">' +
 						'</a>'
 					);
 				}
