@@ -229,8 +229,8 @@ if (ua.indexOf("Firefox") > 0 && GM_info.version >= 4) {
 var SERVER_SCHEME = location.protocol + "//";
 var BASE_URL = SERVER_SCHEME + location.hostname;
 var SERVER_NAME = location.hostname.match(/^(.*)\.3gokushi/)[1];
-var SORT_UP_ICON = BASE_URL + "/pqAx4lHWriQT7gRLz6jk82UCPQLJKZ0bFg48Li5CNA0=/20240502-01/extend_project/w945/img/trade/icon_up.gif";
-var SORT_DOWN_ICON = BASE_URL + "/pqAx4lHWriQT7gRLz6jk82UCPQLJKZ0bFg48Li5CNA0=/20240502-01/extend_project/w945/img/trade/icon_down.gif";
+var SORT_UP_ICON = BASE_URL + "/GGOZoF2VKcBpHjsf47M62JjwVP4NeP4cpvhpCiO4ny0=/20240627-01/extend_project/w945/img/trade/icon_up.gif";
+var SORT_DOWN_ICON = BASE_URL + "/GGOZoF2VKcBpHjsf47M62JjwVP4NeP4cpvhpCiO4ny0=/20240627-01/extend_project/w945/img/trade/icon_down.gif";
 var AJAX_REQUEST_INTERVAL = 100; // (ms)
 
 //----------------------------------------------------------------------
@@ -384,7 +384,7 @@ function addGlobalStyles() {
 			float: left; \
 			width: 105px; \
 			height: 10px; \
-			background-image: url('/pqAx4lHWriQT7gRLz6jk82UCPQLJKZ0bFg48Li5CNA0=/20240502-01/extend_project/w945/img/menu_mark.jpg'); \
+			background-image: url('/GGOZoF2VKcBpHjsf47M62JjwVP4NeP4cpvhpCiO4ny0=/20240627-01/extend_project/w945/img/menu_mark.jpg'); \
 			z-index: 9902; \
 		} \
 		.menu > li a { \
@@ -2961,7 +2961,7 @@ function deckTabControl() {
 						q$("div[class='front'] span[class='status_frontback']").append(
 							"<span class='status_levelup'>" +
 								"<a href='" + BASE_URL + "/card/status_info.php?cid=" + cid + "'>" +
-									"<img src='/pqAx4lHWriQT7gRLz6jk82UCPQLJKZ0bFg48Li5CNA0=/20240502-01/extend_project/w945/img/card/common/btn_levelup.png' alt='ステータス強化' title='ステータス強化' class='levelup'>" +
+									"<img src='/GGOZoF2VKcBpHjsf47M62JjwVP4NeP4cpvhpCiO4ny0=/20240627-01/extend_project/w945/img/card/common/btn_levelup.png' alt='ステータス強化' title='ステータス強化' class='levelup'>" +
 								"</a>" +
 							"</span>"
 						);
@@ -4457,7 +4457,7 @@ function execCommonPart() {
 			weather_html.push(
 				'<p class="weather-ui__p--current-weather" style="' + weather_style + '">' +
 					'<span style="margin-right: 10px;">' + timeline + '</span>' +
-					'<img class="weather-icon" src="https://cdn-3gokushi.marv-games.jp/pqAx4lHWriQT7gRLz6jk82UCPQLJKZ0bFg48Li5CNA0=/20240502-01/extend_project/w945/img/weather/icon_weather_' + weather_no + '_s.png">' +
+					'<img class="weather-icon" src="https://cdn-3gokushi.marv-games.jp/GGOZoF2VKcBpHjsf47M62JjwVP4NeP4cpvhpCiO4ny0=/20240627-01/extend_project/w945/img/weather/icon_weather_' + weather_no + '_s.png">' +
 					'&nbsp;' +
 					'<span class="weather-name">' + weather + '</span>' +
 					effect +
@@ -5335,7 +5335,7 @@ function execUnionPart() {
 
 					q$("div[class^='left']", cards[i]).eq(0).append(
 						'<a href=' + BASE_URL + '/union/lvup.php?cid=' + card_id + '>' +
-							'<img style="width: 90%; cursor: pointer;" src="/pqAx4lHWriQT7gRLz6jk82UCPQLJKZ0bFg48Li5CNA0=/20240502-01/extend_project/w945/img/union/btn_levelupskill_mini.png" alt="ベースカードをこのカードに変更" title="ベースカードをこのカードに変更">' +
+							'<img style="width: 90%; cursor: pointer;" src="/GGOZoF2VKcBpHjsf47M62JjwVP4NeP4cpvhpCiO4ny0=/20240627-01/extend_project/w945/img/union/btn_levelupskill_mini.png" alt="ベースカードをこのカードに変更" title="ベースカードをこのカードに変更">' +
 						'</a>'
 					);
 				}
