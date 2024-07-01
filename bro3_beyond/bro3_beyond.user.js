@@ -2135,6 +2135,7 @@ function mapTabControl() {
 					postdata['radio_reserve_type'] = 0;
 					postdata['card_id'] = 204;
 					postdata['btn_send'] = '出兵';
+					if (location.search.includes("deck_mode")) postdata['deck_mode'] = 2;
 
 					// 出兵処理
 					var wait = false;
