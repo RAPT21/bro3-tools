@@ -8,7 +8,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	0.4
+// @version 	0.5
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
@@ -25,7 +25,7 @@ q$ = jQuery;
 //					自動ダスを無効にしたい場合、スクリプト内カスタム設定で変更可能
 //					「あなたが持てる武将カード」が残り0枚になるか、現在のBP/チケットが規定に満たない場合は停止
 // 2022.06.21  0.4	カードNoで残すカードを指定できるように。残すカードNoになく、スキル名もマッチしないカードを削除対象にします。
-// 2024.08.21  0.5	シルバーEXチケットに対応
+// 2024.08.21  0.5	シルバーEXチケット、指南チケットに対応
 
 var VERSION = "2024.08.21.dev";
 
@@ -183,3 +183,6 @@ inject('busyodasDraw_20061507000');
 
 // シルバーEX
 inject('busyodasDraw_20061503000');
+
+// 指南
+inject('busyodasDraw_18110527000');
