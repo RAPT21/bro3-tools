@@ -6,6 +6,8 @@
 // @include		https://*.3gokushi.jp/village.php*
 // @include		http://*.3gokushi.jp/facility/castle_send_troop.php*
 // @include		https://*.3gokushi.jp/facility/castle_send_troop.php*
+// @include		http://*.3gokushi.jp/card/deck.php*
+// @include		https://*.3gokushi.jp/card/deck.php*
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @exclude		https://*.3gokushi.jp/maintenance*
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
@@ -14,9 +16,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2023.08.14
+// @version 	2024.09.13
 // ==/UserScript==
-var VERSION = "2023.08.14"; 	// バージョン情報
+var VERSION = "2024.09.13"; 	// バージョン情報
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -79,6 +81,9 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2023.07.03 ソース内に不要となった旧オプション設定が残ったままだった
 // 2023.08.11 2023.07.02版以降にて、繰り返しクエスト用出兵の出兵先として0以下の座標を出力先に指定できなくなっていた不具合を修正
 // 2023.08.14 設定画面のレイアウト調整、TP鹵獲オプションβを追加
+// 2024.09.13 TP鹵獲オプションβで設定できる武将数を6→12へ増加
+//			  鹵獲出兵時の制限距離を設定できるように。最大距離=0に設定すると上限なしになります。
+//			  デッキ画面でも設定画面を開けるように
 
 
 //----------------------------------------
@@ -106,6 +111,8 @@ var OPT_TROOPS_01	= 'dtr01'; // 出兵武将カードID
 var OPT_TROOPS_02	= 'dtr02'; // 出兵先座標x
 var OPT_TROOPS_03	= 'dtr03'; // 出兵先座標y
 var OPT_TROOPS_04	= 'dtr04'; // 最小討伐ゲージ
+var OPT_TROOPS_05	= 'dtr05'; // 最小距離
+var OPT_TROOPS_06	= 'dtr06'; // 最大距離
 
 var OPT_CAPTURE_10	= 'dca10'; // 鹵獲出兵1
 var OPT_CAPTURE_11	= 'dca11'; // _カードID
@@ -148,6 +155,48 @@ var OPT_CAPTURE_62	= 'dca62'; // _座標x
 var OPT_CAPTURE_63	= 'dca63'; // _座標y
 var OPT_CAPTURE_64	= 'dca64'; // _討伐ゲージ
 var OPT_CAPTURE_65	= 'dca65'; // _スキルID
+
+var OPT_CAPTURE_70	= 'dca70'; // 鹵獲出兵7
+var OPT_CAPTURE_71	= 'dca71'; // _カードID
+var OPT_CAPTURE_72	= 'dca72'; // _座標x
+var OPT_CAPTURE_73	= 'dca73'; // _座標y
+var OPT_CAPTURE_74	= 'dca74'; // _討伐ゲージ
+var OPT_CAPTURE_75	= 'dca75'; // _スキルID
+
+var OPT_CAPTURE_80	= 'dca80'; // 鹵獲出兵8
+var OPT_CAPTURE_81	= 'dca81'; // _カードID
+var OPT_CAPTURE_82	= 'dca82'; // _座標x
+var OPT_CAPTURE_83	= 'dca83'; // _座標y
+var OPT_CAPTURE_84	= 'dca84'; // _討伐ゲージ
+var OPT_CAPTURE_85	= 'dca85'; // _スキルID
+
+var OPT_CAPTURE_90	= 'dca90'; // 鹵獲出兵9
+var OPT_CAPTURE_91	= 'dca91'; // _カードID
+var OPT_CAPTURE_92	= 'dca92'; // _座標x
+var OPT_CAPTURE_93	= 'dca93'; // _座標y
+var OPT_CAPTURE_94	= 'dca94'; // _討伐ゲージ
+var OPT_CAPTURE_95	= 'dca95'; // _スキルID
+
+var OPT_CAPTURE_A0	= 'dcaA0'; // 鹵獲出兵10
+var OPT_CAPTURE_A1	= 'dcaA1'; // _カードID
+var OPT_CAPTURE_A2	= 'dcaA2'; // _座標x
+var OPT_CAPTURE_A3	= 'dcaA3'; // _座標y
+var OPT_CAPTURE_A4	= 'dcaA4'; // _討伐ゲージ
+var OPT_CAPTURE_A5	= 'dcaA5'; // _スキルID
+
+var OPT_CAPTURE_B0	= 'dcaB0'; // 鹵獲出兵11
+var OPT_CAPTURE_B1	= 'dcaB1'; // _カードID
+var OPT_CAPTURE_B2	= 'dcaB2'; // _座標x
+var OPT_CAPTURE_B3	= 'dcaB3'; // _座標y
+var OPT_CAPTURE_B4	= 'dcaB4'; // _討伐ゲージ
+var OPT_CAPTURE_B5	= 'dcaB5'; // _スキルID
+
+var OPT_CAPTURE_C0	= 'dcaC0'; // 鹵獲出兵12
+var OPT_CAPTURE_C1	= 'dcaC1'; // _カードID
+var OPT_CAPTURE_C2	= 'dcaC2'; // _座標x
+var OPT_CAPTURE_C3	= 'dcaC3'; // _座標y
+var OPT_CAPTURE_C4	= 'dcaC4'; // _討伐ゲージ
+var OPT_CAPTURE_C5	= 'dcaC5'; // _スキルID
 
 
 //----------------------------------------
@@ -690,8 +739,30 @@ function acceptAttentionQuest(callback) {
 
 // 自動出兵
 function sendTroop(vID, cardID, cardGage, targetX, targetY, cardSkillID, callback) {
+	var minimum_troop_distance = g_options[OPT_TROOPS_05];	// 最小距離
+	var maximum_troop_distance = g_options[OPT_TROOPS_06];	// 最大距離
+
 	// 指定の武将を指定の拠点から指定座標に向ける
 	httpGET(`/village_change.php?village_id=${vID}&from=menu&page=%2Fvillage.php#ptop`,function(x){
+		// 指定座標までの距離を求める
+		var htmldoc = document.createElement("html");
+			htmldoc.innerHTML = x;
+		var distance = 0;
+		var xy = xpath('//div[@id="basepoint"]//span[@class="xy"]', htmldoc).snapshotItem(0).textContent;
+		var m = xy.match(/\(([-]?[0-9]+),([-]?[0-9]+)\)/);
+		if (m && m.length >= 2) {
+			var x = forInt(m[1], 0);
+			var y = forInt(m[2], 0);
+			var distance = Math.pow(Math.pow(targetX - x, 2) + Math.pow(targetY - y, 2), 0.5);
+			distance = Math.floor(distance * 100) / 100;
+			if (distance < minimum_troop_distance || (maximum_troop_distance > 0 && distance > maximum_troop_distance)) {
+				console.log(`距離が ${distance} なので設定おかしい？　やめとくね。`);
+				callback(false);
+				return;
+			}
+		}
+
+		// 出兵情報
 		var c = {
 			'village_x_value': targetX, // 出兵先座標x
 			'village_y_value': targetY, // 出兵先座標y
@@ -707,7 +778,7 @@ function sendTroop(vID, cardID, cardGage, targetX, targetY, cardSkillID, callbac
 			c[`use_skill_id[${cardID}]`] = cardSkillID;
 		}
 
-		console.log(SERVER+"拠点 "+vID+" から ("+targetX+","+targetY+") へ "+cardID+" [討伐:"+cardGage+"] スキル:"+cardSkillID+" で出兵します。");
+		console.log(SERVER+"拠点 "+vID+" から ("+targetX+","+targetY+") [距離:"+distance+"] へ "+cardID+" [討伐:"+cardGage+"] スキル:"+cardSkillID+" で出兵します。");
 		httpPOST('/facility/castle_send_troop.php',c,function(x){
 			if (callback) {
 				callback(true);
@@ -739,7 +810,13 @@ function performCaptures() {
 		{ enabled: OPT_CAPTURE_30, card_id: OPT_CAPTURE_31, x: OPT_CAPTURE_32, y: OPT_CAPTURE_33, gage: OPT_CAPTURE_34, skill_id: OPT_CAPTURE_35 },
 		{ enabled: OPT_CAPTURE_40, card_id: OPT_CAPTURE_41, x: OPT_CAPTURE_42, y: OPT_CAPTURE_43, gage: OPT_CAPTURE_44, skill_id: OPT_CAPTURE_45 },
 		{ enabled: OPT_CAPTURE_50, card_id: OPT_CAPTURE_51, x: OPT_CAPTURE_52, y: OPT_CAPTURE_53, gage: OPT_CAPTURE_54, skill_id: OPT_CAPTURE_55 },
-		{ enabled: OPT_CAPTURE_60, card_id: OPT_CAPTURE_61, x: OPT_CAPTURE_62, y: OPT_CAPTURE_63, gage: OPT_CAPTURE_64, skill_id: OPT_CAPTURE_65 }
+		{ enabled: OPT_CAPTURE_60, card_id: OPT_CAPTURE_61, x: OPT_CAPTURE_62, y: OPT_CAPTURE_63, gage: OPT_CAPTURE_64, skill_id: OPT_CAPTURE_65 },
+		{ enabled: OPT_CAPTURE_70, card_id: OPT_CAPTURE_71, x: OPT_CAPTURE_72, y: OPT_CAPTURE_73, gage: OPT_CAPTURE_74, skill_id: OPT_CAPTURE_75 },
+		{ enabled: OPT_CAPTURE_80, card_id: OPT_CAPTURE_81, x: OPT_CAPTURE_82, y: OPT_CAPTURE_83, gage: OPT_CAPTURE_84, skill_id: OPT_CAPTURE_85 },
+		{ enabled: OPT_CAPTURE_90, card_id: OPT_CAPTURE_91, x: OPT_CAPTURE_92, y: OPT_CAPTURE_93, gage: OPT_CAPTURE_94, skill_id: OPT_CAPTURE_95 },
+		{ enabled: OPT_CAPTURE_A0, card_id: OPT_CAPTURE_A1, x: OPT_CAPTURE_A2, y: OPT_CAPTURE_A3, gage: OPT_CAPTURE_A4, skill_id: OPT_CAPTURE_A5 },
+		{ enabled: OPT_CAPTURE_B0, card_id: OPT_CAPTURE_B1, x: OPT_CAPTURE_B2, y: OPT_CAPTURE_B3, gage: OPT_CAPTURE_B4, skill_id: OPT_CAPTURE_B5 },
+		{ enabled: OPT_CAPTURE_C0, card_id: OPT_CAPTURE_C1, x: OPT_CAPTURE_C2, y: OPT_CAPTURE_C3, gage: OPT_CAPTURE_C4, skill_id: OPT_CAPTURE_C5 }
 	];
 
 	var index = 0;
@@ -1202,6 +1279,13 @@ function openSettingBox() {
 			ccreateEdit(divTroop, OPT_TROOPS_03, "", 6);
 			ccreateEdit(divTroop, OPT_TROOPS_04, "討伐", 6);
 
+			var divTroop2 = q$("<div />", {
+				style: 'padding: 1px; padding-left: 16px'
+			});
+			q$(td200).append(divTroop2);
+			ccreateEdit(divTroop2, OPT_TROOPS_05, "最小距離", 6);
+			ccreateEdit(divTroop2, OPT_TROOPS_06, "最大距離", 6);
+
 			ccreateText(td200, "　");
 			ccreateText(td200, "報酬受領", true);
 			ccreateText(td200, "※ クエスト報酬のうち、資源以外は自動で受け取ります。");
@@ -1226,6 +1310,12 @@ function openSettingBox() {
 		ccreateCaptureBox(td200, OPT_CAPTURE_40, OPT_CAPTURE_41, OPT_CAPTURE_42, OPT_CAPTURE_43, OPT_CAPTURE_44, OPT_CAPTURE_45);
 		ccreateCaptureBox(td200, OPT_CAPTURE_50, OPT_CAPTURE_51, OPT_CAPTURE_52, OPT_CAPTURE_53, OPT_CAPTURE_54, OPT_CAPTURE_55);
 		ccreateCaptureBox(td200, OPT_CAPTURE_60, OPT_CAPTURE_61, OPT_CAPTURE_62, OPT_CAPTURE_63, OPT_CAPTURE_64, OPT_CAPTURE_65);
+		ccreateCaptureBox(td200, OPT_CAPTURE_70, OPT_CAPTURE_71, OPT_CAPTURE_72, OPT_CAPTURE_73, OPT_CAPTURE_74, OPT_CAPTURE_75);
+		ccreateCaptureBox(td200, OPT_CAPTURE_80, OPT_CAPTURE_81, OPT_CAPTURE_82, OPT_CAPTURE_83, OPT_CAPTURE_84, OPT_CAPTURE_85);
+		ccreateCaptureBox(td200, OPT_CAPTURE_90, OPT_CAPTURE_91, OPT_CAPTURE_92, OPT_CAPTURE_93, OPT_CAPTURE_94, OPT_CAPTURE_95);
+		ccreateCaptureBox(td200, OPT_CAPTURE_A0, OPT_CAPTURE_A1, OPT_CAPTURE_A2, OPT_CAPTURE_A3, OPT_CAPTURE_A4, OPT_CAPTURE_A5);
+		ccreateCaptureBox(td200, OPT_CAPTURE_B0, OPT_CAPTURE_B1, OPT_CAPTURE_B2, OPT_CAPTURE_B3, OPT_CAPTURE_B4, OPT_CAPTURE_B5);
+		ccreateCaptureBox(td200, OPT_CAPTURE_C0, OPT_CAPTURE_C1, OPT_CAPTURE_C2, OPT_CAPTURE_C3, OPT_CAPTURE_C4, OPT_CAPTURE_C5);
 			ccreateText(td200, "　");
 
 	Setting_Box.appendChild(tr100);
@@ -1291,6 +1381,8 @@ function getDefaultOptions() {
 	settings[OPT_TROOPS_02]		= 0; // 出兵先座標x
 	settings[OPT_TROOPS_03]		= 0; // 出兵先座標y
 	settings[OPT_TROOPS_04]		= 100; // 討伐ゲージ
+	settings[OPT_TROOPS_05]		= 20; // 最小距離
+	settings[OPT_TROOPS_06]		= 30; // 最大距離
 
 	settings[OPT_CAPTURE_10]	= false; // 鹵獲出兵1
 	settings[OPT_CAPTURE_11]	= 0; // _カードID
@@ -1333,6 +1425,48 @@ function getDefaultOptions() {
 	settings[OPT_CAPTURE_63]	= 0; // _座標y
 	settings[OPT_CAPTURE_64]	= 500; // _討伐ゲージ
 	settings[OPT_CAPTURE_65]	= ''; // _スキルID
+
+	settings[OPT_CAPTURE_70]	= false; // 鹵獲出兵7
+	settings[OPT_CAPTURE_71]	= 0; // _カードID
+	settings[OPT_CAPTURE_72]	= 0; // _座標x
+	settings[OPT_CAPTURE_73]	= 0; // _座標y
+	settings[OPT_CAPTURE_74]	= 500; // _討伐ゲージ
+	settings[OPT_CAPTURE_75]	= ''; // _スキルID
+
+	settings[OPT_CAPTURE_80]	= false; // 鹵獲出兵8
+	settings[OPT_CAPTURE_81]	= 0; // _カードID
+	settings[OPT_CAPTURE_82]	= 0; // _座標x
+	settings[OPT_CAPTURE_83]	= 0; // _座標y
+	settings[OPT_CAPTURE_84]	= 500; // _討伐ゲージ
+	settings[OPT_CAPTURE_85]	= ''; // _スキルID
+
+	settings[OPT_CAPTURE_90]	= false; // 鹵獲出兵9
+	settings[OPT_CAPTURE_91]	= 0; // _カードID
+	settings[OPT_CAPTURE_92]	= 0; // _座標x
+	settings[OPT_CAPTURE_93]	= 0; // _座標y
+	settings[OPT_CAPTURE_94]	= 500; // _討伐ゲージ
+	settings[OPT_CAPTURE_95]	= ''; // _スキルID
+
+	settings[OPT_CAPTURE_A0]	= false; // 鹵獲出兵10
+	settings[OPT_CAPTURE_A1]	= 0; // _カードID
+	settings[OPT_CAPTURE_A2]	= 0; // _座標x
+	settings[OPT_CAPTURE_A3]	= 0; // _座標y
+	settings[OPT_CAPTURE_A4]	= 500; // _討伐ゲージ
+	settings[OPT_CAPTURE_A5]	= ''; // _スキルID
+
+	settings[OPT_CAPTURE_B0]	= false; // 鹵獲出兵11
+	settings[OPT_CAPTURE_B1]	= 0; // _カードID
+	settings[OPT_CAPTURE_B2]	= 0; // _座標x
+	settings[OPT_CAPTURE_B3]	= 0; // _座標y
+	settings[OPT_CAPTURE_B4]	= 500; // _討伐ゲージ
+	settings[OPT_CAPTURE_B5]	= ''; // _スキルID
+
+	settings[OPT_CAPTURE_C0]	= false; // 鹵獲出兵12
+	settings[OPT_CAPTURE_C1]	= 0; // _カードID
+	settings[OPT_CAPTURE_C2]	= 0; // _座標x
+	settings[OPT_CAPTURE_C3]	= 0; // _座標y
+	settings[OPT_CAPTURE_C4]	= 500; // _討伐ゲージ
+	settings[OPT_CAPTURE_C5]	= ''; // _スキルID
 
 	return settings;
 }
