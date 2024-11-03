@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.38
+// @version		1.09.39
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -136,6 +136,7 @@
 // 1.09.36	2023/11/28	11/15のメンテ以降で、同盟画面のBeyond機能が動作しなくなっていたのを修正
 // 1.09.37	2023/12/11	カード倉庫画面で、カードNo.によるトレードと図鑑へのリンクを追加 by @pla2999 #64
 // 1.09.38	2024/02/15	RAPT. 地形2.0対応。地形未対応時の処理を削除
+// 1.09.39	2024/11/04	RAPT. 画像パスがメンテのたびに変更される対策
 
 
 //----------------------------------------------------------------------
@@ -229,8 +230,10 @@ if (ua.indexOf("Firefox") > 0 && GM_info.version >= 4) {
 var SERVER_SCHEME = location.protocol + "//";
 var BASE_URL = SERVER_SCHEME + location.hostname;
 var SERVER_NAME = location.hostname.match(/^(.*)\.3gokushi/)[1];
-var SORT_UP_ICON = BASE_URL + "/HoREuhEsJodYTjsHP9-WlblFMSCZoixRojwwm3QiVi8=/20240711-01/extend_project/w945/img/trade/icon_up.gif";
-var SORT_DOWN_ICON = BASE_URL + "/HoREuhEsJodYTjsHP9-WlblFMSCZoixRojwwm3QiVi8=/20240711-01/extend_project/w945/img/trade/icon_down.gif";
+var RESOURCE_BASE_PATH = q$("head link[rel=icon]").attr("href").replace("favicon.ico", "");
+var IMG_SRC_BASE_PATH = RESOURCE_BASE_PATH + "img/";
+var SORT_UP_ICON = BASE_URL + IMG_SRC_BASE_PATH + "trade/icon_up.gif";
+var SORT_DOWN_ICON = BASE_URL + IMG_SRC_BASE_PATH + "trade/icon_down.gif";
 var AJAX_REQUEST_INTERVAL = 100; // (ms)
 
 //----------------------------------------------------------------------
@@ -384,7 +387,7 @@ function addGlobalStyles() {
 			float: left; \
 			width: 105px; \
 			height: 10px; \
-			background-image: url('/HoREuhEsJodYTjsHP9-WlblFMSCZoixRojwwm3QiVi8=/20240711-01/extend_project/w945/img/menu_mark.jpg'); \
+			background-image: url('" + IMG_SRC_BASE_PATH + "menu_mark.jpg'); \
 			z-index: 9902; \
 		} \
 		.menu > li a { \
@@ -2135,7 +2138,9 @@ function mapTabControl() {
 					postdata['radio_reserve_type'] = 0;
 					postdata['card_id'] = 204;
 					postdata['btn_send'] = '出兵';
-					if (location.search.includes("deck_mode")) postdata['deck_mode'] = 2;
+					if (location.search.includes("deck_mode")) {
+						postdata['deck_mode'] = 2;
+					}
 
 					// 出兵処理
 					var wait = false;
@@ -2962,7 +2967,7 @@ function deckTabControl() {
 						q$("div[class='front'] span[class='status_frontback']").append(
 							"<span class='status_levelup'>" +
 								"<a href='" + BASE_URL + "/card/status_info.php?cid=" + cid + "'>" +
-									"<img src='/HoREuhEsJodYTjsHP9-WlblFMSCZoixRojwwm3QiVi8=/20240711-01/extend_project/w945/img/card/common/btn_levelup.png' alt='ステータス強化' title='ステータス強化' class='levelup'>" +
+									"<img src='" + IMG_SRC_BASE_PATH + "card/common/btn_levelup.png' alt='ステータス強化' title='ステータス強化' class='levelup'>" +
 								"</a>" +
 							"</span>"
 						);
@@ -4458,7 +4463,7 @@ function execCommonPart() {
 			weather_html.push(
 				'<p class="weather-ui__p--current-weather" style="' + weather_style + '">' +
 					'<span style="margin-right: 10px;">' + timeline + '</span>' +
-					'<img class="weather-icon" src="https://cdn-3gokushi.marv-games.jp/HoREuhEsJodYTjsHP9-WlblFMSCZoixRojwwm3QiVi8=/20240711-01/extend_project/w945/img/weather/icon_weather_' + weather_no + '_s.png">' +
+					'<img class="weather-icon" src="' + IMG_SRC_BASE_PATH + 'weather/icon_weather_' + weather_no + '_s.png">' +
 					'&nbsp;' +
 					'<span class="weather-name">' + weather + '</span>' +
 					effect +
@@ -5336,7 +5341,7 @@ function execUnionPart() {
 
 					q$("div[class^='left']", cards[i]).eq(0).append(
 						'<a href=' + BASE_URL + '/union/lvup.php?cid=' + card_id + '>' +
-							'<img style="width: 90%; cursor: pointer;" src="/HoREuhEsJodYTjsHP9-WlblFMSCZoixRojwwm3QiVi8=/20240711-01/extend_project/w945/img/union/btn_levelupskill_mini.png" alt="ベースカードをこのカードに変更" title="ベースカードをこのカードに変更">' +
+							'<img style="width: 90%; cursor: pointer;" src="' + IMG_SRC_BASE_PATH + 'union/btn_levelupskill_mini.png" alt="ベースカードをこのカードに変更" title="ベースカードをこのカードに変更">' +
 						'</a>'
 					);
 				}
