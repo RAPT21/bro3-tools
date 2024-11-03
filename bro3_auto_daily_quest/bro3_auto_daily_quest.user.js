@@ -84,6 +84,7 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2024.09.13 TP鹵獲オプションβで設定できる武将数を6→12へ増加
 //			  鹵獲出兵時の制限距離を設定できるように。最大距離=0に設定すると上限なしになります。
 //			  デッキ画面でも設定画面を開けるように
+// 2024.11.04 ヨロズダスの残り回数表示を天候エリア右側から資源表示の下部へ移動
 
 
 //----------------------------------------
@@ -105,7 +106,7 @@ var OPT_FEATURE_03	= 'dfe03'; // 全ての報告書を既読にする
 var OPT_FEATURE_04	= 'dfe04'; // 洛陽への路 通算ログイン報酬を受取る
 var OPT_FEATURE_05	= 'dfe05'; // 育成クエスト（勝戦の計、攻戦の計）自動受注
 var OPT_FEATURE_06	= 'dfe06'; // [β機能] 洛陽への路のルートを自動で切り替える
-var OPT_FEATURE_07	= 'dfe07'; // ヨロズダスの残り回数を天候エリアに表示
+var OPT_FEATURE_07	= 'dfe07'; // ヨロズダスの残り回数を資源表示の下部に表示
 
 var OPT_TROOPS_01	= 'dtr01'; // 出兵武将カードID
 var OPT_TROOPS_02	= 'dtr02'; // 出兵先座標x
@@ -443,11 +444,11 @@ function auto_duel()
 // ヨロズダスを引く
 function yorozudas(callback){
 	httpGET('/reward_vendor/reward_vendor.php',function(x){
-		// ヨロズダスの残り回数を天候エリアに表示
+		// ヨロズダスの残り回数を資源表示の下部に表示
 		if (g_options[OPT_FEATURE_07]) {
 			var yz = q$('#yorozu-msg');
 			if (yz.length === 0) {
-				q$("#weather-ui").append(q$('<p />', {
+				q$("#status_resources_point table.resource_tables tr:eq(1) td:eq(2)").append(q$('<p />', {
 					id: 'yorozu-msg',
 					style: 'color: white; text-align: right;'
 				}).append(''));
@@ -868,7 +869,7 @@ function callSendTroopEx(enabled, cardID, targetX, targetY, minGage, skillID, ca
 		q$(htmldoc).find("dd:contains('待機中')").each(function(){
 			var m = q$("a", this).attr("href").match(/village_id%3D(\d+)%26card_id%3D(\d+)/i);
 
-			// 指定されている武将カードIDと配置拠点IDが一致したもののみ有効とする
+			// 指定されている武将カードIDを探す
 			if (m && m.length == 3 && m[2] == cardID) {
 				// セットされている拠点IDを覚える
 				vID = m[1];
@@ -892,7 +893,7 @@ function callSendTroopEx(enabled, cardID, targetX, targetY, minGage, skillID, ca
 			sendTroop(vID, cardID, cardGage, targetX, targetY, skillID, callback);
 			return true;
 		} else {
-			console.log("[出兵クエ] 討伐ゲージ回復待ち。current="+cardGage);
+			console.log(`[出兵クエ] 討伐ゲージ回復待ち。${cardID}: ${cardGage}/${minGage}`);
 			if (callback) {
 				callback(false);
 			}
@@ -1299,7 +1300,7 @@ function openSettingBox() {
 		ccreateCheckBox(td200, OPT_FEATURE_03, " 全ての報告書を既読にする", "報告書タブにあるボタンを自動で押します。");
 		ccreateCheckBox(td200, OPT_FEATURE_04, " 洛陽への路 通算ログイン報酬を受取る", "洛陽への路の通算ログイン報酬を自動で受け取ります。");
 		ccreateCheckBox(td200, OPT_FEATURE_05, " 育成クエスト自動受注", "育成クエスト（勝戦の計、攻戦の計）を自動で受注します。");
-		ccreateCheckBox(td200, OPT_FEATURE_07, " ヨロズダスの残り回数を天候エリアに表示", "現在引けるヨロズダスの内容を天候エリア右側に表示します。");
+		ccreateCheckBox(td200, OPT_FEATURE_07, " ヨロズダスの残り回数を資源表示の下部に表示", "現在引けるヨロズダスの内容を資源表示の下部に表示します。");
 			ccreateText(td200, "　");
 		ccreateCheckBox(td200, OPT_FEATURE_06, " [β機能] 洛陽への路のルートを自動で切り替える", "洛陽への路 ルートログイン報酬のルートを次の優先順位で選択します。\n　1.自動建設アイテム\n　2.南蛮防御アイテム\n　3.なるべく下のルート\nただし、隘路のチケット宝箱（序）、チケット宝箱（中）の場合は可能であれば海路を選択します。");
 			ccreateText(td200, "　");
@@ -1375,7 +1376,7 @@ function getDefaultOptions() {
 	settings[OPT_FEATURE_04]	= true; // 洛陽への路 通算ログイン報酬を受取る
 	settings[OPT_FEATURE_05]	= true; // 育成クエスト（勝戦の計、攻戦の計）自動受注
 	settings[OPT_FEATURE_06]	= false; // [β機能] 洛陽への路のルートを自動で切り替える
-	settings[OPT_FEATURE_07]	= true; // ヨロズダスの残り回数を天候エリアに表示
+	settings[OPT_FEATURE_07]	= true; // ヨロズダスの残り回数を資源表示の下部に表示
 
 	settings[OPT_TROOPS_01]		= 0; // 出兵武将カードID
 	settings[OPT_TROOPS_02]		= 0; // 出兵先座標x
