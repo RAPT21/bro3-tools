@@ -852,7 +852,7 @@ var chkptn = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -
 									resources += ' NPC領地';
 								}
 							}
-							allRoutes += '(' + fixed[i].x + ',' + fixed[i].y + ")\t" + resources + "\r\n";
+							allRoutes += '(' + fixed[i].x + ',' + fixed[i].y + ")[" + mapdata[keyx][keyy].elevation + "]\t" + resources + "\r\n";
 							lines++;
 						}
 
