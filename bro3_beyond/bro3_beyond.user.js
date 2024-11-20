@@ -232,8 +232,8 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 var SERVER_NAME = location.hostname.match(/^(.*)\.3gokushi/)[1];
 var RESOURCE_BASE_PATH = q$("head link[rel=icon]").attr("href").replace("favicon.ico", "");
 var IMG_SRC_BASE_PATH = RESOURCE_BASE_PATH + "img/";
-var SORT_UP_ICON = BASE_URL + IMG_SRC_BASE_PATH + "trade/icon_up.gif";
-var SORT_DOWN_ICON = BASE_URL + IMG_SRC_BASE_PATH + "trade/icon_down.gif";
+var SORT_UP_ICON = IMG_SRC_BASE_PATH + "trade/icon_up.gif";
+var SORT_DOWN_ICON = IMG_SRC_BASE_PATH + "trade/icon_down.gif";
 var AJAX_REQUEST_INTERVAL = 100; // (ms)
 
 //----------------------------------------------------------------------
