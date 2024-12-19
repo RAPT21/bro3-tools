@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.39
+// @version		1.09.40
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -137,6 +137,8 @@
 // 1.09.37	2023/12/11	カード倉庫画面で、カードNo.によるトレードと図鑑へのリンクを追加 by @pla2999 #64
 // 1.09.38	2024/02/15	RAPT. 地形2.0対応。地形未対応時の処理を削除
 // 1.09.39	2024/11/04	RAPT. 画像パスがメンテのたびに変更される対策
+// 1.09.40	2024/12/20	本拠地＋に空きコストがあるのに、城壁塔に内政武将を１クリックセットができない問題を修正 by @pla2999 #77
+//						RAPT. 「地図＞出兵画面＞出兵時にデッキ武将を一斉出兵する機能を追加」にて、警護デッキから援軍出兵ができなくなっていた問題を修正
 
 
 //----------------------------------------------------------------------
@@ -1755,6 +1757,7 @@ function mapTabControl() {
 			// 出兵座標の取得
 			var troop_x = q$("input[name='village_x_value']").val();
 			var troop_y = q$("input[name='village_y_value']").val();
+			var deck_mode = q$("input[name='deck_mode']:checked").val();
 
 			var solvals;
 			if (q$("#weather-ui").length === 0) {
@@ -2140,6 +2143,8 @@ function mapTabControl() {
 					postdata['btn_send'] = '出兵';
 					if (location.search.includes("deck_mode")) {
 						postdata['deck_mode'] = 2;
+					} else {
+						postdata['deck_mode'] = deck_mode;
 					}
 
 					// 出兵処理
