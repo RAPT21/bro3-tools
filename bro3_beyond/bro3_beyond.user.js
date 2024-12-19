@@ -232,8 +232,8 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 var SERVER_NAME = location.hostname.match(/^(.*)\.3gokushi/)[1];
 var RESOURCE_BASE_PATH = q$("head link[rel=icon]").attr("href").replace("favicon.ico", "");
 var IMG_SRC_BASE_PATH = RESOURCE_BASE_PATH + "img/";
-var SORT_UP_ICON = BASE_URL + IMG_SRC_BASE_PATH + "trade/icon_up.gif";
-var SORT_DOWN_ICON = BASE_URL + IMG_SRC_BASE_PATH + "trade/icon_down.gif";
+var SORT_UP_ICON = IMG_SRC_BASE_PATH + "trade/icon_up.gif";
+var SORT_DOWN_ICON = IMG_SRC_BASE_PATH + "trade/icon_down.gif";
 var AJAX_REQUEST_INTERVAL = 100; // (ms)
 
 //----------------------------------------------------------------------
@@ -7901,13 +7901,16 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 		// 回復スキルは最初に見つかった通常拠点で発動させればよい。空きコスト大きいほうでよい
 		var mainVacantId = 0;
 		var subVacantId = 0;
+		var isMainFound = false;
+		var isSubFound = false;
 		q$.each(villages, function() {
 			if (this.isset_domestic === false) { // 内政官不在
-				if (villages[0] === this) {
+				if (isMainFound === false && this.deck_kind === 1) {
 					mainVacantId = this.village_id;
-				} else {
+					isMainFound = true;
+				} else if (isSubFound === false) {
 					subVacantId = this.village_id;
-					return false;
+					isSubFound = true;
 				}
 			}
 		});
@@ -8100,7 +8103,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 										q$(this).html("<span class='skb'>[使用]</span>");
 										return;
 									}
-									var vacant_cost = (villages[0].village_id === parseInt(village_id, 10)) ? domesticMainVacantCost : domesticSubVacantCost;
+									var vacant_cost = (village_info.deck_kind === 1) ? domesticMainVacantCost : domesticSubVacantCost;
 									if (card_cost > vacant_cost) {
 										alert(`${village_info.village_name}の空きコストが不足しています`);
 										q$(this).parent().children('td').html(recover_html);
