@@ -430,6 +430,9 @@ var chkptn = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -
 				if ( mtext.match(/君主名<\/dt><dd>NPC/) !== null ) {
 					obj.npc_territory = true;
 				}
+				if ( mtext.match(/<span class=\"elevation-name\">(.*?)<\/span>/) != null ) {
+					obj.elevation = RegExp.$1;
+				}
 				obj.stars = -1;
 				obj.wood = 0;
 				obj.stone = 0;
@@ -849,7 +852,7 @@ var chkptn = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -
 									resources += ' NPC領地';
 								}
 							}
-							allRoutes += '(' + fixed[i].x + ',' + fixed[i].y + ")\t" + resources + "\r\n";
+							allRoutes += '(' + fixed[i].x + ',' + fixed[i].y + ")[" + mapdata[keyx][keyy].elevation + "]\t" + resources + "\r\n";
 							lines++;
 						}
 
