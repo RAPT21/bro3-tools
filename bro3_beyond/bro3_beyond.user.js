@@ -6706,16 +6706,25 @@ function deck_resttime_checker() {
 							var chp = q$("td", info.eq(5)).eq(0).text();
 							var cno = q$("td", info.eq(0)).eq(0).text();
 
-							// スキル名＋回復時間
+							// スキルId + スキル名＋回復時間
 							var info2 = q$("div[class='kaifuku_cnt']", cards.eq(i));
+							info2.children().slice(0, 5).remove(); // 余分な要素を除く
 							var skills = [];
-							for (var j = 2; j < info2.length || j <= 5; j++) {
-								// 副将スキルは外す (2023/05/26 by pla2999)
+							var skill_id = -1;
+							for (var j = 0; j < info2.children().length / 2; j++) {
 								var skill = q$("b", info2).eq(j).text().replace(/[ \t]/g, "");
+								// 副将スキルは外す (2023/05/26 by pla2999)
 								if (/^副/.test(skill)) continue;
+								if (skill === "\u00A0") continue; // スキル欄が空欄ならスキップ 
 								skill = skill.replace(/^.*:/, "");
+								var skill_info = getSkillInfo(skill, q$('div.set a.control__button--deck-set-small', cards.eq(i)).attr('href'));
+								if (skill_info === null) { // 内政設定できないスキル
+									skill_id = -1;
+								} else {
+									skill_id = skill_info.skill_id;
+								}
 								var rest = q$("p", info2).eq(j).text().replace(/[\t]/g, "");
-								skills.push({name: skill, rest: rest});
+								skills.push({id: skill_id, name: skill, rest: rest});
 							}
 
 							// スキル説明文
@@ -6746,10 +6755,12 @@ function deck_resttime_checker() {
 								if (skills[j].name.match(regexp) != null || texts[j].match(regexp) != null || cno == skill_name) {
 									var is_use = (skills[j].rest == '回復済み' && is_domskills[j] == true && chp == 100);
 									hits.push({
-										skill: skills[j],						// スキル名＋回復時間
+										skill: skills[j],						// スキルId + スキル名＋回復時間
 										is_dom: is_domskills[j],				// 内政スキルとして使用可能か
 										is_passive: passives[j],				// パッシブスキルか
 										is_heal: is_healing_skill(texts[j]),	// 回復スキルか
+										is_any_village: is_healing_skill_at_anywhere(texts[j]),
+																				// 拠点不問のスキルか？
 										is_use: is_use							// 現在使用可能なスキルか
 									});
 								}
@@ -6824,44 +6835,42 @@ function deck_resttime_checker() {
 						var recovery = 0;
 						for (var i = 0; i < result.length; i++) {
 							// ステータスの描画
-							var st = "";
-							if (result[i].hp < 100) {
-								st = "style='color: red;'";
-							}
 							var tr = "<tr>" +
-								"<td class='tpad'>" + result[i].name + "</td>" +
-								"<td class='tpad'>" + result[i].level + "</td>" +
-								"<td class='tpad' " + st + ">" + result[i].hp + "</td>" +
-								"<td class='tpad'>" + result[i].cost + "</td>" +
-								"<td class='tpad' style='padding-left: 4px; padding-right: 4px;'>" + result[i].selector + "</td>";
+								`<td class="tpad">${result[i].name}</td>`+
+								`<td class="tpad">${result[i].level}</td>` +
+								`<td class="tpad">${result[i].hp}</td>` +
+								`<td class="tpad">${result[i].cost}</td>` +
+								`<td class="tpad" style="padding-left: 4px; padding-right: 4px;">` +
+								result[i].selector + "</td>";
 
 							// スキルの描画
 							for (var j = 0; j < maxhits; j++) {
+								var skillInfo = result[i].skills[j];
 								if (j == 0) {
-									var chk = result[i].skills[j].skill.rest.replace(/[: -]/g, "");
+									var chk = skillInfo.skill.rest.replace(/[: -]/g, "");
 									if (!isNaN(chk)) {
 										recovery ++;
 									}
 								}
-								if (typeof result[i].skills[j] != 'undefined') {
+								if (typeof skillInfo != 'undefined') {
 									var color = "black";
-									if (result[i].skills[j].is_heal == true) {
+									if (skillInfo.is_heal == true) {
 										color = "red";
-									} else if (result[i].skills[j].is_dom == true) {
+									} else if (skillInfo.is_dom == true) {
 										color = "blue";
 									}
-									tr += "<td class='tpad' style='color: " + color + ";'>" + result[i].skills[j].skill.name + "</td>";
-									if (result[i].skills[j].is_use == true) {
-										tr += "<td class='tpad ctime' cardid='" + result[i].cardid + "' skill='" + result[i].skills[j].skill.name + "' heal='" + result[i].skills[j].is_heal + "'>" +
-											"<span style='cursor: pointer; color: " + color + ";'>[スキル使用]</span>" +
+									tr += `<td class="tpad" style="color: ${color};">${skillInfo.skill.name}</td>`;
+									if (skillInfo.is_use == true) {
+										tr += `<td class="tpad ctime" cardid="${result[i].cardid}" skillid="${skillInfo.skill.id}" skill="${skillInfo.skill.name}" heal="${skillInfo.is_heal}" any="${skillInfo.is_any_village}">` +
+											`<span style="cursor: pointer; color: ${color};">[スキル使用]</span>` +
 											"</td>";
 									} else {
-										var recovery_time = result[i].skills[j].skill.rest;
+										var recovery_time = skillInfo.skill.rest;
 										if (/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(recovery_time)) {
 											var remain_time = parseInt((new Date(recovery_time) - new Date())/(1000 * 60));
-											tr += "<td class='tpad'>" + recovery_time + "(" + remain_time + "分)" + "</td>";
+											tr += `<td class="tpad">${recovery_time}(${remain_time}分)</td>`;
 										} else {
-											tr += "<td class='tpad'>" + recovery_time + "</td>";
+											tr += `<td class="tpad">${recovery_time}</td>`;
 										}
 									}
 								} else {
@@ -6889,31 +6898,75 @@ function deck_resttime_checker() {
 								}
 								g_event_process = true;
 
+								var info = basicDeckInfo();
+								var villages = info.villages;
+								var mainVacantCost = info.cost.vacant.normal.main;
+								var subVacantCost = info.cost.vacant.normal.sub;
+								var card_cost = parseFloat(q$(this).closest('tr').find("td").eq(3).text().trim());
+								var card_id = q$(this).attr('cardid');
+								var skill_id = q$(this).attr('skillid');
+                                var action_type; // "set":0, 内政:1, 使用:2
+
 								// 現在拠点の取得
 								var village_id = q$("#deck_add_selected_village").val();
+								var village_info = (function() {
+									var info = null;
+									q$.each(villages, function() {
+										if (this.village_id === parseInt(village_id, 10)) {
+											info = Object.assign({}, this);
+											return false;
+										}
+									});
+									return info;
+								})();
+								var vacant_cost =
+									(village_info.deck_kind === 1) ? mainVacantCost : subVacantCost;
+
+								if (q$(this).attr('heal') == 'true') {	// 回復系スキル
+									if (q$(this).attr('any') == 'true') {
+										({ villageId: village_id, vacantCost: vacant_cost } =
+											decideVillageForHeal(villages, mainVacantCost, subVacantCost));
+									}
+									action_type = 2;
+								} else { // 通常系スキル
+									action_type = 1;
+								}
+
+                                // コストチェック
+                                if (card_cost > vacant_cost) {
+                                    alert("スキル発動できる拠点がありません");
+                                    g_event_process = false;
+                                    return;
+                                }
+
+                                var ssid = getSessionId();
+                                var params = {
+                                    ssid: ssid,
+                                    target_card: card_id,
+                                    mode: "domestic_set",
+                                    deck_mode: 1,
+                                    action_type: action_type, //"set":0, 内政:1, 使用:2
+                                    choose_attr1_skill: skill_id
+                                };
+                                params[`selected_village[${card_id}]`] = village_id;
 
 								// スキル発動後
 								var _this = q$(this);
-								exec_domestic_skill_step1(
-									q$(this).children('span'),			// 状態表示用エレメント
-									q$(this).attr('heal') == 'true',	// 回復の場合実施後デッキから落とす
-									village_id,
-									q$(this).attr('cardid'),	// カードID
-									q$(this).attr('skill'),		// 実行スキル名
-									function() {
-										// 成功時挙動
-										q$("td[class*='ctime']", _this.parent('tr')).off();
-										q$("td[class*='ctime'] span", _this.parent('tr')).html(
-											"<span style='color: gray;'>使用不可</span>"
-										);
-										g_event_process = false;
-									},
-									function() {
-										// 失敗時挙動
-										_this.children('span').text("[スキル使用]");
-										g_event_process = false;
-									}
-								);
+                                q$(this).children('span').html("<span style='color: blue;'>スキル発動中</span>");
+                                q$.ajax('/card/deck.php', {
+                                    type: 'post',
+                                    data: params,
+                                    success: function() {
+                                        q$("td[class*='ctime']", _this.parent('tr')).off();
+                                        q$("td[class*='ctime'] span", _this.parent('tr')).html(
+                                            "<span style='color: gray;'>使用不可</span>");
+                                        g_event_process = false;
+                                    },
+                                    error: function() {
+                                         _this.children('span').text("[スキル使用]");
+                                        g_event_process = false;
+                                    }
+                                });
 							}
 						);
 					}
@@ -7879,6 +7932,55 @@ function returnCard(element, callback){
 }
 
 //--------------------------//
+// 内政用拠点決定関数       //
+//--------------------------//
+function decideVillageForHeal(villages, mainVacantCost, subVacantCost) {
+	var useSkillVillageId = 0;		// 回復系スキル発動拠点ID
+	var useSkillVacantCost = 0;		// 回復系スキル用空きコスト
+
+	// 回復スキルは最初に見つかった通常拠点で発動させればよい。空きコスト大きいほうでよい
+	var mainVacantId = 0;
+	var subVacantId = 0;
+	var isMainFound = false;
+	var isSubFound = false;
+	q$.each(villages, function() {
+		if (this.isset_domestic === false) { // 内政官不在
+			if (isMainFound === false && this.deck_kind === 1) {
+				mainVacantId = this.village_id;
+				isMainFound = true;
+			} else if (isSubFound === false) {
+				subVacantId = this.village_id;
+				isSubFound = true;
+			}
+		}
+	});
+
+	var canMain = (mainVacantId > 0 && mainVacantCost > 0);
+	var canSub = (subVacantId > 0 && subVacantCost > 0);
+	if (canMain && canSub && mainVacantCost < subVacantCost) {
+		// 本拠・拠点とも内政できる拠点がある場合、空きコストが大きいほうを使う
+		canMain = false;
+	}
+
+	if (canMain) {
+		useSkillVillageId = mainVacantId;
+		useSkillVacantCost = mainVacantCost;
+	} else if (canSub) {
+		useSkillVillageId = subVacantId;
+		useSkillVacantCost = subVacantCost;
+	}
+
+	if (useSkillVillageId) {
+		console.log(`回復系スキルを使う拠点: ${useSkillVillageId} / cost: ${useSkillVacantCost}`);
+	} else {
+		console.log(`回復系スキルを使える拠点がない`);
+	}
+	//console.warn(JSON.stringify(villages));
+
+	return {villageId: useSkillVillageId, vacantCost: useSkillVacantCost };
+}
+
+//--------------------------//
 // デッキ：スキル系機能追加 //
 //--------------------------//
 function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_skill_effect, is_easy_deck_set) {
@@ -7892,55 +7994,21 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 	var cards = q$("#cardFileList div[class='cardStatusDetail label-setting-mode']");
 
 	var villages = [];
-	var domesticMainVacantCost = 0;	// 内政用本拠空きコスト
-	var domesticSubVacantCost = 0;	// 内政用拠点空きコスト
-	var useSkillVillageId = 0;		// 回復系スキル発動拠点ID
+	var mainVacantCost = 0;	// 内政用本拠空きコスト
+	var subVacantCost = 0;	// 内政用拠点空きコスト
+	var useSkillVillageID = -1;		// 回復系スキル発動拠点ID
 	var useSkillVacantCost = 0;		// 回復系スキル用空きコスト
+
 	if (is_draw_use_link) {
 		var info = basicDeckInfo();
 		villages = info.villages;
 
-		domesticMainVacantCost = info.cost.vacant.normal.main;
-		domesticSubVacantCost = info.cost.vacant.normal.sub;
+		mainVacantCost = info.cost.vacant.normal.main;
+		subVacantCost = info.cost.vacant.normal.sub;
 
 		// 回復スキルは最初に見つかった通常拠点で発動させればよい。空きコスト大きいほうでよい
-		var mainVacantId = 0;
-		var subVacantId = 0;
-		var isMainFound = false;
-		var isSubFound = false;
-		q$.each(villages, function() {
-			if (this.isset_domestic === false) { // 内政官不在
-				if (isMainFound === false && this.deck_kind === 1) {
-					mainVacantId = this.village_id;
-					isMainFound = true;
-				} else if (isSubFound === false) {
-					subVacantId = this.village_id;
-					isSubFound = true;
-				}
-			}
-		});
-
-		var canMain = (mainVacantId > 0 && info.cost.vacant.normal.main > 0);
-		var canSub = (subVacantId > 0 && info.cost.vacant.normal.sub > 0);
-		if (canMain && canSub && info.cost.vacant.normal.main < info.cost.vacant.normal.sub) {
-			// 本拠・拠点とも内政できる拠点がある場合、空きコストが大きいほうを使う
-			canMain = false;
-		}
-
-		if (canMain) {
-			useSkillVillageId = mainVacantId;
-			useSkillVacantCost = info.cost.vacant.normal.main;
-		} else if (canSub) {
-			useSkillVillageId = subVacantId;
-			useSkillVacantCost = info.cost.vacant.normal.sub;
-		}
-
-		if (useSkillVillageId) {
-			console.log(`回復系スキルを使う拠点: ${useSkillVillageId} / cost: ${useSkillVacantCost}`);
-		} else {
-			console.log(`回復系スキルを使える拠点がない`);
-		}
-		//console.warn(JSON.stringify(villages));
+		({villageId: useSkillVillageId, vacantCost: useSkillVacantCost } =
+			decideVillageForHeal(villages, mainVacantCost, subVacantCost));
 	}
 
 	// パッシブスキル描画＋内政スキル発動リンク作成
@@ -8004,6 +8072,13 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 					if (is_healing_skill(skillTexts.eq(j).text()) == true) {
 						// スキル発動拠点はどこでもいいスキルか
 						var anyVillage = is_healing_skill_at_anywhere(skillTexts.eq(j).text());
+						var vacant_cost;
+						if (anyVillage) {
+							village_id = useSkillVillageId;
+							vacant_cost = useSkillVacantCost;
+						} else {
+							vacant_cost = (village_info.deck_kind === 1) ? mainVacantCost : subVacantCost;
+						}
 
 						// 回復系、発動拠点はどこでもいい：緑、指定した拠点：赤
 						var use_link_html = `<span class='${anyVillage?"skg":"skr"}'>[使用]</span>`;
@@ -8021,7 +8096,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 
 									// コストチェック
 									var card_cost = parseFloat(q$('div.right table.statusParameter1 tr:eq(3) td:eq(0)', elembase).text());
-									if (card_cost > useSkillVacantCost) {
+									if (card_cost > vacant_cost) {
 										alert("スキル発動できる拠点がありません");
 										q$(this).parent().children('td').html(recover_html);
 										q$(this).html(use_link_html);
@@ -8040,7 +8115,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 									if (skill_id.length > 0 && useSkillVillageId > 0) {
 										// ステータス表示変更
 										q$(this).parent().children('td').html(
-											"<span style='color: blue;'>スキルEXEX発動中</span>"
+											"<span style='color: blue;'>スキル発動中</span>"
 										);
 
 										var ssid = getSessionId();
@@ -8108,7 +8183,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 										q$(this).html("<span class='skb'>[使用]</span>");
 										return;
 									}
-									var vacant_cost = (village_info.deck_kind === 1) ? domesticMainVacantCost : domesticSubVacantCost;
+									var vacant_cost = (village_info.deck_kind === 1) ? mainVacantCost : subVacantCost;
 									if (card_cost > vacant_cost) {
 										alert(`${village_info.village_name}の空きコストが不足しています`);
 										q$(this).parent().children('td').html(recover_html);
@@ -10209,7 +10284,7 @@ function is_healing_skill(skill_text) {
 }
 function is_healing_skill_at_anywhere(skill_text) {
 	// 回復系スキルでないスキルは false
-	var isTargetSkillText = ['回復', '討伐', 'ずつ獲得'];
+	var isTargetSkillText = ['回復', '討伐', 'ずつ獲得',  '全拠点'];
 	var isFound = false;
 	for (var i = 0; i < isTargetSkillText.length; i++) {
 		if (skill_text.indexOf(isTargetSkillText[i]) != -1) {
