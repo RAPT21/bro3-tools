@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.40
+// @version		1.09.41
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -139,6 +139,7 @@
 // 1.09.39	2024/11/04	RAPT. 画像パスがメンテのたびに変更される対策
 // 1.09.40	2024/12/20	本拠地＋に空きコストがあるのに、城壁塔に内政武将を１クリックセットができない問題を修正 by @pla2999 #77
 //						RAPT. 「地図＞出兵画面＞出兵時にデッキ武将を一斉出兵する機能を追加」にて、警護デッキから援軍出兵ができなくなっていた問題を修正
+// 1.09.41	2025/03/12	RAPT. デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）で、赤字リンク（呼集系スキルなど）が指定拠点以外で発動しないよう修正
 
 
 //----------------------------------------------------------------------
@@ -8010,6 +8011,8 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 						target_el.html(use_link_html);
 						target_el.eq(0).on(
 							'click', function() {
+								var isAnywhere = q$(this).hasClass('skg');
+
 								// 自動回復スキル発動実行
 								if (q$(this).children('span').length > 0) {
 									q$(this).html("[使用中]");
@@ -8019,13 +8022,31 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 
 									var elembase = q$(this).parents("div[class='cardStatusDetail label-setting-mode']");
 
-									// コストチェック
 									var card_cost = parseFloat(q$('div.right table.statusParameter1 tr:eq(3) td:eq(0)', elembase).text());
-									if (card_cost > useSkillVacantCost) {
-										alert("スキル発動できる拠点がありません");
-										q$(this).parent().children('td').html(recover_html);
-										q$(this).html(use_link_html);
-										return;
+
+									// 拠点指定の場合、内政官チェック
+									if (!isAnywhere) {
+										if (village_info.isset_domestic) {
+											alert(`${village_info.village_name}に内政設定済みの武将がいるため使用できません`);
+											q$(this).parent().children('td').html(recover_html);
+											q$(this).html(use_link_html);
+											return;
+										}
+										var vacant_cost = (village_info.deck_kind === 1) ? domesticMainVacantCost : domesticSubVacantCost;
+										if (card_cost > vacant_cost) {
+											alert(`${village_info.village_name}の空きコストが不足しています`);
+											q$(this).parent().children('td').html(recover_html);
+											q$(this).html(use_link_html);
+											return;
+										}
+									} else {
+										// コストチェック
+										if (card_cost > useSkillVacantCost) {
+											alert("スキル発動できる拠点がありません");
+											q$(this).parent().children('td').html(recover_html);
+											q$(this).html(use_link_html);
+											return;
+										}
 									}
 
 									// 使用スキルの取得
@@ -8052,7 +8073,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 											action_type: 2, //"set":0, 内政:1, 使用:2
 											choose_attr1_skill: skill_id
 										};
-										params[`selected_village[${card_id}]`] = anyVillage ? useSkillVillageId : village_id;
+										params[`selected_village[${card_id}]`] = isAnywhere ? useSkillVillageId : village_id;
 
 										var _this = q$(this);
 										q$.ajax('/card/deck.php', {
