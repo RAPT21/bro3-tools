@@ -9,7 +9,7 @@
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
 // @connect		3gokushi.jp
 // @author		RAPT
-// @version 	0.2
+// @version 	0.3
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -18,12 +18,14 @@ jQuery.noConflict();
 // 宝物庫から同一アイテムを複数まとめて高速移動できます。
 //
 // ▼注意
-// このツールを使っていると、アイテムショップがうまく動作しない模様です。
-// 必要な時以外は無効にしておくことを推奨します。
+// ・このツールを使っていると、アイテムショップなど一部の画面が正常動作しないことがあるようです。
+// 　必要な時以外は無効にしておくことを推奨します。
+// ・ファイルの空き容量が0のとき、まとめて移動するボタンを表示できません。
 
 
 // 2024.01.11	0.1	初版
 // 2024.01.12	0.2	カード移動中の進捗表示、移動処理の中断機能を追加
+//				0.3 進捗表示の調整
 
 
 var SERVER_SCHEME = location.protocol + "//";
@@ -31,7 +33,11 @@ var SERVER_BASE = SERVER_SCHEME + location.hostname;
 
 var SERVER_NAME = location.hostname.match(/^(.*)\.3gokushi/)[1];
 
+//----------------------------------------
+// 保存設定部品定義
+//----------------------------------------
 var g_aborting = false;
+
 
 //==========[本体]==========
 (function($) {
@@ -76,6 +82,8 @@ var g_aborting = false;
 				}
 
 				willRequest(index);
+				index++;
+
 				$.ajax({
 					url: SERVER_BASE + '/item/index.php',
 					type: 'POST',
@@ -93,8 +101,6 @@ var g_aborting = false;
 						didResponse(index, receivedCount, false);
 					}
 				});
-
-				index++;
 			}, 200
 		);
 	}
@@ -203,16 +209,16 @@ var g_aborting = false;
 							log1.text(moving);
 							log2.text('');
 
-							moveItem(ssid, itemId, count, function(index){
-								log1.text(`${moving} - [${index}/${count}]`);
+							moveItem(ssid, itemId, count, function(index) {
+								log1.text(`${moving} - [${1 + index}/${count}] ${percent(1 + index, count)}%`);
 							}, function(postCount, receivedCount, isAllDone){
+								log2.text(`通信完了 - [${receivedCount}/${postCount}] ${percent(receivedCount, postCount)}%`);
+
 								if (isAllDone) {
 									log1.text(`${receivedCount} 移動完了。画面を更新してください`);
 									log2.text('');
 									$(`#useMultiItems_abort-${index}`).css('display', 'none');
 									$(`#useMultiItems_reload-${index}`).css('display', 'block');
-								} else {
-									log2.text(`通信完了 - [${receivedCount}/${postCount}]`);
 								}
 							});
 						}
@@ -255,6 +261,15 @@ var g_aborting = false;
 	addPanel();
 
 })(jQuery);
+
+
+//----------------------------------------
+// 補助
+//----------------------------------------
+function percent(progress, total) {
+	// 小数点以下第二位以降を切り捨てて、32.4 のような小数を返す
+	return ((progress * 1000.0 / total) |  0) / 10;
+}
 
 
 //----------------------------------------
