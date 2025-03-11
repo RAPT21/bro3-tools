@@ -21,6 +21,7 @@
 | [bro3_quick_make_soldier](bro3_quick_make_soldier) | ★人気★　都市画面でワンクリックで造兵したり、援軍派遣したり |
 | [bro3_auto_capture_setting](bro3_auto_capture_setting) | 自動鹵獲出兵先設定を簡単に編集 |
 | [bro3_detect_busho_id](bro3_detect_busho_id) | 武将カードIDを調べる |
+| [bro3_npc_expedition](bro3_npc_expedition) | 北伐出陣画面で予備兵画像をクリックするとまとめて引率兵を切り替える |
 
 ## 臨時
 
@@ -31,7 +32,7 @@
 
 ## 動作環境
 
-拙作ツールは原則として Windows 10 (64bit) 日本語版 + 下記ブラウザで動作確認しています。
+拙作ツールは原則として Windows 11 (64bit) 日本語版 + 下記ブラウザで動作確認しています。
 下記環境以外でも動作するようですが、詳細については把握していませんのでお問い合わせいただいてもお答えいたしかねます。
 
 - [Waterfox Classic 2022.08](https://github.com/WaterfoxCo/Waterfox-Classic/releases/tag/2022.08-classic) + Greasemonkey 3.17
