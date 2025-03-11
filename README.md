@@ -21,6 +21,7 @@
 | [bro3_quick_make_soldier](bro3_quick_make_soldier) | ★人気★　都市画面でワンクリックで造兵したり、援軍派遣したり |
 | [bro3_auto_capture_setting](bro3_auto_capture_setting) | 自動鹵獲出兵先設定を簡単に編集 |
 | [bro3_detect_busho_id](bro3_detect_busho_id) | 武将カードIDを調べる |
+| [bro3_use_multi_items](bro3_use_multi_items) | 宝物庫のカードを複数まとめてファイルへ移動する |
 | [bro3_npc_expedition](bro3_npc_expedition) | 北伐出陣画面で予備兵画像をクリックするとまとめて引率兵を切り替える |
 
 ## 臨時
