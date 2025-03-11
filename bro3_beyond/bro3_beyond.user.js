@@ -140,6 +140,7 @@
 // 1.09.40	2024/12/20	本拠地＋に空きコストがあるのに、城壁塔に内政武将を１クリックセットができない問題を修正 by @pla2999 #77
 //						RAPT. 「地図＞出兵画面＞出兵時にデッキ武将を一斉出兵する機能を追加」にて、警護デッキから援軍出兵ができなくなっていた問題を修正
 // 1.09.41	2025/03/12	RAPT. デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）で、赤字リンク（呼集系スキルなど）が指定拠点以外で発動しないよう修正
+//						- メニューに南蛮襲来、北伐出陣（EX出現No）の項目などを追加
 
 
 //----------------------------------------------------------------------
@@ -3972,6 +3973,8 @@ function execCommonPart() {
 		var alogurl = alurl + '/alliance_log.php';
 		var facurl = BASE_URL + '/facility';
 		var facsturl = facurl + '/unit_status.php';
+		var npcasurl = BASE_URL + '/npc_assault/';
+		var npcexurl = BASE_URL + '/npc_expedition/';
 
 		var loc = q$("li.gnavi02 a").attr('href');
 		var bigloc = loc.replace('/map.php?', '/big_map.php?');
@@ -4001,6 +4004,7 @@ function execCommonPart() {
 						['歴史書', BASE_URL + '/historybook/game_result.php'],
 						['改武将カードカスタマイズ', BASE_URL + '/card_customize/make_select.php'],
 						['武将カード自動保護設定', BASE_URL + '/user/card_protection_setting.php'],
+						['敵襲表示時間設定', BASE_URL + '/user/indicator_defense_setting.php'],
 					],
 				],
 				['洛陽への路', BASE_URL + '/reward/login_bonus',
@@ -4014,6 +4018,41 @@ function execCommonPart() {
 				['交換所', BASE_URL + '/item/point_exchange.php',
 					[
 						['KP交換所', BASE_URL + '/item/point_exchange.php?selected_shop_type=kp'],
+					],
+				],
+				['南蛮襲来', npcasurl,
+					[
+						['進攻編', npcasurl + '?npc_assault_category=1'],
+						['強攻編', npcasurl + '?npc_assault_category=2'],
+						['猛攻編', npcasurl + '?npc_assault_category=3'],
+						['極攻編', npcasurl + '?npc_assault_category=4'],
+					],
+				],
+				['北伐出陣', npcexurl,
+					[
+						['同盟挑戦', npcexurl + '?stage_category=4',
+							// 同盟EX
+							[
+								['同盟No7', npcexurl + 'index.php?stage_category=4&stage_id=4007'],
+							],
+						],
+						['連戦挑戦', npcexurl + '?stage_category=3'],
+						['部隊戦', npcexurl + '?stage_category=2',
+							// 部隊EX
+							[
+								['部隊No5', npcexurl + 'index.php?stage_category=2&stage_id=2005'],
+								['部隊No9', npcexurl + 'index.php?stage_category=2&stage_id=2009'],
+								['部隊No12', npcexurl + 'index.php?stage_category=2&stage_id=2012'],
+							],
+						],
+						['武将戦', npcexurl + '?stage_category=1',
+							// 武将EX
+							[
+								['武将No7', npcexurl + 'index.php?stage_category=1&stage_id=1007'],
+								['武将No15', npcexurl + 'index.php?stage_category=1&stage_id=1015'],
+								['武将No20', npcexurl + 'index.php?stage_category=1&stage_id=1020'],
+							],
+						],
 					],
 				],
 			],
@@ -4233,6 +4272,9 @@ function execCommonPart() {
 						['自城・拠点表示', BASE_URL + '/conditions/top.php#mode-my'],
 						['NPC砦・城表示', BASE_URL + '/conditions/top.php#mode-npc'],
 						['直近陥落表示', BASE_URL + '/conditions/top.php#mode-fall'],
+						['標高', BASE_URL + '/conditions/top.php#mode-elevation'],
+						['攻略', BASE_URL + '/conditions/analysis.php?m=npc_mastery'],
+						['遠征', BASE_URL + '/conditions/analysis.php?m=expedition'],
 					],
 				],
 				['同盟', BASE_URL + '/alliance/npc_mastery_ranking.php',
@@ -4258,6 +4300,7 @@ function execCommonPart() {
 						['デュエル', BASE_URL + '/user/ranking.php?m=duel'],
 						['南蛮襲来', BASE_URL + '/user/ranking.php?m=npc_assault'],
 						['北伐出陣', BASE_URL + '/user/ranking.php?m=npc_expedition'],
+						['君主官位', BASE_URL + '/user/deck_power_grade/ranking.php'],
 						['期間', BASE_URL + '/user/period_ranking.php'],
 						['週間', BASE_URL + '/user/weekly_ranking.php'],
 					],
