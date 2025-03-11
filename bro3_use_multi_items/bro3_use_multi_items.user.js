@@ -9,7 +9,7 @@
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
 // @connect		3gokushi.jp
 // @author		RAPT
-// @version 	0.3
+// @version 	0.4
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -26,6 +26,7 @@ jQuery.noConflict();
 // 2024.01.11	0.1	初版
 // 2024.01.12	0.2	カード移動中の進捗表示、移動処理の中断機能を追加
 //				0.3 進捗表示の調整
+// 2025.01.24	0.4	歴史書モードでも使えるように
 
 
 var SERVER_SCHEME = location.protocol + "//";
@@ -44,11 +45,6 @@ var g_aborting = false;
 
 	// 広告iframe内で呼び出された場合は無視
 	if (!$("#container").length) {
-		return;
-	}
-
-	// 歴史書モードの場合は無視
-	if ($("#sidebar img[title=歴史書]").length){
 		return;
 	}
 
@@ -135,7 +131,7 @@ var g_aborting = false;
 			$('.iu_close', aside).on({
 				click: function() {
 					$(".itemUse").hide();
-  				$(".iu_card").hide();
+					$(".iu_card").hide();
 					g_aborting = true;
 				}
 			});
