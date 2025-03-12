@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.41
+// @version		1.09.42
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -141,6 +141,7 @@
 //						RAPT. 「地図＞出兵画面＞出兵時にデッキ武将を一斉出兵する機能を追加」にて、警護デッキから援軍出兵ができなくなっていた問題を修正
 // 1.09.41	2025/03/12	RAPT. デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）で、赤字リンク（呼集系スキルなど）が指定拠点以外で発動しないよう修正
 //						- メニューに南蛮襲来、北伐出陣（EX出現No）の項目などを追加
+// 1.09.42	2025/03/12	RAPT. デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）で、緑字リンクが任意拠点で発動できなくなっていた不具合を修正
 
 
 //----------------------------------------------------------------------
@@ -8050,11 +8051,11 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 						var anyVillage = is_healing_skill_at_anywhere(skillTexts.eq(j).text());
 
 						// 回復系、発動拠点はどこでもいい：緑、指定した拠点：赤
-						var use_link_html = `<span class='${anyVillage?"skg":"skr"}'>[使用]</span>`;
+						var use_link_html = `<span id="beyond_use_skill" class='${anyVillage?"skg":"skr"}'>[使用]</span>`;
 						target_el.html(use_link_html);
 						target_el.eq(0).on(
 							'click', function() {
-								var isAnywhere = q$(this).hasClass('skg');
+								var isAnywhere = q$("#beyond_use_skill").hasClass('skg');
 
 								// 自動回復スキル発動実行
 								if (q$(this).children('span').length > 0) {
