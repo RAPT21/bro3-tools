@@ -8142,11 +8142,6 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 									var elembase = q$(this).parents("div[class='cardStatusDetail label-setting-mode']");
 
 									var card_cost = parseFloat(q$('div.right table.statusParameter1 tr:eq(3) td:eq(0)', elembase).text());
-									if (card_cost > vacant_cost) {
-										alert("スキル発動できる拠点がありません");
-										q$(this).parent().children('td').html(recover_html);
-										q$(this).html(use_link_html);
-										return;
 
 									// 拠点指定の場合、内政官チェック
 									if (!isAnywhere) {
