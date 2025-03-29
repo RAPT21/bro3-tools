@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.42
+// @version		1.09.43
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -142,6 +142,7 @@
 // 1.09.41	2025/03/12	RAPT. デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）で、赤字リンク（呼集系スキルなど）が指定拠点以外で発動しないよう修正
 //						- メニューに南蛮襲来、北伐出陣（EX出現No）の項目などを追加
 // 1.09.42	2025/03/12	RAPT. デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）で、緑字リンクが任意拠点で発動できなくなっていた不具合を修正
+// 1.09.43	2025/03/30	スキル検索結果画面からのスキル発動の際、回復系スキルの実行を空きコストのある任意の拠点で実行できるよう修正。実行形式を一度のPOSTによる新形式に変更 by @pla2999 #84
 
 
 //----------------------------------------------------------------------
@@ -6760,7 +6761,7 @@ function deck_resttime_checker() {
 								var skill = q$("b", info2).eq(j).text().replace(/[ \t]/g, "");
 								// 副将スキルは外す (2023/05/26 by pla2999)
 								if (/^副/.test(skill)) continue;
-								if (skill === "\u00A0") continue; // スキル欄が空欄ならスキップ 
+								if (skill === "\u00A0") continue; // スキル欄が空欄ならスキップ
 								skill = skill.replace(/^.*:/, "");
 								var skill_info = getSkillInfo(skill, q$('div.set a.control__button--deck-set-small', cards.eq(i)).attr('href'));
 								if (skill_info === null) { // 内政設定できないスキル
@@ -6950,7 +6951,7 @@ function deck_resttime_checker() {
 								var card_cost = parseFloat(q$(this).closest('tr').find("td").eq(3).text().trim());
 								var card_id = q$(this).attr('cardid');
 								var skill_id = q$(this).attr('skillid');
-                                var action_type; // "set":0, 内政:1, 使用:2
+								var action_type; // "set":0, 内政:1, 使用:2
 
 								// 現在拠点の取得
 								var village_id = q$("#deck_add_selected_village").val();
@@ -6977,41 +6978,41 @@ function deck_resttime_checker() {
 									action_type = 1;
 								}
 
-                                // コストチェック
-                                if (card_cost > vacant_cost) {
-                                    alert("スキル発動できる拠点がありません");
-                                    g_event_process = false;
-                                    return;
-                                }
+								// コストチェック
+								if (card_cost > vacant_cost) {
+									alert("スキル発動できる拠点がありません");
+									g_event_process = false;
+									return;
+								}
 
-                                var ssid = getSessionId();
-                                var params = {
-                                    ssid: ssid,
-                                    target_card: card_id,
-                                    mode: "domestic_set",
-                                    deck_mode: 1,
-                                    action_type: action_type, //"set":0, 内政:1, 使用:2
-                                    choose_attr1_skill: skill_id
-                                };
-                                params[`selected_village[${card_id}]`] = village_id;
+								var ssid = getSessionId();
+								var params = {
+									ssid: ssid,
+									target_card: card_id,
+									mode: "domestic_set",
+									deck_mode: 1,
+									action_type: action_type, //"set":0, 内政:1, 使用:2
+									choose_attr1_skill: skill_id
+								};
+								params[`selected_village[${card_id}]`] = village_id;
 
 								// スキル発動後
 								var _this = q$(this);
-                                q$(this).children('span').html("<span style='color: blue;'>スキル発動中</span>");
-                                q$.ajax('/card/deck.php', {
-                                    type: 'post',
-                                    data: params,
-                                    success: function() {
-                                        q$("td[class*='ctime']", _this.parent('tr')).off();
-                                        q$("td[class*='ctime'] span", _this.parent('tr')).html(
-                                            "<span style='color: gray;'>使用不可</span>");
-                                        g_event_process = false;
-                                    },
-                                    error: function() {
-                                         _this.children('span').text("[スキル使用]");
-                                        g_event_process = false;
-                                    }
-                                });
+								q$(this).children('span').html("<span style='color: blue;'>スキル発動中</span>");
+								q$.ajax('/card/deck.php', {
+									type: 'post',
+									data: params,
+									success: function() {
+										q$("td[class*='ctime']", _this.parent('tr')).off();
+										q$("td[class*='ctime'] span", _this.parent('tr')).html(
+											"<span style='color: gray;'>使用不可</span>");
+										g_event_process = false;
+									},
+									error: function() {
+										 _this.children('span').text("[スキル使用]");
+										g_event_process = false;
+									}
+								});
 							}
 						);
 					}
@@ -7977,7 +7978,7 @@ function returnCard(element, callback){
 }
 
 //--------------------------//
-// 内政用拠点決定関数       //
+// 内政用拠点決定関数		//
 //--------------------------//
 function decideVillageForHeal(villages, mainVacantCost, subVacantCost) {
 	var useSkillVillageId = 0;		// 回復系スキル発動拠点ID
