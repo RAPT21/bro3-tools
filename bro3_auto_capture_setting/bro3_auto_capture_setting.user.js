@@ -12,7 +12,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	0.2
+// @version 	1.0
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -28,18 +28,21 @@ jQuery.noConflict();
 // 現在表示している座標が登録済の場合、背景色がピンク色になります。
 // 本拠地デッキ、拠点デッキ、それぞれについて10件登録済の場合はいずれか削除してから登録してください。
 //
+// 鹵獲先を登録時、初期値では無効、優先順位は最下位ですが、Export / Import 表示切替で
+// "active": true,"priority": 1 のように編集してから Import開始 を選択することで上書きできます。
+//
 // 鹵獲先リストのExport/Importが可能です。
 // たとえば本拠地デッキに登録した座標と同じ内容で拠点デッキに登録したい場合は、
 // 本拠地デッキ側にExportされた内容を拠点デッキ側にコピペして、「Import開始」をクリックしてください。
 // ImportフォーマットはJSON形式だけでなく、(x,y)形式で改行区切りにしたリストも利用できます。
-// 鹵獲先の有効化や優先順位はインポートできないため、自動鹵獲出兵先設定画面で編集してください
 //
 
 // 2023.07.15	開発着手
 // 2023.07.23	初版公開
 // 2023.08.04	エクスポート/インポートがうまく動作しない環境への対処
+// 2025.03.30	鹵獲先の有効化や優先順位もインポートできるように
 
-var VERSION = "2023.08.04";
+var VERSION = "2025.03.30";
 
 var BASE_URL = location.protocol + "//" + location.hostname;
 
@@ -59,11 +62,6 @@ var REGISTER_LIMIT_COUNT = 10;
 		return;
 	}
 
-	// デバッグ用
-	//if (location.pathname === '/auto_capture_material/setting.php') {
-	//	settingOperation($);
-	//}
-
 	// 領地(空き地)画面
 	if (location.pathname === '/land.php') {
 		landOperation($);
@@ -75,11 +73,9 @@ var REGISTER_LIMIT_COUNT = 10;
 //========================================
 //	設定画面
 //========================================
-function deckOperation($) {
-}
 
 // 自動鹵獲出兵先設定画面の解析
-function settingOperation($, d = window.document, ssid, callback) {
+function settingProcess($, d = window.document, ssid, callback) {
 	// 簡易登録
 	var baseXY = $("#basepoint .xy").text().match(/(\([^\)]+\))/)[1];
 	var easy1 = $("#acm_setting_deck1");
@@ -215,7 +211,7 @@ function getAutoCaptureMaterialSetting($, ssid, callback) {
 	.done(function(res) {
 		$("#acm_result").empty();
 		var response = $("<div />").append(res);
-		settingOperation($, response, ssid, callback);
+		settingProcess($, response, ssid, callback);
 	});
 }
 
@@ -349,7 +345,7 @@ function performImport($, ssid, deck_kind, delete_text, import_text, callback) {
 			perform_each(import_list, function(index, item, proc){
 				if (index >= REGISTER_LIMIT_COUNT) {
 					// 上限数に達している場合はエラーにせず終わる
-					proc(false);
+					if (proc) proc(false);
 					return;
 				}
 				territoryProcAPI($, ssid, deck_kind, item.x, item.y, 'set_auto_capture_material')
@@ -361,7 +357,15 @@ function performImport($, ssid, deck_kind, delete_text, import_text, callback) {
 					});
 			}, function(done){
 				if (done) {
-					if (callback) callback("インポート完了");
+					console.log("追加完了");
+					updateList($, deck_kind, import_list, function(didUpdate){
+					console.log(didUpdate);
+						if (didUpdate) {
+							if (callback) callback("インポート完了");
+						} else {
+							if (callback) callback("インポート - 更新エラー");
+						}
+					});
 				} else {
 					if (callback) callback("インポート - 追加エラー");
 				}
@@ -369,6 +373,60 @@ function performImport($, ssid, deck_kind, delete_text, import_text, callback) {
 		} else {
 					if (callback) callback("インポート - 削除エラー");
 		}
+	});
+}
+
+// 自動鹵獲出兵先指定
+function updateList($, deck_kind, import_list, callback) {
+	$.ajax({
+		url: `/auto_capture_material/setting.php`,
+		type: 'GET',
+		datatype: 'html',
+		cache: false
+	})
+	.fail(function(){
+		if (callback) callback(false);
+	})
+	.done(function(res){
+		var resp = $("<div>").append(res);
+
+		var hp =	  $('table.commonTables:nth-child(5) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(2) > span:nth-child(1)', resp).text();
+		var percent = $('table.commonTables:nth-child(5) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(4) > span:nth-child(1)', resp).text();
+
+		var c = {};
+		c.deck_kind = deck_kind;
+		c.hp = hp; // 武将のHPxx以上
+		c.storehouse = percent; // 資源xx%以下
+		c.mode = 'edit';
+
+		$(import_list).each(function(index, item){
+			var x = item.x;
+			var y = item.y;
+			c[`is_enable[${x}][${y}]`] = item.active ? 'on' : 'off'; // 有効
+			c[`priority[${x}][${y}]`] = item.priority; // 優先順位
+			c[`group_priority[${x}][${y}]`] = 1 + index; // 並び順
+			c[`unit_attribute_setting[${x}][${y}][501]`] = 'on'; // 歩兵
+			c[`unit_attribute_setting[${x}][${y}][502]`] = 'on'; // 槍兵
+			c[`unit_attribute_setting[${x}][${y}][503]`] = 'on'; // 騎兵
+			c[`unit_attribute_setting[${x}][${y}][504]`] = 'on'; // 弓兵
+			c[`unit_attribute_setting[${x}][${y}][507]`] = 'on'; // 斧兵
+			c[`unit_attribute_setting[${x}][${y}][508]`] = 'on'; // 双兵
+			c[`unit_attribute_setting[${x}][${y}][509]`] = 'on'; // 錘兵
+		});
+
+		$.ajax({
+			url: `/auto_capture_material/setting.php?edit=1&deck_kind=${deck_kind}`,
+			type: 'POST',
+			datatype: 'html',
+			cache: false,
+			data: c
+		})
+		.fail(function(){
+			if (callback) callback(false);
+		})
+		.done(function(){
+			if (callback) callback(true);
+		});
 	});
 }
 
@@ -398,7 +456,7 @@ function landOperation($) {
 	var view = $("<div />", {
 		id: 'acm_setting_view',
 		style: 'width: 520px; line-height: 20px; display: none;'
-			+ ' position: absolute; top: 4px; left: 0px;'
+			+ ' position: absolute; top: -100px; left: 0px;'
 			+ ' padding: 4px 16px 8px 16px;'
 			+ ' color: #333333; background-color: white;'
 			+ ' cursor: default; -moz-border-radius:3px; border-radius: 3px; -webkit-border-radius: 3px; border: 2px solid #009;'
@@ -518,8 +576,7 @@ function landOperation($) {
 				$("<span />", {
 					style: 'color: red'
 				}).append(
-					"Importすると今の設定をすべて削除して、置き換えます。<br />",
-					"今のところ有効化や優先順位はインポートできないため、設定画面で編集してください。"
+					"Importすると今の設定をすべて削除して、置き換えます。"
 				)
 			),
 			$("<div />", {}).append(
