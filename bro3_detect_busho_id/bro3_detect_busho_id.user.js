@@ -13,7 +13,7 @@
 // @grant		GM_addStyle
 // @grant		GM_getResourceText
 // @author		RAPT
-// @version 	0.1
+// @version 	0.2
 // ==/UserScript==
 
 jQuery.noConflict();
@@ -22,18 +22,10 @@ jQuery.noConflict();
 loadAjaxCss(jQuery, "https://ajax.googleapis.com/ajax/libs/jqueryui/1.14.0/themes/smoothness/jquery-ui.css", "jqueryui_css");
 
 
-//==========[機能]==========
-// デッキセットされたカードの情報を取得します。
-//
-// - デフォルトでは通常デッキのカードのみを検出します。
-// - 警護デッキを含めるにチェックが入っていると通常デッキに加え、警護デッキのカード情報も検出します。
-// - カードが待機中になってないと検出できませんので注意
-// - 検出する情報は、そのカードがセットされている拠点ID、カードID、カードNO、武将名です。
+var VERSION = "2025.04.28.dev";
 
-// 2025.02.24	開発着手
-
-
-var VERSION = "2025.02.24.dev";
+// 2025.02.24.dev 初版
+// 2025.04.28.dev 警護デッキと拠点デッキの判定ミスを修正
 
 
 //==========[本体]==========
@@ -57,32 +49,35 @@ var VERSION = "2025.02.24.dev";
 // デッキ内のカード情報を取得
 function detectDeckCardList($) {
 	var cardInfoList = {
-		1: [],
-		2: []
+		1: [], // 通常デッキ
+		2: []  // 警護デッキ
 	};
-	$("#cardListDeck form div.deck-all-tab-element").each(function(){
-		var deck_kind = $(this).data("deck-kind"); // 1: 本拠、2:拠点
-		$("div.deck-all-card-list > div.deck-all-card", this).each(function(){
-			var villageId = 0;
-			var v = $("div.village-name > a", this).eq(0).attr("href").match(/village_id=([0-9]+)/);
-			if (v !== null) {
-				villageId = v[1];
-			}
+	$("#card_uraomote > div.deck_area").each(function(){
+		var deck_mode = $(this).data("deck-mode"); // 1: 通常、2:警護
+		$("#cardListDeck form div.deck-all-tab-element", this).each(function(){
+			var deck_kind = $(this).data("deck-kind"); // 1: 本拠、2:拠点
+			$("div.deck-all-card-list > div.deck-all-card", this).each(function(){
+				var villageId = 0;
+				var v = $("div.village-name > a", this).eq(0).attr("href").match(/village_id=([0-9]+)/);
+				if (v !== null) {
+					villageId = v[1];
+				}
 
-			var cardWindow = $("div[id^=cardWindow_]", this).eq(0);
-			var m = cardWindow.attr("id").match(/cardWindow_([0-9]+)/);
-			if (m !== null) {
-				var cardId = m[1];
-				var cardName = $("span.name-for-sub", cardWindow).text();
-				var cardNo = $("span.cardno", cardWindow).text();
+				var cardWindow = $("div[id^=cardWindow_]", this).eq(0);
+				var m = cardWindow.attr("id").match(/cardWindow_([0-9]+)/);
+				if (m !== null) {
+					var cardId = m[1];
+					var cardName = $("span.name-for-sub", cardWindow).text();
+					var cardNo = $("span.cardno", cardWindow).text();
 
-				cardInfoList[deck_kind].push({
-					'villageId': villageId,
-					'cardId': cardId,
-					'cardNo': cardNo,
-					'cardName': cardName
-				});
-			}
+					cardInfoList[deck_mode].push({
+						'villageId': villageId,
+						'cardId': cardId,
+						'cardNo': cardNo,
+						'cardName': cardName
+					});
+				}
+			});
 		});
 	});
 	return cardInfoList;
