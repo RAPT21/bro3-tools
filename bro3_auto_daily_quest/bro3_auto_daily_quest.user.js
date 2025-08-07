@@ -16,9 +16,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2024.09.13
+// @version 	2025.07.26
 // ==/UserScript==
-var VERSION = "2024.09.13"; 	// バージョン情報
+var VERSION = "2025.07.26"; 	// バージョン情報
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -85,6 +85,8 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 //			  鹵獲出兵時の制限距離を設定できるように。最大距離=0に設定すると上限なしになります。
 //			  デッキ画面でも設定画面を開けるように
 // 2024.11.04 ヨロズダスの残り回数表示を天候エリア右側から資源表示の下部へ移動
+// 2025.07.26 デュエル訓練場で自動連戦する（α機能）
+//			  複数チェックを入れた場合は、暗雲＞猛雨＞吹雪の優先度で選択されます。
 
 
 //----------------------------------------
@@ -107,6 +109,9 @@ var OPT_FEATURE_04	= 'dfe04'; // 洛陽への路 通算ログイン報酬を受�
 var OPT_FEATURE_05	= 'dfe05'; // 育成クエスト（勝戦の計、攻戦の計）自動受注
 var OPT_FEATURE_06	= 'dfe06'; // [β機能] 洛陽への路のルートを自動で切り替える
 var OPT_FEATURE_07	= 'dfe07'; // ヨロズダスの残り回数を資源表示の下部に表示
+var OPT_FEATURE_08	= 'dfe08'; // [α機能] デュエル訓練場の猛雨の訓練で双兵_SL夏侯惇と自動連戦する
+var OPT_FEATURE_09	= 'dfe09'; // [α機能] デュエル訓練場の暗雲の訓練で斧兵_SL黄蓋と自動連戦する
+var OPT_FEATURE_10	= 'dfe10'; // [α機能] デュエル訓練場の吹雪の訓練で騎兵_SL馬雲緑と自動連戦する
 
 var OPT_TROOPS_01	= 'dtr01'; // 出兵武将カードID
 var OPT_TROOPS_02	= 'dtr02'; // 出兵先座標x
@@ -237,6 +242,15 @@ var ID_TRAINING_FRENDLY			= 13301; // 3人以上の同盟員に友軍を派兵�
 var ID_TRAINING_EXTERM			= 13401; // 敵君主の領地に友軍を引率して殲滅戦を行おう
 var ID_TRAINING_BARBARIANS_2ND	= 13501; // 3人以上の君主から援軍を集めて第二章以上の南蛮襲来(強攻編)を撃退しよう
 var ID_TRAINING_VICEROY			= 13601; // 南蛮太守を2人以上任命して第二章以上の南蛮襲来(強攻編)を撃退しよう
+
+// デュエル訓練場
+var ID_DUEL_TRAININGAREA_STG_ONO = 1; // stg:暗雲の訓練：剣斧
+var ID_DUEL_TRAININGAREA_STG_SOU = 2; // stg:猛雨の訓練：槍弓双
+var ID_DUEL_TRAININGAREA_STG_SUI = 3; // stg:吹雪の訓練：騎錘
+var ID_DUEL_TRAININGAREA_DECK_ONO = 18; // npc_deck_id:斧兵_SL黄蓋:約10万
+var ID_DUEL_TRAININGAREA_DECK_SOU = 36; // npc_deck_id:双兵_SL夏侯惇:約7万
+var ID_DUEL_TRAININGAREA_DECK_SUI = 54; // npc_deck_id:騎兵_SL馬雲緑:約8万
+var ID_DUEL_TRAININGAREA_LV = 16; // lvl:16戦目
 
 
 // ヘルパー関数
@@ -439,6 +453,57 @@ function auto_duel()
 			});
 		}
 	}
+}
+
+function duelTrainingArea(stg, deck, lvl, callback) {
+	var c = {
+		'stg': stg,
+		'lvl': lvl
+	};
+	httpPOST('/pvp_duel/trainingarea/trainingarea_npc_select.php',c,function(x){
+		httpGET(`/pvp_duel/trainingarea/trainingarea_npc_confirm.php?npc_deck_id=${deck}&stg=${stg}&lvl=${lvl}&post_callback=post_func&keepThis=true`,function(y){
+			httpGET(`/pvp_duel/trainingarea/trainingarea_npc_process_json.php?npc_deck_id=${deck}&stg=${stg}&lvl=${lvl}`,function(z){
+				if (callback) {
+					callback(true);
+				}
+			});
+		});
+	});
+}
+function auto_duelTrainingArea(stg, deck, lvl) {
+	httpGET('/pvp_duel/trainingarea/trainingarea_top.php',function(x){
+		var htmldoc = document.createElement("html");
+			htmldoc.innerHTML = x;
+		var restCount = q$(".player_hp_box > div:nth-child(1) > span.status", htmldoc).text().match(/(\d+)回\/\d+回/)[1];
+
+		var count = 0;
+		var max = parseInt(restCount, 10);
+		var wait = false;
+
+		var timer1 = setInterval(function() {
+			if (wait) {
+				return;
+			}
+			wait = true;
+
+			if (count >= max) {
+				clearInterval(timer1);
+				timer1 = null;
+				return; // 終了
+			}
+
+			duelTrainingArea(stg, deck, lvl, function(isSucceeded) {
+				if (isSucceeded) {
+					count++;
+					wait = false;
+				} else {
+					clearInterval(timer1);
+					timer1 = null;
+					// 終了
+				}
+			});
+		}, 500);
+	});
 }
 
 // ヨロズダスを引く
@@ -1023,6 +1088,17 @@ function acceptTrainingQuest(callback) {
 				openAllReports();
 			}
 
+			// [α機能] デュエル訓練場で16戦目の高経験値デッキと自動連戦する
+			if (g_options[OPT_FEATURE_09]) {
+				auto_duelTrainingArea(ID_DUEL_TRAININGAREA_STG_ONO, ID_DUEL_TRAININGAREA_DECK_ONO, ID_DUEL_TRAININGAREA_LV); // 剣斧
+			}
+			else if (g_options[OPT_FEATURE_08]) {
+				auto_duelTrainingArea(ID_DUEL_TRAININGAREA_STG_SOU, ID_DUEL_TRAININGAREA_DECK_SOU, ID_DUEL_TRAININGAREA_LV); // 槍弓双
+			}
+			else if (g_options[OPT_FEATURE_10]) {
+				auto_duelTrainingArea(ID_DUEL_TRAININGAREA_STG_SUI, ID_DUEL_TRAININGAREA_DECK_SUI, ID_DUEL_TRAININGAREA_LV); // 騎錘
+			}
+
 			acceptAttentionQuest(function(quest_list){
 
 				// 未クリアの繰り返しクエストマッチング
@@ -1303,6 +1379,9 @@ function openSettingBox() {
 		ccreateCheckBox(td200, OPT_FEATURE_07, " ヨロズダスの残り回数を資源表示の下部に表示", "現在引けるヨロズダスの内容を資源表示の下部に表示します。");
 			ccreateText(td200, "　");
 		ccreateCheckBox(td200, OPT_FEATURE_06, " [β機能] 洛陽への路のルートを自動で切り替える", "洛陽への路 ルートログイン報酬のルートを次の優先順位で選択します。\n　1.自動建設アイテム\n　2.南蛮防御アイテム\n　3.なるべく下のルート\nただし、隘路のチケット宝箱（序）、チケット宝箱（中）の場合は可能であれば海路を選択します。");
+		ccreateCheckBox(td200, OPT_FEATURE_09, " [α機能] デュエル訓練場の暗雲の訓練で斧兵_SL黄蓋と自動連戦する", "デュエル訓練場の暗雲の訓練16戦目で斧兵_SL黄蓋と訓練可能数上限まで自動連戦します。暗雲,猛雨,吹雪はいずれか１つのみチェックを入れてください。複数チェックを入れた場合は、暗雲＞猛雨＞吹雪の優先度で選択されます。");
+		ccreateCheckBox(td200, OPT_FEATURE_08, " [α機能] デュエル訓練場の猛雨の訓練で双兵_SL夏侯惇と自動連戦する", "デュエル訓練場の猛雨の訓練16戦目で双兵_SL夏侯惇と訓練可能数上限まで自動連戦します。暗雲,猛雨,吹雪はいずれか１つのみチェックを入れてください。複数チェックを入れた場合は、暗雲＞猛雨＞吹雪の優先度で選択されます。");
+		ccreateCheckBox(td200, OPT_FEATURE_10, " [α機能] デュエル訓練場の吹雪の訓練で騎兵_SL馬雲緑と自動連戦する", "デュエル訓練場の吹雪の訓練16戦目で騎兵_SL馬雲緑と訓練可能数上限まで自動連戦します。暗雲,猛雨,吹雪はいずれか１つのみチェックを入れてください。複数チェックを入れた場合は、暗雲＞猛雨＞吹雪の優先度で選択されます。");
 			ccreateText(td200, "　");
 			ccreateText(td200, "[β機能] TP鹵獲", true);
 		ccreateCaptureBox(td200, OPT_CAPTURE_10, OPT_CAPTURE_11, OPT_CAPTURE_12, OPT_CAPTURE_13, OPT_CAPTURE_14, OPT_CAPTURE_15);
@@ -1377,6 +1456,9 @@ function getDefaultOptions() {
 	settings[OPT_FEATURE_05]	= true; // 育成クエスト（勝戦の計、攻戦の計）自動受注
 	settings[OPT_FEATURE_06]	= false; // [β機能] 洛陽への路のルートを自動で切り替える
 	settings[OPT_FEATURE_07]	= true; // ヨロズダスの残り回数を資源表示の下部に表示
+	settings[OPT_FEATURE_08]	= false; // [α機能] デュエル訓練場の猛雨の訓練で双兵_SL夏侯惇と自動連戦する
+	settings[OPT_FEATURE_09]	= false; // [α機能] デュエル訓練場の暗雲の訓練で斧兵_SL黄蓋と自動連戦する
+	settings[OPT_FEATURE_10]	= false; // [α機能] デュエル訓練場の吹雪の訓練で騎兵_SL馬雲緑と自動連戦する
 
 	settings[OPT_TROOPS_01]		= 0; // 出兵武将カードID
 	settings[OPT_TROOPS_02]		= 0; // 出兵先座標x
