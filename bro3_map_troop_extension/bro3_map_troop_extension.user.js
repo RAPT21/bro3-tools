@@ -14,7 +14,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	2.1
+// @version 	2.2
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -55,6 +55,7 @@ jQuery.noConflict();
 //					レイアウト微妙なので変更するかも
 // 2023.05.02	2.0	標高MAP画面暫定対応（争覇鯖にて検証中）
 // 2024.02.18	2.1	地形2.0対応
+// 2025.08.16	2.2	領地名を編集を選択したとき、NPC砦のとき標高も表示するように
 
 //==========[オプション]==========
 var OPT_COLORING_RESOURCES = true;		// 資源地カラーリングを行うか。falseだと何も行いません。
@@ -235,10 +236,15 @@ var BASE_URL = SERVER_SCHEME + location.hostname;
 		} else {
 			draw_elevation(obj, $(element));
 		}
+		var elevationName = "";
+		var el = mtext.match(/\[<span class="elevation-name">(.*?)<\/span>\]/);
+		if (el !== null && el.length > 1) {
+			elevationName = `[${el[1]}]`;
+		}
 		if (mtext.match(/戦力<.*npc-red-star.*>([★]+)</)) {
-			obj.npcname = obj.areaname + "(" + x + "," + y + ") ★" + RegExp.$1.length;
+			obj.npcname = `${obj.areaname}(${x},${y})${elevationName}★${RegExp.$1.length}`;
 		} else if (mtext.match(/戦力<.*npc-red-star.*>[★]+\[(\d)\]</)) {
-			obj.npcname = obj.areaname + "(" + x + "," + y + ") ★" + RegExp.$1;
+			obj.npcname = `${obj.areaname}(${x},${y})${elevationName}★${RegExp.$1}`;
 		}
 
 		// マップデータを蓄積
