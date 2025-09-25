@@ -23,6 +23,7 @@
 | [bro3_detect_busho_id](bro3_detect_busho_id) | 武将カードIDを調べる |
 | [bro3_use_multi_items](bro3_use_multi_items) | 宝物庫のカードを複数まとめてファイルへ移動する |
 | [bro3_npc_expedition](bro3_npc_expedition) | 北伐出陣画面で予備兵画像をクリックするとまとめて引率兵を切り替える |
+| [bro3_help_army_report](bro3_help_army_report) | 報告書、同盟ログから南蛮援軍状況を解析して、援軍兵種や兵数をチェックする |
 
 ## 臨時
 
