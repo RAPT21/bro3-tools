@@ -14,13 +14,14 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.1
+// @version 	1.2
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
 
 // 2023/02/12	1.0	初版作成
 // 2025/09/25	1.1	同盟ログ対応
+// 2025/09/27	1.2	南蛮衛兵を検出していたので除外するように。援軍部隊数のカウントがずれていたのを修正。
 
 
 var OPT_MIN_SOLDIER_COUNT = 60000; // 援軍兵士として許容する最小兵数
@@ -58,7 +59,13 @@ function parseReport() {
 			return true;
 		}
 		// 援軍のみでフィルター
+
 		var defenserBase = q$("tr th[class='defenserBase']", row).eq(0);
+		if (defenserBase.text().trim() === '南蛮衛兵') {
+			// 南蛮衛兵は除外
+			return true;
+		}
+
 		var userName = q$("a:eq(1)", defenserBase).text();
 		var vName = q$("a:eq(2)", defenserBase).text();
 
@@ -149,7 +156,7 @@ function parseReport() {
 
 	var info = [];
 	info.push(`主催: ${organizer}`);
-	info.push(`援軍部隊数: ${list.length}`);
+	info.push(`援軍部隊数: ${list.length - 1}`);
 	info.push(`援軍君主数: ${users.size}`);
 	info.push(`警告君主数: ${warnUsers.size}`);
 	if (warnUsers.size > 0) {
@@ -328,7 +335,7 @@ q$(function(){
 		}).append("解析"));
 	}
 
-	// 同盟ログ
+	// 同盟ログ＞防御
 	var urlParams = new URLSearchParams(location.search);
 	if (location.pathname === '/alliance/detail.php' && urlParams.get('m') === 'defense' && urlParams.has('id')) {
 		q$("#gray02Wrapper table[class*='tables'][summary='件名']").before(q$("<button />", {
