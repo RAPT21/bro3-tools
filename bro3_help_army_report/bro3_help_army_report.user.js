@@ -21,7 +21,7 @@ q$ = jQuery;
 
 // 2023/02/12	1.0	初版作成
 // 2025/09/25	1.1	同盟ログ対応
-// 2025/09/27	1.2	南蛮衛兵を検出していたので除外するように
+// 2025/09/27	1.2	南蛮衛兵を検出していたので除外するように。援軍部隊数のカウントがずれていたのを修正。
 
 
 var OPT_MIN_SOLDIER_COUNT = 60000; // 援軍兵士として許容する最小兵数
@@ -156,7 +156,7 @@ function parseReport() {
 
 	var info = [];
 	info.push(`主催: ${organizer}`);
-	info.push(`援軍部隊数: ${list.length}`);
+	info.push(`援軍部隊数: ${list.length - 1}`);
 	info.push(`援軍君主数: ${users.size}`);
 	info.push(`警告君主数: ${warnUsers.size}`);
 	if (warnUsers.size > 0) {
