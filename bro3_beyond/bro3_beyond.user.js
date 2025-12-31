@@ -145,6 +145,7 @@
 // 1.09.43	2025/03/30	スキル検索結果画面からのスキル発動の際、回復系スキルの実行を空きコストのある任意の拠点で実行できるよう修正。実行形式を一度のPOSTによる新形式に変更 by @pla2999 #84
 // 1.09.44	2025/12/31	RAPT. メニューに標高設定画面へのリンクを追加
 //						- 一斉出兵で「討伐500を選択」ボタン押下時、「鹵獲として出兵」にチェックが入るように
+//						- 簡易ラベルセット時、設定後に選択中のタブを維持するように
 
 
 //----------------------------------------------------------------------
@@ -7132,10 +7133,15 @@ function multipleLabelSet(is_move_top_card_count) {
 	var label_texts = [];
 	q$("#tab-labels li a").each(
 		function() {
-			if (q$(this).attr("href").indexOf("l=99") >= 0) {
+			var href = q$(this).attr("href");
+			if (href.indexOf("l=99") >= 0) {
 				return;
 			}
-			label_texts.push(q$(this).text());
+			var no = href.replace(/l=(\d+)/, "$1");
+			if (isNaN(no)) {
+				no = 0;
+			}
+			label_texts[no] = q$(this).text();
 		}
 	);
 
