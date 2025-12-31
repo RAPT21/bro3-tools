@@ -146,6 +146,7 @@
 // 1.09.44	2025/12/31	RAPT. メニューに標高設定画面へのリンクを追加
 //						- 一斉出兵で「討伐500を選択」ボタン押下時、「鹵獲として出兵」にチェックが入るように
 //						- 簡易ラベルセット時、設定後に選択中のタブを維持するように
+//						- 2025/12/31のメンテナンスで仁君君機能が使えなくなったのを修正
 
 
 //----------------------------------------------------------------------
@@ -6996,9 +6997,9 @@ function deck_resttime_checker() {
 									target_card: card_id,
 									mode: "domestic_set",
 									deck_mode: 1,
-									action_type: action_type, //"set":0, 内政:1, 使用:2
-									choose_attr1_skill: skill_id
+									action_type: action_type //"set":0, 内政:1, 使用:2
 								};
+								params['choose_attr1_skills[]'] = skill_id;
 								params[`selected_village[${card_id}]`] = village_id;
 
 								// スキル発動後
@@ -8200,9 +8201,9 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 											target_card: card_id,
 											mode: "domestic_set",
 											deck_mode: 1,
-											action_type: 2, //"set":0, 内政:1, 使用:2
-											choose_attr1_skill: skill_id
+											action_type: 2 //"set":0, 内政:1, 使用:2
 										};
+										params['choose_attr1_skills[]'] = skill_id;
 										params[`selected_village[${card_id}]`] = isAnywhere ? useSkillVillageId : village_id;
 
 										var _this = q$(this);
@@ -8287,9 +8288,9 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 										target_card: card_id,
 										mode: "domestic_set",
 										deck_mode: 1,
-										action_type: 1, //"set":0, 内政:1, 使用:2
-										choose_attr1_skill: skill_id
+										action_type: 1 //"set":0, 内政:1, 使用:2
 									};
+									params['choose_attr1_skills[]'] = skill_id;
 									params[`selected_village[${card_id}]`] = village_id;
 
 									var _this = q$(this);
