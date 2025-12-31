@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.43
+// @version		1.09.44
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -143,6 +143,10 @@
 //						- メニューに南蛮襲来、北伐出陣（EX出現No）の項目などを追加
 // 1.09.42	2025/03/12	RAPT. デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）で、緑字リンクが任意拠点で発動できなくなっていた不具合を修正
 // 1.09.43	2025/03/30	スキル検索結果画面からのスキル発動の際、回復系スキルの実行を空きコストのある任意の拠点で実行できるよう修正。実行形式を一度のPOSTによる新形式に変更 by @pla2999 #84
+// 1.09.44	2025/12/31	RAPT. メニューに標高設定画面へのリンクを追加
+//						- 一斉出兵で「討伐500を選択」ボタン押下時、「鹵獲として出兵」にチェックが入るように
+//						- 簡易ラベルセット時、設定後に選択中のタブを維持するように
+//						- 2025/12/31のメンテナンスで仁君君機能が使えなくなったのを修正
 
 
 //----------------------------------------------------------------------
@@ -1978,6 +1982,7 @@ function mapTabControl() {
 							ents.eq(i).prop('checked', false);
 						}
 					}
+					q$("#use_prize").prop('checked', "true");
 				}
 			);
 
@@ -4137,6 +4142,7 @@ function execCommonPart() {
 								['強化忠誠心攻撃', BASE_URL + '/council/arms.php?council_function_id=205'],
 								['軍費貯蓄拡大', BASE_URL + '/council/arms.php?council_function_id=206'],
 								['名声獲得', BASE_URL + '/council/arms.php?council_function_id=207'],
+								['標高変更', BASE_URL + '/council/arms.php?council_function_id=211'],
 							],
 						],
 						['盟・伍', BASE_URL + '/council/?tab=8'],
@@ -6991,9 +6997,9 @@ function deck_resttime_checker() {
 									target_card: card_id,
 									mode: "domestic_set",
 									deck_mode: 1,
-									action_type: action_type, //"set":0, 内政:1, 使用:2
-									choose_attr1_skill: skill_id
+									action_type: action_type //"set":0, 内政:1, 使用:2
 								};
+								params['choose_attr1_skills[]'] = skill_id;
 								params[`selected_village[${card_id}]`] = village_id;
 
 								// スキル発動後
@@ -7128,10 +7134,15 @@ function multipleLabelSet(is_move_top_card_count) {
 	var label_texts = [];
 	q$("#tab-labels li a").each(
 		function() {
-			if (q$(this).attr("href").indexOf("l=99") >= 0) {
+			var href = q$(this).attr("href");
+			if (href.indexOf("l=99") >= 0) {
 				return;
 			}
-			label_texts.push(q$(this).text());
+			var no = href.replace(/l=(\d+)/, "$1");
+			if (isNaN(no)) {
+				no = 0;
+			}
+			label_texts[no] = q$(this).text();
 		}
 	);
 
@@ -8190,9 +8201,9 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 											target_card: card_id,
 											mode: "domestic_set",
 											deck_mode: 1,
-											action_type: 2, //"set":0, 内政:1, 使用:2
-											choose_attr1_skill: skill_id
+											action_type: 2 //"set":0, 内政:1, 使用:2
 										};
+										params['choose_attr1_skills[]'] = skill_id;
 										params[`selected_village[${card_id}]`] = isAnywhere ? useSkillVillageId : village_id;
 
 										var _this = q$(this);
@@ -8277,9 +8288,9 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 										target_card: card_id,
 										mode: "domestic_set",
 										deck_mode: 1,
-										action_type: 1, //"set":0, 内政:1, 使用:2
-										choose_attr1_skill: skill_id
+										action_type: 1 //"set":0, 内政:1, 使用:2
 									};
+									params['choose_attr1_skills[]'] = skill_id;
 									params[`selected_village[${card_id}]`] = village_id;
 
 									var _this = q$(this);
