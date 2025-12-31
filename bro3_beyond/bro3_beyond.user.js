@@ -245,6 +245,7 @@ var IMG_SRC_BASE_PATH = RESOURCE_BASE_PATH + "img/";
 var SORT_UP_ICON = IMG_SRC_BASE_PATH + "trade/icon_up.gif";
 var SORT_DOWN_ICON = IMG_SRC_BASE_PATH + "trade/icon_down.gif";
 var AJAX_REQUEST_INTERVAL = 100; // (ms)
+var g_isUseSingleSkillQuery = SERVER_NAME[0] === 'e';
 
 //----------------------------------------------------------------------
 // 画面設定項目-保存フィールド名対応定数群
@@ -6999,7 +7000,11 @@ function deck_resttime_checker() {
 									deck_mode: 1,
 									action_type: action_type //"set":0, 内政:1, 使用:2
 								};
-								params['choose_attr1_skills[]'] = skill_id;
+								if (g_isUseSingleSkillQuery) {
+									params['choose_attr1_skill'] = skill_id;
+								} else {
+									params['choose_attr1_skills[]'] = skill_id;
+								}
 								params[`selected_village[${card_id}]`] = village_id;
 
 								// スキル発動後
@@ -8203,7 +8208,11 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 											deck_mode: 1,
 											action_type: 2 //"set":0, 内政:1, 使用:2
 										};
-										params['choose_attr1_skills[]'] = skill_id;
+										if (g_isUseSingleSkillQuery) {
+											params['choose_attr1_skill'] = skill_id;
+										} else {
+											params['choose_attr1_skills[]'] = skill_id;
+										}
 										params[`selected_village[${card_id}]`] = isAnywhere ? useSkillVillageId : village_id;
 
 										var _this = q$(this);
@@ -8290,7 +8299,11 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 										deck_mode: 1,
 										action_type: 1 //"set":0, 内政:1, 使用:2
 									};
-									params['choose_attr1_skills[]'] = skill_id;
+									if (g_isUseSingleSkillQuery) {
+										params['choose_attr1_skill'] = skill_id;
+									} else {
+										params['choose_attr1_skills[]'] = skill_id;
+									}
 									params[`selected_village[${card_id}]`] = village_id;
 
 									var _this = q$(this);
