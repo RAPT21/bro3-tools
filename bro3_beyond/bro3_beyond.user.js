@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.43
+// @version		1.09.44
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -143,6 +143,7 @@
 //						- メニューに南蛮襲来、北伐出陣（EX出現No）の項目などを追加
 // 1.09.42	2025/03/12	RAPT. デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）で、緑字リンクが任意拠点で発動できなくなっていた不具合を修正
 // 1.09.43	2025/03/30	スキル検索結果画面からのスキル発動の際、回復系スキルの実行を空きコストのある任意の拠点で実行できるよう修正。実行形式を一度のPOSTによる新形式に変更 by @pla2999 #84
+// 1.09.44	2025/12/31	RAPT. メニューに標高設定画面へのリンクを追加
 
 
 //----------------------------------------------------------------------
@@ -4137,6 +4138,7 @@ function execCommonPart() {
 								['強化忠誠心攻撃', BASE_URL + '/council/arms.php?council_function_id=205'],
 								['軍費貯蓄拡大', BASE_URL + '/council/arms.php?council_function_id=206'],
 								['名声獲得', BASE_URL + '/council/arms.php?council_function_id=207'],
+								['標高変更', BASE_URL + '/council/arms.php?council_function_id=211'],
 							],
 						],
 						['盟・伍', BASE_URL + '/council/?tab=8'],
