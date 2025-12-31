@@ -9,7 +9,7 @@
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
 // @connect		3gokushi.jp
 // @author		RAPT
-// @version 	0.4
+// @version 	0.5
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -27,6 +27,7 @@ jQuery.noConflict();
 // 2024.01.12	0.2	カード移動中の進捗表示、移動処理の中断機能を追加
 //				0.3 進捗表示の調整
 // 2025.01.24	0.4	歴史書モードでも使えるように
+// 2026.01.01	0.5	BPコインをまとめて使えるように
 
 
 var SERVER_SCHEME = location.protocol + "//";
@@ -76,6 +77,60 @@ var g_aborting = false;
 				if (index >= count || g_aborting) {
 					return;
 				}
+
+				willRequest(index);
+				index++;
+
+				$.ajax({
+					url: SERVER_BASE + '/item/index.php',
+					type: 'POST',
+					datatype: 'html',
+					cache: false,
+					data: params
+				})
+				.always(function(res) {
+					// POST なので一気に送り付ける。応答数が揃ったらコールバックする
+					receivedCount++;
+					if (receivedCount >= count) {
+						clearInterval(timer1);
+						didResponse(index, receivedCount, true);
+					} else {
+						didResponse(index, receivedCount, false);
+					}
+				});
+			}, 200
+		);
+	}
+
+	//----------------------------------------
+	// BPコインをまとめてつかう
+	// - willRequest(index: Int) リクエスト送信前コールバック
+	// - didResponse(postCount: Int, receivedCount: Int, isAllDone: Bool) 送信後コールバック
+	//----------------------------------------
+	function useAllBP(ssid, itemIdCountTable, willRequest, didResponse) {
+		var keys = Object.keys(itemIdCountTable);
+		var count = keys.length;
+		if (count <= 0) {
+			didResponse(0, 0, true);
+			return;
+		}
+
+		var index = 0;
+		var receivedCount = 0;
+		var timer1 = setInterval(
+			function () {
+				if (index >= count) {
+					return;
+				}
+
+				var itemId = keys[index];
+				var itemCount = itemIdCountTable[itemId];
+
+				var params = {
+					allbp_item_id: itemId,
+					allbp_item_num: itemCount,
+					ssid: ssid
+				};
 
 				willRequest(index);
 				index++;
@@ -253,6 +308,38 @@ var g_aborting = false;
 			}
 		});
 	}
+
+	// BPコインを全部つかう
+	($('<button />', {
+		on: {
+			click: function() {
+				var ssid = $('form[name=purchaseform] input[name=ssid]').val();
+				if (!ssid) {
+					return;
+				}
+
+				var table = {};
+				$('#itemInventory li a.item_icon_switch[title$=BPコイン]').each(function(index) {
+					var q = $(this).attr('onclick').split(/,|\)/);
+					var itemId = q[2].trim();
+					var itemCount = parseInt(q[6].trim(), 10);
+					table[itemId] = (table[itemId] || 0) + itemCount;
+				});
+
+				var count = Object.keys(table).length;
+				if (!count) {
+					console.log('このページには利用可能なBPコインはありません。');
+					return;
+				}
+				useAllBP(ssid, table, function(index){
+					console.log(`使用中 - [${1 + index}/${count}] ${percent(1 + index, count)}%`);
+				}, function(postCount, receivedCount, isAllDone){
+					console.log(`完了 - [${receivedCount}/${postCount}] ${percent(receivedCount, postCount)}%`);
+					location.reload();
+				});
+			}
+		}
+	}).append('このページ内のBPコインを全部つかう')).insertAfter($('#itemInventory'));
 
 	addPanel();
 
