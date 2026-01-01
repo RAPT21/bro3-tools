@@ -13,6 +13,8 @@
 // @exclude		http://*.3gokushi.jp/maintenance*
 // @exclude		https://info.3gokushi.jp/*
 // @exclude		http://info.3gokushi.jp/*
+// @exclude		https://www.3gokushi.jp/app/*
+// @exclude		http://www.3gokushi.jp/app/*
 // @connect		3gokushi.jp
 // @grant		GM_getValue
 // @grant		GM_setValue
@@ -23,7 +25,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2023.11.19
+// @version		2026.01.01
 // ==/UserScript==
 
 // 配布サイト
@@ -87,8 +89,10 @@
 // 2023.10.17 拠点の自動LVUPで大城塞,城壁塔に対応
 // 2023.11.07 拠点の建設予約で城壁塔、要塞に対応
 // 2023.11.19 フラット遠訓オプションを追加
+// 2026.01.01 お知らせの中にもビルダーウィンドウが出てしまうようになったので対処
+//				宿舎化オプションの大宿舎化をチェック時、自動削除の設定はリセットしないように変更
 
-var VERSION = "2023.11.19"; 	// バージョン情報
+var VERSION = "2026.01.01"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -2985,7 +2989,7 @@ function clearWaterwheelBox(){
 }
 
 ///LvUP対象施設設のチェックボックスをクリアする
-function clearInifacBox() {
+function clearInifacBox(isClearRemoveBox = true) {
 
 	var checkbox = $a('//input[@id="OPT_CHKBOX0"]');	checkbox[0].checked = false;
 	var checkbox = $a('//input[@id="OPT_CHKBOX1"]');	checkbox[0].checked = false;
@@ -3084,8 +3088,10 @@ function clearInifacBox() {
 	var checkbox = $a('//input[@id="OPT_BLD_SOL"]');	checkbox[0].checked = false;
 	// 自動武器・防具強化
 	var checkbox = $a('//input[@id="OPT_BKBG_CHK"]');	checkbox[0].checked = false;
-	// 自動削除 2015.05.10
-	clearRemoveBox();
+	if (isClearRemoveBox) {
+		// 自動削除 2015.05.10
+		clearRemoveBox();
+	}
 }
 
 // 自動削除 2015.05.10
@@ -3177,7 +3183,7 @@ function InitDaiShukushaVillage(cb){
 	// 大宿舎化
 	if (cb && !cb.checked) return;
 
-	clearInifacBox();
+	clearInifacBox(false);
 	if (cb) cb.checked = true;
 
 	var textbox = $a('//input[@id="OPT_CHKBOXLV5"]');	textbox[0].value = 1;	// 倉庫
@@ -3187,10 +3193,6 @@ function InitDaiShukushaVillage(cb){
 	var textbox = $a('//input[@id="OPT_CHKBOXLV22"]');	textbox[0].value = 8;	// 見張り台
 	var textbox = $a('//input[@id="OPT_CHKBOXLV20"]');	textbox[0].value = 20;	// 大宿舎
 	var checkbox= $a('//input[@id="OPT_CHKBOX20"]');	checkbox[0].checked = true;
-
-	var checkbox = $a('//input[@id="OPT_REMOVE"]');  		checkbox[0].checked = false; // 自動削除
-	var checkbox = $a('//input[@id="OPT_RM_CHKBOX5"]');		checkbox[0].checked = true;	// 倉庫
-	var textbox  = $a('//input[@id="OPT_RM_CHKBOXLV5"]');	 textbox[0].value = "0";
 }
 
 function InitSuishaVillage(cb){
