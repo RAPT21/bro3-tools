@@ -24,6 +24,7 @@
 | [bro3_use_multi_items](bro3_use_multi_items) | 宝物庫のカードを複数まとめてファイルへ移動する |
 | [bro3_npc_expedition](bro3_npc_expedition) | 北伐出陣画面で予備兵画像をクリックするとまとめて引率兵を切り替える |
 | [bro3_help_army_report](bro3_help_army_report) | 報告書、同盟ログから南蛮援軍状況を解析して、援軍兵種や兵数をチェックする |
+| [bro3_receive_all_quest](bro3_receive_all_quest) | クエスト一覧画面で通常クエストを一括で受注から報酬受領まで自動で行う |
 
 ## 臨時
 
