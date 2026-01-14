@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.44
+// @version		1.09.45
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -147,6 +147,7 @@
 //						- 一斉出兵で「討伐500を選択」ボタン押下時、「鹵獲として出兵」にチェックが入るように
 //						- 簡易ラベルセット時、設定後に選択中のタブを維持するように
 //						- 2025/12/31のメンテナンスで仁君君機能が使えなくなったのを修正
+// 1.09.45	2026/01/15	RAPT. デッキ：一括ラベルセット機能を追加で、ラベルが列挙できなくなっていたのを修正
 
 
 //----------------------------------------------------------------------
@@ -7140,11 +7141,12 @@ function multipleLabelSet(is_move_top_card_count) {
 	q$("#tab-labels li a").each(
 		function() {
 			var href = q$(this).attr("href");
-			if (href.indexOf("l=99") >= 0) {
+			var m = href.match(/l=(\d+)/);
+			if (!m || m.length < 2) {
 				return;
 			}
-			var no = href.replace(/l=(\d+)/, "$1");
-			if (isNaN(no)) {
+			var no = parseInt(m[1], 10);
+			if (no === 99) {
 				no = 0;
 			}
 			label_texts[no] = q$(this).text();
