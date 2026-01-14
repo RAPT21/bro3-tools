@@ -25,7 +25,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2026.01.01
+// @version		2026.01.15
 // ==/UserScript==
 
 // 配布サイト
@@ -91,8 +91,9 @@
 // 2023.11.19 フラット遠訓オプションを追加
 // 2026.01.01 お知らせの中にもビルダーウィンドウが出てしまうようになったので対処
 //				宿舎化オプションの大宿舎化をチェック時、自動削除の設定はリセットしないように変更
+// 2026.01.15 自動造兵が動作しなくなっていたのを修正
 
-var VERSION = "2026.01.01"; 	// バージョン情報
+var VERSION = "2026.01.15"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -6512,7 +6513,7 @@ function make_soldier(attackerData){
 			MakeSoldierFlg = false; // 兵士作成フラグ
 
 			var tables = document.evaluate('//*[@class="status village-bottom"]//table//td[4]',document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-			var Temp = tables.snapshotItem(0).innerHTML;
+			var Temp = tables.snapshotItem(0).textContent;
 			temp0 = Temp.split("/");
 			var now_Soldier = temp0[0];
 			var max_Soldier = temp0[1];
