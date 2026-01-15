@@ -25,7 +25,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2026.01.15
+// @version		2026.01.16
 // ==/UserScript==
 
 // 配布サイト
@@ -92,8 +92,9 @@
 // 2026.01.01 お知らせの中にもビルダーウィンドウが出てしまうようになったので対処
 //				宿舎化オプションの大宿舎化をチェック時、自動削除の設定はリセットしないように変更
 // 2026.01.15 自動造兵が動作しなくなっていたのを修正
+// 2026.01.16 数字を4桁ごとに区切って表示するように変更
 
-var VERSION = "2026.01.15"; 	// バージョン情報
+var VERSION = "2026.01.16"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -4279,8 +4280,8 @@ function addInifacHtml(vId) {
 	var td411 = d.createElement("td");
 		td411.style.padding = "3px";
 		td411.style.verticalAlign = "top";
-		ccreateTextBox(td411, "OPT_RISE_KIFU_MAX", OPT_RISE_KIFU_MAX, "各資源が右の数量を超過したら軍費貯蓄する　","資源量が指定値を超過したら軍費貯蓄します。", 10, 5);
-		ccreateTextBox(td411, "OPT_RISE_KIFU", OPT_RISE_KIFU,		"軍費1あたりの資源量 　　　　　　　　　　　","軍費貯蓄画面で軍費1あたりの資源量を確認してください。", 10, 5);
+		ccreateTextBox(td411, "OPT_RISE_KIFU_MAX", OPT_RISE_KIFU_MAX, "各資源が右の数量を超過したら軍費貯蓄する　","資源量が指定値を超過したら軍費貯蓄します。", 12, 5);
+		ccreateTextBox(td411, "OPT_RISE_KIFU", OPT_RISE_KIFU,		"軍費1あたりの資源量 　　　　　　　　　　　","軍費貯蓄画面で軍費1あたりの資源量を確認してください。", 12, 5);
 
 	Contribution_Box.appendChild(tr400);
 	tr400.appendChild(td401);
@@ -5663,6 +5664,23 @@ function ccreateTextBox(container, id, def, text, title, size, left )
 	dv.appendChild(tx);
 	dv.appendChild(tb);
 	container.appendChild(dv);
+
+	// 4桁ごとに桁区切り表示する
+	$input = q$(tb);
+	$input.off('input').on({
+		input: function(){
+			var numericValue = q$(this).val().replace(/[^0-9]/g, '');
+			if (numericValue.length === 0) {
+				q$(this).val("");
+			} else {
+				var reversed = [...numericValue].reverse().join('');
+				var formatted = reversed.replace(/(\d{4})(?=\d)/g, '$1_');
+				q$(this).val([...formatted].reverse().join(''));
+			}
+		}
+	});
+	$input.trigger('input');
+
 	return tb;
 }
 function ccreateText(container, id, text, left )
@@ -5773,7 +5791,7 @@ function cgetTextBoxValue(id)
 {
 	var c = id;
 	if( !c ) return "";
-	return c.value;
+	return c.value.replace(/[^0-9]/g, ''); // 桁区切りを除去して数字のみを返す
 }
 function ccreateComboBox(container, id, sels, def, text, title, left )
 {
