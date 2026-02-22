@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.45
+// @version		1.09.46
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -144,10 +144,12 @@
 // 1.09.42	2025/03/12	RAPT. デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）で、緑字リンクが任意拠点で発動できなくなっていた不具合を修正
 // 1.09.43	2025/03/30	スキル検索結果画面からのスキル発動の際、回復系スキルの実行を空きコストのある任意の拠点で実行できるよう修正。実行形式を一度のPOSTによる新形式に変更 by @pla2999 #84
 // 1.09.44	2025/12/31	RAPT. メニューに標高設定画面へのリンクを追加
-//						- 一斉出兵で「討伐500を選択」ボタン押下時、「鹵獲として出兵」にチェックが入るように
+//						- 地図：一斉出兵で「討伐500を選択」ボタン押下時、「鹵獲として出兵」にチェックが入るように
 //						- 簡易ラベルセット時、設定後に選択中のタブを維持するように
 //						- 2025/12/31のメンテナンスで仁君君機能が使えなくなったのを修正
 // 1.09.45	2026/01/15	RAPT. デッキ：一括ラベルセット機能を追加で、ラベルが列挙できなくなっていたのを修正
+// 1.09.46	2026/02/22	RAPT. 地図：一斉出兵で「兵士をつけて出兵」に鋭兵も含めるように
+//						- 地図：一斉出兵で「HP100未満を選択」を追加
 
 
 //----------------------------------------------------------------------
@@ -1761,7 +1763,10 @@ function mapTabControl() {
 				[true, "crossbow_count"],		// 弩兵
 				[true, "cavalry_guards_count"], // 近衛騎兵
 				[false, "catapult_count"],		// 投石機
-				[false, "cavalry_scout_count"]	// 斥候騎兵
+				[false, "cavalry_scout_count"],	// 斥候騎兵
+				[true, "axe_count"], 			// 戦斧兵
+				[true, "twin_count"], 			// 双剣兵
+				[true, "spindle_count"] 		// 大錘兵
 			];
 
 			// 出兵座標の取得
@@ -1828,7 +1833,7 @@ function mapTabControl() {
 				}
 				html +=
 					"<div>" +
-						"<input type='checkbox' id='g_troop" + i + "' cardno='" + generals[i].id + "' gauge='" + generals[i].gauge + "' prize='" + generals[i].prize + "' style='vertical-align: middle'>" +
+						"<input type='checkbox' id='g_troop" + i + "' cardno='" + generals[i].id + "' gauge='" + generals[i].gauge + "' hp='" + generals[i].hp + "' prize='" + generals[i].prize + "' style='vertical-align: middle'>" +
 							"<label style='margin-left: 4px; margin-right: 4px;' for='g_troop" + i + "'>" +
 								gn +
 								"（レベル: " + generals[i].lv +
@@ -1841,7 +1846,7 @@ function mapTabControl() {
 					"</div>";
 				html_r +=
 					"<div>" +
-						"<input type='checkbox' id='g_reinforce" + i + "' cardno='" + generals[i].id + "' gauge='" + generals[i].gauge + "' prize='" + generals[i].prize + "' style='vertical-align: middle'>" +
+						"<input type='checkbox' id='g_reinforce" + i + "' cardno='" + generals[i].id + "' gauge='" + generals[i].gauge + "' hp='" + generals[i].hp + "' prize='" + generals[i].prize + "' style='vertical-align: middle'>" +
 							"<label style='margin-left: 4px; margin-right: 4px;' for='g_reinforce" + i + "'>" +
 								gn +
 								"（レベル: " + generals[i].lv +
@@ -1867,7 +1872,8 @@ function mapTabControl() {
 						"<input style='margin-bottom: 4px; margin-right: 4px;' id='checkoff_all' type='button' value='選択解除'>" +
 						"<input style='margin-bottom: 4px; margin-right: 4px;' id='check_all' type='button' value='全選択'>" +
 						"<input style='margin-bottom: 4px; margin-right: 4px;' id='check_gauge_100' type='button' value='討伐100以上を選択'>" +
-						"<input style='margin-bottom: 4px;' id='check_gauge_max' type='button' value='討伐500を選択'>" +
+						"<input style='margin-bottom: 4px; margin-right: 4px;' id='check_gauge_max' type='button' value='討伐500を選択'>" +
+						"<input style='margin-bottom: 4px;' id='check_hp_less_100' type='button' value='HP100未満を選択'>" +
 					"</div>" +
 					"<div>" +
 						html +
@@ -1984,7 +1990,22 @@ function mapTabControl() {
 							ents.eq(i).prop('checked', false);
 						}
 					}
-					q$("#use_prize").prop('checked', "true");
+					q$("#use_prize").prop('checked', true);
+				}
+			);
+
+			// HP100未満を選択
+			q$("#check_hp_less_100").on('click',
+				function() {
+					var ents = q$("input[id*='g_troop']");
+					for (var i = 0; i < ents.length; i++) {
+						if (ents.eq(i).attr('hp') < 100) {
+							ents.eq(i).prop('checked', true);
+						} else {
+							ents.eq(i).prop('checked', false);
+						}
+					}
+					q$("#use_prize").prop('checked', false);
 				}
 			);
 
