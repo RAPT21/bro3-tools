@@ -14,7 +14,7 @@
 // @connect		3gokushi.jp
 // @gain		none
 // @author		RAPT
-// @version 	0.1
+// @version 	0.2
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -29,6 +29,7 @@ jQuery.noConflict();
 
 
 // 2026.01.14	0.1	初版
+// 2026.04.12	0.2	経験値指定orスコア指定のボタンも表示できるように
 
 const SERVER_SCHEME = location.protocol + "//";
 const SERVER_BASE = SERVER_SCHEME + location.hostname;
@@ -40,9 +41,15 @@ const SERVER_NAME = location.hostname.match(/^(.*)\.3gokushi/)[1];
 // 保存設定部品定義
 //----------------------------------------
 
-const OPT_USE_LV1 = false;			// 武将LV0→1に必要な経験値5を付与するボタンを表示します
-const OPT_USE_LV400 = false;		// 武将LV0→400に必要な経験値を付与するボタンを表示します
-const OPT_USE_SCORE_MAX = false;	// スコア上限の42億スコアを付与するボタンを表示します
+const OPT_USE_SET_AND_UNSET = true;	// 軍議所北伐の経験値貯蔵庫にカードセット/解除するボタンを表示します
+const OPT_USE_LV1 = true;			// 武将LV0→1に必要な経験値5を付与するボタンを表示します
+const OPT_USE_LV400 = false;		// 武将LV0→400に必要な経験値119630255を付与するボタンを表示します
+const OPT_USE_SCORE_MAX = true;		// スコア上限の42億スコアを付与するボタンを表示します
+
+// 指定の経験値orスコアを付与するボタンを表示します
+// 0を設定すると表示しません
+const OPT_USE_EXP_VALUE = 0; // 経験値指定
+const OPT_USE_SCORE_VALUE = 0; // スコア指定
 
 
 //==========[本体]==========
@@ -197,10 +204,11 @@ const OPT_USE_SCORE_MAX = false;	// スコア上限の42億スコアを付与す
 		$('#cardFileList .cardStatusDetail').each(function() {
 			const cardId = $(this).data('card-id');
 
-			let buttons = [
-				['貯Set', 'cyan', () => { councilExpScoreStorageDeck(cardId, true); }],
-				['Unset', 'orange', () => { councilExpScoreStorageDeck(cardId, false); }]
-			];
+			let buttons = [];
+			if (OPT_USE_SET_AND_UNSET) {
+				buttons.push(['貯Set', 'cyan', () => { councilExpScoreStorageDeck(cardId, true); }]);
+				buttons.push(['Unset', 'orange', () => { councilExpScoreStorageDeck(cardId, false); }]);
+			}
 			if (OPT_USE_LV1) {
 				buttons.push(['LV1', 'yellow', () => { oneshotLV1(cardId, reload); }]);
 			}
@@ -208,7 +216,13 @@ const OPT_USE_SCORE_MAX = false;	// スコア上限の42億スコアを付与す
 				buttons.push(['LV400', 'lime', () => { oneshotLV400(cardId, reload); }]);
 			}
 			if (OPT_USE_SCORE_MAX) {
-				buttons.push(['スコア', 'silver', () => { oneshotScoreMax(cardId, reload); }]);
+				buttons.push(['スコア', 'lavender', () => { oneshotScoreMax(cardId, reload); }]);
+			}
+			if (OPT_USE_EXP_VALUE) {
+				buttons.push(['指EXP', 'mistyrose', () => { oneshotExpScore(cardId, OPT_USE_EXP_VALUE, 0, reload); }]);
+			}
+			if (OPT_USE_SCORE_VALUE) {
+				buttons.push(['指SCORE', 'tomato', () => { oneshotExpScore(cardId, 0, OPT_USE_SCORE_VALUE, reload); }]);
 			}
 
 			const container = $('<div />', { style: 'display: flex;' }).append(makeButtons(buttons));
