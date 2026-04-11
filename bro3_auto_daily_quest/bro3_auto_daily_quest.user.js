@@ -16,9 +16,9 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	2025.07.26
+// @version 	2026.03.18
 // ==/UserScript==
-var VERSION = "2025.07.26"; 	// バージョン情報
+var VERSION = "2026.03.18"; 	// バージョン情報
 
 jQuery.noConflict();
 q$ = jQuery;
@@ -87,6 +87,8 @@ var OPT_QUEST_TIMEINTERVAL = 1500;	// クエスト受注タイミング(ms)
 // 2024.11.04 ヨロズダスの残り回数表示を天候エリア右側から資源表示の下部へ移動
 // 2025.07.26 デュエル訓練場で自動連戦する（α機能）
 //			  複数チェックを入れた場合は、暗雲＞猛雨＞吹雪の優先度で選択されます。
+// 2026.03.18 デュエル仕様変更にともない、デュエル訓練場で自動連戦する（α機能）が動作しなくなっていたのを修正
+//			  「受信箱にあるアイテムを便利アイテムへ移す」でロックされないよう、ウェイトを追加
 
 
 //----------------------------------------
@@ -247,9 +249,9 @@ var ID_TRAINING_VICEROY			= 13601; // 南蛮太守を2人以上任命して第�
 var ID_DUEL_TRAININGAREA_STG_ONO = 1; // stg:暗雲の訓練：剣斧
 var ID_DUEL_TRAININGAREA_STG_SOU = 2; // stg:猛雨の訓練：槍弓双
 var ID_DUEL_TRAININGAREA_STG_SUI = 3; // stg:吹雪の訓練：騎錘
-var ID_DUEL_TRAININGAREA_DECK_ONO = 18; // npc_deck_id:斧兵_SL黄蓋:約10万
-var ID_DUEL_TRAININGAREA_DECK_SOU = 36; // npc_deck_id:双兵_SL夏侯惇:約7万
-var ID_DUEL_TRAININGAREA_DECK_SUI = 54; // npc_deck_id:騎兵_SL馬雲緑:約8万
+var ID_DUEL_TRAININGAREA_DECK_ONO = 28; // npc_deck_id:斧:【攻撃型】_SL曹洪:28:59,859 【防御型】_SL張苞:29:57,229
+var ID_DUEL_TRAININGAREA_DECK_SOU = 59; // npc_deck_id:双:【攻撃型】_SL呂布:58:58,934 【防御型】_SL蒋欽:59:60,590
+var ID_DUEL_TRAININGAREA_DECK_SUI = 88; // npc_deck_id:錘:【攻撃型】_SL張遼:88:64,535 【防御型】_SL厳顔:89:62,928
 var ID_DUEL_TRAININGAREA_LV = 16; // lvl:16戦目
 
 
@@ -352,7 +354,9 @@ function moveFromInbox(reloadIfNeed){
 				'item_id_list': item_id_list,
 				'ssid': ssid.value
 			};
-			httpPOST('/item/inbox.php',c,function(x){moveFromInbox(true);});
+			httpPOST('/item/inbox.php',c,function(x){
+				setTimeout(function(){moveFromInbox(true);},1000);
+			});
 		} else if (reloadIfNeed) {
 			var tid=setTimeout(function(){location.reload(false);},INTERVAL);
 		}
@@ -1379,9 +1383,9 @@ function openSettingBox() {
 		ccreateCheckBox(td200, OPT_FEATURE_07, " ヨロズダスの残り回数を資源表示の下部に表示", "現在引けるヨロズダスの内容を資源表示の下部に表示します。");
 			ccreateText(td200, "　");
 		ccreateCheckBox(td200, OPT_FEATURE_06, " [β機能] 洛陽への路のルートを自動で切り替える", "洛陽への路 ルートログイン報酬のルートを次の優先順位で選択します。\n　1.自動建設アイテム\n　2.南蛮防御アイテム\n　3.なるべく下のルート\nただし、隘路のチケット宝箱（序）、チケット宝箱（中）の場合は可能であれば海路を選択します。");
-		ccreateCheckBox(td200, OPT_FEATURE_09, " [α機能] デュエル訓練場の暗雲の訓練で斧兵_SL黄蓋と自動連戦する", "デュエル訓練場の暗雲の訓練16戦目で斧兵_SL黄蓋と訓練可能数上限まで自動連戦します。暗雲,猛雨,吹雪はいずれか１つのみチェックを入れてください。複数チェックを入れた場合は、暗雲＞猛雨＞吹雪の優先度で選択されます。");
-		ccreateCheckBox(td200, OPT_FEATURE_08, " [α機能] デュエル訓練場の猛雨の訓練で双兵_SL夏侯惇と自動連戦する", "デュエル訓練場の猛雨の訓練16戦目で双兵_SL夏侯惇と訓練可能数上限まで自動連戦します。暗雲,猛雨,吹雪はいずれか１つのみチェックを入れてください。複数チェックを入れた場合は、暗雲＞猛雨＞吹雪の優先度で選択されます。");
-		ccreateCheckBox(td200, OPT_FEATURE_10, " [α機能] デュエル訓練場の吹雪の訓練で騎兵_SL馬雲緑と自動連戦する", "デュエル訓練場の吹雪の訓練16戦目で騎兵_SL馬雲緑と訓練可能数上限まで自動連戦します。暗雲,猛雨,吹雪はいずれか１つのみチェックを入れてください。複数チェックを入れた場合は、暗雲＞猛雨＞吹雪の優先度で選択されます。");
+		ccreateCheckBox(td200, OPT_FEATURE_09, " [α機能] デュエル訓練場の暗雲の訓練で【攻撃型】_SL曹洪と自動連戦する", "デュエル訓練場の暗雲の訓練16戦目で【攻撃型】_SL曹洪と訓練可能数上限まで自動連戦します。暗雲,猛雨,吹雪はいずれか１つのみチェックを入れてください。複数チェックを入れた場合は、暗雲＞猛雨＞吹雪の優先度で選択されます。");
+		ccreateCheckBox(td200, OPT_FEATURE_08, " [α機能] デュエル訓練場の猛雨の訓練で【防御型】_SL蒋欽と自動連戦する", "デュエル訓練場の猛雨の訓練16戦目で【防御型】_SL蒋欽と訓練可能数上限まで自動連戦します。暗雲,猛雨,吹雪はいずれか１つのみチェックを入れてください。複数チェックを入れた場合は、暗雲＞猛雨＞吹雪の優先度で選択されます。");
+		ccreateCheckBox(td200, OPT_FEATURE_10, " [α機能] デュエル訓練場の吹雪の訓練で【攻撃型】_SL張遼と自動連戦する", "デュエル訓練場の吹雪の訓練16戦目で【攻撃型】_SL張遼と訓練可能数上限まで自動連戦します。暗雲,猛雨,吹雪はいずれか１つのみチェックを入れてください。複数チェックを入れた場合は、暗雲＞猛雨＞吹雪の優先度で選択されます。");
 			ccreateText(td200, "　");
 			ccreateText(td200, "[β機能] TP鹵獲", true);
 		ccreateCaptureBox(td200, OPT_CAPTURE_10, OPT_CAPTURE_11, OPT_CAPTURE_12, OPT_CAPTURE_13, OPT_CAPTURE_14, OPT_CAPTURE_15);
@@ -1456,9 +1460,9 @@ function getDefaultOptions() {
 	settings[OPT_FEATURE_05]	= true; // 育成クエスト（勝戦の計、攻戦の計）自動受注
 	settings[OPT_FEATURE_06]	= false; // [β機能] 洛陽への路のルートを自動で切り替える
 	settings[OPT_FEATURE_07]	= true; // ヨロズダスの残り回数を資源表示の下部に表示
-	settings[OPT_FEATURE_08]	= false; // [α機能] デュエル訓練場の猛雨の訓練で双兵_SL夏侯惇と自動連戦する
-	settings[OPT_FEATURE_09]	= false; // [α機能] デュエル訓練場の暗雲の訓練で斧兵_SL黄蓋と自動連戦する
-	settings[OPT_FEATURE_10]	= false; // [α機能] デュエル訓練場の吹雪の訓練で騎兵_SL馬雲緑と自動連戦する
+	settings[OPT_FEATURE_08]	= false; // [α機能] デュエル訓練場の猛雨の訓練で【防御型】_SL蒋欽と自動連戦する
+	settings[OPT_FEATURE_09]	= false; // [α機能] デュエル訓練場の暗雲の訓練で【攻撃型】_SL曹洪と自動連戦する
+	settings[OPT_FEATURE_10]	= false; // [α機能] デュエル訓練場の吹雪の訓練で【攻撃型】_SL張遼と自動連戦する
 
 	settings[OPT_TROOPS_01]		= 0; // 出兵武将カードID
 	settings[OPT_TROOPS_02]		= 0; // 出兵先座標x
