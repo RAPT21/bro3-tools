@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.46
+// @version		1.09.47
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -150,6 +150,7 @@
 // 1.09.45	2026/01/15	RAPT. デッキ：一括ラベルセット機能を追加で、ラベルが列挙できなくなっていたのを修正
 // 1.09.46	2026/02/22	RAPT. 地図：一斉出兵で「兵士をつけて出兵」に鋭兵も含めるように
 //						- 地図：一斉出兵で「HP100未満を選択」を追加
+// 1.09.47	2026/04/12	RAPT. 即時落札ボタンのサイズを少し大きくした
 
 
 //----------------------------------------------------------------------
@@ -9271,7 +9272,7 @@ function createJustBuyButton(id, bid) {
 	var tr_id = id + "_buy";
 	q$("#" + id).html(
 		"<div>" +
-			"<input type='button' id='" + tr_id + "' style='background-color: blue; color: white; border-color: silver;' value='落札'>" +
+			"<input type='button' id='" + tr_id + "' style='width: 100%; height: 36px; background-color: blue; color: white; border-color: silver;' value='落札'>" +
 		"</div>"
 	);
 
