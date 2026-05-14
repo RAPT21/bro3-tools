@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.47
+// @version		1.09.48
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -151,6 +151,7 @@
 // 1.09.46	2026/02/22	RAPT. 地図：一斉出兵で「兵士をつけて出兵」に鋭兵も含めるように
 //						- 地図：一斉出兵で「HP100未満を選択」を追加
 // 1.09.47	2026/04/12	RAPT. 即時落札ボタンのサイズを少し大きくした
+// 1.09.48	2026/05/15	RAPT. デッキ：ファイル内スキル検索機能を追加で、1枠目にパッシブスキルがあると検出スキルがずれることがある問題に対処
 
 
 //----------------------------------------------------------------------
@@ -6791,6 +6792,7 @@ function deck_resttime_checker() {
 								var skill = q$("b", info2).eq(j).text().replace(/[ \t]/g, "");
 								// 副将スキルは外す (2023/05/26 by pla2999)
 								if (/^副/.test(skill)) continue;
+								if (/^:/.test(skill)) continue; // 1枠目がパッシブだと表記がずれることがある運営バグ回避
 								if (skill === "\u00A0") continue; // スキル欄が空欄ならスキップ
 								skill = skill.replace(/^.*:/, "");
 								var skill_info = getSkillInfo(skill, q$('div.set a.control__button--deck-set-small', cards.eq(i)).attr('href'));
