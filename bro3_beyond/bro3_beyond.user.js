@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.48
+// @version		1.09.49
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -150,8 +150,9 @@
 // 1.09.45	2026/01/15	RAPT. デッキ：一括ラベルセット機能を追加で、ラベルが列挙できなくなっていたのを修正
 // 1.09.46	2026/02/22	RAPT. 地図：一斉出兵で「兵士をつけて出兵」に鋭兵も含めるように
 //						- 地図：一斉出兵で「HP100未満を選択」を追加
-// 1.09.47	2026/04/12	RAPT. 即時落札ボタンのサイズを少し大きくした
+// 1.09.47	2026/04/12	RAPT. Trade：簡易落札ボタンのサイズを少し大きくした
 // 1.09.48	2026/05/15	RAPT. デッキ：ファイル内スキル検索機能を追加で、1枠目にパッシブスキルがあると検出スキルがずれることがある問題に対処
+// 1.09.49	2026/06/18	RAPT. メニューの軍議所項目について、6/18メンテによる変更分を反映
 
 
 //----------------------------------------------------------------------
@@ -4168,13 +4169,17 @@ function execCommonPart() {
 								['軍費貯蓄拡大', BASE_URL + '/council/arms.php?council_function_id=206'],
 								['名声獲得', BASE_URL + '/council/arms.php?council_function_id=207'],
 								['標高変更', BASE_URL + '/council/arms.php?council_function_id=211'],
+								['NPC領地突撃ポイント獲得', BASE_URL + '/council/arms.php?council_function_id=212'],
+								['拠点建設予約一覧', BASE_URL + '/council/arms.php?council_function_id=213'],
 							],
 						],
 						['盟・伍', BASE_URL + '/council/?tab=8'],
-						['農村', BASE_URL + '/council/?tab=3'],
+						['経験値貯蔵庫', BASE_URL + '/council/?tab=10'],
+						['屯田', BASE_URL + '/council/?tab=3'],
 						['設計', BASE_URL + '/council/?tab=4'],
 						['南蛮', BASE_URL + '/council/?tab=5'],
 						['北伐', BASE_URL + '/council/?tab=6'],
+						['武闘', BASE_URL + '/council/?tab=9'],
 					],
 				],
 				['合成', BASE_URL + '/union/index.php',
