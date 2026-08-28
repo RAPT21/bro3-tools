@@ -25,7 +25,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2026.06.24
+// @version		2026.08.28
 // ==/UserScript==
 
 // 配布サイト
@@ -94,8 +94,9 @@
 // 2026.01.15 自動造兵が動作しなくなっていたのを修正
 // 2026.01.16 数字を4桁ごとに区切って表示するように変更
 // 2026.06.24 大城塞,城壁塔の自動LVUPができていなかった問題を修正
+// 2026.08.28 重装弓兵などサポート外兵種があっても、武器防具LVUPが動作するように修正
 
-var VERSION = "2026.06.24"; 	// バージョン情報
+var VERSION = "2026.08.28"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -1870,6 +1871,10 @@ debugLog("=== Start autoLvup ===");
 								var BG_LvNm = actionsElem2.snapshotItem(i).innerHTML.substring(actionsElem2.snapshotItem(i).innerHTML.lastIndexOf("&nbsp;&nbsp;")+12);
 								var BG_UID	= UnitID[BG_Name];
 								var BG_Lv	= actionsElem2.snapshotItem(i).innerHTML.substring(3,actionsElem2.snapshotItem(i).innerHTML.lastIndexOf("&nbsp;")-6);
+
+								if (!(BG_Name in UnitID) || !(type + BG_Name in costs)) {
+									continue; // 重装弓兵など、サポート外兵種の場合は無視
+								}
 
 								var BG_WOOD  = costs[type + BG_Name][BG_Lv][0];
 								var BG_STONE = costs[type + BG_Name][BG_Lv][1];
