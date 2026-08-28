@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.49
+// @version		1.09.50
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -153,6 +153,7 @@
 // 1.09.47	2026/04/12	RAPT. Trade：簡易落札ボタンのサイズを少し大きくした
 // 1.09.48	2026/05/15	RAPT. デッキ：ファイル内スキル検索機能を追加で、1枠目にパッシブスキルがあると検出スキルがずれることがある問題に対処
 // 1.09.49	2026/06/18	RAPT. メニューの軍議所項目について、6/18メンテによる変更分を反映
+// 1.09.50	2026/08/28	RAPT. 202608攻防戦で武器防具LVUPが動作するように
 
 
 //----------------------------------------------------------------------
@@ -251,7 +252,7 @@ var IMG_SRC_BASE_PATH = RESOURCE_BASE_PATH + "img/";
 var SORT_UP_ICON = IMG_SRC_BASE_PATH + "trade/icon_up.gif";
 var SORT_DOWN_ICON = IMG_SRC_BASE_PATH + "trade/icon_down.gif";
 var AJAX_REQUEST_INTERVAL = 100; // (ms)
-var g_isUseSingleSkillQuery = SERVER_NAME[0] === 'e';
+var g_isUseSingleSkillQuery = false; // SERVER_NAME[0] === 'e';
 
 //----------------------------------------------------------------------
 // 画面設定項目-保存フィールド名対応定数群
