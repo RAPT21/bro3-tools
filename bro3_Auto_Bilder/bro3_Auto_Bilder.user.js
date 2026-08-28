@@ -25,7 +25,7 @@
 // @grant		GM.xmlhttpRequest
 // @grant		GM.log
 // @author		RAPT
-// @version		2026.01.16
+// @version		2026.06.24
 // ==/UserScript==
 
 // 配布サイト
@@ -93,8 +93,9 @@
 //				宿舎化オプションの大宿舎化をチェック時、自動削除の設定はリセットしないように変更
 // 2026.01.15 自動造兵が動作しなくなっていたのを修正
 // 2026.01.16 数字を4桁ごとに区切って表示するように変更
+// 2026.06.24 大城塞,城壁塔の自動LVUPができていなかった問題を修正
 
-var VERSION = "2026.01.16"; 	// バージョン情報
+var VERSION = "2026.06.24"; 	// バージョン情報
 
 // load jQuery（q$にしているのは Tampermonkey 対策）
 jQuery.noConflict();
@@ -2195,11 +2196,11 @@ debugLog("=== Start setVillageFacility ===");
 			//建築物名分回す
 			OPT_FUC_NAME.push("村","城","砦","要塞","大城塞","城壁塔");
 			if(OPT_CHKBOX[0] == 1) {
-				OPT_CHKBOX.push(1,1,1,1);
-				OPT_CHKBOXLV.push(OPT_CHKBOXLV[0],OPT_CHKBOXLV[0],OPT_CHKBOXLV[0],OPT_CHKBOXLV[0]);
+				OPT_CHKBOX.push(1,1,1,1,1,1);
+				OPT_CHKBOXLV.push(OPT_CHKBOXLV[0],OPT_CHKBOXLV[0],OPT_CHKBOXLV[0],OPT_CHKBOXLV[0],OPT_CHKBOXLV[0],OPT_CHKBOXLV[0]);
 			} else {
-				OPT_CHKBOX.push(0,0,0,0);
-				OPT_CHKBOXLV.push(0,0,0,0);
+				OPT_CHKBOX.push(0,0,0,0,0,0);
+				OPT_CHKBOXLV.push(0,0,0,0,0,0);
 			}
 			OPT_CHKBOX.push;
 			for(var ii=0;ii<OPT_FUC_NAME.length;ii++){
@@ -2225,7 +2226,6 @@ debugLog("=== Start setVillageFacility ===");
 							// 削除施設とレベルアップ施設が一致したらスキップ
 							continue;
 						}
-						// 拠点以外のレベルアップ処理
 						c['x']=parseInt(Temp[0],10);
 						c['y']=parseInt(Temp[1],10);
 						c['village_id']=getVillageID(vId);
