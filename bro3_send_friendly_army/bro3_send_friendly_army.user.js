@@ -10,7 +10,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.5
+// @version 	1.6
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
@@ -44,6 +44,7 @@ q$ = jQuery;
 //					友軍状況画面を開いたあと造兵情報を収集するため、造兵可能になるまで数秒～数十秒かかる場合があります。
 // 2024.01.18	1.4	地形1.0で、基本鋭兵の造兵ができなくなっていたのを修正
 // 2026.09.05 1.5 202609攻防戦にて、天兵仮対応
+// 2026.09.06 1.6 要塞の施設情報取得時、即完可能兵種優先、なければ造兵可能兵種にチェックを入れるように。即完可能時は造兵チェックも入れるように
 
 
 var SERVER_SCHEME = location.protocol + "//";
@@ -364,19 +365,30 @@ q$("#gray02Wrapper table[class*='tables'] tbody tr").each(function(index, row){
 			if (canMakeSoldierAfterSent && sol_names.length) {
 				// 造兵情報取得完了かつ造兵施設あり
 				var hasAny = false;
+				var lastBold = null;
+				var lastBlue = null;
 				for (var i = 0; i < sol_names.length; i++) {
 					// 造兵可能兵種があればその兵種を太字にする
 					var element = armyTable[sol_names[i]];
-					var label = q$(`input[name=a-type][value=${element[IDX_TYPE]}]`).next().css('font-weight', 'bold');
+					var radio = q$(`input[name=a-type][value=${element[IDX_TYPE]}]`);
+					var label = radio.next().css('font-weight', 'bold');
+					lastBold = radio;
 					if (element[IDX_CAN]) {
 						// 即完可能兵種のみさらに青字にする
 						label.css('color', 'blue');
 						hasAny = true;
+						lastBlue = radio;
 					}
 				}
+				// 即完可能兵種優先、なければ造兵可能兵種にチェックを入れる
+				var checkRadio = lastBlue || lastBold;
+				if (checkRadio) {
+					checkRadio.prop('checked', true);
+				}
+
 				// 即完可能兵種があればチェックできるようにする
 				if (hasAny) {
-					q$('#a-make').attr('disabled', false).next().css('color', 'blue');
+					q$('#a-make').attr('disabled', false).prop('checked', true).next().css('color', 'blue');
 				}
 				// console.log(JSON.stringify(armyTable, null, 2));
 			}
