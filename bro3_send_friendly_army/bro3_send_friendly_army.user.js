@@ -10,7 +10,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.4
+// @version 	1.5
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
@@ -43,6 +43,7 @@ q$ = jQuery;
 //					即完できる場合のみ造兵します。送った兵種を送った数だけ造兵します。資源不足はチェックしません。
 //					友軍状況画面を開いたあと造兵情報を収集するため、造兵可能になるまで数秒～数十秒かかる場合があります。
 // 2024.01.18	1.4	地形1.0で、基本鋭兵の造兵ができなくなっていたのを修正
+// 2026.09.05 1.5 202609攻防戦にて、天兵仮対応
 
 
 var SERVER_SCHEME = location.protocol + "//";
@@ -69,14 +70,18 @@ var armyTable = {
 //	斥候	: ['斥候'		, 'scout_count'			, 310, 0, 0, 0],
 //	大剣兵	: ['大剣兵'		, 'large_infantry_count', 315, 0, 0, 0],
 	重盾兵	: ['重盾兵'		, 'heavy_shield_count'	, 317, 0, 0, 0],
-	矛槍兵	: ['矛槍兵'		, 'halbert_count'		, 304, 0, 0, 0],
-	弩兵	: ['弩兵'		, 'crossbow_count'		, 309, 0, 0, 0],
-	近衛騎兵: ['近衛騎兵'	, 'cavalry_guards_count', 307, 0, 0, 0],
+//	矛槍兵	: ['矛槍兵'		, 'halbert_count'		, 304, 0, 0, 0],
+//	弩兵	: ['弩兵'		, 'crossbow_count'		, 309, 0, 0, 0],
+//	近衛騎兵: ['近衛騎兵'	, 'cavalry_guards_count', 307, 0, 0, 0],
 	投石機	: ['投石機'		, 'catapult_count'		, 313, 0, 0, 0],
 	斥候騎兵: ['斥候騎兵'	, 'cavalry_scout_count'	, 311, 0, 0, 0],
 	戦斧兵	: ['戦斧兵'		, 'axe_count'			, 318, 0, 0, 0],
 	双剣兵	: ['双剣兵'		, 'twin_count'			, 319, 0, 0, 0],
-	大錘兵	: ['大錘兵'		, 'spindle_count'		, 320, 0, 0, 0]
+	大錘兵	: ['大錘兵'		, 'spindle_count'		, 320, 0, 0, 0],
+	重装槍兵: ['重装槍兵'	, 'heavy_spear_count'	, 321, 0, 0, 0], // ★重装槍兵の造兵IDは推定。要確認★
+	重装弓兵: ['重装弓兵'	, 'heavy_crossbow_count', 323, 0, 0, 0],
+	重装騎兵: ['重装騎兵'	, 'heavy_cavalry_count'	, 322, 0, 0, 0],
+	禁軍兵	: ['禁軍兵'		, 'imperial_guards_count', 324, 0, 0, 0]
 };
 function armyInfo(type) {
 	var keys = Object.keys(armyTable);
@@ -258,7 +263,7 @@ function getMakeSoldierInfo(res, callback) {
 			if (url.match(/\?x=(\d+)&y=(\d+)#/)) {
 				var x = RegExp.$1;
 				var y = RegExp.$2;
-				if (["兵器工房","厩舎","兵舎","弓兵舎","練兵所","斧兵舎","双兵舎","錘兵舎"].indexOf(name) >= 0) {
+				if (["兵器工房","厩舎","兵舎","弓兵舎","練兵所","斧兵舎","双兵舎","錘兵舎","重装兵舎","禁衛府"].indexOf(name) >= 0) {
 					xy.push([url, x, y]);
 				}
 			}
