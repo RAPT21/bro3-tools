@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.50
+// @version		1.09.51
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -154,6 +154,8 @@
 // 1.09.48	2026/05/15	RAPT. デッキ：ファイル内スキル検索機能を追加で、1枠目にパッシブスキルがあると検出スキルがずれることがある問題に対処
 // 1.09.49	2026/06/18	RAPT. メニューの軍議所項目について、6/18メンテによる変更分を反映
 // 1.09.50	2026/08/28	RAPT. 202608攻防戦でデッキからのスキル発動が動作するように
+// 1.09.51	2026/09/11	RAPT. メニューに軍議所＞軍議＞HP・スキル回復を追加
+//						- 地図：援軍の即時到着ボタンを消すを追加
 
 
 //----------------------------------------------------------------------
@@ -279,6 +281,7 @@ var MAP_01 = 'ma01';		// ドラッグ＆ドロップでのマップ移動機能�
 var MAP_11 = 'ma11';		// 出兵時にデッキ武将を一斉出兵する機能を追加
 var MAP_12 = 'ma12';		// 出兵種別初期選択の制御をできる機能を追加
 var MAP_13 = 'ma13';		// 鹵獲先座標リスト
+var MAP_14 = 'ma14';		// 援軍の即時到着ボタンを消す
 
 // 同盟タブ
 var ALLIANCE_01 = 'al01';	// 同盟トップ：同盟ランキングソート機能の追加
@@ -2233,6 +2236,14 @@ function mapTabControl() {
 			);
 		}
 	}
+
+	// 兵士管理画面
+	if (location.pathname === "/facility/unit_status.php") {
+		// 援軍の即時到着ボタンを消す
+		if (g_beyond_options[MAP_14]) {
+			q$('a[onclick^="useImmediateArrivalBuyAndUse"]').parent().remove();
+		}
+	}
 }
 
 //----------------------------------------------------------------------
@@ -4165,6 +4176,7 @@ function execCommonPart() {
 								['施設建設技術', BASE_URL + '/council/arms.php?council_function_id=201'],
 								['訓練技術', BASE_URL + '/council/arms.php?council_function_id=202'],
 								['再訓練技術', BASE_URL + '/council/arms.php?council_function_id=203'],
+								['HP・スキル回復', BASE_URL + '/council/arms.php?council_function_id=214'],
 								['忠誠心上限アップ', BASE_URL + '/council/arms.php?council_function_id=204'],
 								['強化忠誠心攻撃', BASE_URL + '/council/arms.php?council_function_id=205'],
 								['軍費貯蓄拡大', BASE_URL + '/council/arms.php?council_function_id=206'],
@@ -6249,6 +6261,7 @@ function draw_setting_window(append_target) {
 					<br> \
 					<div style='font-weight: bold'>出兵画面</div> \
 					<div style='margin-left: 8px;'> \
+						<div><input type='checkbox' id='" + MAP_14 + "'><label for='" + MAP_14 + "'>援軍の即時到着ボタンを消す</label></input></div> \
 						<div><input type='checkbox' id='" + MAP_11 + "'><label for='" + MAP_11 + "'>出兵時にデッキ武将を一斉出兵する機能を追加</label></input></div> \
 					</div> \
 					<br> \
