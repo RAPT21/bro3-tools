@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.51
+// @version		1.09.52
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -156,6 +156,7 @@
 // 1.09.50	2026/08/28	RAPT. 202608攻防戦でデッキからのスキル発動が動作するように
 // 1.09.51	2026/09/11	RAPT. メニューに軍議所＞軍議＞HP・スキル回復を追加
 //						- 地図：援軍の即時到着ボタンを消すを追加
+// 1.09.52	2026/09/17	RAPT. デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）で、赤字リンク（呼集スキルなど指定拠点で発動後即下げのスキル）が1.09.43以降で動作しなくなっていた不具合を修正(issue#87)
 
 
 //----------------------------------------------------------------------
@@ -8213,7 +8214,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 											q$(this).html(use_link_html);
 											return;
 										}
-										var vacant_cost = (village_info.deck_kind === 1) ? domesticMainVacantCost : domesticSubVacantCost;
+										var vacant_cost = (village_info.deck_kind === 1) ? mainVacantCost : subVacantCost;
 										if (card_cost > vacant_cost) {
 											alert(`${village_info.village_name}の空きコストが不足しています`);
 											q$(this).parent().children('td').html(recover_html);
