@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.52
+// @version		1.09.53
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -157,6 +157,7 @@
 // 1.09.51	2026/09/11	RAPT. メニューに軍議所＞軍備＞HP・スキル回復を追加
 //						- 地図：援軍の即時到着ボタンを消すを追加
 // 1.09.52	2026/09/17	RAPT. デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）で、赤字リンク（呼集スキルなど指定拠点で発動後即下げのスキル）が1.09.43以降で動作しなくなっていた不具合を修正(issue#87)
+// 1.09.53	2026/09/29	RAPT. デッキ：内政スキル使用リンクの追加で、赤字リンク発動失敗時、緑リンクになってしまう不具合および意図しない拠点で発動してしまうことがある不具合を修正
 
 
 //----------------------------------------------------------------------
@@ -8188,12 +8189,16 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 							vacant_cost = (village_info.deck_kind === 1) ? mainVacantCost : subVacantCost;
 						}
 
-						// 回復系、発動拠点はどこでもいい：緑、指定した拠点：赤
-						var use_link_html = `<span id="beyond_use_skill" class='${anyVillage?"skg":"skr"}'>[使用]</span>`;
-						target_el.html(use_link_html);
+						function makeUseLinkHtml(isAnyVillage) {
+							// 回復系、発動拠点はどこでもいい：緑、指定した拠点：赤
+							return `<span id="beyond_use_skill" class='${isAnyVillage?"skg":"skr"}'>[使用]</span>`;
+						}
+
+						target_el.html(makeUseLinkHtml(anyVillage));
 						target_el.eq(0).on(
 							'click', function() {
 								var isAnywhere = q$("#beyond_use_skill").hasClass('skg');
+								var use_link_html = makeUseLinkHtml(isAnywhere);
 
 								// 自動回復スキル発動実行
 								if (q$(this).children('span').length > 0) {
@@ -8240,7 +8245,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 									var card_id = skill_info.card_id;
 
 									// スキルIDと、スキル発動拠点の選定ができた場合に実施
-									if (skill_id.length > 0 && useSkillVillageId > 0) {
+									if (skill_id.length > 0 && village_id > 0) {
 										// ステータス表示変更
 										q$(this).parent().children('td').html(
 											"<span style='color: blue;'>スキル発動中</span>"
@@ -8259,7 +8264,7 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 										} else {
 											params['choose_attr1_skills[]'] = skill_id;
 										}
-										params[`selected_village[${card_id}]`] = isAnywhere ? useSkillVillageId : village_id;
+										params[`selected_village[${card_id}]`] = village_id;
 
 										var _this = q$(this);
 										q$.ajax('/card/deck.php', {
