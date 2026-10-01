@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.53
+// @version		1.09.54
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -158,6 +158,12 @@
 //						- 地図：援軍の即時到着ボタンを消すを追加
 // 1.09.52	2026/09/17	RAPT. デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）で、赤字リンク（呼集スキルなど指定拠点で発動後即下げのスキル）が1.09.43以降で動作しなくなっていた不具合を修正(issue#87)
 // 1.09.53	2026/09/29	RAPT. デッキ：内政スキル使用リンクの追加で、赤字リンク発動失敗時、緑リンクになってしまう不具合および意図しない拠点で発動してしまうことがある不具合を修正
+// 1.09.54	2026/10/02	RAPT. 2026/10/01メンテナンスによる仕様変更対応がメイン
+//						- Trade：表示レアリティ固定ボタン追加で、レアリティSL対応
+//						- Trade：推定収入・手数料表示を追加で、1,000,000TPを超える出品手数料対応
+//						- メニューの「デッキ＞自動鹵獲出兵設定」を「旧自動鹵獲」へ変更し「おまかせ自動鹵獲」を追加（運営の変更に追随）
+//						- メニューへ「同盟＞保護期間共有」を追加
+//						- メニューから「同盟＞遷都状況」を削除
 
 
 //----------------------------------------------------------------------
@@ -4111,7 +4117,7 @@ function execCommonPart() {
 			[
 				['伍人組', alurl + '/squad.php'],
 				['友軍状況', alurl + '/friendly_army.php'],
-				['遷都状況', alurl + '/castle_transfer.php'],
+			//	['遷都状況', alurl + '/castle_transfer.php'],
 				['同盟ログ', alurl + '/alliance_log.php',
 					[
 						['全て', alogurl], ['攻撃', alogurl + '?m=attack'], ['防御', alogurl + '?m=defense'], ['偵察', alogurl + '?m=scout'],
@@ -4123,6 +4129,7 @@ function execCommonPart() {
 				['助力履歴', alurl + '/assist_history.php'],
 				['管理', alurl + '/manage.php'],
 				['配下同盟管理', alurl + '/manage_dep.php'],
+				['保護期間共有', facurl + '/share_protect_time_view.php'],
 			],
 			// デッキ
 			[
@@ -4310,7 +4317,8 @@ function execCommonPart() {
 				],
 				['トレード獲得履歴', BASE_URL + '/card/trade_history.php?mode=buy'],
 				['トレード放出履歴', BASE_URL + '/card/trade_history.php?mode=sell'],
-				['自動鹵獲出兵設定', BASE_URL + '/auto_capture_material/setting.php'],
+				['おまかせ自動鹵獲', BASE_URL + '/auto_capture_material/smart_setting.php'],
+				['旧自動鹵獲', BASE_URL + '/auto_capture_material/setting.php'],
 				['デッキ一括UP設定', BASE_URL + '/card/deck_priority_index.php'],
 			],
 			// アイテム
@@ -4873,7 +4881,7 @@ function execTradePart() {
 		q$("#filtering input[class='all_rarity_display']").after(
 			"<span>" +
 				"<input type='button' id='change_rarity_all' value='全て' style='" + style + "'></input>" +
-//				"<input type='button' id='change_rarity_sl' value='SLのみ' style='" + style + "'></input>" +	// SLカードが出品可能になったら対応
+				"<input type='button' id='change_rarity_sl' value='SLのみ' style='" + style + "'></input>" +
 				"<input type='button' id='change_rarity_l' value='Lのみ' style='" + style + "'></input>" +
 				"<input type='button' id='change_rarity_ur' value='URのみ' style='" + style + "'></input>" +
 				"<input type='button' id='change_rarity_sr' value='SRのみ' style='" + style + "'></input>" +
@@ -4889,9 +4897,9 @@ function execTradePart() {
 				var r = "r_" + q$(this).attr('id').replace(/change_rarity_/, "");
 				var url = "";
 				if (r != 'r_all') {
-					url = "trade.php?t=" + t + "&k=" + k + "&tl=1&r_l=0&r_ur=0&r_sr=0&r_r=0&r_uc=0&r_c=0".replace(r + "=0", r + "=1");
+					url = "trade.php?t=" + t + "&k=" + k + "&tl=1&r_sl=0&r_l=0&r_ur=0&r_sr=0&r_r=0&r_uc=0&r_c=0".replace(r + "=0", r + "=1");
 				} else {
-					url = "trade.php?t=" + t + "&k=" + k + "&tl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1";
+					url = "trade.php?t=" + t + "&k=" + k + "&tl=1&r_sl=1&r_l=1&r_ur=1&r_sr=1&r_r=1&r_uc=1&r_c=1";
 				}
 				location.href = url;
 			}
@@ -9159,7 +9167,12 @@ function getSessionId() {
 
 // 取引手数料計算
 function calcCharge(tp) {
-	return parseInt((tp * 0.1) + (tp > 500) * (tp - 500) * 0.1 + (tp > 1000) * (tp - 1000) * 0.1);
+	return parseInt(
+		(tp * 0.1)
+		+ (tp > 500) * (tp - 500) * 0.1
+		+ (tp > 1000) * (tp - 1000) * 0.1
+		+ (tp > 1000000) * (tp - 1000000) * 0.05
+	);
 }
 
 // デッキモード取得
