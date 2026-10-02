@@ -14,7 +14,7 @@
 // @connect		3gokushi.jp
 // @gain		none
 // @author		RAPT
-// @version 	0.1
+// @version 	0.2
 // ==/UserScript==
 
 jQuery.noConflict();
@@ -30,14 +30,16 @@ jQuery.noConflict();
 // 3. 登録完了後、画面に表示される「画面を更新する」ボタンをクリックしてページを再読み込みしてください。
 //
 // ▼機能・特徴
-// - 【柔軟な区切り文字】 リストは「改行」または「カンマ（,）」のどちらで区切られていても認識します（混在もOK）。
-// - 【空白の自動除去】 登録エラーを防ぐため、君主名の前後にある不要なスペース（空白文字）は自動で取り除きます。
-// - 【重複チェック】 登録エラーを防ぐため、リスト内で名前が重複している場合は自動で1つにまとめます（重複排除）。除外された君主名は画面上のログで確認できます。
-// - 【自動リロード対応】 スクリプト内の設定（g_reloadIfSucceeded）を true に書き換えることで、登録成功時に手動でボタンを押さなくても、自動でページを最新状態に更新できます。
+// - 【柔軟な区切り文字】リストは「改行」または「カンマ（,）」のどちらで区切られていても認識します（混在もOK）。
+// - 【空白の自動除去】登録エラーを防ぐため、君主名の前後にある不要なスペース（空白文字）は自動で取り除きます。
+// - 【重複チェック】登録エラーを防ぐため、リスト内で名前が重複している場合は自動で1つにまとめます（重複排除）。除外された君主名は画面上のログで確認できます。
+// - 【エラー自動リトライ】一部の君主にエラー（存在しない、共有済など）があっても、その君主をリストから自動で除外して正常な君主だけで再登録を試みます。
+// - 【自動リロード対応】スクリプト内の設定（g_reloadIfSucceeded）を true に書き換えることで、登録成功時に手動でボタンを押さなくても、自動でページを最新状態に更新できます。
 
 
 //==========[更新履歴]==========
 // 2026.10.02	0.1	初版
+// 2026.10.03	0.2	存在しない、共有済などのエラー時、自動で除外してリトライできるように
 
 
 //==========[設定]==========
@@ -193,9 +195,18 @@ const g_reloadIfSucceeded = false; // 登録成功時、自動でリロードす
 		}
 
 		// サーバーへ送信
+		sendRequest(uniqueNamesList, []);
+	});
+
+	function sendRequest(targetList, accumulatedInfoLogs) {
+		if (targetList.length === 0) {
+			showErrors({ "登録エラー": ["有効な君主名がありません。"] });
+			return;
+		}
+
 		const requestData = {
 			add: 1,
-			"user_names[]": uniqueNamesList
+			"user_names[]": targetList
 		};
 
 		$.ajax({
@@ -205,6 +216,11 @@ const g_reloadIfSucceeded = false; // 登録成功時、自動でリロードす
 			dataType: 'json',
 			success: response => {
 				if (response.is_success) {
+					// リトライの末に成功した場合、これまでに除外されたログも併せて表示
+					if (accumulatedInfoLogs.length > 0) {
+						$infoBox.html('💡 以下のエラー君主名を除外して登録しました：<br>' + accumulatedInfoLogs.join('<br>')).show();
+					}
+
 					$successBox.show();
 					$textarea.val('');
 
@@ -214,14 +230,48 @@ const g_reloadIfSucceeded = false; // 登録成功時、自動でリロードす
 						}, 1500);
 					}
 				} else {
+					// ❌ エラーが発生した場合：エラー君主名を特定してリトライを試みる
+					if (response.errors) {
+						const errorNames = []; // 今回のレスポンスでエラーになった君主名たち
+
+						Object.keys(response.errors).forEach(errorType => {
+							const names = response.errors[errorType];
+							names.forEach(name => {
+								if (errorNames.indexOf(name) === -1) {
+									errorNames.push(name);
+								}
+								// ログ用テキストの成形 (例: 「存在しない君主名です (対象: 穴熊さん)」)
+								accumulatedInfoLogs.push(`${errorType} (対象: ${name})`);
+							});
+						});
+
+						// エラー君主名を取り除いた新しい送信リストを作成
+						const nextTargetList = targetList.filter(name => errorNames.indexOf(name) === -1);
+
+						// 削った結果、まだ送信できる君主名が1件以上残っているなら自動リトライ
+						if (nextTargetList.length > 0) {
+							$infoBox.html('🔄 エラー君主名を除外して再登録を試みています...').show();
+
+							// サーバーへの連続負荷を避けるため、少しだけ猶予（0.3秒）を置いてリトライ
+							setTimeout(() => {
+								sendRequest(nextTargetList, accumulatedInfoLogs);
+							}, 300);
+							return;
+						}
+					}
+
+					// リトライできない場合（または全員エラーの場合）は画面にエラーを表示
 					showErrors(response.errors);
+					if (accumulatedInfoLogs.length > 0) {
+						$infoBox.html('💡 除外されたエラー履歴：<br>' + accumulatedInfoLogs.join('<br>')).show();
+					}
 				}
 			},
 			error: () => {
 				showErrors({ "通信エラー": ["APIの実行に失敗しました。"] });
 			}
 		});
-	});
+	}
 
 	function showErrors(errors) {
 		if (!errors) return;
