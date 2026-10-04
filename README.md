@@ -26,6 +26,7 @@
 | [bro3_help_army_report](bro3_help_army_report) | 報告書、同盟ログから南蛮援軍状況を解析して、援軍兵種や兵数をチェックする |
 | [bro3_receive_all_quest](bro3_receive_all_quest) | クエスト一覧画面で通常クエストを一括で受注から報酬受領まで自動で行う |
 | [bro3_deck_council_exp_score](bro3_deck_council_exp_score) | デッキ画面から経験値貯蔵庫へカード操作する |
+| [bro3_share_protect_time_register](bro3_share_protect_time_register) | 保護期間共有画面で君主名をまとめて登録する |
 
 ## 臨時
 
