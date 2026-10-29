@@ -13,7 +13,7 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	1.3
+// @version 	1.4
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -25,7 +25,7 @@ jQuery.noConflict();
 // 援軍派遣モードに切り替えると、「警護」リンクが表示されます。これをクリックで警護出兵画面を表示します。
 //
 // ▼特徴
-// 造兵兵種を選択できます。デフォルトは重盾兵です。
+// 造兵兵種を選択できます。デフォルトは禁軍兵です。
 // └初期状態では通常南蛮に使用しない兵種はコメントアウトしています。ソース内の兵種対応表のコメントアウトをいじることで変更できます。
 //
 // ▼援軍派遣先
@@ -44,6 +44,7 @@ jQuery.noConflict();
 // 2024.01.18	1.1	地形1.0で、基本鋭兵の造兵ができなくなっていたのを修正
 // 2025.06.24	1.2	造兵後すぐに援軍する設定を追加。ある拠点で造兵・援軍処理中に、他拠点の造兵・援軍リンクを処理しないよう制御。
 // 2026.06.10	1.3	「荒地 LV.1」のマスがあると造兵できなくなる対策
+// 2026.10.29	1.4	天兵対応
 
 
 var SERVER_SCHEME = location.protocol + "//";
@@ -98,9 +99,13 @@ var armyTable = {
 	重盾兵	: ['重盾兵'		, 'heavy_shield_count'	, 317, 0, 0, 0, '練兵所'],
 //	矛槍兵	: ['矛槍兵'		, 'halbert_count'		, 304, 0, 0, 0, '兵舎'],
 //	弩兵	: ['弩兵'		, 'crossbow_count'		, 309, 0, 0, 0, '弓兵舎'],
-	近衛騎兵: ['近衛騎兵'	, 'cavalry_guards_count', 307, 0, 0, 0, '厩舎'],
+//	近衛騎兵: ['近衛騎兵'	, 'cavalry_guards_count', 307, 0, 0, 0, '厩舎'],
 //	投石機	: ['投石機'		, 'catapult_count'		, 313, 0, 0, 0, '兵器工房'],
 //	斥候騎兵: ['斥候騎兵'	, 'cavalry_scout_count'	, 311, 0, 0, 0, '厩舎'],
+	禁軍兵	: ['禁軍兵'		, 'imperial_guards_count', 324, 0, 0, 0, '禁衛府'],
+//	重装槍兵: ['重装槍兵'	, 'heavy_spear_count'	, 321, 0, 0, 0, '重装兵舎'],
+//	重装弓兵: ['重装弓兵'	, 'heavy_crossbow_count', 323, 0, 0, 0, '重装兵舎'],
+//	重装騎兵: ['重装騎兵'	, 'heavy_cavalry_count'	, 322, 0, 0, 0, '重装兵舎'],
 	戦斧兵	: ['戦斧兵'		, 'axe_count'			, 318, 0, 0, 0, '斧兵舎'],
 	双剣兵	: ['双剣兵'		, 'twin_count'			, 319, 0, 0, 0, '双兵舎'],
 	大錘兵	: ['大錘兵'		, 'spindle_count'		, 320, 0, 0, 0, '錘兵舎']
@@ -606,7 +611,7 @@ function armyInfoById(value) {
 				text: element[IDX_NAME]
 			}));
 		}
-		$(selectId).val(armyTable['重盾兵'][IDX_ID]); // デフォルトは重盾兵
+		$(selectId).val(armyTable['禁軍兵'][IDX_ID]); // デフォルトは禁軍兵
 	}
 
 
