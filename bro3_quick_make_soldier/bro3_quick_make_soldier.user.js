@@ -13,7 +13,7 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	1.1
+// @version 	1.2
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -42,6 +42,7 @@ jQuery.noConflict();
 // 2023.06.02	0.3	援軍派遣モードのとき、警護リンクをクリックで警護出兵画面に切り替えるように。
 // 2023.06.03	1.0	初公開。
 // 2024.01.18	1.1	地形1.0で、基本鋭兵の造兵ができなくなっていたのを修正
+// 2025.06.24	1.2	造兵後すぐに援軍する設定を追加。ある拠点で造兵・援軍処理中に、他拠点の造兵・援軍リンクを処理しないよう制御。
 
 
 var SERVER_SCHEME = location.protocol + "//";
@@ -52,12 +53,24 @@ var SAVENAME = SERVER_NAME + "_bro3_quick_make_soldier_20230214_"; //グリモ�
 
 
 //----------------------------------------
+// UIにない設定
+//----------------------------------------
+var OPT_MAKE_AND_SEND = false; // 造兵後すぐに援軍するか
+
+
+//----------------------------------------
 // 保存設定部品定義
 //----------------------------------------
 var g_options = {};
 
 var AXIS_01 = 'qax01';	// 援軍派遣先X座標
 var AXIS_02 = 'qax02';	// 援軍派遣先Y座標
+
+
+//----------------------------------------
+// 制御用
+//----------------------------------------
+var g_processing = false;			// 処理中制御
 
 
 //----------------------------------------
@@ -328,7 +341,7 @@ function armyInfoById(value) {
 		});
 
 		if (Object.keys(sols).length === 0) {
-			console.log("[qms] 兵キャパ0のため造兵できませんでした。");
+			console.log("[qms] 兵数0のため送兵できませんでした。");
 			if (callback) {
 				callback("兵0");
 			}
@@ -387,6 +400,10 @@ function armyInfoById(value) {
 			style: 'margin-left: 4px; cursor: pointer;',
 			on: {
 				click: function(){
+					if (g_processing) {
+						return;
+					}
+					g_processing = true;
 					$(target).off('click');
 
 					$(thisId).text("処理中");
@@ -399,30 +416,54 @@ function armyInfoById(value) {
 							var y = coord[1];
 							changeVillageAndSendTroop(vId, x, y, function(msg){
 								$(thisId).text(msg);
+								g_processing = false;
 							});
 						} else {
 							$(thisId).text("座標不正");
+							g_processing = false;
 						}
 					} else {
 						// 造兵
 						changeVillage(vId, function(sol_names, capacity){
 							if (capacity === 0) {
 								$(thisId).text("キャパ0");
+								g_processing = false;
 								return
 							}
 
 							var element = armyInfoById($("#qmsArmyOptions").val());
 							if (sol_names.indexOf(element[IDX_NAME]) < 0) {
 								$(thisId).text("造兵不可");
+								g_processing = false;
 								return
 							}
 							if (element[IDX_CAN]) {
 								// 即完可能
 								makeSoldier(element[IDX_X], element[IDX_Y], element[IDX_ID], capacity, function(msg){
 									$(thisId).text(msg);
+									if (OPT_MAKE_AND_SEND) {
+										var coord = getCoordinate();
+										if (coord && coord.length === 2) {
+											var x = coord[0];
+											var y = coord[1];
+
+											$(thisId).text("出兵中");
+											setTimeout(function(){
+												changeVillageAndSendTroop(vId, x, y, function(msg2){
+													$(thisId).text(msg2);
+													g_processing = false;
+												});
+											}, 500);
+										} else {
+											g_processing = false;
+										}
+									} else {
+										g_processing = false;
+									}
 								});
 							} else {
 								$(thisId).text("即完不可");
+								g_processing = false;
 							}
 						});
 					}
