@@ -13,7 +13,7 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	1.2
+// @version 	1.3
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -43,6 +43,7 @@ jQuery.noConflict();
 // 2023.06.03	1.0	初公開。
 // 2024.01.18	1.1	地形1.0で、基本鋭兵の造兵ができなくなっていたのを修正
 // 2025.06.24	1.2	造兵後すぐに援軍する設定を追加。ある拠点で造兵・援軍処理中に、他拠点の造兵・援軍リンクを処理しないよう制御。
+// 2026.06.10	1.3	「荒地 LV.1」のマスがあると造兵できなくなる対策
 
 
 var SERVER_SCHEME = location.protocol + "//";
@@ -212,7 +213,7 @@ function armyInfoById(value) {
 			if ($(area).attr("alt").match(/(.*?)\s*LV.+/)) {
 				var name = RegExp.$1;
 				var url = $(area).attr("href");
-				if (url.match(/\?x=(\d+)&y=(\d+)#/)) {
+				if (url && url.match(/\?x=(\d+)&y=(\d+)#/)) {
 					var x = RegExp.$1;
 					var y = RegExp.$2;
 					var facility = armyInfoById($("#qmsArmyOptions").val())[IDX_FACILITY];
