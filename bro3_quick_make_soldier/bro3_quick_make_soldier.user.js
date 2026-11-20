@@ -13,7 +13,7 @@
 // @grant		GM_getValue
 // @grant		GM_setValue
 // @author		RAPT
-// @version 	1.4
+// @version 	1.5
 // ==/UserScript==
 jQuery.noConflict();
 
@@ -44,86 +44,85 @@ jQuery.noConflict();
 // 2024.01.18	1.1	地形1.0で、基本鋭兵の造兵ができなくなっていたのを修正
 // 2025.06.24	1.2	造兵後すぐに援軍する設定を追加。ある拠点で造兵・援軍処理中に、他拠点の造兵・援軍リンクを処理しないよう制御。
 // 2026.06.10	1.3	「荒地 LV.1」のマスがあると造兵できなくなる対策
-// 2026.10.29	1.4	天兵対応
+// 2026.10.29	1.4	天兵仮対応
+// 2026.11.20	1.5	天兵選択時、旧兵舎でも造兵できるように（天兵兵舎と旧兵舎の両方で即完できるとき、天兵兵舎を優先）
 
 
-var SERVER_SCHEME = location.protocol + "//";
-var SERVER_BASE = SERVER_SCHEME + location.hostname;
+const SERVER_SCHEME = location.protocol + "//";
+const SERVER_BASE = SERVER_SCHEME + location.hostname;
 
-var SERVER_NAME = location.hostname.match(/^(.*)\.3gokushi/)[1];
-var SAVENAME = SERVER_NAME + "_bro3_quick_make_soldier_20230214_"; //グリモン領域への保存時のPGの名前;
+const SERVER_NAME = location.hostname.match(/^(.*)\.3gokushi/)[1];
+const SAVENAME = SERVER_NAME + "_bro3_quick_make_soldier_20230214_"; //グリモン領域への保存時のPGの名前;
 
 
 //----------------------------------------
 // UIにない設定
 //----------------------------------------
-var OPT_MAKE_AND_SEND = false; // 造兵後すぐに援軍するか
+const OPT_MAKE_AND_SEND = false; // 造兵後すぐに援軍するか
 
 
 //----------------------------------------
 // 保存設定部品定義
 //----------------------------------------
-var g_options = {};
+let g_options = {};
 
-var AXIS_01 = 'qax01';	// 援軍派遣先X座標
-var AXIS_02 = 'qax02';	// 援軍派遣先Y座標
+const AXIS_01 = 'qax01';	// 援軍派遣先X座標
+const AXIS_02 = 'qax02';	// 援軍派遣先Y座標
 
 
 //----------------------------------------
 // 制御用
 //----------------------------------------
-var g_processing = false;			// 処理中制御
+let g_processing = false;			// 処理中制御
 
 
 //----------------------------------------
 // 兵種対応表
 //----------------------------------------
-var IDX_NAME = 0;
-var IDX_TYPE = 1;
-var IDX_ID = 2;
-var IDX_CAN = 3;
-var IDX_X = 4;
-var IDX_Y = 5;
-var IDX_FACILITY = 6;
+const IDX_NAME = 0;
+const IDX_TYPE = 1;
+const IDX_ID = 2;
+const IDX_FAC_GROUP = 3;
 
-var armyTable = {
-			// 兵種			, type					,ID,即完可,x,y,造兵施設],
-//	剣兵	: ['剣兵'		, 'infantry_count'		, 301, 0, 0, 0, '練兵所'],
-//	盾兵	: ['盾兵'		, 'shield_count'		, 316, 0, 0, 0, '練兵所'],
-//	槍兵	: ['槍兵'		, 'spear_count'			, 303, 0, 0, 0, '兵舎'],
-//	弓兵	: ['弓兵'		, 'archer_count'		, 308, 0, 0, 0, '弓兵舎'],
-//	騎兵	: ['騎兵'		, 'cavalry_count'		, 305, 0, 0, 0, '厩舎'],
-//	衝車	: ['衝車'		, 'ram_count'			, 312, 0, 0, 0, '兵器工房'],
-//	斥候	: ['斥候'		, 'scout_count'			, 310, 0, 0, 0, '練兵所'],
-//	大剣兵	: ['大剣兵'		, 'large_infantry_count', 315, 0, 0, 0, '練兵所'],
-	重盾兵	: ['重盾兵'		, 'heavy_shield_count'	, 317, 0, 0, 0, '練兵所'],
-//	矛槍兵	: ['矛槍兵'		, 'halbert_count'		, 304, 0, 0, 0, '兵舎'],
-//	弩兵	: ['弩兵'		, 'crossbow_count'		, 309, 0, 0, 0, '弓兵舎'],
-//	近衛騎兵: ['近衛騎兵'	, 'cavalry_guards_count', 307, 0, 0, 0, '厩舎'],
-//	投石機	: ['投石機'		, 'catapult_count'		, 313, 0, 0, 0, '兵器工房'],
-//	斥候騎兵: ['斥候騎兵'	, 'cavalry_scout_count'	, 311, 0, 0, 0, '厩舎'],
-	禁軍兵	: ['禁軍兵'		, 'imperial_guards_count', 324, 0, 0, 0, '禁衛府'],
-//	重装槍兵: ['重装槍兵'	, 'heavy_spear_count'	, 321, 0, 0, 0, '重装兵舎'],
-//	重装弓兵: ['重装弓兵'	, 'heavy_crossbow_count', 323, 0, 0, 0, '重装兵舎'],
-//	重装騎兵: ['重装騎兵'	, 'heavy_cavalry_count'	, 322, 0, 0, 0, '重装兵舎'],
-	戦斧兵	: ['戦斧兵'		, 'axe_count'			, 318, 0, 0, 0, '斧兵舎'],
-	双剣兵	: ['双剣兵'		, 'twin_count'			, 319, 0, 0, 0, '双兵舎'],
-	大錘兵	: ['大錘兵'		, 'spindle_count'		, 320, 0, 0, 0, '錘兵舎']
+const IDX_FAC_CAN = 0;
+const IDX_FAC_X = 1;
+const IDX_FAC_Y = 2;
+const IDX_FAC_FACILITY = 3;
+
+const armyTable = {
+			// 兵種			, type					,ID,[[即完可,x,y,造兵施設], ...]],
+//	剣兵	: ['剣兵'		, 'infantry_count'		, 301, [[0, 0, 0, '練兵所']]],
+//	盾兵	: ['盾兵'		, 'shield_count'		, 316, [[0, 0, 0, '練兵所']]],
+//	槍兵	: ['槍兵'		, 'spear_count'			, 303, [[0, 0, 0, '兵舎']]],
+//	弓兵	: ['弓兵'		, 'archer_count'		, 308, [[0, 0, 0, '弓兵舎']]],
+//	騎兵	: ['騎兵'		, 'cavalry_count'		, 305, [[0, 0, 0, '厩舎']]],
+//	衝車	: ['衝車'		, 'ram_count'			, 312, [[0, 0, 0, '兵器工房']]],
+//	斥候	: ['斥候'		, 'scout_count'			, 310, [[0, 0, 0, '練兵所']]],
+//	大剣兵	: ['大剣兵'		, 'large_infantry_count', 315, [[0, 0, 0, '練兵所']]],
+	重盾兵	: ['重盾兵'		, 'heavy_shield_count'	, 317, [[0, 0, 0, '練兵所']]],
+//	矛槍兵	: ['矛槍兵'		, 'halbert_count'		, 304, [[0, 0, 0, '兵舎']]],
+//	弩兵	: ['弩兵'		, 'crossbow_count'		, 309, [[0, 0, 0, '弓兵舎']]],
+//	近衛騎兵: ['近衛騎兵'	, 'cavalry_guards_count', 307, [[0, 0, 0, '厩舎']]],
+//	投石機	: ['投石機'		, 'catapult_count'		, 313, [[0, 0, 0, '兵器工房']]],
+//	斥候騎兵: ['斥候騎兵'	, 'cavalry_scout_count'	, 311, [[0, 0, 0, '厩舎']]],
+	禁軍兵	: ['禁軍兵'		, 'imperial_guards_count',324, [[0, 0, 0, '禁衛府'], [0, 0, 0, '練兵所']]],
+//	重装槍兵: ['重装槍兵'	, 'heavy_spear_count'	, 321, [[0, 0, 0, '重装兵舎'], [0, 0, 0, '兵舎']]],
+	重装弓兵: ['重装弓兵'	, 'heavy_crossbow_count', 323, [[0, 0, 0, '重装兵舎'], [0, 0, 0, '弓兵舎']]],
+	重装騎兵: ['重装騎兵'	, 'heavy_cavalry_count'	, 322, [[0, 0, 0, '重装兵舎'], [0, 0, 0, '厩舎']]],
+	戦斧兵	: ['戦斧兵'		, 'axe_count'			, 318, [[0, 0, 0, '斧兵舎']]],
+	双剣兵	: ['双剣兵'		, 'twin_count'			, 319, [[0, 0, 0, '双兵舎']]],
+	大錘兵	: ['大錘兵'		, 'spindle_count'		, 320, [[0, 0, 0, '錘兵舎']]]
 };
+
+// サイドバーでデフォルト選択する兵種
+const DEFAULT_ARMY_NAME = '禁軍兵';
 
 
 //----------------------------------------
 // 兵種を指定して兵種情報を取得。該当なしのとき null を返す
 //----------------------------------------
 function armyInfo(index, expectedValue) {
-	var keys = Object.keys(armyTable);
-	for (var i = 0; i < keys.length; i++) {
-		var element = armyTable[keys[i]];
-		if (element[index] == expectedValue) {
-			return element;
-		}
-	}
-	return null;
+	return Object.values(armyTable).find(element => element[index] == expectedValue) || null;
 }
 function armyInfoById(value) {
 	return armyInfo(IDX_ID, value);
@@ -198,6 +197,16 @@ function armyInfoById(value) {
 	// 拠点の造兵情報を収集
 	//----------------------------------------
 	function getMakeSoldierInfo(res, callback) {
+		// 調査開始前に armyTable の即完フラグと座標をリセットする
+		Object.keys(armyTable).forEach(function(key) {
+			var group = armyTable[key][IDX_FAC_GROUP];
+			for (var k = 0; k < group.length; k++) {
+				group[k][IDX_FAC_CAN] = false;
+				group[k][IDX_FAC_X] = 0;
+				group[k][IDX_FAC_Y] = 0;
+			}
+		});
+
 		// 兵キャパ
 		var vacancy = 0;
 		var m = $("#basepoint .status table tbody tr td:eq(3)", res).text().trim().match(/(\d+)\/(\d+)/);
@@ -221,9 +230,11 @@ function armyInfoById(value) {
 				if (url && url.match(/\?x=(\d+)&y=(\d+)#/)) {
 					var x = RegExp.$1;
 					var y = RegExp.$2;
-					var facility = armyInfoById($("#qmsArmyOptions").val())[IDX_FACILITY];
-					if ([facility].indexOf(name) >= 0) {
-						xy.push([url, x, y]);
+
+					// 選択中の兵種の施設グループから一致する施設を探す
+					var facGroup = armyInfoById($("#qmsArmyOptions").val())[IDX_FAC_GROUP];
+					if (facGroup.some(fac => fac[IDX_FAC_FACILITY] === name)) {
+						xy.push([url, x, y, name]);
 					}
 				}
 			}
@@ -250,6 +261,7 @@ function armyInfoById(value) {
 			var url = xy[i][0];
 			var x = xy[i][1];
 			var y = xy[i][2];
+			var name = xy[i][3];
 			$.ajax({
 				url: `${SERVER_BASE}/${url}`,
 				type: 'GET',
@@ -262,10 +274,15 @@ function armyInfoById(value) {
 					var sol_name = $(mainTtl).text().replace(/\[.+\]/, "");
 					var time = $("td", $(mainTtl).closest("tr").next().next().next().next()).text();
 					if (Object.keys(armyTable).indexOf(sol_name) >= 0) {
-						armyTable[sol_name][IDX_CAN] = /00:00:0[01]/.test(time); // 即完のみ作成可能とする
-						armyTable[sol_name][IDX_X] = x;
-						armyTable[sol_name][IDX_Y] = y;
-						facilities.push(sol_name);
+
+						// 施設グループから name と一致する要素を探して更新
+						var targetFac = armyTable[sol_name][IDX_FAC_GROUP].find(fac => fac[IDX_FAC_FACILITY] === name);
+						if (targetFac) {
+							targetFac[IDX_FAC_CAN] = /00:00:0[01]/.test(time); // 即完のみ作成可能とする
+							targetFac[IDX_FAC_X] = x;
+							targetFac[IDX_FAC_Y] = y;
+							facilities.push(sol_name);
+						}
 					}
 				});
 
@@ -416,18 +433,7 @@ function armyInfoById(value) {
 					var isChecked = $("#qmsSendHelpCheckBox").is(':checked');
 					if (isChecked) {
 						// 援軍
-						var coord = getCoordinate();
-						if (coord && coord.length === 2) {
-							var x = coord[0];
-							var y = coord[1];
-							changeVillageAndSendTroop(vId, x, y, function(msg){
-								$(thisId).text(msg);
-								g_processing = false;
-							});
-						} else {
-							$(thisId).text("座標不正");
-							g_processing = false;
-						}
+						sendTroop(vId, $(thisId));
 					} else {
 						// 造兵
 						changeVillage(vId, function(sol_names, capacity){
@@ -443,26 +449,16 @@ function armyInfoById(value) {
 								g_processing = false;
 								return
 							}
-							if (element[IDX_CAN]) {
+
+							// 即完可能な施設を調査
+							var targetFac = element[IDX_FAC_GROUP].find(fac => fac[IDX_FAC_CAN]);
+							if (targetFac) {
 								// 即完可能
-								makeSoldier(element[IDX_X], element[IDX_Y], element[IDX_ID], capacity, function(msg){
+								makeSoldier(targetFac[IDX_FAC_X], targetFac[IDX_FAC_Y], element[IDX_ID], capacity, function(msg){
 									$(thisId).text(msg);
 									if (OPT_MAKE_AND_SEND) {
-										var coord = getCoordinate();
-										if (coord && coord.length === 2) {
-											var x = coord[0];
-											var y = coord[1];
-
-											$(thisId).text("出兵中");
-											setTimeout(function(){
-												changeVillageAndSendTroop(vId, x, y, function(msg2){
-													$(thisId).text(msg2);
-													g_processing = false;
-												});
-											}, 500);
-										} else {
-											g_processing = false;
-										}
+										// 造兵時間分を遅延させて実行
+										sendTroop(vId, $(thisId), 1500);
 									} else {
 										g_processing = false;
 									}
@@ -477,6 +473,38 @@ function armyInfoById(value) {
 			}
 		}).append("造兵");
 		$(target).parent().append(link);
+	}
+
+
+	/**
+	 * 援軍を出兵する
+	 *
+	 * 送り先座標が取得できない場合は即座に終了します。
+	 * それ以外では非同期で処理を終了します。
+	 *
+	 * @param {string} vId - 出兵元の拠点ID
+	 * @param {jQuery} $log - ログを記述するオブジェクト
+	 * @param {number} [delayMs=0] - 遅延実行する時間(ms)
+	 * @returns {void} 戻り値およびPromisは返さない
+	 */
+	function sendTroop(vId, $log, delayMs = 0) {
+		const coord = getCoordinate();
+		if (coord && coord.length === 2) {
+			const x = coord[0];
+			const y = coord[1];
+
+			$log.text("出兵中");
+			setTimeout(() => {
+				changeVillageAndSendTroop(vId, x, y, msg => {
+					$log.text(msg);
+					g_processing = false;
+				});
+			}, delayMs);
+;
+		} else {
+			$log.text("座標不正");
+			g_processing = false;
+		}
 	}
 
 
@@ -611,7 +639,9 @@ function armyInfoById(value) {
 				text: element[IDX_NAME]
 			}));
 		}
-		$(selectId).val(armyTable['禁軍兵'][IDX_ID]); // デフォルトは禁軍兵
+		if (armyTable[DEFAULT_ARMY_NAME]) {
+			$(selectId).val(armyTable[DEFAULT_ARMY_NAME][IDX_ID]);
+		}
 	}
 
 
