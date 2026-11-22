@@ -14,7 +14,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.2
+// @version 	1.3
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
@@ -22,6 +22,7 @@ q$ = jQuery;
 // 2023/02/12	1.0	初版作成
 // 2025/09/25	1.1	同盟ログ対応
 // 2025/09/27	1.2	南蛮衛兵を検出していたので除外するように。援軍部隊数のカウントがずれていたのを修正。
+// 2026/11/23	1.3	報告書と同盟ログについて天兵対応
 
 
 var OPT_MIN_SOLDIER_COUNT = 60000; // 援軍兵士として許容する最小兵数
@@ -107,6 +108,18 @@ function parseReport() {
 				solCounts.push(parseInt(text, 10));
 			}
 		});
+		q$("tr:eq(10) th.solClass3", row).each(function(){
+			var text = q$(this).text();
+			if (text.length > 0) {
+				solNames.push(text);
+			}
+		});
+		q$("tr:eq(11) td", row).each(function(){
+			var text = q$(this).text();
+			if (text.length > 0) {
+				solCounts.push(parseInt(text, 10));
+			}
+		});
 
 		var sols = {};
 		var totalCount = 0;
@@ -119,9 +132,10 @@ function parseReport() {
 		var tate = sols['重盾兵'];
 		var high = sols['矛槍兵'] + sols['弩兵'] + sols['近衛騎兵'];
 		var ei = sols['戦斧兵'] + sols['双剣兵'] + sols['大錘兵'];
+		var ten = sols['禁軍兵'] + sols['重装槍兵'] + sols['重装弓兵'] + sols['重装騎兵'];
 		var busho = sols['武将'];
 		// var others = totalCount - ken - tate - high - ei - busho;
-		var others = totalCount - tate - ei - busho;
+		var others = totalCount - tate - ei - ten - busho;
 
 		var warn = [];
 		if (villages.has(vName)) {
@@ -132,7 +146,7 @@ function parseReport() {
 		}
 		if (others > 0) {
 			// warn.push("大剣、重盾、上級、鋭兵以外の兵士がいる");
-			warn.push("重盾、鋭兵以外の兵士がいる");
+			warn.push("重盾、鋭兵、天兵以外の兵士がいる");
 		}
 		if ((totalCount - busho) < OPT_MIN_SOLDIER_COUNT) {
 			warn.push("援軍兵不足");
@@ -147,11 +161,9 @@ function parseReport() {
 		villages.add(vName);
 
 		if (list.length === 0) {
-			// list.push(['武将', '大剣', '重盾', '上級', '鋭兵', '他兵', '君主名', '拠点名'].join("\t"));
-			list.push(['武将', '重盾', '鋭兵', '他兵', '君主名', '拠点名'].join("\t"));
+			list.push(['武将', '天兵', '重盾', '鋭兵', '他兵', '君主名', '拠点名'].join("\t"));
 		}
-		// list.push([busho, ken, tate, high, ei, others, userName, vName].join("\t"));
-		list.push([busho, tate, ei, others, userName, vName].join("\t"));
+		list.push([busho, ten, tate, ei, others, userName, vName].join("\t"));
 	});
 
 	var info = [];
