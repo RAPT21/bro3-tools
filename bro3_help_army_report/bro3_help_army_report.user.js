@@ -14,7 +14,7 @@
 // @connect		3gokushi.jp
 // @grant		none
 // @author		RAPT
-// @version 	1.3
+// @version 	1.4
 // ==/UserScript==
 jQuery.noConflict();
 q$ = jQuery;
@@ -23,6 +23,7 @@ q$ = jQuery;
 // 2025/09/25	1.1	同盟ログ対応
 // 2025/09/27	1.2	南蛮衛兵を検出していたので除外するように。援軍部隊数のカウントがずれていたのを修正。
 // 2026/11/23	1.3	報告書と同盟ログについて天兵対応
+// 2026/11/24	1.4	報告書と同盟ログについて南蛮衛兵も表示するように
 
 
 var OPT_MIN_SOLDIER_COUNT = 60000; // 援軍兵士として許容する最小兵数
@@ -37,107 +38,126 @@ function zip(keys, values) {
 	return result;
 }
 
+function parseReportRow(row) {
+	let solNames = [];
+	let solCounts = [];
+	q$("tr:eq(1) th.solClass3", row).each(function(){
+		const text = q$(this).text();
+		if (text.length > 0) {
+			solNames.push(text);
+		}
+	});
+	q$("tr:eq(2) td", row).each(function(){
+		const text = q$(this).text();
+		if (text.length > 0) {
+			solCounts.push(parseInt(text, 10));
+		}
+	});
+	q$("tr:eq(4) th.solClass3", row).each(function(){
+		const text = q$(this).text();
+		if (text.length > 0) {
+			solNames.push(text);
+		}
+	});
+	q$("tr:eq(5) td", row).each(function(){
+		const text = q$(this).text();
+		if (text.length > 0) {
+			solCounts.push(parseInt(text, 10));
+		}
+	});
+	q$("tr:eq(7) th.solClass3", row).each(function(){
+		const text = q$(this).text();
+		if (text.length > 0) {
+			solNames.push(text);
+		}
+	});
+	q$("tr:eq(8) td", row).each(function(){
+		const text = q$(this).text();
+		if (text.length > 0) {
+			solCounts.push(parseInt(text, 10));
+		}
+	});
+	q$("tr:eq(10) th.solClass3", row).each(function(){
+		const text = q$(this).text();
+		if (text.length > 0) {
+			solNames.push(text);
+		}
+	});
+	q$("tr:eq(11) td", row).each(function(){
+		const text = q$(this).text();
+		if (text.length > 0) {
+			solCounts.push(parseInt(text, 10));
+		}
+	});
+
+	let sols = {};
+	let totalCount = 0;
+	let descriptions = [];
+	const maxCount = Math.min(solNames.length, solCounts.length)
+	for (let i = 0; i < maxCount; i++) {
+		sols[solNames[i]] = solCounts[i];
+		totalCount += solCounts[i];
+		if (solCounts[i] > 0) {
+			descriptions.push(`${solNames[i]}(${solCounts[i]})`);
+		}
+	}
+
+	return {
+		sols: sols,
+		totalCount: totalCount,
+		descriptions: descriptions // 0でない兵種と兵数情報
+	};
+}
+
 // 報告書詳細を解析
 function parseReport() {
-	var list = [];
-	var users = new Set();
-	var warnUsers = new Set();
-	var warnReasons = {};
-	var villages = new Set();
+	let list = [];
+	let users = new Set();
+	let warnUsers = new Set();
+	let warnReasons = {};
+	let villages = new Set();
 
 	// 南蛮主催者を取得
-	var text = q$("#gray02Wrapper table[class*='tables'][summary='件名'] tr td.brno:contains('が南蛮兵に攻撃されました')").text();
-	var match = text.match(/【.*?】.*?【.*?】(.*?)　\(.*?\)　が南蛮兵に攻撃されました/);
+	const text = q$("#gray02Wrapper table[class*='tables'][summary='件名'] tr td.brno:contains('が南蛮兵に攻撃されました')").text();
+	const match = text.match(/【.*?】.*?【.*?】(.*?)　\(.*?\)　が南蛮兵に攻撃されました/);
 	if (match === null || !match.length) {
 		return "";
 	}
-	var organizer = match[1];
+	const organizer = match[1];
+	let organizerEmployments = [];
 
 	// 援軍を解析
 	q$("#gray02Wrapper table[class*='tables'][summary='防御者'] tbody").each(function(index, row){
-		var defenser = q$("tr th[class='defenser']", row).text();
+		const defenser = q$("tr th[class='defenser']", row).text();
 		if (defenser.indexOf('援軍') < 0) {
 			return true;
 		}
 		// 援軍のみでフィルター
 
-		var defenserBase = q$("tr th[class='defenserBase']", row).eq(0);
+		const defenserBase = q$("tr th[class='defenserBase']", row).eq(0);
 		if (defenserBase.text().trim() === '南蛮衛兵') {
 			// 南蛮衛兵は除外
+			let employInfo = parseReportRow(row);
+			organizerEmployments = employInfo.descriptions;
 			return true;
 		}
 
-		var userName = q$("a:eq(1)", defenserBase).text();
-		var vName = q$("a:eq(2)", defenserBase).text();
+		const userName = q$("a:eq(1)", defenserBase).text();
+		const vName = q$("a:eq(2)", defenserBase).text();
 
-		var solNames = [];
-		var solCounts = [];
-		q$("tr:eq(1) th.solClass3", row).each(function(){
-			var text = q$(this).text();
-			if (text.length > 0) {
-				solNames.push(text);
-			}
-		});
-		q$("tr:eq(2) td", row).each(function(){
-			var text = q$(this).text();
-			if (text.length > 0) {
-				solCounts.push(parseInt(text, 10));
-			}
-		});
-		q$("tr:eq(4) th.solClass3", row).each(function(){
-			var text = q$(this).text();
-			if (text.length > 0) {
-				solNames.push(text);
-			}
-		});
-		q$("tr:eq(5) td", row).each(function(){
-			var text = q$(this).text();
-			if (text.length > 0) {
-				solCounts.push(parseInt(text, 10));
-			}
-		});
-		q$("tr:eq(7) th.solClass3", row).each(function(){
-			var text = q$(this).text();
-			if (text.length > 0) {
-				solNames.push(text);
-			}
-		});
-		q$("tr:eq(8) td", row).each(function(){
-			var text = q$(this).text();
-			if (text.length > 0) {
-				solCounts.push(parseInt(text, 10));
-			}
-		});
-		q$("tr:eq(10) th.solClass3", row).each(function(){
-			var text = q$(this).text();
-			if (text.length > 0) {
-				solNames.push(text);
-			}
-		});
-		q$("tr:eq(11) td", row).each(function(){
-			var text = q$(this).text();
-			if (text.length > 0) {
-				solCounts.push(parseInt(text, 10));
-			}
-		});
+		const solInfo = parseReportRow(row);
 
-		var sols = {};
-		var totalCount = 0;
-		var maxCount = Math.min(solNames.length, solCounts.length)
-		for (var i = 0; i < maxCount; i++) {
-			sols[solNames[i]] = solCounts[i];
-			totalCount += solCounts[i];
-		}
-		var ken = sols['大剣兵'];
-		var tate = sols['重盾兵'];
-		var high = sols['矛槍兵'] + sols['弩兵'] + sols['近衛騎兵'];
-		var ei = sols['戦斧兵'] + sols['双剣兵'] + sols['大錘兵'];
-		var ten = sols['禁軍兵'] + sols['重装槍兵'] + sols['重装弓兵'] + sols['重装騎兵'];
-		var busho = sols['武将'];
-		// var others = totalCount - ken - tate - high - ei - busho;
-		var others = totalCount - tate - ei - ten - busho;
+		const sols = solInfo.sols;
+		const totalCount = solInfo.totalCount;
+		const ken = sols['大剣兵'];
+		const tate = sols['重盾兵'];
+		const high = sols['矛槍兵'] + sols['弩兵'] + sols['近衛騎兵'];
+		const ei = sols['戦斧兵'] + sols['双剣兵'] + sols['大錘兵'];
+		const ten = sols['禁軍兵'] + sols['重装槍兵'] + sols['重装弓兵'] + sols['重装騎兵'];
+		const busho = sols['武将'];
+		const others = totalCount - tate - ei - ten - busho;
 
-		var warn = [];
+		let warn = [];
 		if (villages.has(vName)) {
 			warn.push("同一拠点から複数部隊");
 		}
@@ -166,8 +186,9 @@ function parseReport() {
 		list.push([busho, ten, tate, ei, others, userName, vName].join("\t"));
 	});
 
-	var info = [];
+	let info = [];
 	info.push(`主催: ${organizer}`);
+	info.push(`南蛮衛兵: ${organizerEmployments.join(', ')}`);
 	info.push(`援軍部隊数: ${list.length - 1}`);
 	info.push(`援軍君主数: ${users.size}`);
 	info.push(`警告君主数: ${warnUsers.size}`);
