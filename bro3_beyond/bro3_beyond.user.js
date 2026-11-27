@@ -4,7 +4,7 @@
 // @include		https://*.3gokushi.jp/*
 // @include		http://*.3gokushi.jp/*
 // @description	ブラウザ三国志beyondリメイク by Craford 氏 with RAPT
-// @version		1.09.54
+// @version		1.09.55
 // @updateURL	http://craford.sweet.coocan.jp/content/tool/beyond/bro3_beyond.user.js
 
 // @grant	GM_addStyle
@@ -164,6 +164,11 @@
 //						- メニューの「デッキ＞自動鹵獲出兵設定」を「旧自動鹵獲」へ変更し「おまかせ自動鹵獲」を追加（運営の変更に追随）
 //						- メニューへ「同盟＞保護期間共有」を追加
 //						- メニューから「同盟＞遷都状況」を削除
+// 1.09.55	2026/11/28	RAPT. 「地図＞出兵画面＞出兵時にデッキ武将を一斉出兵する機能を追加」で兵士を付けて出兵が動作しなくなっていたのを修正
+//						- 運営機能「奇門遁甲 スキル式盤表示」が実装されたので「デッキ：スキル補正効果表示機能の追加」を機能削除
+//						- メニューへ「デッキ＞軍議所＞編集」を追加
+//						- メニューへ「都市＞交換所＞GP交換所」を追加
+//						- メニューから「全体地図＞3D」を削除し、「全体地図＞181x181」を追加
 
 
 //----------------------------------------------------------------------
@@ -309,7 +314,7 @@ var DECK_01 = 'de01';		// 共通：パッシブスキルの着色
 var DECK_02 = 'de02';		// 共通：トレードへのリンクを追加
 var DECK_03 = 'de03';		// 共通：ページ切り替えのプルダウンを追加
 var DECK_11 = 'de11';		// デッキ：ファイル内スキル検索機能の追加
-var DECK_12 = 'de12';		// デッキ：スキル補正効果表示機能の追加
+//var DECK_12 = 'de12';		// (運営機能「奇門遁甲 スキル式盤表示」が実装されたので機能削除)デッキ：スキル補正効果表示機能の追加
 var DECK_13 = 'de13';		// デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）
 var DECK_14 = 'de14';		// デッキ：1クリックデッキセットボタン追加
 var DECK_15 = 'de15';		// デッキ：ファイルに下げるボタンを1クリックで使用に変更
@@ -1779,6 +1784,10 @@ function mapTabControl() {
 				[true, "cavalry_guards_count"], // 近衛騎兵
 				[false, "catapult_count"],		// 投石機
 				[false, "cavalry_scout_count"],	// 斥候騎兵
+				[true, "imperial_guards_count"],	// 禁軍兵
+				[true, "heavy_spear_count"],	// 重装槍兵
+				[true, "heavy_crossbow_count"],	// 重装弓兵
+				[true, "heavy_cavalry_count"],	// 重装騎兵
 				[true, "axe_count"], 			// 戦斧兵
 				[true, "twin_count"], 			// 双剣兵
 				[true, "spindle_count"] 		// 大錘兵
@@ -1789,12 +1798,7 @@ function mapTabControl() {
 			var troop_y = q$("input[name='village_y_value']").val();
 			var deck_mode = q$("input[name='deck_mode']:checked").val();
 
-			var solvals;
-			if (q$("#weather-ui").length === 0) {
-				solvals = q$("table[class='innerTables'] tr td span");
-			} else {
-				solvals = q$("table[class='commonTablesNoMG'] tr td span");
-			}
+			var solvals = q$("table[class='commonTablesNoMG'] tr td span");
 			var sols = new Array();
 			for (var i = 0; i < solvals.length; i++) {
 				var match = solvals.eq(i).text().match(/\d+/);
@@ -3800,7 +3804,7 @@ function deckControl() {
 	// 副将設定画面限定処理
 	if (location.pathname === "/card/set_subgeneral.php") {
 		// パッシブ着色、スキル使用OFF、スキル効果計算、簡易デッキセット
-		addSkillViewOnSmallCardDeck(g_beyond_options[DECK_01], false, false, false);
+		addSkillViewOnSmallCardDeck(g_beyond_options[DECK_01], false, false);
 		return;
 	}
 
@@ -3857,7 +3861,7 @@ function deckControl() {
 	}
 
 	// パッシブ着色、スキル使用、スキル効果計算、簡易デッキセット
-	addSkillViewOnSmallCardDeck(g_beyond_options[DECK_01], g_beyond_options[DECK_13], g_beyond_options[DECK_12], g_beyond_options[DECK_14]);
+	addSkillViewOnSmallCardDeck(g_beyond_options[DECK_01], g_beyond_options[DECK_13], g_beyond_options[DECK_14]);
 }
 
 // ページャープルダウンの作成
@@ -4032,7 +4036,6 @@ function execCommonPart() {
 		var loc = q$("li.gnavi02 a").attr('href');
 		var bigloc = loc.replace('/map.php?', '/big_map.php?');
 		var eleloc = loc.replace('/map.php?', '/elevation_map.php?');
-		var _3dloc = loc.replace('/map.php?', '/3d_map.php?');
 		var widloc = loc.replace('/map.php?', '/wide_map.php?');
 
 		var cur_x = 0;
@@ -4071,6 +4074,7 @@ function execCommonPart() {
 				['交換所', BASE_URL + '/item/point_exchange.php',
 					[
 						['KP交換所', BASE_URL + '/item/point_exchange.php?selected_shop_type=kp'],
+						['GP交換所', BASE_URL + '/item/point_exchange.php?selected_shop_type=gp'],
 					],
 				],
 				['南蛮襲来', npcasurl,
@@ -4111,7 +4115,11 @@ function execCommonPart() {
 			],
 			// 全体地図
 			[
-				['21x21', eleloc + '&map_size=21'], ['41x41', eleloc + '&map_size=41'], ['91x91', widloc], ['3D', _3dloc], ['旧51x51', bigloc + '&type=4'],
+				['21x21', eleloc + '&map_size=21'],
+				['41x41', eleloc + '&map_size=41'],
+				['91x91', widloc],
+				['181x181', widloc + '&map_size=181'],
+				['旧51x51', bigloc + '&type=4'],
 			],
 			// 同盟
 			[
@@ -4197,6 +4205,7 @@ function execCommonPart() {
 						],
 						['盟・伍', BASE_URL + '/council/?tab=8'],
 						['経験値貯蔵庫', BASE_URL + '/council/?tab=10'],
+						['編集', BASE_URL + '/council/?tab=12'],
 						['屯田', BASE_URL + '/council/?tab=3'],
 						['設計', BASE_URL + '/council/?tab=4'],
 						['南蛮', BASE_URL + '/council/?tab=5'],
@@ -5129,7 +5138,7 @@ function execUnionPart() {
 	}
 
 	// パッシブ着色、スキル使用OFF、スキル効果計算OFF、簡易デッキセットOFF
-	addSkillViewOnSmallCardDeck(g_beyond_options[DECK_01], false, false, false);
+	addSkillViewOnSmallCardDeck(g_beyond_options[DECK_01], false, false);
 
 	// 連続スキルレベルアップ
 	if (location.pathname == "/union/lvup.php") {
@@ -6190,7 +6199,7 @@ function execTradeCardPart() {
 	}
 
 	// パッシブ着色、スキル使用OFF、スキル効果計算OFF、簡易デッキセットOFF
-	addSkillViewOnSmallCardDeck(g_beyond_options[TRADE_31], false, false, false);
+	addSkillViewOnSmallCardDeck(g_beyond_options[TRADE_31], false, false);
 
 	// 出品ボックス作成
 	if (g_beyond_options[TRADE_34] == true) {
@@ -6348,7 +6357,6 @@ function draw_setting_window(append_target) {
 						<div><input type='checkbox' id='" + DECK_1C + "'><label for='" + DECK_1C + "'>デッキ：現在の所持枚数をファイルの上部へ移動する</label></input></div> \
 						<div class='red'>以下の機能はカード表示モード（小）でのみ有効です</div> \
 						<div><input type='checkbox' id='" + DECK_11 + "'><label for='" + DECK_11 + "'>ファイル内スキル検索機能を追加</label></input></div> \
-						<div><input type='checkbox' id='" + DECK_12 + "'><label for='" + DECK_12 + "'>スキル補正効果表示機能を追加</label></input></div> \
 						<div><input type='checkbox' id='" + DECK_13 + "'><label for='" + DECK_13 + "'>デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）</label></input></div> \
 						<div style='margin-left: 8px;'> \
 							<div><input type='checkbox' id='" + DECK_1A + "'><label for='" + DECK_1A + "'>デッキ：内政スキル使用後画面を強制更新する</label></input></div> \
@@ -8100,7 +8108,7 @@ function decideVillageForHeal(villages, mainVacantCost, subVacantCost) {
 //--------------------------//
 // デッキ：スキル系機能追加 //
 //--------------------------//
-function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_skill_effect, is_easy_deck_set) {
+function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_easy_deck_set) {
 	// ファイルリストがないページから呼ばれたら何もしない
 	if (q$("#cardFileList").length == 0) {
 		return;
@@ -8453,495 +8461,6 @@ function addSkillViewOnSmallCardDeck(is_draw_passive, is_draw_use_link, is_draw_
 
 						// デッキセット処理
 						exec_domestic_step1(q$(this));
-					}
-				);
-			}
-		}
-	}
-
-	// スキル効果自動計算ボックス追加（一旦天候対応鯖では機能させない）
-	if (is_draw_skill_effect == true && q$("#weather-ui").length === 0) {
-		//-----------
-		// 設定画面
-		//-----------
-		q$("form[name='form_cancel_reserved']").after(
-			"<div style='position: absolute; left: 320px; width: 464px;'>" +
-				"<fieldset style='-moz-border-radius:5px; border-radius: 5px; -webkit-border-radius: 5px; margin-bottom:6px; border: 2px solid black;'>" +
-					"<div style='margin: 2px 2px 2px 2px;'>" +
-						"<span style='font-weight: bold;'>課金設定</span>" +
-						"<input type='checkbox' id='auto_atk_10' style='margin-left:6px; margin-right: 4px; padding: 2px;'>" +
-						"<label for='auto_atk_10'>攻撃課金</span>" +
-						"<input type='checkbox' id='auto_def_10' style='margin-left:6px; margin-right: 4px; padding: 2px;'>" +
-						"<label for='auto_def_10'>防御課金</span>" +
-						"<input type='checkbox' id='auto_spd_10' style='margin-left:6px; margin-right: 4px; padding: 2px;'>" +
-						"<label for='auto_spd_10'>速度課金</span>" +
-					"</div>" +
-					"<div style='margin: 2px 2px 2px 2px;'>" +
-						"<span style='font-weight: bold;'>全軍補正</span>" +
-						"<span style='margin-left: 6px;'>攻撃</span>" +
-						"<input type='text' id='auto_atk' size=6 style='margin-left:4px; margin-right: 4px; padding: 2px;' value='0'>" +
-						"<span>%</span>" +
-						"<span style='margin-left: 6px;'>防御</span>" +
-						"<input type='text' id='auto_def' size=6 style='margin-left:4px; margin-right: 4px; padding: 2px;' value='0'>" +
-						"<span>%</span>" +
-						"<span style='margin-left: 6px;'>速度</span>" +
-						"<input type='text' id='auto_spd' size=6 style='margin-left:4px; margin-right: 4px; padding: 2px;' value='0'>" +
-						"<span>%</span>" +
-						"<input type='button' id='save_settings' style='margin-left: 6px;' value='保存'>" +
-					"</div>" +
-				"</fieldset>" +
-			"</div>"
-		);
-
-		//---------------------
-		// 保存ボタンイベント
-		//---------------------
-		q$("#save_settings").on('click',
-			function() {
-				var obj = new Object;
-				obj.auto_atk = 0;
-				obj.auto_def = 0;
-				obj.auto_spd = 0;
-				if (!isNaN(parseFloat(q$("#auto_atk").val()))) {
-					obj.auto_atk = q$("#auto_atk").val();
-				}
-				if (!isNaN(parseFloat(q$("#auto_def").val()))) {
-					obj.auto_def = q$("#auto_def").val();
-				}
-				if (!isNaN((q$("#auto_spd").val()))) {
-					obj.auto_spd = q$("#auto_spd").val();
-				};
-				obj.auto_atk_10 = q$("#auto_atk_10").prop('checked');
-				obj.auto_def_10 = q$("#auto_def_10").prop('checked');
-				obj.auto_spd_10 = q$("#auto_spd_10").prop('checked');
-
-				GM_setValue(SERVER_NAME + '_auto_calc', JSON.stringify(obj));
-
-				// チェックボックス全てのカードに反映
-				q$("input[id*='auto_calc_chk_atk']").prop('checked', obj.auto_atk_10);
-				q$("input[id*='auto_calc_chk_def']").prop('checked', obj.auto_def_10);
-				q$("input[id*='auto_calc_chk_spd']").prop('checked', obj.auto_spd_10);
-
-				// 全てのカードのイベントを再実行
-				q$("select[id*='auto_calc']").change();
-			}
-		);
-
-		//-------------------
-		// デッキカード処理
-		//-------------------
-		var calc_options = JSON.parse(GM_getValue(SERVER_NAME + '_auto_calc', null));
-		for (var i = 0; i < deckcards.length; i++) {
-			var id_name = "auto_calc_w_" + i;
-			var select_id = id_name + '_select';
-			var addHtml = "<div style='margin-bottom: 4px;'><select id='" + select_id + "' style='width: 200px;'><option value=''>指定なし</option>";
-
-			var skills = q$("ul[class^='back_skill'] li", deckcards.eq(i).children("div[id*='card_frontback']").eq(0));
-			for (var j = 0; j < skills.length; j++) {
-				var skill = skills.eq(j).children("span[class*=skillName]").text().replace(/[ \t\r\n]/g, "");
-				if (skill != "") {
-					addHtml += "<option value='" + j + "'>" + skill + "</option>";
-				}
-			}
-			addHtml += "</select>";
-
-			q$("div[id*='card_frontback']", deckcards.eq(i)).eq(0).before(
-				addHtml +
-				"<div>" +
-					"<input type='checkbox' class='m4l' id='auto_calc_chk_atk_w_" + i + "'>" +
-						"<label for='auto_calc_chk_atk_w_" + i + "' style='margin-left: 2px;' >攻撃課金</label>" +
-					"</input>" +
-					"<input type='checkbox' class='m4l' id='auto_calc_chk_def_w_" + i + "'>" +
-						"<label for='auto_calc_chk_def_w_" + i + "' style='margin-left: 2px;' >防御課金</label>" +
-					"</input>" +
-					"<input type='checkbox' class='m4l' id='auto_calc_chk_spd_w_" + i + "'>" +
-						"<label for='auto_calc_chk_spd_w_" + i + "' style='margin-left: 2px;' >速度課金</label>" +
-					"</input>" +
-				"</div>"
-			);
-
-			// 各スキル値に補正枠を追加
-			q$("div[class*='omote_4sk']", deckcards.eq(i)).eq(0).each(
-				function() {
-					// 兵種への直接アクセス導線を作る
-					q$("span[class='soltype-for-sub']", this).attr('id', 'sol_type');
-
-					// 副将表示モードの値を保持
-					q$("ul[class='status']", this).append(
-						"<span style='display: none;' id='sgview_w_" + i + "'>1</span>"
-					);
-
-					// Lカードだけ着色を赤ではなく紫色にするため、レアリティ判定をする
-					var color = "red";
-					if (q$(this).parent().attr('class').match(/_l$/)) {
-						color = "violet";
-					}
-
-					// ステータス値への直接アクセス導線を作る
-					var status_list = q$("ul[class='status'] li", this);
-					for (var j = 0; j < status_list.length; j++) {
-						var cname = status_list.eq(j).attr('class');
-						var match = cname.match(/status_([a-z]*)/);
-						var status_value = status_list.eq(j).text();
-						var mode = "";
-						if (cname.indexOf("black") >= 0) {
-							mode = "0";
-						} else if (cname.indexOf("red") >= 0) {
-							mode = "1";
-						}
-						if (mode != "") {
-							status_list.eq(j).attr({'id':'status_n_' + i, 'status':match[1], 'mode':mode});
-							status_list.eq(j).after(
-								"<li id='status_p_" + i + "' status='" + match[1] + "' mode='" + mode + "' style='display: none; color: " + color + ";' class='" + cname + "'>" + status_value + "</li>"
-							);
-						} else {
-							status_list.eq(j).attr({'id':'status_n_' + i, 'status':match[1]});
-							status_list.eq(j).after(
-								"<li id='status_p_" + i + "' status='" + match[1] + "' style='display: none; color: " + color + ";' class='" + cname + "'>" + status_value + "</li>"
-							);
-						}
-					}
-
-					// スキル説明文への直接アクセス導線を作る
-					q$("ul[class^='back_skill'] li div[class*='skill']", q$(this).parents("div[id*='card_frontback']")).each(
-						function(index) {
-							q$(this).attr('id', 'skill_text_' + index);
-						}
-					);
-				}
-			);
-		}
-
-		//-----------------------
-		// 小カードファイル処理
-		//-----------------------
-		var stats = ['att', 'int', 'wdef', 'sdef', 'bdef', 'rdef', 'speed'];	// ステータスマッピング用
-		for (var i = 0; i < cards.length; i++) {
-			var id_name = "auto_calc_" + i;
-			var select_id = id_name + '_select';
-			var addHtml = "<div style='margin-bottom: 4px;'><select id='" + select_id + "' name='" + select_id + "' style='width: 200px;'><option value=''>指定なし</option>";
-
-			var elembase = cards.eq(i).children("div[class='statusDetail clearfix']");
-			var elems_l = q$("div[class^='left']", elembase);
-			var match = q$("div[class='illustMini'] a[class^='thickbox']", elems_l).attr('href').match(/inlineId=cardWindow_(\d+)/);
-			var cid = match[1];
-
-			var skills = q$("div[id='cardWindow_" + cid + "'] ul[class^='back_skill'] li", cards.eq(i));
-			for (var j = 0; j < skills.length; j++) {
-				var skill = skills.eq(j).children("span").text().replace(/[ \t\r\n]/g, "");
-				if (skill != "" && skill.match(/^副/) == null) {
-					addHtml += "<option value='" + j + "'>" + skill + "</option>";
-				}
-			}
-			addHtml += "</select>";
-
-			q$("div[class='statusDetail clearfix']", cards.eq(i)).before(
-				addHtml +
-				"<div>" +
-					"<input type='checkbox' class='m4l' id='auto_calc_chk_atk_" + i + "'>" +
-						"<label for='auto_calc_chk_atk_" + i + "' style='margin-left: 2px;' >攻撃課金</label>" +
-					"</input>" +
-					"<input type='checkbox' class='m4l' id='auto_calc_chk_def_" + i + "'>" +
-						"<label for='auto_calc_chk_def_" + i + "' style='margin-left: 2px;' >防御課金</label>" +
-					"</input>" +
-					"<input type='checkbox' class='m4l' id='auto_calc_chk_spd_" + i + "'>" +
-						"<label for='auto_calc_chk_spd_" + i + "' style='margin-left: 2px;' >速度課金</label>" +
-					"</input>" +
-				"</div>"
-			);
-
-			// 副将表示モードの値を保持
-			cards.eq(i).after(
-				"<span style='display: none;' id='sgview_" + i + "'>1</span>"
-			);
-
-			var trlist = q$("table[class='statusParameter1'] tr", cards.eq(i));
-			for (var j = 0; j < trlist.length - 1; j++) {
-				// 兵種への直接アクセス導線を作る
-				if (j == 4) {
-					trlist.eq(j).children('td').eq(0).attr('id', 'sol_type');
-				}
-
-				// ステータス値への直接アクセス導線を作る
-				var tdlist = trlist.eq(j).children('td');
-				if (tdlist.length == 2) {
-					// 副将補正なし枠
-					tdlist.eq(1).attr({'id':'status_n_' + i, 'status':stats[j]});
-					tdlist.eq(1).after(
-						"<td id='status_p_" + i + "' status='" + stats[j] + "' style='display: none; color: red;'>" + tdlist.eq(1).text() + "</li>"
-					);
-				} else {
-					// 副将補正あり枠
-					for (var k = 1; k <= 2; k++) {
-						var cname = tdlist.eq(k).attr('class');
-						var mode = "";
-						if (cname.indexOf("black") >= 0) {
-							mode = "0";
-						} else if (cname.indexOf("red") >= 0) {
-							mode = "1";
-						}
-
-						tdlist.eq(k).attr({'id':'status_n_' + i, 'status':stats[j], 'mode':mode});
-						tdlist.eq(k).after(
-							"<td id='status_p_" + i + "' status='" + stats[j] + "' mode='" + mode + "' style='display: none; color: red;' class='" + cname + "'>" + tdlist.eq(k).text() + "</li>"
-						);
-					}
-				}
-			}
-
-			// スキル説明文への直接アクセス導線を作る
-			q$("div[id='cardWindow_" + cid + "'] ul[class^='back_skill'] li div[class*='skill']", cards.eq(i)).each(
-				function(index) {
-					q$(this).attr('id', 'skill_text_' + index);
-				}
-			);
-		}
-
-		//-------------------
-		// イベント割り当て
-		//-------------------
-		// スキル選択時のイベント
-		q$("select[id*='auto_calc']").change(
-			function() {
-				var options = JSON.parse(GM_getValue(SERVER_NAME + '_auto_calc', null));
-				var target = q$(this).parent().parent();
-				var match = q$(this).attr('id').match(/(\d+)/);
-				if (q$(this).attr('id').indexOf('_w') > 0) {
-					// デッキ
-					correct_status(
-						"sgview_w_" + match[1],
-						q$(this).prop('selectedIndex') - 1,
-						q$("div[id*='skill_text']", target),
-						q$("span[id='sol_type'] img", target).eq(0).attr('title').substr(0,1),
-						q$("li[id*='status_n']", target),
-						q$("li[id*='status_p']", target),
-						options,
-						q$("input[id*='auto_calc_chk_']", target)
-					);
-				} else {
-					// ファイル
-					correct_status(
-						"sgview_" + match[1],
-						q$(this).prop('selectedIndex') - 1,
-						q$("div[id*='skill_text']", target),
-						q$("td[id='sol_type']", target).eq(0).text().substr(0,1),
-						q$("td[id*='status_n']", target),
-						q$("td[id*='status_p']", target),
-						options,
-						q$("input[id*='auto_calc_chk_']", target)
-					);
-				}
-			}
-		);
-
-		// チェックボックス選択時のイベント
-		q$("input[id*='auto_calc']").on('click',
-			function() {
-				var options = JSON.parse(GM_getValue(SERVER_NAME + '_auto_calc', null));
-				var target = q$(this).parent().parent().parent();
-				var match = q$(this).attr('id').match(/(\d+)/);
-				if (q$(this).attr('id').indexOf('_w') > 0) {
-					// デッキ
-					correct_status(
-						"sgview_w_" + match[1],
-						q$("select", target).prop('selectedIndex') - 1,
-						q$("div[id*='skill_text']", target),
-						q$("span[id='sol_type'] img", target).eq(0).attr('title').substr(0,1),
-						q$("li[id*='status_n']", target),
-						q$("li[id*='status_p']", target),
-						options,
-						q$("input[id*='auto_calc_chk_']", target)
-					);
-				} else {
-					// ファイル
-					correct_status(
-						"sgview_" + match[1],
-						q$("select", target).prop('selectedIndex') - 1,
-						q$("div[id*='skill_text']", target),
-						q$("td[id='sol_type']", target).eq(0).text().substr(0,1),
-						q$("td[id*='status_n']", target),
-						q$("td[id*='status_p']", target),
-						options,
-						q$("input[id*='auto_calc_chk_']", target)
-					);
-				}
-			}
-		);
-
-		//-----------------------------
-		// 自動補正値の設定内容ロード
-		//-----------------------------
-		var setting_params = GM_getValue(SERVER_NAME + '_auto_calc', null);
-		if (setting_params != null) {
-			// 設定値がある
-			var settings = JSON.parse(setting_params);
-			q$("#auto_atk").val(settings.auto_atk);
-			q$("#auto_def").val(settings.auto_def);
-			q$("#auto_spd").val(settings.auto_spd);
-			q$("#auto_atk_10").prop('checked', settings.auto_atk_10);
-			q$("#auto_def_10").prop('checked', settings.auto_def_10);
-			q$("#auto_spd_10").prop('checked', settings.auto_spd_10);
-
-			// チェックボックス全てのカードに反映
-			q$("input[id*='auto_calc_chk_atk']").prop('checked', settings.auto_atk_10);
-			q$("input[id*='auto_calc_chk_def']").prop('checked', settings.auto_def_10);
-			q$("input[id*='auto_calc_chk_spd']").prop('checked', settings.auto_spd_10);
-		} else {
-			// 設定値がないときは、初期値で保存
-			var obj = new Object;
-			obj.auto_atk = 0;
-			obj.auto_def = 0;
-			obj.auto_spd = 0;
-			obj.auto_atk_10 = false;
-			obj.auto_def_10 = false;
-			obj.auto_spd_10 = false;
-			GM_setValue(SERVER_NAME + '_auto_calc', JSON.stringify(obj));
-		}
-
-		//---------------------------------------------------------
-		// 初期状態ではファイル内の全カードを白スキル未使用で計算
-		//---------------------------------------------------------
-		// デッキ
-		for (var i = 0; i < deckcards.length; i++) {
-			correct_status(
-				"sgview_w_" + i,		// カード連番
-				-1,		// 選択スキル
-				q$("div[id*='skill_text']", deckcards.eq(i)),
-				q$("span[id='sol_type'] img", deckcards.eq(i)).eq(0).attr('title').substr(0,1),
-				q$("li[id*='status_n']", deckcards.eq(i)),
-				q$("li[id*='status_p']", deckcards.eq(i)),
-				calc_options,
-				q$("input[id*='auto_calc_chk_']", deckcards.eq(i))
-			);
-
-			var sgviews = q$("div[class='effect clearfix'] p[class='view'] a", deckcards.eq(i));
-			if (sgviews.length > 0) {
-				// 運営の副将枠イベントを殺す
-				sgviews.eq(0).attr({'onclick': null, 'viewid': i}).text("*表示");
-				sgviews.eq(1).attr({'onclick': null, 'viewid': i}).text("-非表示");
-
-				// オンクリック時の挙動
-				sgviews.eq(0).on('click',
-					function() {
-						var viewid = q$(this).attr('viewid');
-						q$("#sgview_w_" + viewid).text("1");
-
-						var sel_skill = q$("#auto_calc_w_" + viewid + "_select").prop('selectedIndex') - 1;
-						var dcards = q$("#cardListDeck form[class='clearfix']").children("div[class='cardColmn']");
-
-						var sgviews = q$("div[class='effect clearfix'] p[class='view'] a", dcards.eq(viewid));
-						sgviews.eq(0).text("*表示");
-						sgviews.eq(1).text("-非表示");
-
-						correct_status(
-							"sgview_w_" + viewid,	// カード連番
-							sel_skill,				// 選択スキル
-							q$("div[id*='skill_text']", dcards.eq(viewid)),
-							q$("span[id='sol_type'] img", dcards.eq(viewid)).eq(0).attr('title').substr(0,1),
-							q$("li[id*='status_n']", dcards.eq(viewid)),
-							q$("li[id*='status_p']", dcards.eq(viewid)),
-							JSON.parse(GM_getValue(SERVER_NAME + '_auto_calc', null)),
-							q$("input[id*='auto_calc_chk_']", dcards.eq(viewid))
-						);
-					}
-				);
-
-				// オフクリック時の挙動
-				sgviews.eq(1).on('click',
-					function() {
-						var viewid = q$(this).attr('viewid');
-						q$("#sgview_w_" + viewid).text("0");
-
-						var sel_skill = q$("#auto_calc_w_" + viewid + "_select").prop('selectedIndex') - 1;
-						var dcards = q$("#cardListDeck form[class='clearfix']").children("div[class='cardColmn']");
-
-						var sgviews = q$("div[class='effect clearfix'] p[class='view'] a", dcards.eq(viewid));
-						sgviews.eq(0).text("-表示");
-						sgviews.eq(1).text("*非表示");
-
-						correct_status(
-							"sgview_w_" + viewid,	// カード連番
-							sel_skill,				// 選択スキル
-							q$("div[id*='skill_text']", dcards.eq(viewid)),
-							q$("span[id='sol_type'] img", dcards.eq(viewid)).eq(0).attr('title').substr(0,1),
-							q$("li[id*='status_n']", dcards.eq(viewid)),
-							q$("li[id*='status_p']", dcards.eq(viewid)),
-							JSON.parse(GM_getValue(SERVER_NAME + '_auto_calc', null)),
-							q$("input[id*='auto_calc_chk_']", dcards.eq(viewid))
-						);
-					}
-				);
-			}
-		}
-
-		// ファイル
-		for (var i = 0; i < cards.length; i++) {
-			correct_status(
-				"sgview_" + i,		// カード連番
-				-1,					// 選択スキル
-				q$("div[id*='skill_text']", cards.eq(i)),
-				q$("td[id='sol_type']", cards.eq(i)).eq(0).text().substr(0,1),
-				q$("td[id*='status_n']", cards.eq(i)),
-				q$("td[id*='status_p']", cards.eq(i)),
-				calc_options,
-				q$("input[id*='auto_calc_chk_']", cards.eq(i))
-			);
-
-			var sgviews = q$("div[class='effect clearfix'] p[class='view'] a", cards.eq(i));
-			if (sgviews.length > 0) {
-				// 運営の副将枠イベントを殺す
-				sgviews.eq(0).attr({'onclick': null, 'viewid': i}).text("*表示");
-				sgviews.eq(1).attr({'onclick': null, 'viewid': i}).text("-非表示");
-
-				// オンクリック時の挙動
-				sgviews.eq(0).on('click',
-					function() {
-						var viewid = q$(this).attr('viewid');
-						q$("#sgview_" + viewid).text("1");
-
-						var sel_skill = q$("#auto_calc_" + viewid + "_select").prop('selectedIndex') - 1;
-						var dcards = q$("#cardFileList div[class='cardStatusDetail label-setting-mode']");
-
-						var sgviews = q$("div[class='effect clearfix'] p[class='view'] a", cards.eq(viewid));
-						sgviews.eq(0).text("*表示");
-						sgviews.eq(1).text("-非表示");
-
-						correct_status(
-							"sgview_" + viewid,		// カード連番
-							sel_skill,				// 選択スキル
-							q$("div[id*='skill_text']", dcards.eq(viewid)),
-							q$("td[id='sol_type']", dcards.eq(viewid)).eq(0).text().substr(0,1),
-							q$("td[id*='status_n']", dcards.eq(viewid)),
-							q$("td[id*='status_p']", dcards.eq(viewid)),
-							JSON.parse(GM_getValue(SERVER_NAME + '_auto_calc', null)),
-							q$("input[id*='auto_calc_chk_']", dcards.eq(viewid))
-						);
-					}
-				);
-
-				// オフクリック時の挙動
-				sgviews.eq(1).on('click',
-					function() {
-						var viewid = q$(this).attr('viewid');
-						q$("#sgview_" + viewid).text("0");
-
-						var sel_skill = q$("#auto_calc_" + viewid + "_select").prop('selectedIndex') - 1;
-						var dcards = q$("#cardFileList div[class='cardStatusDetail label-setting-mode']");
-
-						var sgviews = q$("div[class='effect clearfix'] p[class='view'] a", cards.eq(viewid));
-						sgviews.eq(0).text("-表示");
-						sgviews.eq(1).text("*非表示");
-
-						correct_status(
-							"sgview_" + viewid,		// カード連番
-							sel_skill,				// 選択スキル
-							q$("div[id*='skill_text']", dcards.eq(viewid)),
-							q$("td[id='sol_type']", dcards.eq(viewid)).eq(0).text().substr(0,1),
-							q$("td[id*='status_n']", dcards.eq(viewid)),
-							q$("td[id*='status_p']", dcards.eq(viewid)),
-							JSON.parse(GM_getValue(SERVER_NAME + '_auto_calc', null)),
-							q$("input[id*='auto_calc_chk_']", dcards.eq(viewid))
-						);
 					}
 				);
 			}
@@ -10182,7 +9701,7 @@ function getDefaultOptions() {
 	settings[DECK_02] = true;		// 共通：トレードへのリンク追加
 	settings[DECK_03] = true;		// 共通：ページ切り替えのプルダウンを追加
 	settings[DECK_11] = true;		// デッキ：ファイル内スキル検索機能の追加
-	settings[DECK_12] = true;		// デッキ：スキル補正効果表示機能の追加
+	//settings[DECK_12] = true;		// (運営機能「奇門遁甲 スキル式盤表示」が実装されたので機能削除)デッキ：スキル補正効果表示機能の追加
 	settings[DECK_13] = true;		// デッキ：内政スキル使用リンクの追加（回復：赤/緑、内政：青）
 	settings[DECK_14] = true;		// デッキ：1クリックデッキセットボタン追加
 	settings[DECK_15] = false;		// デッキ：ファイルに下げるボタンを1クリックで使用に変更
